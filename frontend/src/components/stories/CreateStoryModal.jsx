@@ -146,7 +146,7 @@ export default function CreateStoryModal({ currentUser, onClose }) {
             onChange={e => setCaption(e.target.value)}
             placeholder={type === "image" ? "Add a caption..." : "What's on your mind?"}
             rows={2}
-            className="w-full text-sm text-slate-700 placeholder:text-slate-400 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-300 resize-none"
+            className="w-full text-sm text-slate-700 placeholder:text-slate-400 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-orange-300 resize-none"
           />
 
           {/* Background colors (text only) */}
@@ -166,7 +166,7 @@ export default function CreateStoryModal({ currentUser, onClose }) {
           <Button
             onClick={handlePublish}
             disabled={uploading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl h-10 font-semibold"
+            className="w-full bg-orange-600 hover:bg-orange-700 rounded-xl h-10 font-semibold"
           >
             {uploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Publishing...</> : "Share Story"}
           </Button>

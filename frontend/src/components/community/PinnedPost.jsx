@@ -9,7 +9,7 @@ export default function PinnedPost({ post }) {
         <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Pinned</span>
       </div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
           {post.author_name?.[0]?.toUpperCase() || "U"}
         </div>
         <div>

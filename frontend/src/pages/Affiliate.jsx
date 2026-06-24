@@ -82,7 +82,7 @@ Let me know what you end up getting! 😄`,
     title: "Email Newsletter Block",
     type: "Email",
     icon: Mail,
-    gradient: "from-blue-500 to-indigo-600",
+    gradient: "from-orange-500 to-orange-600",
     description: "Drop this block into your email newsletter for instant affiliate revenue.",
     content: `Subject: 🛍️ Something I've been loving lately
 
@@ -155,7 +155,7 @@ function LeaderboardItem({ rank, name, avatar_url, total_earned, total_sales, is
       transition={{ delay: rank * 0.04 }}
       className={`flex items-center gap-4 p-3.5 rounded-2xl border mb-2 transition-all ${
         isMe
-          ? "bg-indigo-50 dark:bg-indigo-950 border-indigo-200 dark:border-indigo-800 shadow-sm shadow-indigo-100"
+          ? "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800 shadow-sm shadow-orange-100"
           : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600"
       }`}
     >
@@ -164,7 +164,7 @@ function LeaderboardItem({ rank, name, avatar_url, total_earned, total_sales, is
       }`}>
         {rank}
       </div>
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
         {avatar_url ? (
           <img src={avatar_url} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -174,12 +174,12 @@ function LeaderboardItem({ rank, name, avatar_url, total_earned, total_sales, is
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
           {name}
-          {isMe && <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900 px-1.5 py-0.5 rounded-full">{t("affiliate.youBadge")}</span>}
+          {isMe && <span className="text-[9px] font-black text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900 px-1.5 py-0.5 rounded-full">{t("affiliate.youBadge")}</span>}
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500">{total_sales} {t(`affiliate.saleSuffix_${total_sales === 1 ? "one" : "other"}`)}</p>
       </div>
       <div className="text-right shrink-0">
-        <p className={`text-sm font-black ${isMe ? "text-indigo-700 dark:text-indigo-400" : "text-indigo-600"}`}>{formatCurrency(total_earned)}</p>
+        <p className={`text-sm font-black ${isMe ? "text-orange-700 dark:text-orange-400" : "text-orange-600"}`}>{formatCurrency(total_earned)}</p>
         <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.earnedLabel")}</p>
       </div>
     </motion.div>
@@ -212,7 +212,7 @@ function AssetCard({ asset, affiliateUrl }) {
       <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">
         {parts.map((part, i) =>
           part === "{YOUR_LINK}" ? (
-            <span key={i} className="text-indigo-600 dark:text-indigo-400 font-semibold break-all">{affiliateUrl}</span>
+            <span key={i} className="text-orange-600 dark:text-indigo-400 font-semibold break-all">{affiliateUrl}</span>
           ) : (
             part
           )
@@ -293,7 +293,7 @@ function ConversionBar({ clicks, conversions }) {
     <div>
       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
         <span>{t("affiliate.conversionRate")}</span>
-        <span className="font-semibold text-indigo-600">{pct.toFixed(1)}%</span>
+        <span className="font-semibold text-orange-600">{pct.toFixed(1)}%</span>
       </div>
       <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -429,7 +429,7 @@ export default function Affiliate() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard icon={Link2} label={t("affiliate.activeLinks")} value={myLinks.filter(l => l.status === "active").length} color="bg-indigo-50 text-indigo-600" />
+        <StatCard icon={Link2} label={t("affiliate.activeLinks")} value={myLinks.filter(l => l.status === "active").length} color="bg-indigo-50 text-orange-600" />
         <StatCard icon={MousePointerClick} label={t("affiliate.totalClicks")} value={totalClicks.toLocaleString()} color="bg-blue-50 text-blue-600" />
         <StatCard icon={ShoppingCart} label={t("affiliate.conversions")} value={totalConversions} sub={totalClicks ? `${((totalConversions/totalClicks)*100).toFixed(1)}% ${t("affiliate.rateSuffix")}` : ""} color="bg-green-50 text-green-600" />
         <StatCard icon={DollarSign} label={t("affiliate.pendingPayout")} value={formatCurrency(pendingPayout)} sub={t("affiliate.totalEarnedSub", { amount: formatCurrency(totalEarned) })} color="bg-amber-50 text-amber-600" />
@@ -475,7 +475,7 @@ export default function Affiliate() {
                           <Badge className={`text-[10px] border-0 capitalize ${link.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"}`}>
                             {link.status}
                           </Badge>
-                          <span className="text-xs font-bold text-indigo-600">{link.commission_pct}% comm.</span>
+                          <span className="text-xs font-bold text-orange-600">{link.commission_pct}% comm.</span>
                         </div>
                       </div>
 
@@ -568,7 +568,7 @@ export default function Affiliate() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">{product.title}</p>
-                            <p className="text-xs text-indigo-600 font-bold">{formatCurrency(product.price)}</p>
+                            <p className="text-xs text-orange-600 font-bold">{formatCurrency(product.price)}</p>
                             <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.commissionLabel", { pct: product.affiliate_commission_pct || 10 })}</p>
                           </div>
                           {pendingProductId === productId ? (

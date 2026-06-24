@@ -84,7 +84,7 @@ import React, { useState } from "react";
          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("communities.title")}</h1> 
          <Dialog open={createOpen} onOpenChange={setCreateOpen}> 
            <DialogTrigger asChild> 
-             <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl"> 
+             <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl"> 
                <Plus className="w-4 h-4 mr-1.5" /> {t("communities.create")}
              </Button> 
            </DialogTrigger> 
@@ -125,7 +125,7 @@ import React, { useState } from "react";
                <Button 
                  onClick={() => createMutation.mutate()} 
                  disabled={!newCommunity.name.trim() || createMutation.isPending} 
-                 className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl py-6 text-base font-bold shadow-lg shadow-indigo-100" 
+                 className="w-full bg-orange-600 hover:bg-orange-700 rounded-xl py-6 text-base font-bold shadow-lg shadow-orange-100" 
                > 
                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} 
                  {t("communities.createCommunity")}
@@ -149,7 +149,7 @@ import React, { useState } from "react";
        {myCommunities.length > 0 && ( 
          <div className="mb-10"> 
            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-             <Users className="w-5 h-5 text-indigo-500" /> {t("communities.myCommunities")}
+             <Users className="w-5 h-5 text-orange-500" /> {t("communities.myCommunities")}
            </h2> 
            <div className="grid sm:grid-cols-2 gap-4"> 
              {myCommunities.map((c) => ( 
@@ -197,10 +197,10 @@ import React, { useState } from "react";
          whileHover={{ y: -4 }} 
          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all h-full shadow-sm" 
        > 
-         <div className="h-28 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 relative"> 
+         <div className="h-28 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 relative"> 
            {community.cover_image && <img src={community.cover_image} alt="" className="w-full h-full object-cover" />} 
            {joined && ( 
-             <div className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[10px] font-bold uppercase tracking-wider text-indigo-600 shadow-sm"> 
+             <div className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[10px] font-bold uppercase tracking-wider text-orange-600 shadow-sm"> 
                {t("communities.joined")}
              </div> 
            )} 

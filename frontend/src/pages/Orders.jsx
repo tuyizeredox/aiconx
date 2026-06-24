@@ -22,7 +22,7 @@ import { toast } from "sonner";
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: "bg-amber-100 text-amber-700", label: "Pending" },
   confirmed: { icon: CheckCircle2, color: "bg-blue-100 text-blue-700", label: "Confirmed" },
-  processing: { icon: Package, color: "bg-indigo-100 text-indigo-700", label: "Processing" },
+  processing: { icon: Package, color: "bg-orange-100 text-orange-700", label: "Processing" },
   shipped: { icon: Truck, color: "bg-purple-100 text-purple-700", label: "Shipped" },
   delivered: { icon: CheckCircle2, color: "bg-green-100 text-green-700", label: "Delivered" },
   cancelled: { icon: XCircle, color: "bg-red-100 text-red-700", label: "Cancelled" },
@@ -110,7 +110,7 @@ export default function Orders() {
           placeholder={t("orders.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-2xl h-12 focus:ring-indigo-500 focus:border-indigo-500"
+          className="pl-10 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-2xl h-12 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
 
@@ -140,7 +140,7 @@ export default function Orders() {
           icon={ShoppingBag}
           title={search ? t("common.noResults") : t("orders.noOrders")}
           description={search ? t("orders.adjustSearch") : t("orders.noOrdersDesc")}
-          action={!search && <Link to={createPageUrl("Marketplace")}><Button className="bg-indigo-600 hover:bg-indigo-700">{t("orders.browseMarketplace")}</Button></Link>}
+          action={!search && <Link to={createPageUrl("Marketplace")}><Button className="bg-orange-600 hover:bg-orange-700">{t("orders.browseMarketplace")}</Button></Link>}
         />
       ) : (
         <div className="space-y-4">
@@ -197,7 +197,7 @@ export default function Orders() {
                       </div>
                     ))}
                     {order.items?.length > 2 && (
-                      <p className="text-xs text-indigo-600 font-medium pl-1">{t("orders.moreItems", { count: order.items.length - 2 })}</p>
+                      <p className="text-xs text-orange-600 font-medium pl-1">{t("orders.moreItems", { count: order.items.length - 2 })}</p>
                     )}
                   </div>
 
@@ -230,7 +230,7 @@ export default function Orders() {
                         size="sm"
                         variant="ghost"
                         onClick={() => navigate(createPageUrl("Chat") + `?to=${order.vendor_username}`)}
-                        className="rounded-xl text-[10px] h-8 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                        className="rounded-xl text-[10px] h-8 text-orange-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
                         title="Contact Seller"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />

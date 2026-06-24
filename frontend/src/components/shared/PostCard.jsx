@@ -9,6 +9,7 @@ import { createPageUrl } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import { useNativeShare } from "@/hooks/useNativeShare";
 import { formatDistanceToNow } from "date-fns";
 import useEmblaCarousel from 'embla-carousel-react';
 
@@ -16,6 +17,7 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const nativeShare = useNativeShare({ post, onFallback: () => setIsShareModalOpen(true) });
   const [showFullContent, setShowFullContent] = useState(false);
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -190,13 +192,13 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
             {post.author_avatar ? (
               <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" loading="lazy" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white">
+              <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
                 {post.author_name?.[0]?.toUpperCase() || "U"}
               </div>
             )}
           </div>
           <div className="flex flex-col">
-            <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{post.author_name || "User"}</p>
+            <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors">{post.author_name || "User"}</p>
             <div className="flex items-center gap-2">
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">@{authorUsername}</p>
               <span className="text-[10px] text-slate-300 dark:text-slate-600">•</span>
@@ -223,7 +225,7 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
           {post.content.length > 150 && (
             <button
               onClick={() => setShowFullContent(!showFullContent)}
-              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1 hover:text-indigo-700 dark:hover:text-indigo-300"
+              className="text-xs font-semibold text-orange-600 dark:text-orange-400 mt-1 hover:text-orange-700 dark:hover:text-orange-300"
             >
               {showFullContent ? t("common.seeLess") : t("common.seeMore")}
             </button>
@@ -342,7 +344,7 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
             to={createPageUrl("ProductDetail") + `?id=${post.tagged_products[0]}`}
             className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
-            <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+            <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
               <ShoppingBag className="w-4 h-4" />
             </div>
             <span className="flex-1">View tagged product</span>
@@ -374,18 +376,18 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
           </button>
 
           <Link to={createPageUrl("PostDetail") + `?id=${postId}`} className="flex items-center gap-1.5 group outline-none">
-            <MessageCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors" />
-            <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors">
+            <MessageCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
+            <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
               {post.comments_count > 0 ? post.comments_count.toLocaleString() : t("common.comment")}
             </span>
           </Link>
 
           <button 
-            onClick={() => currentUser && setIsShareModalOpen(true)}
+            onClick={() => currentUser && nativeShare()}
             className="flex items-center gap-1.5 group outline-none"
           >
-            <Share2 className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors" />
-            <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors">
+            <Share2 className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
+            <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
               {post.shares_count > 0 ? post.shares_count.toLocaleString() : t("common.share")}
             </span>
           </button>
@@ -395,8 +397,8 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
           onClick={() => currentUser && saveMutation.mutate()}
           className={`p-1.5 rounded-full transition-all duration-200 ${
             isBookmarked 
-              ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30" 
-              : "text-slate-500 dark:text-slate-400 hover:text-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+              ? "text-orange-600 bg-orange-50 dark:bg-orange-900/30" 
+              : "text-slate-500 dark:text-slate-400 hover:text-orange-500 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />

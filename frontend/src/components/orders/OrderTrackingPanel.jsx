@@ -34,9 +34,9 @@ function generateTrackingEvents(order) {
 }
 
 const EVENT_CONFIG = {
-  order_placed: { icon: Package, color: "bg-blue-500", label: "Order Placed" },
+  order_placed: { icon: Package, color: "bg-orange-500", label: "Order Placed" },
   processing: { icon: Clock, color: "bg-amber-500", label: "Processing" },
-  picked_up: { icon: Truck, color: "bg-indigo-500", label: "Picked Up" },
+  picked_up: { icon: Truck, color: "bg-orange-500", label: "Picked Up" },
   in_transit: { icon: Truck, color: "bg-purple-500", label: "In Transit" },
   out_for_delivery: { icon: MapPin, color: "bg-orange-500", label: "Out for Delivery" },
   delivered: { icon: CheckCircle2, color: "bg-green-500", label: "Delivered" },
@@ -66,7 +66,7 @@ function ProgressBar({ events }) {
               </span>
             </div>
             {!isLast && (
-              <div className={`flex-1 h-0.5 -mt-4 transition-all ${i < currentStep ? "bg-indigo-500" : "bg-slate-100 dark:bg-slate-700"}`} />
+              <div className={`flex-1 h-0.5 -mt-4 transition-all ${i < currentStep ? "bg-orange-500" : "bg-slate-100 dark:bg-slate-700"}`} />
             )}
           </React.Fragment>
         );

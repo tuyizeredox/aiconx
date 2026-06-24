@@ -114,7 +114,7 @@ export default function StoreDetail() {
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t("storeDetail.invalidStore")}</h2>
         <p className="text-slate-500 dark:text-slate-400 mb-6">{t("storeDetail.invalidStoreDesc")}</p>
         <Link to={createPageUrl("Marketplace")}>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("storeDetail.backToMarketplace")}</Button>
+          <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("storeDetail.backToMarketplace")}</Button>
         </Link>
       </div>
     );
@@ -127,7 +127,7 @@ export default function StoreDetail() {
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t("storeDetail.storeNotFound")}</h2>
         <p className="text-slate-500 dark:text-slate-400 mb-6">{storeError.status === 404 ? t("storeDetail.storeMovedOrDeleted") : t("storeDetail.storeLoadError")}</p>
         <Link to={createPageUrl("Marketplace")}>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("storeDetail.backToMarketplace")}</Button>
+          <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("storeDetail.backToMarketplace")}</Button>
         </Link>
       </div>
     );
@@ -155,7 +155,7 @@ export default function StoreDetail() {
 
       {/* Store Banner */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6">
-        <div className="h-32 lg:h-48 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 relative">
+        <div className="h-32 lg:h-48 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 relative">
           {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
         </div>
         <div className="p-6 -mt-10 relative">
@@ -163,7 +163,7 @@ export default function StoreDetail() {
             {store.logo_url ? (
               <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="bg-gradient-to-br from-indigo-400 to-purple-500 w-full h-full flex items-center justify-center text-white">
+              <span className="bg-gradient-to-br from-orange-400 to-orange-500 w-full h-full flex items-center justify-center text-white">
                 {store.name?.[0]?.toUpperCase()}
               </span>
             )}
@@ -172,7 +172,7 @@ export default function StoreDetail() {
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{store.name}</h1>
               {store.is_verified && (
-                <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-0"><CheckCircle className="w-3 h-3 mr-1" />{t("common.verified")}</Badge>
+                <Badge className="bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 border-0"><CheckCircle className="w-3 h-3 mr-1" />{t("common.verified")}</Badge>
               )}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{store.description}</p>
@@ -195,7 +195,7 @@ export default function StoreDetail() {
                   className={`rounded-xl gap-2 font-semibold transition-all ${
                     isFollowing 
                       ? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600" 
-                      : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100"
+                      : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100"
                   }`}
                   size="sm"
                   variant={isFollowing ? "secondary" : "default"}

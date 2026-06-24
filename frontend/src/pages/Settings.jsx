@@ -347,7 +347,7 @@ export default function Settings() {
               {profileData.banner_url ? (
                 <img src={profileData.banner_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-80" />
+                <div className="w-full h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 opacity-80" />
               )}
               <label className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
                 <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30">
@@ -367,7 +367,7 @@ export default function Settings() {
                   {profileData.avatar_url ? (
                     <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 font-bold text-2xl">
+                    <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30 text-orange-500 font-bold text-2xl">
                       {profileData.display_name?.[0]?.toUpperCase() || "U"}
                     </div>
                   )}
@@ -377,7 +377,7 @@ export default function Settings() {
                     </div>
                   )}
                 </div>
-                <label className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm">
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-orange-600 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center cursor-pointer hover:bg-orange-700 transition-colors shadow-sm">
                   <Camera className="w-4 h-4 text-white" />
                   <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'avatar')} disabled={uploading.avatar} />
                 </label>
@@ -395,7 +395,7 @@ export default function Settings() {
                   value={profileData.username} 
                   onChange={e => setProfileData({...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})}
                   placeholder="username"
-                  className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-indigo-500 pl-8"
+                  className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-orange-500 pl-8"
                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-1 ml-1">{t("settings.usernameHint")}</p>
@@ -406,7 +406,7 @@ export default function Settings() {
                 value={profileData.display_name} 
                 onChange={e => setProfileData({...profileData, display_name: e.target.value})}
                 placeholder="Full name or nickname"
-                className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-indigo-500"
+                className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-orange-500"
               />
             </div>
             <div>
@@ -416,14 +416,14 @@ export default function Settings() {
                 onChange={e => setProfileData({...profileData, bio: e.target.value})}
                 placeholder={t("settings.bioPlaceholder")}
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 focus:border-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none transition-all resize-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 focus:border-orange-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none transition-all resize-none"
               />
               <p className="text-right text-[10px] text-slate-400 dark:text-slate-500 mt-1">{profileData.bio.length}/500</p>
             </div>
             <Button 
               onClick={handleProfileSave}
               disabled={updateMutation.isPending}
-              className="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white rounded-xl h-11 font-semibold"
+              className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-11 font-semibold"
             >
               {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {t("settings.saveChanges")}
@@ -452,7 +452,7 @@ export default function Settings() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-indigo-600 dark:text-indigo-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
               onClick={() => setShowEmailModal(true)}
             >
               {t("settings.change")}
@@ -471,7 +471,7 @@ export default function Settings() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-indigo-600 dark:text-indigo-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
               onClick={() => setShowPhoneModal(true)}
             >
               {currentUser?.phone_number ? t("settings.change") : t("settings.add")}
@@ -485,24 +485,24 @@ export default function Settings() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-indigo-600 dark:text-indigo-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
               onClick={() => setShowPasswordModal(true)}
             >
               {t("settings.update")}
             </Button>
           </div>
-          <div className="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm shrink-0">
+          <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-2xl border border-orange-100 dark:border-orange-900/30 flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-sm shrink-0">
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-100">{t("settings.twoFactor")}</h4>
-              <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mb-2 leading-relaxed">{t("settings.twoFactorDesc")}</p>
+              <h4 className="text-sm font-bold text-orange-900 dark:text-orange-100">{t("settings.twoFactor")}</h4>
+              <p className="text-xs text-orange-600/70 dark:text-orange-400/70 mb-2 leading-relaxed">{t("settings.twoFactorDesc")}</p>
               <Button 
                 size="sm" 
                 onClick={handle2FAToggle}
                 disabled={updateMutation.isPending}
-                className={`${currentUser?.is_2fa_enabled ? "bg-red-500 hover:bg-red-600" : "bg-indigo-600 hover:bg-indigo-700"} text-white rounded-lg h-8 text-[10px] font-bold px-3`}
+                className={`${currentUser?.is_2fa_enabled ? "bg-red-500 hover:bg-red-600" : "bg-orange-600 hover:bg-orange-700"} text-white rounded-lg h-8 text-[10px] font-bold px-3`}
               >
                 {currentUser?.is_2fa_enabled ? t("settings.disable2FA") : t("settings.enable2FA")}
               </Button>
@@ -625,7 +625,7 @@ export default function Settings() {
               </div>
               <div 
                 onClick={() => handleNotificationToggle(item.id)}
-                className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors shadow-inner ${notifications[item.id] ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"}`}
+                className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors shadow-inner ${notifications[item.id] ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
               >
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${notifications[item.id] ? "right-0.5" : "left-0.5"}`} />
               </div>
@@ -649,7 +649,7 @@ export default function Settings() {
                 <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.language")}</span>
               </div>
-              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-lg">
+              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
                 {currentLangInfo?.flag} {currentLangInfo?.label}
               </span>
             </div>
@@ -660,8 +660,8 @@ export default function Settings() {
                   onClick={() => handleLanguageChange(l.code)}
                   className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                     selectedLang === l.code 
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" 
-                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-indigo-200 dark:hover:border-indigo-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                      ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100" 
+                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
                   }`}
                 >
                   {l.flag} {l.label}
@@ -671,7 +671,7 @@ export default function Settings() {
             <Button 
               onClick={handleSaveLanguage}
               disabled={selectedLang === currentLang || langSaving}
-              className="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white rounded-xl h-10 text-xs font-bold"
+              className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
             >
               {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
             </Button>
@@ -689,7 +689,7 @@ export default function Settings() {
                   updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: newTheme } });
                 }
               }}
-              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${theme === "dark" ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"}`}
+              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${theme === "dark" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
             >
               <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${theme === "dark" ? "right-0.5" : "left-0.5"}`} />
             </div>
@@ -758,7 +758,7 @@ export default function Settings() {
           </div>
           <DialogFooter>
             <Button 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl h-11"
               disabled={otpToken.length !== 6 || enable2FAMutation.isPending}
               onClick={() => enable2FAMutation.mutate()}
             >
@@ -829,7 +829,7 @@ export default function Settings() {
           </div>
           <DialogFooter>
             <Button 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl h-11"
               disabled={otpToken.length !== 6 || verifyEmailMutation.isPending}
               onClick={() => verifyEmailMutation.mutate(otpToken)}
             >
@@ -856,7 +856,7 @@ export default function Settings() {
               <p className="text-[10px] text-slate-400 ml-1">{t("settings.phoneHint")}</p>
             </div>
             <Button 
-              className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 rounded-xl h-11 font-bold"
+              className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-orange-600 dark:hover:bg-orange-700 rounded-xl h-11 font-bold"
               disabled={!phoneForm.newPhone || phoneForm.newPhone.length < 10 || phoneMutation.isPending}
               onClick={() => phoneMutation.mutate()}
             >
@@ -891,7 +891,7 @@ export default function Settings() {
           </div>
           <DialogFooter>
             <Button 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11 font-bold"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl h-11 font-bold"
               disabled={otpToken.length !== 6 || verifyPhoneMutation.isPending}
               onClick={() => verifyPhoneMutation.mutate(otpToken)}
             >

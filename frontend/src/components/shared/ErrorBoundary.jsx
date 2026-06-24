@@ -38,7 +38,7 @@ export default class ErrorBoundary extends React.Component {
                 <RefreshCw className="w-4 h-4" />
                 Try again
               </Button>
-              <Button onClick={() => window.location.href = "/"} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button onClick={() => window.location.href = "/"} className="bg-orange-600 hover:bg-orange-700">
                 Go home
               </Button>
             </div>

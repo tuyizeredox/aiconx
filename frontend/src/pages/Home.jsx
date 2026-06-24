@@ -135,7 +135,7 @@ export default function Home() {
                   <Flame className="w-4 h-4 text-orange-500" />
                   {t("home.trending")}
                 </h2>
-                <Link to={createPageUrl("Marketplace")} className="text-xs text-indigo-600 font-medium flex items-center gap-0.5">
+                <Link to={createPageUrl("Marketplace")} className="text-xs text-orange-600 font-medium flex items-center gap-0.5">
                   {t("home.seeAll")} <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -173,12 +173,12 @@ export default function Home() {
                     <div className="flex gap-3">
                       {activeTab === "following" ? (
                         <Link to={createPageUrl("Explore")}>
-                          <Button className="bg-indigo-600 hover:bg-indigo-700">{t("home.findPeopleToFollow")}</Button>
+                          <Button className="bg-orange-600 hover:bg-orange-700">{t("home.findPeopleToFollow")}</Button>
                         </Link>
                       ) : (
                         <>
                           <Link to={createPageUrl("CreatePost")}>
-                            <Button className="bg-indigo-600 hover:bg-indigo-700">{t("home.createPost")}</Button>
+                            <Button className="bg-orange-600 hover:bg-orange-700">{t("home.createPost")}</Button>
                           </Link>
                           <Link to={createPageUrl("Explore")}>
                             <Button variant="outline">{t("home.explore")}</Button>
@@ -212,7 +212,7 @@ export default function Home() {
                 >
                   {isFetchingNextPage ? (
                     <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                      <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
                       <p className="text-xs text-slate-400 font-medium">{t("home.loadingMore")}</p>
                     </div>
                   ) : hasNextPage ? (

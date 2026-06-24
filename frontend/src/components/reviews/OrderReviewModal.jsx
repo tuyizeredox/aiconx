@@ -140,7 +140,7 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder={t("orders.titlePlaceholder")}
-            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
+            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-200"
           />
         </div>
 
@@ -151,7 +151,7 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
             onChange={e => setContent(e.target.value)}
             rows={3}
             placeholder={t("orders.reviewPlaceholder")}
-            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-indigo-300 resize-none"
+            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-orange-300 resize-none"
           />
         </div>
 
@@ -172,7 +172,7 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
               </div>
             ))}
             {mediaFiles.length < 3 && (
-              <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all text-slate-400">
+              <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition-all text-slate-400">
                 <Upload className="w-4 h-4" />
                 <span className="text-[9px] mt-0.5 font-medium">{t("common.upload")}</span>
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
@@ -186,7 +186,7 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
           <Button
             onClick={() => submitMutation.mutate()}
             disabled={rating === 0 || submitMutation.isPending || uploading}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl h-9 font-bold"
+            className="flex-1 bg-orange-600 hover:bg-orange-700 rounded-xl h-9 font-bold"
             size="sm"
           >
             {submitMutation.isPending || uploading ? (

@@ -246,7 +246,7 @@ export default function VendorFinance() {
 
   const statusColors = {
     pending: "bg-amber-100 text-amber-700",
-    processing: "bg-blue-100 text-blue-700",
+    processing: "bg-orange-100 text-orange-700",
     completed: "bg-green-100 text-green-700",
     rejected: "bg-red-100 text-red-700",
   };
@@ -254,7 +254,7 @@ export default function VendorFinance() {
   const orderStatusColors = {
     pending: "bg-amber-50 text-amber-700",
     confirmed: "bg-blue-50 text-blue-700",
-    processing: "bg-indigo-50 text-indigo-700",
+    processing: "bg-orange-50 text-orange-700",
     shipped: "bg-purple-50 text-purple-700",
     delivered: "bg-green-50 text-green-700",
     cancelled: "bg-red-50 text-red-700",
@@ -269,7 +269,7 @@ export default function VendorFinance() {
         </div>
         <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-2">
+            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-2">
               <Wallet className="w-4 h-4" /> {t("finance.requestWithdrawal")}
             </Button>
           </DialogTrigger>
@@ -277,7 +277,7 @@ export default function VendorFinance() {
             <DialogHeader>
               <DialogTitle>{t("finance.requestWithdrawal")}</DialogTitle>
               {store?.payment_method && (
-                <p className="text-[10px] text-indigo-600 font-medium flex items-center gap-1 mt-1">
+                <p className="text-[10px] text-orange-600 font-medium flex items-center gap-1 mt-1">
                   <CheckCircle2 className="w-3 h-3" /> {t("finance.preFilledFromStore")}
                 </p>
               )}
@@ -416,7 +416,7 @@ export default function VendorFinance() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard icon={DollarSign} label={t("finance.availableBalance")} value={formatCurrency(availableBalance)} color="bg-indigo-50 text-indigo-600" />
+        <StatCard icon={DollarSign} label={t("finance.availableBalance")} value={formatCurrency(availableBalance)} color="bg-indigo-50 text-orange-600" />
         <StatCard icon={TrendingUp} label={t("finance.totalEarned")} value={formatCurrency(totalEarned)} sub={t("finance.afterPlatformFee")} color="bg-green-50 text-green-600" />
         <StatCard icon={Clock} label={t("finance.pendingEarnings")} value={formatCurrency(pendingEarnings)} sub={t("finance.fromActiveOrders")} color="bg-amber-50 text-amber-600" />
         <StatCard icon={CheckCircle2} label={t("finance.totalWithdrawn")} value={formatCurrency(totalWithdrawn)} color="bg-purple-50 text-purple-600" />

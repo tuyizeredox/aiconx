@@ -163,7 +163,7 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={DollarSign} label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} color="bg-indigo-50 text-indigo-600" />
+        <KpiCard icon={DollarSign} label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} color="bg-orange-50 text-orange-600" />
         <KpiCard icon={ShoppingCart} label={t("store.totalOrders")} value={orders.length} sub={t("store.paidCount", { count: paidOrders })} color="bg-purple-50 text-purple-600" />
         <KpiCard icon={Users} label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} color="bg-pink-50 text-pink-600" />
         <KpiCard icon={Package} label={t("store.avgOrderValue")} value={`$${avgOrderValue.toFixed(2)}`} sub={t("store.completionRateSub", { rate: completionRate })} color="bg-green-50 text-green-600" />
@@ -225,7 +225,7 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                   >
                     <td className="py-2.5 pr-3 font-semibold text-slate-800">{p.name}</td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.purchases.toLocaleString()}</td>
-                    <td className="py-2.5 font-bold text-indigo-600">${p.revenue.toLocaleString()}</td>
+                    <td className="py-2.5 font-bold text-orange-600">${p.revenue.toLocaleString()}</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -312,7 +312,7 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                   </div>
                 );
               })}
-              <p className="text-xs text-slate-400 mt-3">{t("store.orderCompletionRate")} <span className="text-indigo-600 font-semibold">{completionRate}%</span></p>
+              <p className="text-xs text-slate-400 mt-3">{t("store.orderCompletionRate")} <span className="text-orange-600 font-semibold">{completionRate}%</span></p>
             </div>
           )}
         </div>

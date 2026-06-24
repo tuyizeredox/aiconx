@@ -59,11 +59,11 @@ const PLANS = [
     name: "Pro",
     price: DEFAULT_PRICES.pro.monthly,
     priceAnnual: DEFAULT_PRICES.pro.annual,
-    color: "border-indigo-400",
-    headerBg: "bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950",
+    color: "border-orange-400",
+    headerBg: "bg-gradient-to-br from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950",
     badge: "subscription.badgeMostPopular",
     icon: Zap,
-    iconColor: "text-indigo-600",
+    iconColor: "text-orange-600",
     features: [
       "subscription.proFeat0",
       "subscription.proFeat1",
@@ -112,15 +112,15 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className={`relative rounded-2xl border-2 ${plan.color} ${isActive ? "ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900" : ""} overflow-hidden flex flex-col`}
+      className={`relative rounded-2xl border-2 ${plan.color} ${isActive ? "ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-slate-900" : ""} overflow-hidden flex flex-col`}
     >
       {plan.badge && (
-        <div className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full ${plan.id === "pro" ? "bg-indigo-600 text-white" : "bg-amber-500 text-white"}`}>
+        <div className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full ${plan.id === "pro" ? "bg-orange-600 text-white" : "bg-amber-500 text-white"}`}>
           {t(plan.badge)}
         </div>
       )}
       <div className={`p-5 ${plan.headerBg}`}>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${plan.id === "free" ? "bg-slate-200 dark:bg-slate-700" : plan.id === "pro" ? "bg-indigo-100 dark:bg-indigo-900" : "bg-amber-100 dark:bg-amber-900"}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${plan.id === "free" ? "bg-slate-200 dark:bg-slate-700" : plan.id === "pro" ? "bg-orange-100 dark:bg-orange-900" : "bg-amber-100 dark:bg-amber-900"}`}>
           <PlanIcon className={`w-5 h-5 ${plan.iconColor}`} />
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">{plan.name}</h3>
@@ -151,7 +151,7 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
           <Button
             onClick={() => onSelect(plan)}
             disabled={isPending}
-            className={`w-full rounded-xl ${plan.id === "free" ? "variant-outline border border-slate-200" : plan.id === "pro" ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
+            className={`w-full rounded-xl ${plan.id === "free" ? "variant-outline border border-slate-200" : plan.id === "pro" ? "bg-orange-600 hover:bg-indigo-700" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
             variant={plan.id === "free" ? "outline" : "default"}
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
@@ -194,7 +194,7 @@ function CustomDomainManager({ subscription, vendorUsername }) {
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("subscription.customDomainTitle")}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t("subscription.customDomainUpgradeHint")}</p>
         </div>
-        <Badge className="ml-auto bg-indigo-600 text-white text-xs">Pro+</Badge>
+        <Badge className="ml-auto bg-orange-600 text-white text-xs">Pro+</Badge>
       </div>
     );
   }
@@ -221,7 +221,7 @@ function CustomDomainManager({ subscription, vendorUsername }) {
           placeholder="shop.yourbrand.com"
           className="rounded-xl text-sm"
         />
-        <Button onClick={save} disabled={saving || !domain.trim()} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl shrink-0">
+        <Button onClick={save} disabled={saving || !domain.trim()} className="bg-orange-600 hover:bg-indigo-700 rounded-xl shrink-0">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.save")}
         </Button>
       </div>
@@ -528,7 +528,7 @@ try {
   return (
     <div className="space-y-6">
       {/* Current Plan Banner */}
-      <div className={`relative rounded-2xl p-5 flex items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border border-indigo-200 dark:border-indigo-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
+      <div className={`relative rounded-2xl p-5 flex items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-indigo-200 dark:border-indigo-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
         {currentPlanInfo && <currentPlanInfo.icon className={`w-8 h-8 shrink-0 ${currentPlanInfo.iconColor}`} />}
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -559,7 +559,7 @@ try {
               size="sm"
               variant="default"
               disabled={payingNow}
-              className="h-9 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 rounded-lg px-5 shadow-sm shadow-indigo-100 min-w-[90px]"
+              className="h-9 text-xs font-bold bg-orange-600 hover:bg-indigo-700 rounded-lg px-5 shadow-sm shadow-indigo-100 min-w-[90px]"
               onClick={handlePayNow}
             >
               {payingNow ? (
@@ -621,7 +621,7 @@ try {
         <span className={`text-sm font-medium ${billing === "monthly" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{t("subscription.monthly")}</span>
         <button
           onClick={() => setBilling(b => b === "monthly" ? "annual" : "monthly")}
-          className={`relative w-12 h-6 rounded-full transition-colors ${billing === "annual" ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"}`}
+          className={`relative w-12 h-6 rounded-full transition-colors ${billing === "annual" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
         >
           <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${billing === "annual" ? "left-7" : "left-1"}`} />
         </button>
@@ -684,7 +684,7 @@ try {
                     <button
                       key={m.id}
                       onClick={() => handleMethodSelect(m)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-all text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-all text-left"
                     >
                       {m.logo
                         ? <img src={m.logo} alt={m.label} className="w-10 h-10 object-contain rounded-lg" />
@@ -755,7 +755,7 @@ try {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-700"
+                      className="flex-1 rounded-xl bg-orange-600 hover:bg-indigo-700"
                       disabled={phoneSaving || payingNow || phoneInput.trim().length < 9}
                     >
                       {phoneSaving || payingNow
@@ -806,7 +806,7 @@ try {
                       {t("common.close")}
                     </Button>
                     <Button
-                      className="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-700"
+                      className="flex-1 rounded-xl bg-orange-600 hover:bg-indigo-700"
                       onClick={() => {
                         verifyPayment({
                           id: subscription.id || subscription._id,
@@ -837,7 +837,7 @@ try {
                     </div>
                   </div>
                   <Button
-                    className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700"
+                    className="w-full rounded-xl bg-orange-600 hover:bg-indigo-700"
                     onClick={() => setPendingPayment(null)}
                   >
                     {t("subscription.tryAgain")}

@@ -87,7 +87,7 @@ export default function GlobalSearch() {
 
   return (
     <div ref={ref} className="relative w-full max-w-xs">
-      <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-300 focus-within:shadow-sm">
+      <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-300 focus-within:shadow-sm">
         <Search className="w-4 h-4 text-slate-400 shrink-0" />
         <input
           ref={inputRef}
@@ -121,7 +121,7 @@ export default function GlobalSearch() {
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={`shrink-0 text-[11px] font-semibold px-3 py-1 rounded-lg capitalize transition-colors ${
-                    activeCategory === cat ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    activeCategory === cat ? "bg-orange-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                   }`}
                 >
                   {cat}
@@ -132,7 +132,7 @@ export default function GlobalSearch() {
             <div className="max-h-[400px] overflow-y-auto">
               {isLoading && (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-orange-400" />
                 </div>
               )}
 
@@ -159,7 +159,7 @@ export default function GlobalSearch() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 truncate">{p.title}</p>
-                        <p className="text-xs text-slate-400">{p.store_name || "Store"} · <span className="font-semibold text-indigo-600">${p.price}</span></p>
+                        <p className="text-xs text-slate-400">{p.store_name || "Store"} · <span className="font-semibold text-orange-600">${p.price}</span></p>
                       </div>
                     </Link>
                   ))}
@@ -177,14 +177,14 @@ export default function GlobalSearch() {
                       onClick={handleResultClick}
                       className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 overflow-hidden flex items-center justify-center shrink-0">
-                        {s.logo_url ? <img src={s.logo_url} alt="" className="w-full h-full object-cover" /> : <Store className="w-4 h-4 text-indigo-400" />}
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 overflow-hidden flex items-center justify-center shrink-0">
+                        {s.logo_url ? <img src={s.logo_url} alt="" className="w-full h-full object-cover" /> : <Store className="w-4 h-4 text-orange-400" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
                         <p className="text-xs text-slate-400 capitalize">{s.category} · {s.product_count || 0} products</p>
                       </div>
-                      {s.is_verified && <span className="text-[10px] bg-blue-100 text-blue-600 font-semibold px-1.5 py-0.5 rounded-full shrink-0">✓ Verified</span>}
+                      {s.is_verified && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full shrink-0">✓ Verified</span>}
                     </Link>
                   ))}
                 </div>
@@ -201,7 +201,7 @@ export default function GlobalSearch() {
                       onClick={handleResultClick}
                       className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 overflow-hidden flex items-center justify-center shrink-0">
                         {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-white font-bold text-sm">{u.full_name?.[0]?.toUpperCase() || "U"}</span>}
                       </div>
                       <div className="flex-1 min-w-0">

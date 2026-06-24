@@ -28,7 +28,7 @@ export default function RecommendedSection({ currentUser }) {
           <Sparkles className="w-4 h-4 text-purple-500" />
           {t("home.recommendedForYou")}
         </h2>
-        <Link to={createPageUrl("Marketplace")} className="text-xs text-indigo-600 font-medium flex items-center gap-0.5">
+        <Link to={createPageUrl("Marketplace")} className="text-xs text-orange-600 font-medium flex items-center gap-0.5">
           {t("home.seeAll")} <ChevronRight className="w-3 h-3" />
         </Link>
       </div>

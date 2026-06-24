@@ -36,17 +36,17 @@ const CheckoutStep = ({ number, title, active, completed, children, onEdit, summ
   const { t } = useTranslation();
   return (
   <div 
-    className={`bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border ${active ? "border-indigo-500/50 shadow-lg shadow-indigo-500/10 dark:shadow-indigo-500/20" : "border-slate-200 dark:border-slate-800"} p-6 mb-6 transition-all duration-300`}
+    className={`bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border ${active ? "border-orange-500/50 shadow-lg shadow-orange-500/10 dark:shadow-orange-500/20" : "border-slate-200 dark:border-slate-800"} p-6 mb-6 transition-all duration-300`}
   >
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${completed ? "bg-emerald-500 text-white" : active ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${completed ? "bg-emerald-500 text-white" : active ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`}>
           {completed ? <CheckCircle2 className="w-5 h-5" /> : number}
         </div>
         <h2 className={`font-semibold text-lg ${active ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{title}</h2>
       </div>
       {completed && onEdit && (
-        <button onClick={onEdit} className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">{t("checkout.editDetails")}</button>
+        <button onClick={onEdit} className="text-xs font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors">{t("checkout.editDetails")}</button>
       )}
     </div>
     {(active || !completed) && (
@@ -119,16 +119,16 @@ const FulfillmentMethodCard = ({ method, selected, onSelect, store, subtotal }) 
         disabled
           ? "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 opacity-60 cursor-not-allowed"
           : selected
-          ? "border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-md shadow-indigo-500/10"
-          : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          ? "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 shadow-md shadow-orange-500/10"
+          : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
       }`}
     >
       <div className="flex items-center gap-4">
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${selected ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${selected ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className={`font-semibold text-sm ${selected ? "text-indigo-900 dark:text-indigo-300" : "text-slate-900 dark:text-white"}`}>{getMethodLabel(method)}</p>
+          <p className={`font-semibold text-sm ${selected ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{getMethodLabel(method)}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{getSubLabel()}</p>
         </div>
       </div>
@@ -136,7 +136,7 @@ const FulfillmentMethodCard = ({ method, selected, onSelect, store, subtotal }) 
         {fee !== null && (
           <span className={`text-sm font-semibold ${fee === freeLabel ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>{fee}</span>
         )}
-        {selected && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
+        {selected && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
       </div>
     </button>
   );
@@ -805,7 +805,7 @@ export default function Checkout() {
       const Icon = FULFILLMENT_ICONS[method];
       return (
         <div key={g.store_id} className="flex items-center gap-2 text-xs text-slate-600 font-medium">
-          <Icon className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+          <Icon className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
           <span className="font-bold text-slate-800">{g.store_name}</span>
           <span className="text-slate-400">·</span>
           <span className="capitalize">{method === "shipping" ? t("checkout.shippingLabel") : method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel")}</span>
@@ -818,7 +818,7 @@ export default function Checkout() {
         {methodSummary}
         {needsAddress && selectedAddress && (
           <div className="flex items-start gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 mt-3">
-            <MapPin className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+            <MapPin className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{selectedAddress.street}</p>
               <p className="text-xs text-slate-500">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
@@ -829,7 +829,7 @@ export default function Checkout() {
     );
   };
 
-  if (cartLoading || addressLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+  if (cartLoading || addressLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-orange-600" /></div>;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 lg:py-12">
@@ -868,7 +868,7 @@ export default function Checkout() {
                 return (
                   <div key={group.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-100 dark:border-slate-700" : ""}`}>
                     <div className="flex items-center gap-2 mb-3">
-                      <StoreIcon className="w-4 h-4 text-indigo-500" />
+                      <StoreIcon className="w-4 h-4 text-orange-500" />
                       <h3 className="font-black text-sm text-slate-900 dark:text-white tracking-tight">{group.store_name}</h3>
                       {enabledMethods.length === 1 && (
                         <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-0.5 rounded-full capitalize">{t("checkout.methodOnly", { method: enabledMethods[0] === "shipping" ? t("checkout.shippingLabel") : enabledMethods[0] === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel") })}</span>
@@ -904,7 +904,7 @@ export default function Checkout() {
                     )}
 
                     {selectedMethod === "delivery" && ds.delivery_radius_km && (
-                      <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl px-4 py-2.5 text-xs text-blue-700 dark:text-blue-300 font-medium">
+                      <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30 rounded-xl px-4 py-2.5 text-xs text-orange-700 dark:text-orange-300 font-medium">
                         <Navigation className="w-3.5 h-3.5 flex-shrink-0" />
                         {t("checkout.deliveryRadius", { km: ds.delivery_radius_km })}
                       </div>
@@ -917,7 +917,7 @@ export default function Checkout() {
               {needsAddress && (
                 <div className="pt-6 border-t-2 border-slate-100 dark:border-slate-700 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-4 h-4 text-indigo-500" />
+                    <MapPin className="w-4 h-4 text-orange-500" />
                     <h3 className="font-black text-sm text-slate-900 dark:text-white">
                       {storeGroups.every(g => storeDeliverySelections[g.store_id] === "delivery") ? t("checkout.deliveryAddress") : t("checkout.shippingAddress")}
                     </h3>
@@ -930,13 +930,13 @@ export default function Checkout() {
                         onClick={() => setSelectedAddressId(addr._id)}
                         className={`flex flex-col text-left p-4 rounded-xl border transition-all relative group ${
                           selectedAddressId === addr._id 
-                            ? "border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-md shadow-indigo-500/10" 
-                            : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            ? "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 shadow-md shadow-orange-500/10" 
+                            : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-100/50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">{addr.label || "Address"}</span>
-                            {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">{addr.label || "Address"}</span>
+                            {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
                         </div>
                         <p className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-1">{addr.street}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{addr.city}, {addr.state} {addr.zip}</p>
@@ -946,12 +946,12 @@ export default function Checkout() {
                     
                     <button 
                         onClick={() => setIsAddingAddress(true)}
-                        className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/10 dark:hover:to-purple-900/10 transition-all group"
+                        className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-gradient-to-br hover:from-orange-50 hover:to-orange-50 dark:hover:from-orange-900/10 dark:hover:to-orange-900/10 transition-all group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-gradient-to-br group-hover:from-indigo-100 group-hover:to-purple-100 dark:group-hover:from-indigo-900/40 dark:group-hover:to-purple-900/40 flex items-center justify-center mb-2 transition-all">
-                            <Plus className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-gradient-to-br group-hover:from-orange-100 group-hover:to-orange-100 dark:group-hover:from-orange-900/40 dark:group-hover:to-orange-900/40 flex items-center justify-center mb-2 transition-all">
+                            <Plus className="w-5 h-5 text-slate-400 group-hover:text-orange-600 dark:group-hover:text-orange-400" />
                         </div>
-                        <span className="text-sm font-semibold text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{t("checkout.addNewAddress")}</span>
+                        <span className="text-sm font-semibold text-slate-500 group-hover:text-orange-600 dark:group-hover:text-orange-400">{t("checkout.addNewAddress")}</span>
                     </button>
                   </div>
 
@@ -964,27 +964,27 @@ export default function Checkout() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
                             <label htmlFor="addr-label" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.addressLabel")}</label>
-                            <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                            <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div className="col-span-2">
                           <label htmlFor="addr-street" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.streetAddress")}</label>
-                          <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                          <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div>
                           <label htmlFor="addr-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.city")}</label>
-                          <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Lagos" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                          <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Lagos" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div>
                           <label htmlFor="addr-state" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.state")}</label>
-                          <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Lagos" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                          <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Lagos" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div>
                           <label htmlFor="addr-zip" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.zipCode")}</label>
-                          <Input id="addr-zip" value={newAddress.zip} onChange={e => setNewAddress({...newAddress, zip: e.target.value})} placeholder="100001" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                          <Input id="addr-zip" value={newAddress.zip} onChange={e => setNewAddress({...newAddress, zip: e.target.value})} placeholder="100001" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div>
                           <label htmlFor="addr-phone" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.phone")}</label>
-                          <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+234..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                          <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+234..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                       </div>
                       <Button 
@@ -1000,7 +1000,7 @@ export default function Checkout() {
                             addAddressMutation.mutate(newAddress);
                         }} 
                         disabled={addAddressMutation.isPending}
-                        className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl h-12 font-semibold shadow-lg shadow-indigo-500/30 transition-all"
+                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl h-12 font-semibold shadow-lg shadow-orange-500/30 transition-all"
                       >
                         {addAddressMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("checkout.saveAddress")}
                       </Button>
@@ -1012,7 +1012,7 @@ export default function Checkout() {
               <Button 
                 onClick={handleContinueFromStep1}
                 disabled={isContinuing}
-                className="w-full mt-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 h-14 rounded-xl font-semibold text-lg shadow-lg shadow-indigo-500/30 transition-all active:scale-[0.98]"
+                className="w-full mt-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 h-14 rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98]"
               >
                 {isContinuing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
                 {isContinuing ? t("checkout.loading") : t("checkout.continueToPayment")}
@@ -1038,12 +1038,12 @@ export default function Checkout() {
                        onClick={() => setPaymentMethod(method.id)}
                        className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${
                          paymentMethod === method.id
-                           ? "border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-md shadow-indigo-500/10"
-                           : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                           ? "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 shadow-md shadow-orange-500/10"
+                           : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                        }`}
                      >
                        <div className="flex items-center gap-4">
-                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${paymentMethod === method.id ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
+                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${paymentMethod === method.id ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
                            {method.logo ? (
                              <img src={method.logo} alt={method.label} className="w-5 h-5 object-contain" />
                            ) : (
@@ -1051,25 +1051,25 @@ export default function Checkout() {
                            )}
                          </div>
                          <div className="text-left">
-                           <p className={`font-semibold text-sm ${paymentMethod === method.id ? "text-indigo-900 dark:text-indigo-300" : "text-slate-900 dark:text-white"}`}>{method.label}</p>
+                           <p className={`font-semibold text-sm ${paymentMethod === method.id ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{method.label}</p>
                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("checkout.mobileMoneyPayment")}</p>
                          </div>
                        </div>
-                       {paymentMethod === method.id && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
+                       {paymentMethod === method.id && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
                      </button>
                    ))}
                  </div>
 
                  {/* Phone Number Input for Mobile Money */}
                  {paymentMethod === 'mtn' || paymentMethod === 'airtel' ? (
-                   <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                   <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
                      <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 block">{t("checkout.phoneNumber")}</label>
                      <Input
                        type="tel"
                        placeholder="+250 7XX XXX XXX"
                        value={checkoutPhone}
                        onChange={e => setCheckoutPhone(e.target.value)}
-                       className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                       className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                      />
                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{t("checkout.phonePaymentNote")}</p>
                    </div>
@@ -1086,7 +1086,7 @@ export default function Checkout() {
                   return (
                     <div key={store.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-200 dark:border-slate-700 mt-4" : ""}`}>
                       <div className="flex items-center gap-2">
-                        <StoreIcon className="w-4 h-4 text-indigo-600" />
+                        <StoreIcon className="w-4 h-4 text-orange-600" />
                         <h3 className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">{store.store_name}</h3>
                         <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">{t("checkout.itemsCount", { count: store.items.length })}</span>
                       </div>
@@ -1146,7 +1146,7 @@ export default function Checkout() {
 
               {/* Secure Badge */}
               <div className="flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl px-4 py-3 border border-indigo-200/50 dark:border-indigo-800/30">
-                <Shield className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                <Shield className="w-4 h-4 text-orange-600 flex-shrink-0" />
                 <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{t("checkout.securePaymentDesc")}</p>
               </div>
 
@@ -1218,7 +1218,7 @@ export default function Checkout() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16 opacity-50" />
               
               <h3 className="font-semibold text-xl text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
-                  <ShoppingBag className="w-5 h-5 text-indigo-600" /> {t("cart.orderSummary")}
+                  <ShoppingBag className="w-5 h-5 text-orange-600" /> {t("cart.orderSummary")}
               </h3>
 
               <div className="space-y-4 relative z-10">
@@ -1275,7 +1275,7 @@ export default function Checkout() {
                                     onClick={() => validateCouponMutation.mutate(couponCode)}
                                     disabled={!couponCode || validateCouponMutation.isPending}
                                     variant="outline" 
-                                    className="h-11 rounded-xl font-semibold border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+                                    className="h-11 rounded-xl font-semibold border-indigo-200 text-orange-600 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
                                 >
                                     {validateCouponMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.apply")}
                                 </Button>
@@ -1289,7 +1289,7 @@ export default function Checkout() {
                                 </div>
                                 <div>
                                     <p className="text-xs font-black text-indigo-900 uppercase tracking-tight">{appliedCoupon.code}</p>
-                                    <p className="text-[10px] text-indigo-600 font-bold">{t("checkout.appliedSuccessfully")}</p>
+                                    <p className="text-[10px] text-orange-600 font-bold">{t("checkout.appliedSuccessfully")}</p>
                                 </div>
                             </div>
                             <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 hover:text-red-500 p-1">
@@ -1411,7 +1411,7 @@ export default function Checkout() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-700"
+                      className="flex-1 rounded-xl bg-orange-600 hover:bg-orange-700"
                       disabled={phoneSaving}
                     >
                       {phoneSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("subscription.payNow")}

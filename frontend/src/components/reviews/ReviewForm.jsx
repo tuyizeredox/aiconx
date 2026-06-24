@@ -141,7 +141,7 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
             </div>
           ))}
           {mediaFiles.length < 5 && (
-            <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors">
+            <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors">
               <Upload className="w-5 h-5 text-slate-400" />
               <span className="text-[9px] text-slate-400 mt-0.5">{t("common.upload")}</span>
               <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileChange} />
@@ -154,7 +154,7 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
         <Button
           onClick={() => submitMutation.mutate()}
           disabled={rating === 0 || !content.trim() || submitMutation.isPending}
-          className="bg-indigo-600 hover:bg-indigo-700 rounded-xl flex-1"
+          className="bg-orange-600 hover:bg-orange-700 rounded-xl flex-1"
         >
           {submitMutation.isPending || uploading
             ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploading ? t("product.uploadingMedia") : t("product.submitting")}</>

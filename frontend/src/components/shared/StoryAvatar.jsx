@@ -19,9 +19,9 @@ export default function StoryAvatar({ user, size = "md" }) {
       to={createPageUrl("Profile") + `?email=${user.email}`}
       className="flex flex-col items-center gap-1.5 shrink-0"
     >
-      <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px]`}>
+      <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 p-[2px]`}>
         <div className={`${innerSizes[size]} rounded-full bg-white p-[2px]`}>
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
             {user.avatar ? (
               <img src={user.avatar} alt="" className="w-full h-full object-cover" />
             ) : (

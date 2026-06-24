@@ -59,12 +59,12 @@ function IncomingCallOverlay({ call, currentUser, onAnswer, onReject }) {
               initial={{ scale: 1, opacity: 0.4 }}
               animate={{ scale: 1.3, opacity: 0 }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-              className="absolute top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500"
+              className="absolute top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-500"
             />
           )}
 
           <div className="relative z-10">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">
               {callerName?.[0]?.toUpperCase() || "U"}
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{callerName}</h2>
@@ -72,7 +72,7 @@ function IncomingCallOverlay({ call, currentUser, onAnswer, onReject }) {
             <motion.p
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider"
+              className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider"
             >
               Incoming {callType === "video" ? "Video" : "Voice"} Call
             </motion.p>

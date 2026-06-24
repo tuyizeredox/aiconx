@@ -50,7 +50,7 @@ function UserListModal({ open, onClose, title, users = [] }) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t("profile.searchUsers")}
-              className="w-full bg-slate-50 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 border-none rounded-xl py-2 pl-9 pr-4 text-sm focus:ring-1 focus:ring-indigo-300 outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 border-none rounded-xl py-2 pl-9 pr-4 text-sm focus:ring-1 focus:ring-orange-300 outline-none"
             />
           </div>
 
@@ -70,11 +70,11 @@ function UserListModal({ open, onClose, title, users = [] }) {
                   onClick={onClose}
                   className="flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-700">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-700">
                     {u.avatar_url ? (
                       <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-indigo-600 dark:text-indigo-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>
+                      <span className="text-orange-600 dark:text-orange-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -93,8 +93,8 @@ function UserListModal({ open, onClose, title, users = [] }) {
 
 const STATUS_CONFIG = {
   pending:   { icon: Clock,         color: "bg-amber-100 text-amber-700",  tKey: "orders.pending" },
-  confirmed: { icon: CheckCircle2,  color: "bg-blue-100 text-blue-700",    tKey: "orders.confirmed" },
-  processing:{ icon: Package,       color: "bg-indigo-100 text-indigo-700",tKey: "orders.processing" },
+  confirmed: { icon: CheckCircle2,  color: "bg-orange-100 text-orange-700",    tKey: "orders.confirmed" },
+  processing:{ icon: Package,       color: "bg-orange-100 text-orange-700",tKey: "orders.processing" },
   shipped:   { icon: Truck,         color: "bg-purple-100 text-purple-700",tKey: "orders.shipped" },
   delivered: { icon: CheckCircle2,  color: "bg-green-100 text-green-700",  tKey: "orders.delivered" },
 };
@@ -284,7 +284,7 @@ export default function Profile() {
           {bannerUrl ? (
             <img src={bannerUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+            <div className="w-full h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700" />
           )}
         </div>
 
@@ -292,7 +292,7 @@ export default function Profile() {
           <div className="flex items-end justify-between -mt-12 mb-4">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 flex items-center justify-center transition-transform hover:scale-105 duration-300">
+              <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                 ) : (
@@ -300,7 +300,7 @@ export default function Profile() {
                 )}
               </div>
               {(profileUser?.is_verified || store?.is_verified) && (
-                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-lg">
+                <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-lg">
                   <BadgeCheck className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -321,10 +321,10 @@ export default function Profile() {
                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 100);
                       }}
-                      className={`relative rounded-xl gap-1.5 transition-all font-bold h-9 px-4 shadow-sm border-indigo-200 ${
+                      className={`relative rounded-xl gap-1.5 transition-all font-bold h-9 px-4 shadow-sm border-orange-200 ${
                         activeTab === "plan" 
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-indigo-100" 
-                          : "bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800"
+                          ? "bg-orange-600 text-white border-orange-600 shadow-orange-100" 
+                          : "bg-orange-50/80 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
                       }`}
                     >
                       <CreditCard className="w-4 h-4" /> 
@@ -337,7 +337,7 @@ export default function Profile() {
                     variant="outline" 
                     size="sm" 
                     onClick={() => setEditOpen(true)} 
-                    className="rounded-xl gap-1.5 border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all font-semibold h-9"
+                    className="rounded-xl gap-1.5 border-slate-200 hover:bg-slate-50 hover:text-orange-600 transition-all font-semibold h-9"
                   >
                     <Pencil className="w-3.5 h-3.5" /> {t("profile.editProfile")}
                   </Button>
@@ -358,7 +358,7 @@ export default function Profile() {
                     className={`rounded-xl px-5 h-9 font-semibold transition-all ${
                       isFollowing 
                         ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
-                        : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100"
+                        : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100"
                     }`}
                     variant={isFollowing ? "secondary" : "default"}
                   >
@@ -389,7 +389,7 @@ export default function Profile() {
             <div className="flex items-center gap-2 mb-0.5">
               <h1 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">{displayName}</h1>
               {isOwnProfile && (
-                <Badge variant="secondary" className="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 border-0 text-[10px] font-bold py-0 px-1.5 h-4 uppercase tracking-wider">{t("profile.youBadge")}</Badge>
+                <Badge variant="secondary" className="bg-orange-50 dark:bg-orange-950 text-orange-600 border-0 text-[10px] font-bold py-0 px-1.5 h-4 uppercase tracking-wider">{t("profile.youBadge")}</Badge>
               )}
               {!isOwnProfile && isFollowedBy && (
                 <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-0 text-[9px] font-bold py-0 px-1.5 h-4 uppercase tracking-wider">{t("profile.followsYou")}</Badge>
@@ -413,7 +413,7 @@ export default function Profile() {
               {store && (
                 <Link 
                   to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} 
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 rounded-lg text-xs text-indigo-700 dark:text-indigo-400 font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 dark:bg-orange-950 rounded-lg text-xs text-orange-700 dark:text-orange-400 font-bold hover:bg-orange-100 dark:hover:bg-orange-900 transition-colors"
                 >
                   <Store className="w-3.5 h-3.5" /> {store.name}
                 </Link>
@@ -492,10 +492,10 @@ export default function Profile() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3 px-1">
                 <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-indigo-500" />
+                  <ShoppingBag className="w-4 h-4 text-orange-500" />
                   {t("profile.storeHighlights")}
                 </h2>
-                <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider hover:underline">
+                <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} className="text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:underline">
                   {t("profile.visitStore")}
                 </Link>
               </div>
@@ -550,7 +550,7 @@ export default function Profile() {
           {isOwnProfile && <TabsTrigger value="orders" className="flex-1 gap-1.5"><Package className="w-4 h-4" />{t("orders.title")}</TabsTrigger>}
           {isOwnProfile && <TabsTrigger value="liked" className="flex-1 gap-1.5"><Heart className="w-4 h-4" />{t("common.liked")}</TabsTrigger>}
           {isOwnProfile && (
-            <TabsTrigger value="plan" className="flex-1 gap-1.5 text-indigo-600 font-bold border-indigo-100 data-[state=active]:bg-indigo-50/50 relative">
+            <TabsTrigger value="plan" className="flex-1 gap-1.5 text-orange-600 font-bold border-orange-100 data-[state=active]:bg-orange-50/50 relative">
               <CreditCard className="w-4 h-4" />
               <span>{t("profile.plan")}</span>
               {subscription?.status === 'pending' && (
@@ -594,7 +594,7 @@ export default function Profile() {
               <p className="text-sm text-slate-400">{t("profile.noProductsYet")}</p>
               {isOwnProfile && (
                 <Link to={createPageUrl("MyStore")}>
-                  <Button size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("profile.openMyStore")}</Button>
+                  <Button size="sm" className="mt-3 bg-orange-600 hover:bg-orange-700 rounded-xl">{t("profile.openMyStore")}</Button>
                 </Link>
               )}
             </div>
@@ -612,7 +612,7 @@ export default function Profile() {
               <Package className="w-10 h-10 text-slate-200 dark:text-slate-600 mx-auto mb-2" />
               <p className="text-sm text-slate-400">{t("orders.noOrders")}</p>
               <Link to={createPageUrl("Marketplace")}>
-                <Button size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("profile.browseMarketplace")}</Button>
+                <Button size="sm" className="mt-3 bg-orange-600 hover:bg-orange-700 rounded-xl">{t("profile.browseMarketplace")}</Button>
               </Link>
             </div>
           ) : (
@@ -645,7 +645,7 @@ export default function Profile() {
                   </div>
                   <div className="mt-2 pt-2 border-t border-slate-50 dark:border-slate-700 flex justify-between">
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{t("orders.total")}: {formatCurrency(order.total)}</span>
-                    <Link to={createPageUrl("Orders")} className="text-xs text-indigo-500 font-semibold hover:underline">{t("profile.orderDetails")}</Link>
+                    <Link to={createPageUrl("Orders")} className="text-xs text-orange-500 font-semibold hover:underline">{t("profile.orderDetails")}</Link>
                   </div>
                 </motion.div>
               );

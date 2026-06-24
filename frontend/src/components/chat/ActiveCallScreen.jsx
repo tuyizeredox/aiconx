@@ -251,7 +251,7 @@ function ActiveCallScreen({
         className="fixed bottom-4 right-4 z-[90] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-3 flex items-center gap-3 cursor-pointer"
         onClick={toggleMinimize}
       >
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold">
           {otherPartyName?.[0]?.toUpperCase() || "U"}
         </div>
         <div className="min-w-0">
@@ -274,21 +274,21 @@ function ActiveCallScreen({
       className={`fixed inset-0 z-[90] bg-slate-900 flex flex-col ${isFullscreen ? "" : "p-2 md:p-4"}`}
     >
       {callPhase === "ringing" && isIncoming && (
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-900/90 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/90 to-orange-900/90 z-10 flex items-center justify-center">
           <div className="text-center">
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-28 h-28 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-6 shadow-2xl"
+              className="w-28 h-28 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-6 shadow-2xl"
             >
               {otherPartyName?.[0]?.toUpperCase() || "U"}
             </motion.div>
             <h2 className="text-2xl font-bold text-white mb-1">{otherPartyName}</h2>
-            <p className="text-sm text-indigo-200 mb-1">@{otherParty}</p>
+            <p className="text-sm text-orange-200 mb-1">@{otherParty}</p>
             <motion.p
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="text-xs font-semibold text-indigo-300 uppercase tracking-widest mb-8"
+              className="text-xs font-semibold text-orange-300 uppercase tracking-widest mb-8"
             >
               Incoming {call.call_type === "video" ? "Video" : "Voice"} Call
             </motion.p>
@@ -320,7 +320,7 @@ function ActiveCallScreen({
       )}
 
       {callPhase === "connecting" && !isIncoming && (
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-900/90 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/90 to-orange-900/90 z-10 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
             <p className="text-white font-medium">Connecting...</p>
@@ -392,7 +392,7 @@ function ActiveCallScreen({
           <motion.div
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-xl"
+            className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-3xl font-bold shadow-xl"
           >
             {otherPartyName?.[0]?.toUpperCase() || "U"}
           </motion.div>
@@ -402,7 +402,7 @@ function ActiveCallScreen({
       {/* Call info bar */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
             {otherPartyName?.[0]?.toUpperCase() || "U"}
           </div>
           <div>

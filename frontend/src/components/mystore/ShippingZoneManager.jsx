@@ -112,7 +112,7 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
               key={c.code}
               type="button"
               onClick={() => toggleCountry(c.code)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${form.countries.includes(c.code) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${form.countries.includes(c.code) ? "bg-orange-600 text-white border-orange-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}
             >
               {c.label}
             </button>
@@ -130,7 +130,7 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
             estimated_days_max: parseInt(form.estimated_days_max) || 1
           })}
           disabled={saving || !form.zone_name.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 rounded-xl flex-1"
+          className="bg-orange-600 hover:bg-orange-700 rounded-xl flex-1"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Check className="w-4 h-4 mr-1" />}
           {t("store.saveZone")}
@@ -184,7 +184,7 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <Truck className="w-5 h-5 text-indigo-500" /> {t("store.shippingZones")}
+            <Truck className="w-5 h-5 text-orange-500" /> {t("store.shippingZones")}
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">{t("store.shippingZonesDesc")}</p>
         </div>
@@ -202,7 +202,7 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
             setShowAdd(true);
           }} 
           size="sm" 
-          className="bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-1.5"
+          className="bg-orange-600 hover:bg-indigo-700 rounded-xl gap-1.5"
         >
           <Plus className="w-4 h-4" /> {t("store.addZone")}
         </Button>

@@ -47,7 +47,7 @@ export default function SuggestedUsers({ currentUser }) {
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6">
       <div className="p-4 border-b border-slate-50 dark:border-slate-700 flex items-center justify-between">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white">Suggested for you</h3>
-        <Link to={createPageUrl("Explore")} className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700">
+        <Link to={createPageUrl("Explore")} className="text-[11px] font-bold text-orange-600 hover:text-orange-700">
           See All
         </Link>
       </div>
@@ -68,7 +68,7 @@ export default function SuggestedUsers({ currentUser }) {
               <div>
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{item.display_name}</p>
-                  <span className="px-1 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded text-[9px] font-bold uppercase tracking-tighter">Store</span>
+                  <span className="px-1 py-0.5 bg-orange-50 dark:bg-orange-950 text-orange-600 rounded text-[9px] font-bold uppercase tracking-tighter">Store</span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">@{item.username}</p>
               </div>
@@ -81,7 +81,7 @@ export default function SuggestedUsers({ currentUser }) {
                 display_name: item.display_name 
               })}
               disabled={followMutation.isPending}
-              className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white transition-all duration-200"
+              className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-orange-600 hover:text-white transition-all duration-200"
             >
               {followMutation.isPending ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />

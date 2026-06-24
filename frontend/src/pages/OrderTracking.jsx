@@ -66,9 +66,9 @@ function TrackingTimeline({ status }) {
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 z-10 ${
                   isDone
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-orange-600 text-white"
                     : isCurrent
-                    ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+                    ? "bg-orange-600 text-white ring-4 ring-orange-100"
                     : "bg-slate-100 text-slate-400"
                 }`}
               >
@@ -76,7 +76,7 @@ function TrackingTimeline({ status }) {
               </motion.div>
               {!isLast && (
                 <div className={`w-0.5 flex-1 min-h-[28px] my-1 rounded-full transition-colors duration-500 ${
-                  isDone ? "bg-indigo-600" : "bg-slate-200"
+                  isDone ? "bg-orange-600" : "bg-slate-200"
                 }`} />
               )}
             </div>
@@ -263,7 +263,7 @@ export default function OrderTracking() {
         <Button
           onClick={handleSearch}
           disabled={searching || !searchId.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-4 shrink-0"
+          className="bg-orange-600 hover:bg-indigo-700 rounded-xl px-4 shrink-0"
         >
           {searching ? (
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
@@ -316,7 +316,7 @@ export default function OrderTracking() {
             description={t("orderTracking.noOrdersDesc")}
             action={
               <Link to={createPageUrl("Marketplace")}>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("orderTracking.browseMarketplace")}</Button>
+                <Button className="bg-orange-600 hover:bg-indigo-700 rounded-xl">{t("orderTracking.browseMarketplace")}</Button>
               </Link>
             }
           />

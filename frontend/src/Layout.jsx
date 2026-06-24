@@ -128,7 +128,7 @@ export default function Layout({ children, currentPageName }) {
   const cartItemCount = Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] transition-colors duration-300">
       {/* Mobile Sidebar Overlay */}
       {isMobile && sidebarOpen && (
         <div 
@@ -189,11 +189,11 @@ export default function Layout({ children, currentPageName }) {
                 title={!sidebarOpen && !isMobile ? item.name : ""}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400"
+                    ? "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                 } ${!sidebarOpen && !isMobile ? "justify-center" : ""}`}
               >
-                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-400" : ""}`} />
+                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-orange-600 dark:text-orange-400" : ""}`} />
                 {(sidebarOpen || isMobile) && (
                   <>
                     <span className="truncate">{item.tKey ? t(item.tKey) : item.name}</span>
@@ -203,12 +203,12 @@ export default function Layout({ children, currentPageName }) {
                       </span>
                     )}
                     {item.name === "Messages" && unreadMsgCount > 0 && (
-                      <span className="ml-auto bg-indigo-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="ml-auto bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
                       </span>
                     )}
                     {item.name === "Cart" && cartItemCount > 0 && (
-                      <span className="ml-auto bg-indigo-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                      <span className="ml-auto bg-orange-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
                         {cartItemCount}
                       </span>
                     )}
@@ -233,7 +233,7 @@ export default function Layout({ children, currentPageName }) {
                 setShowCreate(true);
                 if (isMobile) setSidebarOpen(false);
               }}
-              className={`flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 transition-all ${!sidebarOpen && !isMobile && "aspect-square p-0"}`}
+              className={`flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-orange-200 dark:hover:shadow-orange-900/40 transition-all ${!sidebarOpen && !isMobile && "aspect-square p-0"}`}
             >
               <Plus className="w-4 h-4" />
               {(sidebarOpen || isMobile) && <span>{t("nav.create")}</span>}
@@ -260,7 +260,7 @@ export default function Layout({ children, currentPageName }) {
             <Link to={createPageUrl("chat")} className="relative p-2">
               <MessageCircle className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               {unreadMsgCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-indigo-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 w-4 h-4 bg-orange-500 text-white text-[10px] rounded-full flex items-center justify-center">
                   {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
                 </span>
               )}
@@ -292,7 +292,7 @@ export default function Layout({ children, currentPageName }) {
                 <button
                   key={item.name}
                   onClick={() => setShowCreate(true)}
-                  className="w-11 h-11 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40 -mt-4"
+                  className="w-11 h-11 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-200 dark:shadow-orange-900/40 -mt-4"
                 >
                   <Plus className="w-5 h-5 text-white" />
                 </button>
@@ -306,17 +306,17 @@ export default function Layout({ children, currentPageName }) {
               >
                 <item.icon
                   className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
+                    isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-slate-500"
                   }`}
                 />
                 {item.name === "Cart" && cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">
+                  <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">
                     {cartItemCount}
                   </span>
                 )}
                 <span
                   className={`text-[10px] font-medium ${
-                    isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
+                    isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-slate-500"
                   }`}
                 >
                   {item.tKey ? t(item.tKey) : item.name}

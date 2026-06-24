@@ -37,7 +37,7 @@ const EMOJI_PACK = [
 
 function Avatar({ name, size = 10 }) {
   return (
-    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm shrink-0`}>
+    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0`}>
       {name?.[0]?.toUpperCase() || "U"}
     </div>
   );
@@ -87,7 +87,7 @@ function ProductSharePicker({ onShare, onClose, currentUser }) {
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder={t("chat.searchProductsPlaceholder")}
-        className="w-full text-xs bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-2.5 py-1.5 mb-2 outline-none focus:border-indigo-300 dark:text-white dark:placeholder:text-slate-400"
+        className="w-full text-xs bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-2.5 py-1.5 mb-2 outline-none focus:border-orange-300 dark:text-white dark:placeholder:text-slate-400"
       />
       {isLoading ? (
         <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
@@ -96,12 +96,12 @@ function ProductSharePicker({ onShare, onClose, currentUser }) {
       ) : (
         <div className="grid grid-cols-3 gap-2 max-h-52 overflow-y-auto">
           {products.map(p => (
-            <button key={p.id} onClick={() => onShare(p)} className="text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl p-1.5 transition-colors border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800">
+            <button key={p.id} onClick={() => onShare(p)} className="text-left hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-xl p-1.5 transition-colors border border-transparent hover:border-orange-100 dark:hover:border-orange-800">
               <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 mb-1">
                 {p.images?.[0] ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-slate-300 m-auto mt-2" />}
               </div>
               <p className="text-[10px] text-slate-700 dark:text-slate-300 line-clamp-2 font-medium">{p.title}</p>
-              <p className="text-[10px] font-bold text-indigo-600">{formatCurrency(p.price)}</p>
+              <p className="text-[10px] font-bold text-orange-600">{formatCurrency(p.price)}</p>
             </button>
           ))}
         </div>
@@ -127,7 +127,7 @@ function OfferModal({ onSend, onClose }) {
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t("chat.enterPriceOffer")}</p>
       <div className="flex gap-2">
         <Input type="number" placeholder="RWF 0" value={amount} onChange={e => setAmount(e.target.value)} className="rounded-xl" />
-        <Button onClick={() => { onSend(parseFloat(amount)); onClose(); }} disabled={!amount} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl shrink-0">{t("chat.send")}</Button>
+        <Button onClick={() => { onSend(parseFloat(amount)); onClose(); }} disabled={!amount} className="bg-orange-600 hover:bg-orange-700 rounded-xl shrink-0">{t("chat.send")}</Button>
       </div>
     </motion.div>
   );
@@ -608,12 +608,12 @@ export default function Chat() {
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">
               {t("chat.title")}
               {unreadTotal > 0 && (
-                <span className="ml-2 text-xs bg-indigo-600 text-white rounded-full px-1.5 py-0.5">{unreadTotal}</span>
+                <span className="ml-2 text-xs bg-orange-600 text-white rounded-full px-1.5 py-0.5">{unreadTotal}</span>
               )}
             </h1>
             <button
               onClick={() => { setComposing(v => !v); setUserSearch(""); }}
-              className={`p-1.5 rounded-xl transition-colors ${composing ? "bg-indigo-100 text-indigo-600" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}
+              className={`p-1.5 rounded-xl transition-colors ${composing ? "bg-orange-100 text-orange-600" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}
               title={t("chat.newConversation")}
             >
               <PenSquare className="w-4 h-4" />
@@ -900,14 +900,14 @@ export default function Chat() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => { setShowProductPicker(v => !v); setShowOfferModal(false); setShowEmojiPicker(false); }}
-                      className={`p-1.5 rounded-xl transition-colors ${showProductPicker ? "bg-indigo-100 text-indigo-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
+                      className={`p-1.5 rounded-xl transition-colors ${showProductPicker ? "bg-indigo-100 text-orange-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
                       title={t("chat.shareProductTooltip")}
                     >
                       <ShoppingBag className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => { setShowOfferModal(v => !v); setShowProductPicker(false); setShowEmojiPicker(false); }}
-                      className={`p-1.5 rounded-xl transition-colors ${showOfferModal ? "bg-indigo-100 text-indigo-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
+                      className={`p-1.5 rounded-xl transition-colors ${showOfferModal ? "bg-indigo-100 text-orange-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
                       title={t("chat.makeAnOffer")}
                     >
                       <Star className="w-4 h-4" />
@@ -932,7 +932,7 @@ export default function Chat() {
                     <button
                       type="button"
                       onClick={() => { setShowEmojiPicker(v => !v); setShowProductPicker(false); setShowOfferModal(false); }}
-                      className={`p-2 rounded-xl transition-colors ${showEmojiPicker ? "bg-indigo-100 text-indigo-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
+                      className={`p-2 rounded-xl transition-colors ${showEmojiPicker ? "bg-indigo-100 text-orange-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
                       title="Emoji picker"
                     >
                       <Smile className="w-4 h-4" />
@@ -940,7 +940,7 @@ export default function Chat() {
                     <button
                       onClick={sendText}
                       disabled={!newMessage.trim() || sendMutation.isPending}
-                      className="w-8 h-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center ml-1 shrink-0 transition-colors"
+                      className="w-8 h-8 rounded-xl bg-orange-600 hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center ml-1 shrink-0 transition-colors"
                     >
                       <Send className="w-3.5 h-3.5 text-white" />
                     </button>
@@ -987,7 +987,7 @@ export default function Chat() {
                               <p className="text-xs text-slate-400">@{c.other_user_username}</p>
                             </div>
                             {forwardToUsername === c.other_user_username && (
-                              <div className="ml-auto w-4 h-4 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+                              <div className="ml-auto w-4 h-4 rounded-full bg-orange-600 flex items-center justify-center shrink-0">
                                 <CheckCheck className="w-2.5 h-2.5 text-white" />
                               </div>
                             )}
@@ -999,7 +999,7 @@ export default function Chat() {
                     )}
                     <div className="flex gap-2">
                       <Button onClick={() => { setForwardMsg(null); setForwardToUsername(""); }} variant="outline" className="flex-1 rounded-xl" size="sm">{t("chat.cancel")}</Button>
-                      <Button onClick={executeForward} disabled={!forwardToUsername.trim()} className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl" size="sm">{t("chat.forward")}</Button>
+                      <Button onClick={executeForward} disabled={!forwardToUsername.trim()} className="flex-1 bg-orange-600 hover:bg-indigo-700 rounded-xl" size="sm">{t("chat.forward")}</Button>
                     </div>
                   </motion.div>
                 </motion.div>

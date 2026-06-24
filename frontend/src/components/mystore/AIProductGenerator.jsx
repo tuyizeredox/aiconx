@@ -61,12 +61,12 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
   const generating = generateMutation.isPending;
 
   return (
-    <div className="border border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl overflow-hidden">
+    <div className="border border-orange-200 bg-gradient-to-r from-orange-50 to-orange-50 rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center gap-3 p-4 text-left"
       >
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shrink-0">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1">
@@ -103,7 +103,7 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
                       onUpgrade();
                     }} 
                     size="sm" 
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl"
+                    className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 rounded-xl"
                   >
                     {t("aiProduct.upgradePlan")}
                   </Button>

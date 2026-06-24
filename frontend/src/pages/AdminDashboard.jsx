@@ -103,7 +103,7 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             {store.name}
-            {store.is_verified && <ShieldCheckIcon className="w-5 h-5 text-blue-500" />}
+            {store.is_verified && <ShieldCheckIcon className="w-5 h-5 text-orange-500" />}
           </DialogTitle>
           <DialogDescription>
             {t('admin.storeModal.storeId', { id: store._id })}
@@ -922,7 +922,8 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8">
+    <div className="min-h-screen dark:bg-[#0a0a0c] bg-slate-50">
+      <div className="container mx-auto p-4 md:p-8 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('admin.title')}</h1>
@@ -1043,7 +1044,7 @@ const AdminDashboard = () => {
                       labelFormatter={(val) => new Date(val).toLocaleDateString()}
                       formatter={(val) => [formatCurrency(val), t('admin.overview.salesLabel')]}
                     />
-                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="total" fill="#f97316" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -1226,7 +1227,7 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           {u.is_verified ? (
-                            <Badge variant="success" className="bg-blue-500 hover:bg-blue-600">{t('admin.users.verified')}</Badge>
+                            <Badge variant="success" className="bg-orange-500 hover:bg-orange-600">{t('admin.users.verified')}</Badge>
                           ) : (
                             <Badge variant="outline">{t('admin.users.unverified')}</Badge>
                           )}
@@ -1249,7 +1250,7 @@ const AdminDashboard = () => {
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleVerifyUser(u._id, u.is_verified)}>
-                                <ShieldCheckIcon className="mr-2 h-4 w-4 text-blue-500" />
+                                <ShieldCheckIcon className="mr-2 h-4 w-4 text-orange-500" />
                                 {u.is_verified ? t('admin.users.unverifyAccount') : t('admin.users.verifyAccount')}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -1398,7 +1399,7 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           {s.is_verified ? (
-                            <Badge variant="success" className="bg-blue-500 hover:bg-blue-600">{t('admin.stores.verified')}</Badge>
+                            <Badge variant="success" className="bg-orange-500 hover:bg-orange-600">{t('admin.stores.verified')}</Badge>
                           ) : (
                             <Badge variant="outline">{t('admin.stores.unverified')}</Badge>
                           )}
@@ -1439,7 +1440,7 @@ const AdminDashboard = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => handleUpdateStoreVerification(s._id, !s.is_verified)}>
-                                  <ShieldCheckIcon className="w-4 h-4 mr-2 text-blue-500" /> 
+                                  <ShieldCheckIcon className="w-4 h-4 mr-2 text-orange-500" /> 
                                   {s.is_verified ? t('admin.stores.removeVerification') : t('admin.stores.verifyStore')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -1956,7 +1957,7 @@ const AdminDashboard = () => {
                   </div>
                 ))}
               </div>
-              <Button onClick={handleSavePlanPrices} disabled={planPricesSaving} className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
+              <Button onClick={handleSavePlanPrices} disabled={planPricesSaving} className="mt-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl">
                 {t('admin.subscriptions.savePrices')}
               </Button>
             </CardContent>
@@ -2710,7 +2711,7 @@ const AdminDashboard = () => {
 
                   <div className="space-y-2 border p-4 rounded-lg bg-slate-50/50">
                     <div className="flex items-center gap-2 mb-1">
-                      <Wallet className="w-4 h-4 text-indigo-500" />
+                      <Wallet className="w-4 h-4 text-orange-500" />
                       <Label htmlFor="min-withdrawal">{t('admin.settings.minWithdrawal')}</Label>
                     </div>
                     <div className="flex gap-2">
@@ -2757,6 +2758,7 @@ const AdminDashboard = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };

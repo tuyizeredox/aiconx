@@ -7,6 +7,7 @@ import ReviewForm from "@/components/reviews/ReviewForm";
 import SimilarProducts from "@/components/product/SimilarProducts";
 import SentimentSummary from "@/components/product/SentimentSummary";
 import ShareModal from "@/components/shared/ShareModal";
+import { useNativeShare } from "@/hooks/useNativeShare";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -52,6 +53,7 @@ export default function ProductDetail() {
   });
 
   const product = productResponse?.data || productResponse;
+  const nativeShare = useNativeShare({ product, onFallback: () => setIsShareModalOpen(true) });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ["productReviews", productId],
@@ -143,16 +145,6 @@ export default function ProductDetail() {
     );
   }
 
-  const handleShare = async () => {
-    try {
-      const url = window.location.href;
-      await navigator.clipboard.writeText(url);
-      toast.success(t("product.linkCopied"));
-    } catch (e) {
-      toast.error(t("product.failedToCopyLink"));
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6 animate-pulse">
@@ -239,7 +231,7 @@ export default function ProductDetail() {
                   key={`thumb-${i}-${img}`}
                   onClick={() => setSelectedImage(i)}
                   className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                    selectedImage === i ? "border-indigo-500 ring-2 ring-indigo-100" : "border-transparent opacity-60 hover:opacity-100"
+                    selectedImage === i ? "border-orange-500 ring-2 ring-orange-100" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
@@ -254,7 +246,7 @@ export default function ProductDetail() {
           {product.store_name && (
             <Link
               to={createPageUrl("StoreDetail") + `?id=${product.store_id || product.store?._id}`}
-              className="inline-flex items-center gap-1.5 text-sm text-indigo-600 font-medium mb-2 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm text-orange-600 font-medium mb-2 hover:underline"
             >
               <Store className="w-4 h-4" />
               {product.store_name}
@@ -302,7 +294,7 @@ export default function ProductDetail() {
               onClick={() => addToCartMutation.mutate()}
               disabled={addToCartMutation.isPending || product.status === "sold_out"}
               className={`flex-1 h-12 rounded-xl text-base font-semibold transition-all ${
-                addedToCart ? "bg-green-600 hover:bg-green-700" : "bg-indigo-600 hover:bg-indigo-700"
+                addedToCart ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
               }`}
             >
               {addedToCart ? <><Check className="w-5 h-5 mr-2" /> {t("product.added")}</> : <><ShoppingCart className="w-5 h-5 mr-2" /> {t("product.addToCart")}</>}
@@ -316,7 +308,7 @@ export default function ProductDetail() {
               <Heart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
             </Button>
             <Button
-              onClick={() => setIsShareModalOpen(true)}
+              onClick={() => nativeShare()}
               variant="outline"
               size="icon"
               className="h-12 w-12 rounded-xl"
@@ -328,7 +320,7 @@ export default function ProductDetail() {
           {/* Trust Badges */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
-              <Truck className="w-5 h-5 text-indigo-500" />
+              <Truck className="w-5 h-5 text-orange-500" />
               <div>
                 <p className="text-xs font-medium text-slate-700">{t("product.fastShipping")}</p>
                 <p className="text-xs text-slate-400">{t("product.businessDays")}</p>
@@ -414,7 +406,7 @@ export default function ProductDetail() {
                   >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
                         {review.reviewer_name?.[0]?.toUpperCase() || "U"}
                       </div>
                       <div>

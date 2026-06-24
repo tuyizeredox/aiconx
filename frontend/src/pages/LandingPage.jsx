@@ -87,7 +87,7 @@ export default function LandingPage() {
                     onClick={() => setViewerIndex(idx)}
                     className="flex flex-col items-center gap-1 shrink-0 focus:outline-none"
                   >
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px]">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 p-[2px]">
                       <div className="w-full h-full rounded-full bg-white dark:bg-slate-950 p-[2px]">
                         <div
                           className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-xs overflow-hidden"
@@ -160,7 +160,7 @@ export default function LandingPage() {
                       to="/register"
                       className="w-24 shrink-0 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-2.5 text-center hover:shadow-md transition-shadow"
                     >
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center mx-auto mb-1.5 text-sm overflow-hidden">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-100 to-orange-100 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center mx-auto mb-1.5 text-sm overflow-hidden">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt="" className="w-full h-full object-cover rounded-xl" />
                         ) : (
@@ -169,7 +169,7 @@ export default function LandingPage() {
                       </div>
                       <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{store.name}</h3>
                       <div className="flex items-center justify-center gap-0.5 mt-0.5">
-                        {store.is_verified && <span className="text-blue-500 text-[10px]">✓</span>}
+                        {store.is_verified && <span className="text-orange-500 text-[10px]">✓</span>}
                         <span className="text-[10px] text-slate-400">{store.product_count || 0}</span>
                       </div>
                     </Link>

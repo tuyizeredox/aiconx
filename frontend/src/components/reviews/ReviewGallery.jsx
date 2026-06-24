@@ -22,7 +22,7 @@ export default function ReviewGallery({ reviews }) {
   return (
     <div className="mt-6">
       <div className="flex items-center gap-2 mb-3">
-        <Images className="w-5 h-5 text-indigo-500" />
+        <Images className="w-5 h-5 text-orange-500" />
         <h3 className="text-base font-bold text-slate-900">{t("product.reviewGallery")}</h3>
         <span className="text-xs text-slate-400 font-medium">{t("product.photosAndVideos", { count: allMedia.length })}</span>
       </div>

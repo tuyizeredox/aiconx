@@ -112,23 +112,23 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4"
+          className="bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3 text-center md:text-left">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-              <Star className="w-5 h-5 text-indigo-600" />
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+              <Star className="w-5 h-5 text-orange-600" />
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900">{t("store.unlockAdvancedInsights")}</p>
               <p className="text-xs text-slate-500">{t("store.upgradeForInsights")}</p>
             </div>
           </div>
-          <Button onClick={onUpgrade} size="sm" className="bg-indigo-600 hover:bg-indigo-700 rounded-xl whitespace-nowrap">{t("store.upgradePlan")}</Button>
+          <Button onClick={onUpgrade} size="sm" className="bg-orange-600 hover:bg-orange-700 rounded-xl whitespace-nowrap">{t("store.upgradePlan")}</Button>
         </motion.div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} icon={DollarSign} color="bg-indigo-50 text-indigo-600" />
+        <StatCard label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} icon={DollarSign} color="bg-orange-50 text-orange-600" />
         <StatCard label={t("store.totalOrders")} value={orders.length} sub={t("store.paidCount", { count: paidOrders })} icon={ShoppingCart} color="bg-purple-50 text-purple-600" />
         <StatCard label={t("store.avgOrderValue")} value={`$${avgOrderValue.toFixed(2)}`} icon={Package} color="bg-pink-50 text-pink-600" />
         <StatCard label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} icon={Users} color="bg-amber-50 text-amber-600" />

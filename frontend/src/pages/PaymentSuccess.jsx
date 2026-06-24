@@ -58,7 +58,7 @@ useEffect(() => {
       <div className="max-w-md w-full bg-white rounded-[2.5rem] border border-slate-100 p-8 text-center shadow-2xl shadow-slate-200/50">
         {status === 'verifying' && (
           <div className="py-12">
-            <Loader2 className="w-16 h-16 animate-spin text-indigo-600 mx-auto mb-6" />
+            <Loader2 className="w-16 h-16 animate-spin text-orange-600 mx-auto mb-6" />
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{t("payment.verifying")}</h1>
             <p className="text-slate-500 font-medium">{t("payment.verifyingDesc")}</p>
           </div>
@@ -72,7 +72,7 @@ useEffect(() => {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-3">{t("payment.success")}</h1>
             <p className="text-slate-500 font-medium mb-8">{t("payment.successDesc")}</p>
             <div className="grid gap-3">
-              <Button asChild className="bg-indigo-600 hover:bg-indigo-700 h-12 rounded-xl font-bold w-full">
+              <Button asChild className="bg-orange-600 hover:bg-orange-700 h-12 rounded-xl font-bold w-full">
                 <Link to={createPageUrl("Orders")}>
                   {t("payment.viewOrders")} <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>

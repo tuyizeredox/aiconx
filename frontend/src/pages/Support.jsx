@@ -54,7 +54,7 @@ export default function Support() {
       description: t('support.channels.liveChat.description'),
       icon: MessageCircle,
       action: t('support.channels.liveChat.action'),
-      color: "bg-blue-500",
+      color: "bg-orange-500",
       onClick: () => navigate(createPageUrl("Chat") + "?to=support"),
     },
     {
@@ -70,7 +70,7 @@ export default function Support() {
       description: t('support.channels.emailSupport.description'),
       icon: Mail,
       action: t('support.channels.emailSupport.action'),
-      color: "bg-indigo-600",
+      color: "bg-orange-600",
       onClick: () => {
         const a = document.createElement('a');
         a.href = 'mailto:support@iqon.ai';
@@ -130,7 +130,7 @@ export default function Support() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {supportChannels.map((channel, idx) => (
-          <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/30 text-center flex flex-col items-center group hover:border-indigo-100 dark:hover:border-indigo-700 transition-all">
+          <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/30 text-center flex flex-col items-center group hover:border-orange-100 dark:hover:border-orange-700 transition-all">
             <div className={`w-14 h-14 rounded-2xl ${channel.color} flex items-center justify-center text-white mb-6 shadow-lg shadow-slate-200 dark:shadow-slate-900/50 group-hover:scale-110 transition-transform`}>
               <channel.icon className="w-7 h-7" />
             </div>

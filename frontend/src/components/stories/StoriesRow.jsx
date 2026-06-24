@@ -70,7 +70,7 @@ export default function StoriesRow({ currentUser }) {
             }}
             className="shrink-0 flex flex-col items-center gap-1.5"
           >
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center relative overflow-hidden ${myStory ? 'p-0.5 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-sm' : 'bg-indigo-50 border-2 border-dashed border-indigo-200'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center relative overflow-hidden ${myStory ? 'p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm' : 'bg-orange-50 border-2 border-dashed border-orange-200'}`}>
               <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center relative overflow-hidden">
                 {myStory ? (
                   // Show preview of the latest story
@@ -97,7 +97,7 @@ export default function StoriesRow({ currentUser }) {
                       );
                     }
                     return (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold text-sm">
                         {currentUser?.display_name?.[0]?.toUpperCase() || currentUser?.full_name?.[0]?.toUpperCase() || "U"}
                       </div>
                     );
@@ -107,7 +107,7 @@ export default function StoriesRow({ currentUser }) {
                   currentUser?.avatar_url ? (
                     <img src={currentUser.avatar_url} alt="" className="w-full h-full object-cover rounded-full opacity-50" />
                   ) : (
-                    <Plus className="w-5 h-5 text-indigo-400" />
+                    <Plus className="w-5 h-5 text-orange-400" />
                   )
                 )}
               </div>
@@ -144,7 +144,7 @@ export default function StoriesRow({ currentUser }) {
                 }}
                 className="shrink-0 flex flex-col items-center gap-1.5"
               >
-                <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-sm relative">
+                <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm relative">
                   <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center relative overflow-hidden">
                     {hasMedia ? (
                       isVideo ? (

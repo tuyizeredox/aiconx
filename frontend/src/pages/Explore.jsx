@@ -74,7 +74,7 @@ export default function Explore() {
           placeholder={t("explore.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-12 pr-4 h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl text-base focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
+          className="pl-12 pr-4 h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl text-base focus:ring-2 focus:ring-orange-100 focus:border-orange-300"
         />
         {search && (
           <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -123,7 +123,7 @@ export default function Explore() {
                   {u.avatar_url ? (
                     <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-indigo-600 dark:text-indigo-400 font-bold text-lg">{(u.username || u.display_name)?.[0]?.toUpperCase()}</span>
+                    <span className="text-orange-600 dark:text-orange-400 font-bold text-lg">{(u.username || u.display_name)?.[0]?.toUpperCase()}</span>
                   )}
                 </div>
                 <span className="text-xs font-semibold text-slate-900 dark:text-white truncate w-full text-center">{u.display_name || u.username}</span>
@@ -138,7 +138,7 @@ export default function Explore() {
       {communities.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-500" />
+            <Sparkles className="w-5 h-5 text-orange-500" />
             {debouncedSearch ? t("explore.relatedCommunities") : t("explore.popularCommunities")}
           </h2>
           <div className="overflow-x-auto -mx-4 px-4 hide-scrollbar">
@@ -149,7 +149,7 @@ export default function Explore() {
                   to={createPageUrl("CommunityDetail") + `?id=${c.id || c._id}`}
                   className="w-48 shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-shadow"
                 >
-                  <div className="h-20 bg-gradient-to-br from-indigo-400 to-purple-500 relative">
+                  <div className="h-20 bg-gradient-to-br from-orange-400 to-orange-500 relative">
                     {c.cover_image && <img src={c.cover_image} alt="" className="w-full h-full object-cover" />}
                   </div>
                   <div className="p-3 -mt-4 relative">

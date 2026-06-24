@@ -57,13 +57,13 @@ export default function AdminPanel({ community, posts, members }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="rounded-xl gap-1.5">
-          <Shield className="w-4 h-4 text-indigo-500" /> Moderate
+          <Shield className="w-4 h-4 text-orange-500" /> Moderate
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-indigo-500" /> Admin Panel
+            <Shield className="w-5 h-5 text-orange-500" /> Admin Panel
           </DialogTitle>
         </DialogHeader>
 
@@ -82,7 +82,7 @@ export default function AdminPanel({ community, posts, members }) {
             <Button
               size="sm"
               onClick={() => updateCommunityMutation.mutate({ rules: rulesText })}
-              className="mt-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg"
+              className="mt-2 bg-orange-600 hover:bg-orange-700 rounded-lg"
             >
               <Check className="w-3.5 h-3.5 mr-1" /> Save Rules
             </Button>

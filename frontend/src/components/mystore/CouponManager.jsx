@@ -86,7 +86,7 @@ export default function CouponManager({ store, vendorUsername }) {
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-1.5 h-9">
+            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5 h-9">
               <Plus className="w-4 h-4" /> {t("store.newCoupon")}
             </Button>
           </DialogTrigger>
@@ -154,9 +154,9 @@ export default function CouponManager({ store, vendorUsername }) {
               </div>
 
               {form.code && form.discount_value && (
-                <div className="p-3 bg-indigo-50 rounded-xl border border-dashed border-indigo-200">
+                <div className="p-3 bg-orange-50 rounded-xl border border-dashed border-orange-200">
                   <p className="text-xs text-slate-500 mb-1">{t("store.couponPreview")}</p>
-                  <p className="text-sm font-bold text-indigo-700 font-mono">{form.code}</p>
+                  <p className="text-sm font-bold text-orange-700 font-mono">{form.code}</p>
                   <p className="text-xs text-slate-600 mt-0.5">
                     {form.discount_type === "percentage"
                       ? t("store.percentOff", { value: form.discount_value })
@@ -169,7 +169,7 @@ export default function CouponManager({ store, vendorUsername }) {
               <Button
                 onClick={() => createMutation.mutate()}
                 disabled={!form.code.trim() || !form.discount_value || createMutation.isPending}
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                className="w-full bg-orange-600 hover:bg-indigo-700"
               >
                 {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Tag className="w-4 h-4 mr-2" />}
                 {t("store.createCoupon")}
@@ -213,14 +213,14 @@ export default function CouponManager({ store, vendorUsername }) {
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                     isInactive ? "bg-slate-100" : "bg-indigo-50"
                   }`}>
-                    <Tag className={`w-4 h-4 ${isInactive ? "text-slate-400" : "text-indigo-600"}`} />
+                    <Tag className={`w-4 h-4 ${isInactive ? "text-slate-400" : "text-orange-600"}`} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => copyCode(coupon.code)}
-                        className="text-sm font-bold font-mono text-slate-900 hover:text-indigo-600 transition-colors flex items-center gap-1"
+                        className="text-sm font-bold font-mono text-slate-900 hover:text-orange-600 transition-colors flex items-center gap-1"
                       >
                         {coupon.code}
                         <Copy className="w-3 h-3 opacity-50" />
@@ -253,7 +253,7 @@ export default function CouponManager({ store, vendorUsername }) {
                       title={coupon.is_active ? t("store.deactivate") : t("store.activate")}
                     >
                       {coupon.is_active
-                        ? <ToggleRight className="w-5 h-5 text-indigo-600" />
+                        ? <ToggleRight className="w-5 h-5 text-orange-600" />
                         : <ToggleLeft className="w-5 h-5 text-slate-400" />}
                     </button>
                     <button

@@ -21,7 +21,7 @@ import { toast } from '@/components/ui/use-toast';
 
 const MemoizedBackground = React.memo(() => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    <div className="absolute inset-0 dark:bg-[radial-gradient(circle_at_50%_50%,rgba(17,17,19,1)_0%,rgba(0,0,0,1)_100%)] bg-gradient-to-br from-slate-50 via-orange-50/40 to-indigo-50/30" />
+    <div className="absolute inset-0 dark:bg-[radial-gradient(circle_at_50%_50%,rgba(17,17,19,1)_0%,rgba(0,0,0,1)_100%)] bg-gradient-to-br from-slate-50 via-orange-50/40 to-orange-50/30" />
     <motion.div
       animate={{ scale: [1, 1.2, 1], x: [0, 100, 0], y: [0, 50, 0] }}
       transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
@@ -30,7 +30,7 @@ const MemoizedBackground = React.memo(() => (
     <motion.div
       animate={{ scale: [1.2, 1, 1.2], x: [0, -120, 0], y: [0, -80, 0] }}
       transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute -bottom-[20%] -right-[10%] w-[70%] h-[70%] dark:bg-indigo-600/10 bg-indigo-400/15 rounded-full blur-[120px]"
+      className="absolute -bottom-[20%] -right-[10%] w-[70%] h-[70%] dark:bg-orange-600/10 bg-orange-400/15 rounded-full blur-[120px]"
     />
     <div className="absolute inset-0 dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
   </div>

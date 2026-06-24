@@ -16,7 +16,7 @@ export default function CreateActionModal({ open, onClose, currentUser }) {
       label: t("create.createPost"),
       description: t("create.createPostDesc"),
       icon: PenSquare,
-      color: "bg-indigo-50 text-indigo-600",
+      color: "bg-orange-50 text-orange-600",
       to: createPageUrl("CreatePost"),
     },
     {

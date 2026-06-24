@@ -47,7 +47,7 @@ export default function Marketplace() {
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
       {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-3xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 rounded-3xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200')] bg-cover bg-center opacity-10" />
         <div className="relative z-10">
           <h1 className="text-2xl lg:text-3xl font-bold mb-2">{t("shop.heroTitle")}</h1>
@@ -80,7 +80,7 @@ export default function Marketplace() {
                     to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`}
                     className="w-40 shrink-0 bg-white rounded-2xl border border-slate-100 p-4 text-center hover:shadow-lg transition-shadow"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mx-auto mb-2 text-2xl overflow-hidden">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center mx-auto mb-2 text-2xl overflow-hidden">
                       {store.logo_url ? (
                         <img src={store.logo_url} alt="" className="w-full h-full object-cover rounded-2xl" />
                       ) : (
@@ -89,7 +89,7 @@ export default function Marketplace() {
                     </div>
                     <h3 className="text-sm font-semibold text-slate-900 truncate">{store.name}</h3>
                     <div className="flex items-center justify-center gap-1 mt-1">
-                      {store.is_verified && <span className="text-blue-500 text-xs">✓</span>}
+                      {store.is_verified && <span className="text-orange-500 text-xs">✓</span>}
                       <span className="text-xs text-slate-400">{t("shop.storeItems", { count: store.product_count || 0 })}</span>
                     </div>
                   </Link>

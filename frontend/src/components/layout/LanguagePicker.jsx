@@ -36,11 +36,11 @@ export default function LanguagePicker({ compact = false }) {
                 <button
                   key={l.code}
                   onClick={() => { setLang(l.code); setOpen(false); }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${lang === l.code ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-700 hover:bg-slate-50"}`}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${lang === l.code ? "bg-orange-50 text-orange-700 font-semibold" : "text-slate-700 hover:bg-slate-50"}`}
                 >
                   <span className="text-base">{l.flag}</span>
                   <span className="flex-1 text-left">{l.label}</span>
-                  {lang === l.code && <Check className="w-3.5 h-3.5 text-indigo-500" />}
+                  {lang === l.code && <Check className="w-3.5 h-3.5 text-orange-500" />}
                 </button>
               ))}
             </motion.div>

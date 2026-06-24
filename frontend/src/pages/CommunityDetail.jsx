@@ -111,10 +111,10 @@ const COMMUNITY_CATEGORIES = [
 
        {/* Banner */} 
        <div className="rounded-2xl overflow-hidden mb-6 bg-white border border-slate-100 shadow-sm"> 
-         <div className="h-32 lg:h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 relative"> 
+         <div className="h-32 lg:h-40 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 relative"> 
            {community.cover_image && <img src={community.cover_image} alt="" className="w-full h-full object-cover" />} 
            {isAdmin && ( 
-             <div className="absolute top-3 right-3 px-2 py-1 bg-indigo-700/80 backdrop-blur-sm rounded-lg flex items-center gap-1 text-white text-xs font-medium"> 
+             <div className="absolute top-3 right-3 px-2 py-1 bg-orange-700/80 backdrop-blur-sm rounded-lg flex items-center gap-1 text-white text-xs font-medium"> 
                <Shield className="w-3 h-3" /> {t("communities.admin")} 
              </div> 
            )} 
@@ -138,7 +138,7 @@ const COMMUNITY_CATEGORIES = [
                  <Button 
                    onClick={() => joinMutation.mutate()} 
                    variant={isMember ? "secondary" : "default"} 
-                   className={`rounded-xl ${!isMember ? "bg-indigo-600 hover:bg-indigo-700" : ""}`} 
+                   className={`rounded-xl ${!isMember ? "bg-orange-600 hover:bg-orange-700" : ""}`} 
                  > 
                    {isMember ? <><UserCheck className="w-4 h-4 mr-1.5" /> {t("communities.joined")}</> : <><UserPlus className="w-4 h-4 mr-1.5" /> {t("communities.join")}</>} 
                  </Button> 
@@ -151,12 +151,12 @@ const COMMUNITY_CATEGORIES = [
        {/* Create Post CTA */} 
        {isMember && ( 
          <Link to={`/CreatePost?community_id=${communityId}`}> 
-           <div className="bg-white border border-slate-200 rounded-2xl p-3 flex items-center gap-3 mb-5 hover:border-indigo-300 transition-colors cursor-pointer shadow-sm"> 
-             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
+           <div className="bg-white border border-slate-200 rounded-2xl p-3 flex items-center gap-3 mb-5 hover:border-orange-300 transition-colors cursor-pointer shadow-sm"> 
+             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
                {currentUser?.display_name?.[0]?.toUpperCase() || "U"} 
              </div> 
              <span className="text-sm text-slate-400 flex-1">{t("communities.shareWithCommunity")}</span> 
-             <PenSquare className="w-4 h-4 text-indigo-400" /> 
+             <PenSquare className="w-4 h-4 text-orange-400" /> 
            </div> 
          </Link> 
        )} 
@@ -203,7 +203,7 @@ const COMMUNITY_CATEGORIES = [
            ) : ( 
              members.map(m => ( 
                <div key={m._id} className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"> 
-                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
+                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
                    {m.member_email?.[0]?.toUpperCase()} 
                  </div> 
                  <div className="flex-1 min-w-0"> 

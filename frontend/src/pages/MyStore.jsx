@@ -329,21 +329,21 @@ export default function MyStore() {
   const pendingOrders = orders.filter(o => o.status === "pending" || o.status === "confirmed").length;
 
   if (storeLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>;
+    return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>;
   }
 
   if (!store) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center mx-auto mb-6">
-          <Store className="w-9 h-9 text-indigo-500" />
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-100 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center mx-auto mb-6">
+          <Store className="w-9 h-9 text-orange-500" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("store.createStoreTitle")}</h1>
         <p className="text-slate-500 dark:text-slate-400 mb-8">{t("store.createStoreSubtitle")}</p>
 
         <Dialog open={showCreateStore} onOpenChange={setShowCreateStore}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-8 h-12 text-base">
+            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl px-8 h-12 text-base">
               <Plus className="w-5 h-5 mr-2" /> {t("store.createStore")}
             </Button>
           </DialogTrigger>
@@ -435,7 +435,7 @@ export default function MyStore() {
                   </Select>
 
                   {storeForm.payment_method === 'bank_transfer' && (
-                    <div className="space-y-3 border-l-2 border-indigo-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
                       <Input placeholder={t("store.bankName")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
                       <Input placeholder={t("store.accountHolderName")} value={storeForm.bank_account_name} onChange={e => setStoreForm(p => ({ ...p, bank_account_name: e.target.value }))} />
                       <div className="grid grid-cols-2 gap-3">
@@ -446,13 +446,13 @@ export default function MyStore() {
                   )}
 
                   {storeForm.payment_method === 'paypal' && (
-                    <div className="space-y-3 border-l-2 border-indigo-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
                       <Input type="email" placeholder={t("store.paypalEmail")} value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                     </div>
                   )}
 
                   {storeForm.payment_method === 'mobile_money' && (
-                    <div className="space-y-3 border-l-2 border-indigo-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
                       <Input placeholder={t("store.mobileMoneyNumber")} value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
                       <p className="text-[10px] text-slate-400">{t("store.mobileMoneyHint")}</p>
                     </div>
@@ -484,7 +484,7 @@ export default function MyStore() {
                     </div>
 
                     {storeForm.delivery_settings.delivery_enabled && (
-                      <div className="space-y-3 border-l-2 border-indigo-100 pl-4 py-1">
+                      <div className="space-y-3 border-l-2 border-orange-100 pl-4 py-1">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-xs">{t("store.deliveryFee")}</Label>
@@ -544,7 +544,7 @@ export default function MyStore() {
                     </div>
 
                     {storeForm.delivery_settings.pickup_enabled && (
-                      <div className="space-y-1.5 border-l-2 border-indigo-100 pl-4 py-1">
+                      <div className="space-y-1.5 border-l-2 border-orange-100 pl-4 py-1">
                         <Label className="text-xs">{t("store.pickupInstructions")}</Label>
                         <Textarea 
                           placeholder={t("store.pickupInstructionsPlaceholder")} 
@@ -558,7 +558,7 @@ export default function MyStore() {
               </div>
 
               <div className="mt-6">
-                <Button onClick={() => createStoreMutation.mutate()} disabled={!storeForm.name.trim() || createStoreMutation.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 h-11">
+                <Button onClick={() => createStoreMutation.mutate()} disabled={!storeForm.name.trim() || createStoreMutation.isPending} className="w-full bg-orange-600 hover:bg-orange-700 h-11">
                   {createStoreMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   {t("store.createMyStore")}
                 </Button>
@@ -939,7 +939,7 @@ export default function MyStore() {
                   </div>
 
                   <div className="mt-6">
-                    <Button onClick={() => updateStoreMutation.mutate(storeForm)} disabled={!storeForm.name.trim() || updateStoreMutation.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 h-11">
+                    <Button onClick={() => updateStoreMutation.mutate(storeForm)} disabled={!storeForm.name.trim() || updateStoreMutation.isPending} className="w-full bg-orange-600 hover:bg-indigo-700 h-11">
                       {updateStoreMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       {t("store.saveAllChanges")}
                     </Button>
@@ -962,7 +962,7 @@ export default function MyStore() {
               <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" /> {t("store.setupProgress")}
               </h3>
-              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-orange-600 bg-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {Math.round(
                   ((store.logo_url ? 1 : 0) + 
                   (store.description ? 1 : 0) + 
@@ -978,7 +978,7 @@ export default function MyStore() {
                 { label: t("store.setupAddProduct"), done: products.length > 0 },
                 { label: t("store.setupPayoutMethod"), done: !!store.payment_method },
               ].map((step, i) => (
-                <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-indigo-100 dark:border-indigo-900 text-indigo-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
+                <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-indigo-100 dark:border-indigo-900 text-orange-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
                   {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200" />}
                   <span className="text-xs font-medium">{step.label}</span>
                 </div>
@@ -1015,7 +1015,7 @@ export default function MyStore() {
             <TabsTrigger value="coupons">{t("store.coupons")}</TabsTrigger>
             <TabsTrigger value="analytics" className="gap-1.5">
               {t("store.analytics")} 
-              {currentPlan === 'free' ? <Badge className="px-1 py-0 text-[8px] bg-indigo-100 text-indigo-600 border-0">Standard</Badge> : <Badge className="px-1 py-0 text-[8px] bg-amber-100 text-amber-600 border-0">Pro+</Badge>}
+              {currentPlan === 'free' ? <Badge className="px-1 py-0 text-[8px] bg-indigo-100 text-orange-600 border-0">Standard</Badge> : <Badge className="px-1 py-0 text-[8px] bg-amber-100 text-amber-600 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-1.5">
               {t("store.shipping")}
@@ -1034,13 +1034,13 @@ export default function MyStore() {
                   setActiveTab("subscription");
                   toast.error(t("store.subscriptionLimitReached", { plan: currentPlan, limit: limits.products === Infinity ? t("store.unlimited") : limits.products }));
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 rounded-xl"
+                className="bg-orange-600 hover:bg-indigo-700 rounded-xl"
               >
                 <Plus className="w-4 h-4 mr-1.5" /> {t("store.addProduct")}
               </Button>
             ) : (
               <DialogTrigger asChild>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">
+                <Button className="bg-orange-600 hover:bg-indigo-700 rounded-xl">
                   <Plus className="w-4 h-4 mr-1.5" /> {t("store.addProduct")}
                 </Button>
               </DialogTrigger>
@@ -1118,7 +1118,7 @@ export default function MyStore() {
                 <Button 
                   onClick={() => addProductMutation.mutate()} 
                   disabled={!productForm.title.trim() || !productForm.price || addProductMutation.isPending || uploading} 
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 h-11 rounded-xl font-bold"
+                  className="w-full bg-orange-600 hover:bg-indigo-700 h-11 rounded-xl font-bold"
                 >
                   {addProductMutation.isPending || uploading ? (
                     <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploading ? t("store.uploadingMedia") : t("store.addingProduct")}</>
@@ -1146,7 +1146,7 @@ export default function MyStore() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{product.title}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-sm font-bold text-indigo-600">{formatCurrency(product.price)}</span>
+                      <span className="text-sm font-bold text-orange-600">{formatCurrency(product.price)}</span>
                       <Badge variant="secondary" className="text-[10px]">{product.status}</Badge>
                       <span className="text-xs text-slate-400 dark:text-slate-500">{t("store.stock")}: {product.inventory_count || 0}</span>
                     </div>
@@ -1170,7 +1170,7 @@ export default function MyStore() {
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.shippingZonesRestricted")}</h3>
              <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.shippingZonesRestrictedDesc")}</p>
-             <Button onClick={() => setActiveTab("subscription")} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("store.upgradePlan")}</Button>
+             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-indigo-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
           <ShippingZoneManager store={store} vendorUsername={currentUser?.username} plan={currentPlan} onUpgrade={() => setActiveTab("subscription")} />
@@ -1196,7 +1196,7 @@ export default function MyStore() {
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.couponsRestricted")}</h3>
              <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.couponsRestrictedDesc")}</p>
-             <Button onClick={() => setActiveTab("subscription")} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("store.upgradePlan")}</Button>
+             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-indigo-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
           <CouponManager store={store} vendorUsername={currentUser?.username} />
@@ -1273,7 +1273,7 @@ export default function MyStore() {
                           <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                             {t("store.orderRef", { id: orderId?.slice(-8) })}
                           </p>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors">
                             {order.buyer_name || `@${order.buyer_username}`}
                           </h4>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1334,7 +1334,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-indigo-600 hover:bg-indigo-50"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-indigo-50"
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               navigate(createPageUrl("Chat") + `?to=${order.buyer_username}`);

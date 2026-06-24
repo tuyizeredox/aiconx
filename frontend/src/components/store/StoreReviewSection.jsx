@@ -104,7 +104,7 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
             {review.reviewer_name?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
@@ -127,8 +127,8 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
 
       {/* Vendor reply */}
       {review.vendor_reply && (
-        <div className="mt-3 bg-indigo-50 dark:bg-indigo-950 border border-indigo-100 dark:border-indigo-800 rounded-xl p-3">
-          <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 mb-1 flex items-center gap-1">
+        <div className="mt-3 bg-orange-50 dark:bg-orange-950 border border-orange-100 dark:border-orange-800 rounded-xl p-3">
+          <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1 flex items-center gap-1">
             <MessageSquare className="w-3 h-3" /> {t("storeDetail.vendorResponse")}
           </p>
           <p className="text-xs text-slate-600 dark:text-slate-300">{review.vendor_reply}</p>
@@ -147,7 +147,7 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
         {isVendor && !review.vendor_reply && (
           <button
             onClick={() => setShowReply(v => !v)}
-            className="flex items-center gap-1 text-xs text-indigo-600 font-medium hover:text-indigo-800"
+            className="flex items-center gap-1 text-xs text-orange-600 font-medium hover:text-orange-800"
           >
             <Edit3 className="w-3.5 h-3.5" />
             {t("storeDetail.reply")}
@@ -173,7 +173,7 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
               className="text-sm rounded-xl mb-2 min-h-[80px]"
             />
             <div className="flex gap-2">
-              <Button onClick={() => replyMutation.mutate()} disabled={!replyText.trim() || replyMutation.isPending} size="sm" className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">
+              <Button onClick={() => replyMutation.mutate()} disabled={!replyText.trim() || replyMutation.isPending} size="sm" className="bg-orange-600 hover:bg-orange-700 rounded-xl">
                 {replyMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
                 {t("storeDetail.postReply")}
               </Button>
@@ -236,7 +236,7 @@ export default function StoreReviewSection({ store, currentUser }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t("storeDetail.storeReviews")}</h2>
         {canReview && !alreadyReviewed && (
-          <Button onClick={() => setShowForm(v => !v)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-1.5">
+          <Button onClick={() => setShowForm(v => !v)} size="sm" className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5">
             <Star className="w-4 h-4" /> {t("storeDetail.writeReview")}
           </Button>
         )}
@@ -247,7 +247,7 @@ export default function StoreReviewSection({ store, currentUser }) {
 
       <AnimatePresence>
         {showForm && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-indigo-100 dark:border-slate-700 p-5 mb-5">
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-orange-100 dark:border-slate-700 p-5 mb-5">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">{t("storeDetail.yourReview")}</h3>
             <div className="mb-3">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">{t("storeDetail.rating")}</p>
@@ -269,7 +269,7 @@ export default function StoreReviewSection({ store, currentUser }) {
               <Button
                 onClick={() => submitMutation.mutate()}
                 disabled={form.rating === 0 || !form.content.trim() || submitMutation.isPending}
-                className="bg-indigo-600 hover:bg-indigo-700 rounded-xl"
+                className="bg-orange-600 hover:bg-orange-700 rounded-xl"
               >
                 {submitMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Send className="w-4 h-4 mr-1" />}
                 {t("storeDetail.submitReview")}

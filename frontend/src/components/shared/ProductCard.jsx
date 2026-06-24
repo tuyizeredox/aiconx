@@ -8,11 +8,13 @@ import { wishlistAPI } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import { useNativeShare } from "@/hooks/useNativeShare";
 
 export default function ProductCard({ product, compact = false, currentUser }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+  const nativeShare = useNativeShare({ product, onFallback: () => setIsShareModalOpen(true) });
   const productId = product?.id || product?._id;
 
   // Only fetch wishlist for authenticated users with username
@@ -109,7 +111,7 @@ export default function ProductCard({ product, compact = false, currentUser }) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setIsShareModalOpen(true);
+                  nativeShare();
                 }}
                 className="w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
               >

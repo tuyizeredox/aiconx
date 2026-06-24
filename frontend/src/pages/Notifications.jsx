@@ -16,7 +16,7 @@ const TYPE_ICONS = {
   comment: { icon: MessageCircle, color: "bg-blue-100 text-blue-500" },
   follow: { icon: UserPlus, color: "bg-purple-100 text-purple-500" },
   order_update: { icon: Package, color: "bg-green-100 text-green-500" },
-  message: { icon: MessageCircle, color: "bg-indigo-100 text-indigo-500" },
+  message: { icon: MessageCircle, color: "bg-orange-100 text-orange-500" },
   mention: { icon: MessageCircle, color: "bg-amber-100 text-amber-500" },
   community: { icon: Users, color: "bg-pink-100 text-pink-500" },
   promotion: { icon: Megaphone, color: "bg-orange-100 text-orange-500" },
@@ -90,7 +90,7 @@ export default function Notifications() {
             variant="ghost"
             size="sm"
             onClick={() => markAllRead.mutate()}
-            className="text-indigo-600 hover:text-indigo-700"
+            className="text-orange-600 hover:text-orange-700"
           >
             <CheckCheck className="w-4 h-4 mr-1.5" />
             {t("notifications.markAllRead")}

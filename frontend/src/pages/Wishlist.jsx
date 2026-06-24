@@ -80,7 +80,7 @@ export default function Wishlist() {
         {wishlistItems.length > 0 && (
           <Button
             onClick={moveAllToCart}
-            className="bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-1.5"
+            className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5"
           >
             <ShoppingCart className="w-4 h-4" /> {t("wishlist.addAllToCart")}
           </Button>
@@ -106,7 +106,7 @@ export default function Wishlist() {
           description={t("wishlist.emptyDesc")}
           action={
             <Link to={createPageUrl("Marketplace")}>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">{t("wishlist.browseProducts")}</Button>
+              <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("wishlist.browseProducts")}</Button>
             </Link>
           }
         />
@@ -151,7 +151,7 @@ export default function Wishlist() {
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => addToCartMutation.mutate(item)}
-                        className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-xl transition-colors"
                       >
                         <ShoppingCart className="w-3 h-3" /> {t("wishlist.addToCart")}
                       </button>

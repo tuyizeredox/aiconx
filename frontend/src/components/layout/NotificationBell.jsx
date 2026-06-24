@@ -8,12 +8,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "@/lib/SocketContext";
 
 const TYPE_CONFIG = {
-  message:      { icon: MessageCircle, color: "bg-indigo-100 text-indigo-600", label: "Message" },
+  message:      { icon: MessageCircle, color: "bg-orange-100 text-orange-600", label: "Message" },
   offer:        { icon: DollarSign,    color: "bg-amber-100 text-amber-600",   label: "Offer" },
   order_update: { icon: Package,       color: "bg-green-100 text-green-600",   label: "Order" },
   like:         { icon: Heart,         color: "bg-red-100 text-red-500",       label: "Like" },
   follow:       { icon: UserPlus,      color: "bg-purple-100 text-purple-600", label: "Follow" },
-  comment:      { icon: MessageCircle, color: "bg-blue-100 text-blue-600",     label: "Comment" },
+  comment:      { icon: MessageCircle, color: "bg-orange-100 text-orange-600",     label: "Comment" },
   product_added: { icon: Package,      color: "bg-emerald-100 text-emerald-600", label: "Product" },
   mention:      { icon: MessageCircle, color: "bg-amber-100 text-amber-600",   label: "Mention" },
 };
@@ -109,14 +109,14 @@ export default function NotificationBell({ userEmail }) {
                 <Bell className="w-4 h-4 text-slate-700" />
                 <span className="text-sm font-bold text-slate-900">Notifications</span>
                 {unread > 0 && (
-                  <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold rounded-full px-2 py-0.5">{unread} new</span>
+                  <span className="text-xs bg-orange-100 text-orange-700 font-semibold rounded-full px-2 py-0.5">{unread} new</span>
                 )}
               </div>
               <div className="flex items-center gap-1">
                 {unread > 0 && (
                   <button
                     onClick={() => markAllMutation.mutate()}
-                    className="text-[10px] text-indigo-500 font-semibold hover:underline flex items-center gap-0.5"
+                    className="text-[10px] text-orange-500 font-semibold hover:underline flex items-center gap-0.5"
                   >
                     <CheckCheck className="w-3 h-3" /> All read
                   </button>
@@ -148,7 +148,7 @@ export default function NotificationBell({ userEmail }) {
                         else if (notif.metadata?.link && typeof notif.metadata.link === "string" && notif.metadata.link.startsWith("/")) navigate(notif.metadata.link);
                         setOpen(false);
                       }}
-                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0 ${!notif.is_read ? "bg-indigo-50/40" : ""}`}
+                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0 ${!notif.is_read ? "bg-orange-50/40" : ""}`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${cfg.color}`}>
                         <Icon className="w-3.5 h-3.5" />
@@ -160,7 +160,7 @@ export default function NotificationBell({ userEmail }) {
                           {new Date(notif.created_at || notif.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
-                      {!notif.is_read && <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />}
+                      {!notif.is_read && <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0" />}
                     </button>
                   );
                 })
@@ -172,7 +172,7 @@ export default function NotificationBell({ userEmail }) {
               <Link
                 to={createPageUrl("Notifications")}
                 onClick={() => setOpen(false)}
-                className="text-xs text-indigo-600 font-semibold hover:underline w-full block text-center"
+                className="text-xs text-orange-600 font-semibold hover:underline w-full block text-center"
               >
                 View all notifications →
               </Link>

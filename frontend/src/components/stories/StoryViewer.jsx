@@ -111,13 +111,13 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   if (!story) return null;
 
   const BG_GRADIENTS = {
-    "#6366f1": "from-indigo-600 to-purple-700",
+    "#6366f1": "from-orange-600 to-orange-700",
     "#ec4899": "from-pink-500 to-rose-600",
     "#f59e0b": "from-amber-500 to-orange-600",
     "#10b981": "from-emerald-500 to-teal-600",
     "#3b82f6": "from-blue-500 to-cyan-600",
   };
-  const gradClass = BG_GRADIENTS[story.bg_color] || "from-indigo-600 to-purple-700";
+  const gradClass = BG_GRADIENTS[story.bg_color] || "from-orange-600 to-orange-700";
 
   return (
     <motion.div
@@ -145,7 +145,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
             {story.author_avatar ? (
               <img src={story.author_avatar} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold">
+              <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold">
                 {story.author_name?.[0]?.toUpperCase() || story.author_username?.[0]?.toUpperCase() || "U"}
               </div>
             )}

@@ -65,11 +65,11 @@ export default function SentimentSummary({ productId, reviews }) {
 
   if (isLoading && !existing) {
     return (
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-4 mb-6 flex items-center gap-3">
-        <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />
+      <div className="bg-gradient-to-br from-orange-50 to-orange-50 border border-orange-100 rounded-2xl p-4 mb-6 flex items-center gap-3">
+        <Loader2 className="w-5 h-5 text-orange-500 animate-spin shrink-0" />
         <div>
-          <p className="text-sm font-semibold text-indigo-700">{t("sentiment.analyzing", { count: reviews.length })}</p>
-          <p className="text-xs text-indigo-500">{t("sentiment.generating")}</p>
+          <p className="text-sm font-semibold text-orange-700">{t("sentiment.analyzing", { count: reviews.length })}</p>
+          <p className="text-xs text-orange-500">{t("sentiment.generating")}</p>
         </div>
       </div>
     );
@@ -88,7 +88,7 @@ export default function SentimentSummary({ productId, reviews }) {
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
@@ -157,7 +157,7 @@ export default function SentimentSummary({ productId, reviews }) {
         <button
           onClick={() => generateMutation.mutate()}
           disabled={isLoading}
-          className="flex items-center gap-1 text-[10px] text-indigo-500 hover:text-indigo-700 disabled:opacity-50"
+          className="flex items-center gap-1 text-[10px] text-orange-500 hover:text-orange-700 disabled:opacity-50"
         >
           <RefreshCw className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`} />
           {t("sentiment.refresh")}

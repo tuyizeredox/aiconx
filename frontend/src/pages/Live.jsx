@@ -29,11 +29,11 @@ function ChatMsg({ msg, isNew }) {
   const isJoin = msg.message_type === "join";
   return (
     <motion.div initial={isNew ? { opacity: 0, x: -10 } : { opacity: 1 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2 items-start">
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${isBuy ? "bg-green-500" : isJoin ? "bg-blue-500" : "bg-gradient-to-br from-indigo-400 to-purple-500"}`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${isBuy ? "bg-green-500" : isJoin ? "bg-orange-500" : "bg-gradient-to-br from-orange-400 to-orange-500"}`}>
         {isBuy ? "🛒" : isJoin ? "👋" : msg.user_name?.[0]}
       </div>
-      <div className={`backdrop-blur-sm rounded-xl px-3 py-1.5 max-w-[85%] ${isBuy ? "bg-green-500/30 border border-green-400/40" : isJoin ? "bg-blue-500/20" : "bg-black/30"}`}>
-        <span className={`text-xs font-semibold mr-1.5 ${isBuy ? "text-green-300" : isJoin ? "text-blue-300" : "text-indigo-300"}`}>{msg.user_name}</span>
+      <div className={`backdrop-blur-sm rounded-xl px-3 py-1.5 max-w-[85%] ${isBuy ? "bg-green-500/30 border border-green-400/40" : isJoin ? "bg-orange-500/20" : "bg-black/30"}`}>
+        <span className={`text-xs font-semibold mr-1.5 ${isBuy ? "text-green-300" : isJoin ? "text-orange-300" : "text-orange-300"}`}>{msg.user_name}</span>
         <span className="text-white text-xs">{msg.content}</span>
       </div>
     </motion.div>
@@ -62,7 +62,7 @@ function ProductPill({ product, currentUser }) {
       <img src={product.image} alt={product.title} className="w-11 h-11 rounded-xl object-cover shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-white text-xs font-semibold truncate">{product.title}</p>
-        <p className="text-indigo-300 text-xs font-bold">{formatCurrency(product.price)}</p>
+        <p className="text-orange-300 text-xs font-bold">{formatCurrency(product.price)}</p>
       </div>
       <button
         onClick={() => currentUser ? addMutation.mutate() : toast.error(t("live.signInToBuy"))}
@@ -1041,7 +1041,7 @@ export default function Live() {
                   <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-1 font-medium">{session.host_name} · {session.store_name}</p>
                   
                   <div className="flex items-center gap-2.5 mt-2">
-                    <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <span className="text-[10px] text-orange-600 font-bold bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-md flex items-center gap-1">
                       <Radio className="w-2.5 h-2.5" />
                       {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : t("live.soon")}
                     </span>
@@ -1050,7 +1050,7 @@ export default function Live() {
                 </div>
                 <button 
                   onClick={() => toast.success(t("live.reminderSet", { title: session.title }))}
-                  className="shrink-0 w-10 h-10 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center transition-colors self-center"
+                  className="shrink-0 w-10 h-10 bg-indigo-50 dark:bg-indigo-950 text-orange-600 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center transition-colors self-center"
                 >
                   <Heart className="w-5 h-5" />
                 </button>
@@ -1076,7 +1076,7 @@ export default function Live() {
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-3 bg-indigo-50 dark:bg-indigo-950 rounded-2xl">
                 <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-xl flex items-center justify-center shrink-0">
-                  <Store className="w-4 h-4 text-indigo-600" />
+                  <Store className="w-4 h-4 text-orange-600" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{t("live.step1CreateStore")}</p>

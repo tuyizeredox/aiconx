@@ -12,7 +12,7 @@ const EMOJI_QUICK = ["❤️", "😂", "🔥", "👍", "😍", "💯", "🎉", "
 
 function Avatar({ name, size = 7 }) {
   return (
-    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs shrink-0`}>
+    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-xs shrink-0`}>
       {name?.[0]?.toUpperCase() || "U"}
     </div>
   );
@@ -142,17 +142,17 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
 
         {/* Product share card */}
         {msg.message_type === "product_share" && msg.product_data && (
-          <div className={`mb-1 rounded-2xl overflow-hidden border ${isMine ? "border-indigo-400/40" : "border-slate-200"}`}>
-            <div className={`flex items-center gap-2 p-2.5 ${isMine ? "bg-indigo-500" : "bg-slate-50"}`}>
+          <div className={`mb-1 rounded-2xl overflow-hidden border ${isMine ? "border-orange-400/40" : "border-slate-200"}`}>
+            <div className={`flex items-center gap-2 p-2.5 ${isMine ? "bg-orange-500" : "bg-slate-50"}`}>
               {msg.product_data.image && (
                 <img src={msg.product_data.image} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <p className={`text-xs font-semibold truncate ${isMine ? "text-white" : "text-slate-800"}`}>{msg.product_data.title}</p>
-                <p className={`text-xs font-bold ${isMine ? "text-indigo-200" : "text-indigo-600"}`}>${msg.product_data.price}</p>
+                <p className={`text-xs font-bold ${isMine ? "text-orange-200" : "text-orange-600"}`}>${msg.product_data.price}</p>
               </div>
               <Link to={createPageUrl("ProductDetail") + `?id=${msg.product_id}`}>
-                <button className={`shrink-0 text-xs px-2 py-1 rounded-lg font-semibold ${isMine ? "bg-white/20 text-white" : "bg-indigo-600 text-white"}`}>View</button>
+                <button className={`shrink-0 text-xs px-2 py-1 rounded-lg font-semibold ${isMine ? "bg-white/20 text-white" : "bg-orange-600 text-white"}`}>View</button>
               </Link>
             </div>
           </div>
@@ -160,9 +160,9 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
 
         {/* Offer card */}
         {msg.message_type === "offer" && (
-          <div className={`mb-1 p-3 rounded-2xl border-2 border-dashed ${isMine ? "border-indigo-400/60 bg-indigo-500" : "border-indigo-300 bg-indigo-50"}`}>
-            <p className={`text-xs font-semibold ${isMine ? "text-indigo-100" : "text-indigo-700"}`}>💰 Price Offer</p>
-            <p className={`text-xl font-bold ${isMine ? "text-white" : "text-indigo-900"}`}>${msg.offer_amount}</p>
+          <div className={`mb-1 p-3 rounded-2xl border-2 border-dashed ${isMine ? "border-orange-400/60 bg-orange-500" : "border-orange-300 bg-orange-50"}`}>
+            <p className={`text-xs font-semibold ${isMine ? "text-orange-100" : "text-orange-700"}`}>💰 Price Offer</p>
+            <p className={`text-xl font-bold ${isMine ? "text-white" : "text-orange-900"}`}>${msg.offer_amount}</p>
             {!isMine && (
               <div className="flex gap-2 mt-2">
                 <button
@@ -186,7 +186,7 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
 
         {/* Image message */}
         {msg.message_type === "image" && msg.image_url && (
-          <div className={`mb-1 rounded-2xl overflow-hidden ${isMine ? "border border-indigo-400/40" : "border border-slate-200"}`}>
+          <div className={`mb-1 rounded-2xl overflow-hidden ${isMine ? "border border-orange-400/40" : "border border-slate-200"}`}>
             <img
               src={msg.image_url}
               alt="Shared image"
@@ -198,9 +198,9 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
 
         {/* Reply context */}
         {msg.reply_to_content && (
-          <div className={`mb-1 px-3 py-1.5 rounded-xl border-l-2 ${isMine ? "bg-indigo-500/30 border-indigo-200" : "bg-slate-100 border-slate-300"}`}>
-            <p className={`text-[10px] font-semibold ${isMine ? "text-indigo-200" : "text-slate-500"}`}>{msg.reply_to_name || "Reply"}</p>
-            <p className={`text-[11px] truncate ${isMine ? "text-indigo-100" : "text-slate-600"}`}>{msg.reply_to_content}</p>
+          <div className={`mb-1 px-3 py-1.5 rounded-xl border-l-2 ${isMine ? "bg-orange-500/30 border-orange-200" : "bg-slate-100 border-slate-300"}`}>
+            <p className={`text-[10px] font-semibold ${isMine ? "text-orange-200" : "text-slate-500"}`}>{msg.reply_to_name || "Reply"}</p>
+            <p className={`text-[11px] truncate ${isMine ? "text-orange-100" : "text-slate-600"}`}>{msg.reply_to_content}</p>
           </div>
         )}
 
@@ -215,9 +215,9 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
                 if (e.key === "Escape") setEditing(false);
               }}
               autoFocus
-              className="flex-1 px-3 py-2 text-sm rounded-xl border border-indigo-300 outline-none bg-white"
+              className="flex-1 px-3 py-2 text-sm rounded-xl border border-orange-300 outline-none bg-white"
             />
-            <button onClick={() => editMutation.mutate(editText)} className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-xl font-semibold">Save</button>
+            <button onClick={() => editMutation.mutate(editText)} className="px-3 py-1 bg-orange-600 text-white text-xs rounded-xl font-semibold">Save</button>
             <button onClick={() => setEditing(false)} className="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-xl">Cancel</button>
           </div>
         ) : (
@@ -226,15 +226,15 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
             onClick={() => setShowActions(false)}
             className={`px-4 py-2.5 rounded-2xl text-sm cursor-pointer select-none ${
               isMine
-                ? "bg-indigo-600 text-white rounded-br-sm"
+                ? "bg-orange-600 text-white rounded-br-sm"
                 : "bg-white text-slate-700 border border-slate-100 rounded-bl-sm shadow-sm"
             }`}
           >
             {msg.content && <p className="leading-relaxed">{msg.content}</p>}
-            {msg.is_edited && <span className={`text-[9px] italic ${isMine ? "text-indigo-200" : "text-slate-400"}`}> (edited)</span>}
-            <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${isMine ? "text-indigo-200 justify-end" : "text-slate-400"}`}>
+            {msg.is_edited && <span className={`text-[9px] italic ${isMine ? "text-orange-200" : "text-slate-400"}`}> (edited)</span>}
+            <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${isMine ? "text-orange-200 justify-end" : "text-slate-400"}`}>
               {new Date(msg.created_at || msg.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-              {isMine && <CheckCheck className={`w-3 h-3 ${msg.is_read ? "text-blue-300" : "text-indigo-300"}`} />}
+              {isMine && <CheckCheck className={`w-3 h-3 ${msg.is_read ? "text-orange-300" : "text-orange-300"}`} />}
             </div>
           </div>
         )}

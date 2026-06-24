@@ -225,7 +225,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
             {currentUser && (
               <button
                 onClick={() => setShowReplyInput(prev => !prev)}
-                className={`flex items-center gap-1 text-[10px] font-bold transition-colors ${showReplyInput ? "text-indigo-600" : "text-slate-400 hover:text-indigo-500"}`}
+                className={`flex items-center gap-1 text-[10px] font-bold transition-colors ${showReplyInput ? "text-orange-600" : "text-slate-400 hover:text-orange-500"}`}
               >
                 <CornerDownRight className="w-3 h-3" />
                 {t("common.reply") || "Reply"}
@@ -243,8 +243,8 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-2 mt-2 ml-2 pl-2 border-l-2 border-indigo-200">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+              <div className="flex items-center gap-2 mt-2 ml-2 pl-2 border-l-2 border-orange-200">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                   {currentUser?.full_name?.[0]?.toUpperCase() || "U"}
                 </div>
                 <div className="flex-1 flex gap-2">
@@ -253,7 +253,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder={`${t("common.replyTo") || "Reply to"} @${comment.author_username || "User"}...`}
-                    className="rounded-xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-9 text-sm focus:ring-indigo-100"
+                    className="rounded-xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-9 text-sm focus:ring-orange-100"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey && replyText.trim() && !replyMutation.isPending) {
                         e.preventDefault();
@@ -269,7 +269,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
                     onClick={() => replyText.trim() && replyMutation.mutate()}
                     disabled={!replyText.trim() || replyMutation.isPending}
                     size="icon"
-                    className="rounded-xl bg-indigo-600 hover:bg-indigo-700 w-9 h-9 shrink-0"
+                    className="rounded-xl bg-orange-600 hover:bg-orange-700 w-9 h-9 shrink-0"
                   >
                     {replyMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   </Button>
@@ -283,7 +283,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
         {replyCount > 0 && (
           <button
             onClick={() => setShowReplies(prev => !prev)}
-            className="flex items-center gap-1.5 ml-2 mt-2 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+            className="flex items-center gap-1.5 ml-2 mt-2 text-[11px] font-bold text-orange-600 hover:text-indigo-700 transition-colors"
           >
             {showReplies ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             {showReplies
@@ -442,7 +442,7 @@ export default function PostDetail() {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder={t("chat.typeMessage")}
-                  className="rounded-2xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-11 focus:ring-indigo-100"
+                  className="rounded-2xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-11 focus:ring-orange-100"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey && commentText.trim() && !addCommentMutation.isPending) {
                       e.preventDefault();

@@ -32,7 +32,7 @@ import OrderTrackingPanel from "./OrderTrackingPanel";
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: "bg-amber-100 text-amber-700", label: "Pending" },
   confirmed: { icon: CheckCircle2, color: "bg-blue-100 text-blue-700", label: "Confirmed" },
-  processing: { icon: Package, color: "bg-indigo-100 text-indigo-700", label: "Processing" },
+  processing: { icon: Package, color: "bg-orange-100 text-orange-700", label: "Processing" },
   shipped: { icon: Truck, color: "bg-purple-100 text-purple-700", label: "Shipped" },
   delivered: { icon: CheckCircle2, color: "bg-green-100 text-green-700", label: "Delivered" },
   cancelled: { icon: XCircle, color: "bg-red-100 text-red-700", label: "Cancelled" },
@@ -93,8 +93,8 @@ export default function OrderDetailModal({
         <div className="p-6 space-y-8">
           {/* Vendor Status Management */}
           {isVendor && (
-            <section className="bg-indigo-50/30 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-4">
-              <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-300 mb-3 flex items-center gap-2">
+            <section className="bg-orange-50/30 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-2xl p-4">
+              <h3 className="text-sm font-bold text-orange-900 dark:text-orange-300 mb-3 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 Manage Order Status
               </h3>
@@ -103,7 +103,7 @@ export default function OrderDetailModal({
                   value={order.status} 
                   onValueChange={(newStatus) => onUpdateStatus?.(order._id || order.id, newStatus)}
                 >
-                  <SelectTrigger className="flex-1 bg-white dark:bg-slate-700 rounded-xl h-11 border-indigo-100 dark:border-indigo-800">
+                  <SelectTrigger className="flex-1 bg-white dark:bg-slate-700 rounded-xl h-11 border-orange-100 dark:border-orange-800">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

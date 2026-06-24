@@ -136,7 +136,7 @@ export default function Cart() {
           description={t("cart.emptyDescription")}
           action={
             <Link to={createPageUrl("Marketplace")}>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold">{t("cart.browseProducts")}</Button>
+              <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl font-bold">{t("cart.browseProducts")}</Button>
             </Link>
           }
         />
@@ -166,7 +166,7 @@ export default function Cart() {
                       {item.product_title}
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{item.store_name}</p>
-                    <p className="text-base font-bold text-indigo-600 dark:text-indigo-400">
+                    <p className="text-base font-bold text-orange-600 dark:text-orange-400">
                       {formatCurrency(item.product_price)}
                     </p>
                   </div>
@@ -298,7 +298,7 @@ export default function Cart() {
               <Button
                 onClick={handlePayNow}
                 disabled={cartItems.length === 0}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-base font-bold shadow-lg shadow-indigo-200/50 dark:shadow-indigo-900/30 mb-2 transition-colors"
+                className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-base font-bold shadow-lg shadow-orange-200/50 dark:shadow-orange-900/30 mb-2 transition-colors"
               >
                 <Zap className="w-4 h-4 mr-2" /> {t("cart.payNow")}
               </Button>

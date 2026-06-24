@@ -190,7 +190,7 @@ export default function CreatePost() {
       <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
         {/* Author row */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-lg shrink-0">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-lg shrink-0">
             {currentUser?.full_name?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
@@ -222,10 +222,10 @@ export default function CreatePost() {
 
         {/* Tagged products */}
         {taggedProducts.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-            <p className="text-xs font-semibold text-indigo-700 w-full mb-1">{t("create.taggedProducts")}</p>
+          <div className="flex flex-wrap gap-2 mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
+            <p className="text-xs font-semibold text-orange-700 w-full mb-1">{t("create.taggedProducts")}</p>
             {taggedProducts.map(p => (
-              <div key={p.id} className="flex items-center gap-1.5 bg-white rounded-lg px-2.5 py-1 border border-indigo-100 text-xs">
+              <div key={p.id} className="flex items-center gap-1.5 bg-white rounded-lg px-2.5 py-1 border border-orange-100 text-xs">
                 <span className="text-slate-700 font-medium">{p.title}</span>
                 <button onClick={() => toggleProduct(p)} className="text-slate-400 hover:text-red-500">
                   <X className="w-3 h-3" />
@@ -271,7 +271,7 @@ export default function CreatePost() {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${uploadProgress}%` }}
-                className="h-full bg-indigo-500 rounded-full"
+                className="h-full bg-orange-500 rounded-full"
               />
             </div>
           </div>
@@ -305,10 +305,10 @@ export default function CreatePost() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-slate-800 truncate">{p.title}</p>
-                      <p className="text-xs text-indigo-600 font-bold">{formatCurrency(p.price)}</p>
+                      <p className="text-xs text-orange-600 font-bold">{formatCurrency(p.price)}</p>
                     </div>
                     {taggedProducts.find(tp => tp.id === p.id) && (
-                      <Badge className="bg-indigo-100 text-indigo-700 text-[10px] border-0">{t("create.taggedLabel")}</Badge>
+                      <Badge className="bg-orange-100 text-orange-700 text-[10px] border-0">{t("create.taggedLabel")}</Badge>
                     )}
                   </button>
                 ))}
@@ -344,7 +344,7 @@ export default function CreatePost() {
             </label>
             <button
               onClick={() => { setShowProductSearch(v => !v); setShowEmoji(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 text-sm transition-colors ${showProductSearch ? "bg-indigo-50 text-indigo-600" : "hover:bg-slate-50"}`}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 text-sm transition-colors ${showProductSearch ? "bg-indigo-50 text-orange-600" : "hover:bg-slate-50"}`}
             >
               <ShoppingBag className="w-5 h-5 text-purple-500" />
               <span className="hidden sm:inline text-xs">{t("create.tag")}</span>

@@ -75,7 +75,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
           {bannerUrl ? (
             <img src={bannerUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+            <div className="w-full h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700" />
           )}
           <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
             {uploadingBanner ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
@@ -86,7 +86,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
         {/* Avatar */}
         <div className="flex justify-center -mt-10 relative z-10 mb-2">
           <label className="relative cursor-pointer group">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-4 ring-white shadow-lg">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center ring-4 ring-white shadow-lg">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -113,7 +113,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
               rows={3}
               maxLength={160}
               placeholder="Tell people a little about yourself..."
-              className="w-full text-sm border border-input rounded-xl px-3 py-2 resize-none outline-none focus:ring-1 focus:ring-indigo-300"
+              className="w-full text-sm border border-input rounded-xl px-3 py-2 resize-none outline-none focus:ring-1 focus:ring-orange-300"
             />
             <p className="text-right text-[10px] text-slate-400">{bio.length}/160</p>
           </div>
@@ -121,7 +121,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
 
         <div className="flex gap-2 mt-2">
           <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl">Cancel</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl">
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="flex-1 bg-orange-600 hover:bg-orange-700 rounded-xl">
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
           </Button>
         </div>
