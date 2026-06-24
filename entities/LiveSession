@@ -1,0 +1,69 @@
+{
+  "name": "LiveSession",
+  "type": "object",
+  "properties": {
+    "host_email": {
+      "type": "string"
+    },
+    "host_name": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "thumbnail": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "fashion",
+        "electronics",
+        "home",
+        "beauty",
+        "sports",
+        "food",
+        "art",
+        "other"
+      ]
+    },
+    "is_live": {
+      "type": "boolean",
+      "default": false
+    },
+    "viewer_count": {
+      "type": "number",
+      "default": 0
+    },
+    "likes": {
+      "type": "number",
+      "default": 0
+    },
+    "pinned_products": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of {id, title, price, image} product objects"
+    },
+    "stream_key": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "host_email",
+    "title"
+  ]
+}

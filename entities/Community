@@ -1,0 +1,62 @@
+{
+  "name": "Community",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "cover_image": {
+      "type": "string"
+    },
+    "icon_url": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "fashion",
+        "tech",
+        "fitness",
+        "food",
+        "art",
+        "music",
+        "gaming",
+        "travel",
+        "diy",
+        "other"
+      ]
+    },
+    "owner_email": {
+      "type": "string"
+    },
+    "member_count": {
+      "type": "number",
+      "default": 0
+    },
+    "post_count": {
+      "type": "number",
+      "default": 0
+    },
+    "featured_products": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Featured product IDs"
+    },
+    "rules": {
+      "type": "string"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "owner_email"
+  ]
+}

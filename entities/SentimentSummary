@@ -1,0 +1,48 @@
+{
+  "name": "SentimentSummary",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string"
+    },
+    "overall_sentiment": {
+      "type": "string",
+      "enum": [
+        "very_positive",
+        "positive",
+        "neutral",
+        "negative",
+        "very_negative"
+      ]
+    },
+    "sentiment_score": {
+      "type": "number",
+      "description": "0-100 score"
+    },
+    "pros": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary_text": {
+      "type": "string"
+    },
+    "review_count_analyzed": {
+      "type": "number",
+      "default": 0
+    },
+    "last_updated": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "product_id"
+  ]
+}

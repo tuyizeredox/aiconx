@@ -1,0 +1,65 @@
+{
+  "name": "AffiliateLink",
+  "type": "object",
+  "properties": {
+    "influencer_email": {
+      "type": "string"
+    },
+    "influencer_name": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_title": {
+      "type": "string"
+    },
+    "product_price": {
+      "type": "number"
+    },
+    "ref_code": {
+      "type": "string",
+      "description": "Unique referral code"
+    },
+    "commission_pct": {
+      "type": "number",
+      "default": 10
+    },
+    "clicks": {
+      "type": "number",
+      "default": 0
+    },
+    "conversions": {
+      "type": "number",
+      "default": 0
+    },
+    "total_commission_earned": {
+      "type": "number",
+      "default": 0
+    },
+    "commission_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "expired"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "influencer_email",
+    "product_id",
+    "ref_code"
+  ]
+}

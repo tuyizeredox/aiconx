@@ -1,0 +1,79 @@
+{
+  "name": "Post",
+  "type": "object",
+  "properties": {
+    "author_username": {
+      "type": "string",
+      "description": "Username of the post author"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the author"
+    },
+    "author_avatar": {
+      "type": "string",
+      "description": "Avatar URL of the author"
+    },
+    "content": {
+      "type": "string",
+      "description": "Text content of the post"
+    },
+    "media_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs of images/videos"
+    },
+    "media_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "video",
+        "text",
+        "product_review"
+      ],
+      "description": "Type of media in the post"
+    },
+    "tagged_products": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of tagged products"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0
+    },
+    "shares_count": {
+      "type": "number",
+      "default": 0
+    },
+    "community_id": {
+      "type": "string",
+      "description": "Community this post belongs to, if any"
+    },
+    "is_sponsored": {
+      "type": "boolean",
+      "default": false
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "followers",
+        "community"
+      ],
+      "default": "public"
+    }
+  },
+  "required": [
+    "author_username",
+    "content"
+  ]
+}

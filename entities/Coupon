@@ -1,0 +1,57 @@
+{
+  "name": "Coupon",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Coupon code (e.g. SAVE20)"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "vendor_email": {
+      "type": "string"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "percentage",
+        "flat"
+      ],
+      "default": "percentage"
+    },
+    "discount_value": {
+      "type": "number",
+      "description": "Percent (e.g. 20) or flat amount (e.g. 10)"
+    },
+    "min_order_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum cart total to apply coupon"
+    },
+    "max_uses": {
+      "type": "number",
+      "default": 0,
+      "description": "0 = unlimited"
+    },
+    "uses_count": {
+      "type": "number",
+      "default": 0
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Expiry date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "code",
+    "vendor_email",
+    "discount_type",
+    "discount_value"
+  ]
+}

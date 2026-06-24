@@ -1,0 +1,148 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "buyer_username": {
+      "type": "string"
+    },
+    "buyer_name": {
+      "type": "string"
+    },
+    "vendor_username": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_title": {
+            "type": "string"
+          },
+          "product_image": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "shipping_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "delivery_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "shipping",
+        "delivery",
+        "pickup"
+      ],
+      "default": "shipping"
+    },
+    "total": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "shipping_address": {
+      "type": "string"
+    },
+    "shipping_country": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 2
+    },
+    "estimated_delivery": {
+      "type": "string"
+    },
+    "pickup_instructions": {
+      "type": "string"
+    },
+    "tracking_number": {
+      "type": "string"
+    },
+    "affiliate_username": {
+      "type": "string",
+      "description": "Affiliate who referred this order"
+    },
+    "affiliate_commission": {
+      "type": "number",
+      "default": 0
+    },
+"payment_method": {
+      "type": "string",
+      "enum": [
+        "card",
+        "paypal",
+        "crypto",
+        "bank_transfer",
+        "mobile_money",
+        "itecpay"
+      ],
+      "default": "itecpay"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_reference": {
+      "type": "string"
+    },
+    "payment_provider": {
+      "type": "string",
+      "enum": ["stripe", "itecpay"]
+    },
+    "tax_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "discount_amount": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "buyer_username",
+    "vendor_username",
+    "items",
+    "total"
+  ]
+}

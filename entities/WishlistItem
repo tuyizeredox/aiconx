@@ -1,0 +1,37 @@
+{
+  "name": "WishlistItem",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_title": {
+      "type": "string"
+    },
+    "product_image": {
+      "type": "string"
+    },
+    "product_price": {
+      "type": "number"
+    },
+    "compare_at_price": {
+      "type": "number"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "vendor_email": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_email",
+    "product_id"
+  ]
+}

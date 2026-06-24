@@ -1,0 +1,114 @@
+{
+  "name": "Store",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Store name"
+    },
+    "description": {
+      "type": "string"
+    },
+    "owner_email": {
+      "type": "string"
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "banner_url": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "fashion",
+        "electronics",
+        "home",
+        "beauty",
+        "sports",
+        "food",
+        "art",
+        "books",
+        "handmade",
+        "other"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "default": "pending"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "follower_count": {
+      "type": "number",
+      "default": 0
+    },
+    "product_count": {
+      "type": "number",
+      "default": 0
+    },
+    "total_sales": {
+      "type": "number",
+      "default": 0
+    },
+    "rating_avg": {
+      "type": "number",
+      "default": 0
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "paypal",
+        "stripe",
+        "other"
+      ],
+      "default": "bank_transfer"
+    },
+    "bank_name": { "type": "string" },
+    "bank_account_name": { "type": "string" },
+    "bank_account_number": { "type": "string" },
+    "routing_number": { "type": "string" },
+    "paypal_email": { "type": "string" },
+    "delivery_settings": {
+      "type": "object",
+      "properties": {
+        "shipping_enabled": { "type": "boolean", "default": true },
+        "delivery_enabled": { "type": "boolean", "default": false },
+        "pickup_enabled": { "type": "boolean", "default": false },
+        "delivery_fee": { "type": "number", "default": 0 },
+        "delivery_radius_km": { "type": "number" },
+        "min_order_for_delivery": { "type": "number", "default": 0 },
+        "free_delivery_above": { "type": "number" },
+        "delivery_time_est": { "type": "string" },
+        "pickup_instructions": { "type": "string" }
+      }
+    },
+    "phone_number": { "type": "string" },
+    "address": { "type": "string" },
+    "website_url": { "type": "string" },
+    "social_links": {
+      "type": "object",
+      "properties": {
+        "facebook": { "type": "string" },
+        "instagram": { "type": "string" },
+        "twitter": { "type": "string" },
+        "tiktok": { "type": "string" }
+      }
+    }
+  },
+  "required": [
+    "name",
+    "owner_email"
+  ]
+}

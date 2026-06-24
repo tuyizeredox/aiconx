@@ -1,0 +1,25 @@
+{
+  "name": "CommunityMember",
+  "type": "object",
+  "properties": {
+    "community_id": {
+      "type": "string"
+    },
+    "member_email": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "member",
+        "moderator",
+        "admin"
+      ],
+      "default": "member"
+    }
+  },
+  "required": [
+    "community_id",
+    "member_email"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_username": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "like",
+        "comment",
+        "follow",
+        "order_update",
+        "message",
+        "mention",
+        "community",
+        "promotion",
+        "offer",
+        "subscription_limit",
+        "product_added"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string",
+      "description": "Deep link to relevant page"
+    },
+    "sender_username": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "recipient_username",
+    "type",
+    "title"
+  ]
+}

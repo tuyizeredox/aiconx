@@ -1,0 +1,56 @@
+{
+  "name": "VendorSubscription",
+  "type": "object",
+  "properties": {
+    "vendor_email": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "pro",
+        "elite"
+      ],
+      "default": "free"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "annual"
+      ],
+      "default": "monthly"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "custom_domain": {
+      "type": "string"
+    },
+    "payment_method": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "vendor_email",
+    "plan"
+  ]
+}

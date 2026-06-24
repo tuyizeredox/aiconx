@@ -1,0 +1,39 @@
+{
+  "name": "LiveChatMessage",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "chat",
+        "purchase",
+        "join",
+        "like"
+      ],
+      "default": "chat"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_title": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "user_email",
+    "content"
+  ]
+}

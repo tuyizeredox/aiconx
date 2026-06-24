@@ -1,0 +1,45 @@
+{
+  "name": "Call",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "description": "Reference to the chat conversation"
+    },
+    "caller_username": {
+      "type": "string",
+      "description": "Username of the caller"
+    },
+    "callee_username": {
+      "type": "string",
+      "description": "Username of the callee"
+    },
+    "call_type": {
+      "type": "string",
+      "enum": ["voice", "video"],
+      "default": "voice"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ringing", "answered", "rejected", "ended", "missed"],
+      "default": "ringing"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration": {
+      "type": "number",
+      "description": "Call duration in seconds"
+    }
+  },
+  "required": [
+    "caller_username",
+    "callee_username",
+    "call_type"
+  ]
+}

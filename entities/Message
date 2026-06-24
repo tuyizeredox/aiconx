@@ -1,0 +1,83 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string"
+    },
+    "sender_username": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "receiver_username": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "image",
+        "product_share",
+        "order_update",
+        "offer"
+      ],
+      "default": "text"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Image URL if message_type is image"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_data": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "image": {
+          "type": "string"
+        }
+      }
+    },
+    "offer_amount": {
+      "type": "number"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Linked order ID when offer creates an order"
+    },
+    "reply_to_content": {
+      "type": "string"
+    },
+    "reply_to_name": {
+      "type": "string"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_edited": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "conversation_id",
+    "sender_username",
+    "content"
+  ]
+}

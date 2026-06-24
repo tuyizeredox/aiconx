@@ -1,0 +1,48 @@
+{
+  "name": "ShippingZone",
+  "type": "object",
+  "properties": {
+    "vendor_email": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "zone_name": {
+      "type": "string",
+      "description": "e.g. Domestic, Europe, Asia-Pacific"
+    },
+    "countries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Country codes e.g. US, CA, GB"
+    },
+    "flat_rate": {
+      "type": "number",
+      "description": "Flat shipping cost in USD"
+    },
+    "free_above": {
+      "type": "number",
+      "description": "Order amount above which shipping is free (0 = never free)"
+    },
+    "estimated_days_min": {
+      "type": "number",
+      "default": 3
+    },
+    "estimated_days_max": {
+      "type": "number",
+      "default": 7
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "vendor_email",
+    "zone_name",
+    "flat_rate"
+  ]
+}

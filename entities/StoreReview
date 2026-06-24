@@ -1,0 +1,50 @@
+{
+  "name": "StoreReview",
+  "type": "object",
+  "properties": {
+    "store_id": {
+      "type": "string"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "vendor_email": {
+      "type": "string"
+    },
+    "reviewer_email": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number",
+      "description": "1-5 star rating"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "vendor_reply": {
+      "type": "string"
+    },
+    "vendor_replied_at": {
+      "type": "string"
+    },
+    "helpful_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_verified_purchase": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "store_id",
+    "reviewer_email",
+    "rating"
+  ]
+}

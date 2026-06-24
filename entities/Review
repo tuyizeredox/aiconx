@@ -1,0 +1,47 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string"
+    },
+    "store_id": {
+      "type": "string"
+    },
+    "reviewer_email": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number",
+      "description": "1-5 star rating"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "media_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_verified_purchase": {
+      "type": "boolean",
+      "default": false
+    },
+    "helpful_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "product_id",
+    "reviewer_email",
+    "rating"
+  ]
+}

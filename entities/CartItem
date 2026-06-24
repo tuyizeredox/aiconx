@@ -1,0 +1,48 @@
+{
+  "name": "CartItem",
+  "type": "object",
+  "properties": {
+    "user_username": {
+      "type": "string",
+      "description": "Username of the user who owns this cart item"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Product ID"
+    },
+    "product_title": {
+      "type": "string",
+      "description": "Product title"
+    },
+    "product_image": {
+      "type": "string",
+      "description": "Product image URL"
+    },
+    "product_price": {
+      "type": "number",
+      "description": "Product price"
+    },
+    "store_id": {
+      "type": "string",
+      "description": "Store ID"
+    },
+    "store_name": {
+      "type": "string",
+      "description": "Store name"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1,
+      "description": "Quantity of the product"
+    },
+    "affiliate_username": {
+      "type": "string",
+      "description": "Affiliate username who referred this item"
+    }
+  },
+  "required": [
+    "user_username",
+    "product_id",
+    "quantity"
+  ]
+}

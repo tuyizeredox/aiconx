@@ -1,0 +1,101 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Product title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Product price"
+    },
+    "compare_at_price": {
+      "type": "number",
+      "description": "Original price for showing discount"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Product image URLs"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "fashion",
+        "electronics",
+        "home",
+        "beauty",
+        "sports",
+        "food",
+        "art",
+        "books",
+        "handmade",
+        "other"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "store_id": {
+      "type": "string",
+      "description": "ID of the store selling this product"
+    },
+    "store_name": {
+      "type": "string"
+    },
+    "vendor_username": {
+      "type": "string",
+      "description": "Username of the vendor"
+    },
+    "inventory_count": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "draft",
+        "sold_out",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "rating_avg": {
+      "type": "number",
+      "default": 0
+    },
+    "rating_count": {
+      "type": "number",
+      "default": 0
+    },
+    "sales_count": {
+      "type": "number",
+      "default": 0
+    },
+    "affiliate_commission_pct": {
+      "type": "number",
+      "default": 10,
+      "description": "Affiliate commission percentage"
+    }
+  },
+  "required": [
+    "title",
+    "price",
+    "vendor_username"
+  ]
+}

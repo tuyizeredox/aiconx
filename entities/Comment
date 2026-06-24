@@ -1,0 +1,34 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string"
+    },
+    "author_username": {
+      "type": "string"
+    },
+    "author_name": {
+      "type": "string"
+    },
+    "author_avatar": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "parent_comment_id": {
+      "type": "string",
+      "description": "For nested replies"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "post_id",
+    "author_username",
+    "content"
+  ]
+}
