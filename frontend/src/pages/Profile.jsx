@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/AuthContext";
 import {
   Grid3X3, ShoppingBag, UserPlus, UserCheck, LogOut,
   Store, Package, CheckCircle2, Clock, Truck, Pencil, Star, BadgeCheck, Heart,
-  Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles
+  Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X
 } from "lucide-react";
 import StarRating from "@/components/reviews/StarRating";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
@@ -29,8 +29,9 @@ import { motion } from "framer-motion";
 function UserListModal({ open, onClose, title, users = [] }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const filtered = users.filter(u => 
-    u.display_name?.toLowerCase().includes(search.toLowerCase()) || 
+  const usersArray = Array.isArray(users) ? users : [];
+  const filtered = usersArray.filter(u =>
+    u.display_name?.toLowerCase().includes(search.toLowerCase()) ||
     u.username?.toLowerCase().includes(search.toLowerCase()) ||
     u.following_username?.toLowerCase().includes(search.toLowerCase()) ||
     u.follower_username?.toLowerCase().includes(search.toLowerCase())
@@ -61,25 +62,27 @@ function UserListModal({ open, onClose, title, users = [] }) {
                 <p className="text-xs text-slate-400">{t("profile.noUsersFound")}</p>
               </div>
             ) : filtered.map((u, i) => {
-              const username = u.following_username || u.follower_username || u.username;
-              const name = u.display_name || username || "User";
+              const user = u.user || u;
+              const username = user.following_username || user.follower_username || user.username;
+              const name = user.display_name || username || "User";
+              const avatarUrl = user.avatar_url;
               return (
-                <Link 
-                  key={i} 
+                <Link
+                  key={i}
                   to={createPageUrl("Profile") + `?username=${username}`}
                   onClick={onClose}
                   className="flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-700">
-                    {u.avatar_url ? (
-                      <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-orange-600 dark:text-orange-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{t("profile.viewProfile")}</p>
+                    <p className="text-[10px] text-slate-400 truncate">@{username}</p>
                   </div>
                 </Link>
               );
@@ -106,6 +109,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [editOpen, setEditOpen] = useState(false);
   const [userList, setUserList] = useState({ open: false, title: "", users: [] });
+  const [imageModalOpen, setImageModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { user: currentUser, logout } = useAuth();
 
@@ -292,13 +296,18 @@ export default function Profile() {
           <div className="flex items-end justify-between -mt-12 mb-4">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
-                {avatarUrl ? (
+              {avatarUrl ? (
+                <button
+                  onClick={() => setImageModalOpen(true)}
+                  className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300 cursor-pointer p-0"
+                >
                   <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-                ) : (
+                </button>
+              ) : (
+                <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
                   <span className="text-white font-bold text-3xl">{displayName[0]?.toUpperCase()}</span>
-                )}
-              </div>
+                </div>
+              )}
               {(profileUser?.is_verified || store?.is_verified) && (
                 <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-lg">
                   <BadgeCheck className="w-4 h-4 text-white" />
@@ -698,12 +707,34 @@ export default function Profile() {
       )}
 
       {/* User List Modal (Followers/Following) */}
-      <UserListModal 
-        open={userList.open} 
+      <UserListModal
+        open={userList.open}
         onClose={() => setUserList({ ...userList, open: false })}
         title={userList.title}
         users={userList.users}
       />
+
+      {/* Profile Image Modal */}
+      <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center">
+            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white">{displayName}</DialogTitle>
+            <button
+              onClick={() => setImageModalOpen(false)}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-500" />
+            </button>
+          </DialogHeader>
+          <div className="p-4 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="max-w-full max-h-[70vh] object-contain rounded-lg"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

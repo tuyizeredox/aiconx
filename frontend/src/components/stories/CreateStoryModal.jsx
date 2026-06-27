@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { X, Image, Type, Loader2 } from "lucide-react";
-import { filesAPI, storiesAPI } from "@/api/apiClient";
+import { storiesAPI } from "@/api/apiClient";
+import { uploadStoryMedia } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,22 @@ export default function CreateStoryModal({ currentUser, onClose }) {
   const handleMediaSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Validate file type first
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg'];
+    if (!validTypes.includes(file.type)) {
+      toast.error(`Unsupported file type: ${file.type}. Supported: images (JPEG, PNG, GIF, WebP) and videos (MP4, WebM, OGG)`);
+      e.target.value = "";
+      return;
+    }
+    
+    // Validate file size (200MB limit)
+    if (file.size >= 200 * 1024 * 1024) {
+      toast.error(`File too large: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB). Max 200MB.`);
+      e.target.value = "";
+      return;
+    }
+    
     setMediaFile(file);
     setMediaPreview(URL.createObjectURL(file));
     setType(file.type.startsWith("video/") ? "video" : "image");
@@ -43,7 +60,7 @@ export default function CreateStoryModal({ currentUser, onClose }) {
       let media_url = null;
       if (mediaFile) {
         console.log(`Uploading story media: ${mediaFile.name}`);
-        const res = await filesAPI.upload(mediaFile);
+        const res = await uploadStoryMedia(mediaFile);
         console.log('Upload response:', res);
         media_url = res.url;
         if (!media_url) {
@@ -73,14 +90,21 @@ export default function CreateStoryModal({ currentUser, onClose }) {
 
       console.log('Publishing story with final data:', JSON.stringify(storyData, null, 2));
       await storiesAPI.create(storyData);
-      
-      queryClient.invalidateQueries({ queryKey: ["stories"] });
+
+      // Invalidate and refetch stories immediately
+      await queryClient.invalidateQueries({ queryKey: ["stories"] });
+      await queryClient.refetchQueries({ queryKey: ["stories"] });
+
       toast.success("Story published! 🎉");
       onClose();
     } catch (e) {
       console.error('Story publish failed:', e);
-      const detailMsg = e.details ? `: ${JSON.stringify(e.details)}` : '';
-      toast.error(`Failed to publish story${detailMsg}`);
+      if (e.status === 413 || e.message?.includes('too large')) {
+        toast.error('The file you are trying to upload is too large. Please try a smaller file.');
+      } else {
+        const detailMsg = e.details ? `: ${JSON.stringify(e.details)}` : '';
+        toast.error(`Failed to publish story${detailMsg}`);
+      }
     } finally {
       setUploading(false);
     }
@@ -95,7 +119,7 @@ export default function CreateStoryModal({ currentUser, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
-        initial={{ y: 60, opacity: 0 }}
+        initial={{ y: 60, opacity: 0 }}conrse preload="mtadata"
         animate={{ y: 0, opacity: 1 }}
         className="bg-white rounded-3xl w-full max-w-sm overflow-hidden"
       >
@@ -108,12 +132,12 @@ export default function CreateStoryModal({ currentUser, onClose }) {
         </div>
 
         {/* Preview */}
-        <div className="mx-4 mt-4 rounded-2xl overflow-hidden aspect-[9/16] max-h-64 relative">
+        <div className="mx-4 mt-4 rounded-2xl overflow-hidden relative max-h-96">
           {mediaPreview ? (
             type === "video" ? (
-              <video src={mediaPreview} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+              <video src={mediaPreview} className="w-full h-auto max-h-96 object-contain" controls playsInline preload="metadata" />
             ) : (
-              <img src={mediaPreview} alt="" className="w-full h-full object-cover" />
+              <img src={mediaPreview} alt="" className="w-full h-auto max-h-96 object-contain" />
             )
           ) : (
             <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: bgColor }}>

@@ -439,12 +439,29 @@ export async function followRoutes(fastify: FastifyInstance) {
         .find(filter)
         .sort({ created_at: -1 })
         .limit(limit)
-        .skip(skip);
+        .skip(skip)
+        .lean();
+
+      // Fetch user details for each follower
+      const followersWithDetails = await Promise.all(
+        followers.map(async (follow) => {
+          if (follow_type === 'user') {
+            const user = await User.findOne({ username: follow.follower_username })
+              .select('username display_name avatar_url is_verified')
+              .lean();
+            return {
+              ...follow,
+              user
+            };
+          }
+          return follow;
+        })
+      );
 
       const total = await Follow.countDocuments(filter);
 
-      reply.send({
-        followers,
+      return reply.send({
+        followers: followersWithDetails,
         pagination: {
           total,
           limit,
@@ -454,7 +471,7 @@ export async function followRoutes(fastify: FastifyInstance) {
       });
     } catch (error: any) {
       fastify.log.error(error, 'Get followers handler failed');
-      reply.code(500).send({ error: 'Internal server error', message: error.message });
+      return reply.code(500).send({ error: 'Internal server error', message: error.message });
     }
   });
 
@@ -479,12 +496,29 @@ export async function followRoutes(fastify: FastifyInstance) {
         .find(filter)
         .sort({ created_at: -1 })
         .limit(limit)
-        .skip(skip);
+        .skip(skip)
+        .lean();
+
+      // Fetch user details for each followed user
+      const followingWithDetails = await Promise.all(
+        following.map(async (follow) => {
+          if (follow.follow_type === 'user') {
+            const user = await User.findOne({ username: follow.following_username })
+              .select('username display_name avatar_url is_verified')
+              .lean();
+            return {
+              ...follow,
+              user
+            };
+          }
+          return follow;
+        })
+      );
 
       const total = await Follow.countDocuments(filter);
 
-      reply.send({
-        following,
+      return reply.send({
+        following: followingWithDetails,
         pagination: {
           total,
           limit,
@@ -494,7 +528,7 @@ export async function followRoutes(fastify: FastifyInstance) {
       });
     } catch (error: any) {
       fastify.log.error(error, 'Get following handler failed');
-      reply.code(500).send({ error: 'Internal server error', message: error.message });
+      return reply.code(500).send({ error: 'Internal server error', message: error.message });
     }
   });
 

@@ -1,46 +1,59 @@
 import { FastifyInstance } from 'fastify';
-import { v2 as cloudinary } from 'cloudinary';
 import { z } from 'zod';
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { 
+  uploadFile, 
+  deleteFile, 
+  generatePresignedUploadUrl, 
+  getStorageStatus,
+  isS3Configured 
+} from '../services/storageService';
 
 export async function fileRoutes(fastify: FastifyInstance) {
-  // Get a signature for Cloudinary client-side upload (more secure)
-  fastify.get('/upload-signature', {
-    preHandler: [fastify.authenticate],
-  }, async (request, reply) => {
+  // Get storage status
+  fastify.get('/storage-status', async (request, reply) => {
     try {
-      const timestamp = Math.round(new Date().getTime() / 1000);
-      const signature = cloudinary.utils.api_sign_request(
-        { timestamp, folder: 'iqon' },
-        process.env.CLOUDINARY_API_SECRET!
-      );
-
-      return {
-        signature,
-        timestamp,
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        folder: 'iqon',
-      };
+      return getStorageStatus();
     } catch (error) {
       fastify.log.error(error);
-      return reply.code(500).send({ error: 'Failed to generate upload signature' });
+      return reply.code(500).send({ error: 'Failed to get storage status' });
     }
   });
 
-  // Direct upload (if needed, but client-side is better for performance)
+  // Get presigned URL for S3 direct upload (client-side upload)
+  fastify.get('/presigned-url', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const query = request.query as any;
+      const { filename, contentType, folder = 'media' } = query;
+
+      if (!filename || !contentType) {
+        return reply.code(400).send({ error: 'filename and contentType are required' });
+      }
+
+      if (!isS3Configured()) {
+        return reply.code(503).send({ error: 'S3 not configured, falling back to Cloudinary' });
+      }
+
+      const presignedData = await generatePresignedUploadUrl(filename, contentType, folder);
+
+      return presignedData;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Failed to generate presigned URL' });
+    }
+  });
+
+  // Direct upload (backend upload - useful for base64 files)
   fastify.post('/upload', {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
     try {
       const body = request.body as any;
       const file = body?.file as string;
+      const filename = body?.filename || 'upload.jpg';
+      const contentType = body?.contentType || 'image/jpeg';
+      const folder = body?.folder || 'media';
       
       if (!file) {
         fastify.log.error('No file provided in request body');
@@ -53,35 +66,22 @@ export async function fileRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: 'Invalid file format. Please provide a base64 encoded image or video.' });
       }
 
-      // Log Cloudinary config status (without exposing secrets)
-      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-      const apiKey = process.env.CLOUDINARY_API_KEY;
-      const apiSecret = process.env.CLOUDINARY_API_SECRET;
-      
-      if (!cloudName || !apiKey || !apiSecret) {
-        fastify.log.error('Cloudinary credentials not configured');
-        fastify.log.error(`Config status - cloud_name: ${cloudName ? 'set' : 'missing'}, api_key: ${apiKey ? 'set' : 'missing'}, api_secret: ${apiSecret ? 'set' : 'missing'}`);
-        return reply.code(500).send({ error: 'Cloudinary configuration missing' });
-      }
+      fastify.log.info(`Uploading file (size: ${Math.round(file.length / 1024)}KB)`);
 
-      fastify.log.info(`Uploading file to Cloudinary (cloud: ${cloudName})`);
-      fastify.log.info(`File size: ${Math.round(file.length / 1024)}KB`);
+      const uploadResult = await uploadFile(file, filename, contentType, { folder });
 
-      const uploadResponse = await cloudinary.uploader.upload(file, {
-        folder: 'iqon',
-        resource_type: 'auto', // Auto-detect image or video
-      });
-
-      fastify.log.info(`Upload successful: ${uploadResponse.public_id}`);
+      fastify.log.info(`Upload successful: ${uploadResult.provider} - ${uploadResult.url}`);
 
       return {
-        url: uploadResponse.secure_url,
-        public_id: uploadResponse.public_id,
+        url: uploadResult.url,
+        key: uploadResult.key,
+        public_id: uploadResult.public_id,
+        provider: uploadResult.provider,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      fastify.log.error(`Cloudinary upload error: ${errorMessage}`);
-      fastify.log.error(error); // Log full error stack
+      fastify.log.error(`Upload error: ${errorMessage}`);
+      fastify.log.error(error);
       return reply.code(500).send({ 
         error: 'Upload failed',
         message: errorMessage 
@@ -90,12 +90,15 @@ export async function fileRoutes(fastify: FastifyInstance) {
   });
 
   // Delete file
-  fastify.delete('/:publicId', {
+  fastify.delete('/:keyOrPublicId', {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
     try {
-      const { publicId } = request.params as { publicId: string };
-      await cloudinary.uploader.destroy(publicId);
+      const { keyOrPublicId } = request.params as { keyOrPublicId: string };
+      const query = request.query as any;
+      const provider = query?.provider as 's3' | 'cloudinary' | undefined;
+
+      await deleteFile(keyOrPublicId, provider);
       return { status: 'deleted' };
     } catch (error) {
       fastify.log.error(error);

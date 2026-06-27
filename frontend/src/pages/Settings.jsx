@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { authAPI, filesAPI } from "@/api/apiClient";
+import { authAPI } from "@/api/apiClient";
+import { uploadAvatar } from "@/lib/storage";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
 import { useAuth } from "@/lib/AuthContext";
 import { 
@@ -305,7 +306,7 @@ export default function Settings() {
 
     setUploading(prev => ({ ...prev, [type]: true }));
     try {
-      const res = await filesAPI.upload(file);
+      const res = await uploadAvatar(file);
       if (res.url) {
         setProfileData(prev => ({ ...prev, [`${type}_url`]: res.url }));
         updateMutation.mutate({ [`${type}_url`]: res.url });

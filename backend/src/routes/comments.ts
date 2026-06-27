@@ -51,6 +51,23 @@ export async function commentRoutes(fastify: FastifyInstance) {
         .skip(parseInt(skip))
         .lean({ virtuals: true });
 
+      // Fetch user avatars for all comment authors
+      const authorUsernames = [...new Set(comments.map((c: any) => c.author_username))];
+      const users = await User.find({ username: { $in: authorUsernames } })
+        .select('username avatar_url')
+        .lean();
+      
+      const userAvatarMap = users.reduce((acc: any, user: any) => {
+        acc[user.username] = user.avatar_url;
+        return acc;
+      }, {});
+
+      // Update comments with current avatar URLs
+      const commentsWithAvatars = comments.map((comment: any) => ({
+        ...comment,
+        author_avatar: userAvatarMap[comment.author_username] || comment.author_avatar
+      }));
+
       const total = await Comment.countDocuments(filter);
 
       // Add is_liked field
@@ -59,11 +76,11 @@ export async function commentRoutes(fastify: FastifyInstance) {
       let userLikesSet = new Set<string>();
 
       if (effectiveUsername && typeof effectiveUsername === 'string') {
-        const commentIds = comments.map((c: any) => c._id.toString());
+        const commentIds = commentsWithAvatars.map((c: any) => c._id.toString());
         userLikesSet = await getLikesForTargets(effectiveUsername, 'comment', commentIds);
       }
 
-      const commentsWithLikeStatus = comments.map((comment: any) => ({
+      const commentsWithLikeStatus = commentsWithAvatars.map((comment: any) => ({
         ...comment,
         id: comment._id.toString(),
         is_liked: userLikesSet.has(comment._id.toString())
@@ -313,11 +330,38 @@ export async function commentRoutes(fastify: FastifyInstance) {
       // Get all replies
       const replies = await Comment
         .find({ parent_comment_id: id })
-        .sort({ created_at: 1 });
+        .sort({ created_at: 1 })
+        .lean({ virtuals: true });
+
+      // Fetch user avatars for all comment authors (parent + replies)
+      const authorUsernames = [...new Set([
+        comment.author_username,
+        ...replies.map((r: any) => r.author_username)
+      ])];
+      
+      const users = await User.find({ username: { $in: authorUsernames } })
+        .select('username avatar_url')
+        .lean();
+      
+      const userAvatarMap = users.reduce((acc: any, user: any) => {
+        acc[user.username] = user.avatar_url;
+        return acc;
+      }, {});
+
+      // Update comment and replies with current avatar URLs
+      const commentWithAvatar = {
+        ...comment.toObject(),
+        author_avatar: userAvatarMap[comment.author_username] || comment.author_avatar
+      };
+
+      const repliesWithAvatars = replies.map((reply: any) => ({
+        ...reply,
+        author_avatar: userAvatarMap[reply.author_username] || reply.author_avatar
+      }));
 
       reply.send({
-        comment,
-        replies,
+        comment: commentWithAvatar,
+        replies: repliesWithAvatars,
         total_replies: replies.length
       });
     } catch (error) {

@@ -37,7 +37,7 @@ import React, { useState } from "react";
      queryKey: ["myCommunityMemberships", currentUser?.email],
      queryFn: async () => {
        if (!currentUser?.email) return [];
-       const res = await communityMembersAPI.list({ member_email: currentUser.email, limit: 100 });
+       const res = await communityMembersAPI.list({ member_username: currentUser.username, limit: 100 });
        return res.data || [];
      },
      enabled: !!currentUser?.email,
@@ -60,8 +60,7 @@ import React, { useState } from "react";
      mutationFn: async () => { 
        await communitiesAPI.create({ 
          ...newCommunity, 
-         owner_email: currentUser.email, 
-       }); 
+         }); 
      }, 
      onSuccess: () => { 
        toast.success(t("communities.communityCreated")); 
@@ -75,8 +74,8 @@ import React, { useState } from "react";
      ? communities.filter(c => c.name?.toLowerCase().includes(search.toLowerCase())) 
      : communities; 
  
-   const myCommunities = communities.filter(c => joinedIds.has(c._id || c.id) || c.owner_email === currentUser?.email); 
-   const discoverCommunities = filtered.filter(c => !joinedIds.has(c._id || c.id) && c.owner_email !== currentUser?.email); 
+   const myCommunities = communities.filter(c => joinedIds.has(c._id || c.id) || c.owner_username === currentUser?.username); 
+   const discoverCommunities = filtered.filter(c => !joinedIds.has(c._id || c.id) && c.owner_username !== currentUser?.username); 
  
    return ( 
      <div className="max-w-4xl mx-auto px-4 py-6"> 

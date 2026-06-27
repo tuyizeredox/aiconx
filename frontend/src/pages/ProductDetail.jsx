@@ -452,7 +452,7 @@ export default function ProductDetail() {
             <p className="font-medium text-slate-500">{t("product.noReviewsYet")}</p>
             <p className="text-sm text-slate-400 mt-1 mb-4">{t("product.beFirstToReview")}</p>
             {currentUser && (
-              <Button onClick={() => setShowReviewForm(true)} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl">
+              <Button onClick={() => setShowReviewForm(true)} className="bg-orange-600 hover:bg-orange-700 rounded-xl">
                 <PenLine className="w-4 h-4 mr-2" /> {t("product.writeReview")}
               </Button>
             )}

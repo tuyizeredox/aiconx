@@ -31,7 +31,7 @@ import OrderTrackingPanel from "./OrderTrackingPanel";
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: "bg-amber-100 text-amber-700", label: "Pending" },
-  confirmed: { icon: CheckCircle2, color: "bg-blue-100 text-blue-700", label: "Confirmed" },
+  confirmed: { icon: CheckCircle2, color: "bg-orange-100 text-orange-700", label: "Confirmed" },
   processing: { icon: Package, color: "bg-orange-100 text-orange-700", label: "Processing" },
   shipped: { icon: Truck, color: "bg-purple-100 text-purple-700", label: "Shipped" },
   delivered: { icon: CheckCircle2, color: "bg-green-100 text-green-700", label: "Delivered" },
@@ -124,9 +124,9 @@ export default function OrderDetailModal({
             <div className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 {order.delivery_method === "delivery" ? (
-                  <Navigation className="w-4 h-4 text-indigo-600" />
+                  <Navigation className="w-4 h-4 text-orange-600" />
                 ) : (
-                  <Truck className="w-4 h-4 text-indigo-600" />
+                  <Truck className="w-4 h-4 text-orange-600" />
                 )}
                 {order.delivery_method === "delivery" ? "Delivery Status" : "Tracking Status"}
               </h3>
@@ -148,7 +148,7 @@ export default function OrderDetailModal({
           {/* Items Section */}
           <section>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Package className="w-4 h-4 text-indigo-600" />
+              <Package className="w-4 h-4 text-orange-600" />
               Items ({order.items?.length})
             </h3>
             <div className="space-y-4">
@@ -183,7 +183,7 @@ export default function OrderDetailModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <section>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-indigo-600" />
+                <CreditCard className="w-4 h-4 text-orange-600" />
                 Payment Info
               </h3>
               <div className="space-y-3 bg-slate-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-600">
@@ -209,11 +209,11 @@ export default function OrderDetailModal({
             <section>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 {order.delivery_method === "pickup" ? (
-                  <Package className="w-4 h-4 text-indigo-600" />
+                  <Package className="w-4 h-4 text-orange-600" />
                 ) : order.delivery_method === "delivery" ? (
-                  <Navigation className="w-4 h-4 text-indigo-600" />
+                  <Navigation className="w-4 h-4 text-orange-600" />
                 ) : (
-                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <MapPin className="w-4 h-4 text-orange-600" />
                 )}
                 {order.delivery_method === "pickup" ? "Store Pickup" : order.delivery_method === "delivery" ? "Local Delivery" : "Delivery Address"}
               </h3>
@@ -242,7 +242,7 @@ export default function OrderDetailModal({
                   <div className="mt-auto">
                     <Badge variant="secondary" className={`text-[10px] capitalize font-medium ${
                       order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
-                      order.delivery_method === "delivery" ? "bg-blue-100 text-blue-700" :
+                      order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
                       "bg-slate-100 text-slate-600"
                     }`}>
                       {order.delivery_method === "pickup" ? "Store Pickup" : order.delivery_method === "delivery" ? "Local Delivery" : "Shipping"}
@@ -269,7 +269,7 @@ export default function OrderDetailModal({
             {isVendor ? (
               <Button 
                 onClick={() => onContactBuyer?.(order.buyer_username)}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-indigo-100"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-orange-100"
               >
                 <MessageCircle className="w-4 h-4" />
                 Chat with Buyer
@@ -278,7 +278,7 @@ export default function OrderDetailModal({
               <>
                 <Button 
                   onClick={() => onContactVendor?.(order.vendor_username)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-indigo-100"
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-orange-100"
                 >
                   <MessageCircle className="w-4 h-4" />
                   Contact Vendor

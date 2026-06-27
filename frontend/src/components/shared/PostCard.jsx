@@ -1,24 +1,33 @@
 // Remove unused imports
 import React, { useState, useEffect, memo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { postsAPI, bookmarksAPI } from "@/api/apiClient";
-import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
+import { postsAPI, bookmarksAPI, followsAPI } from "@/api/apiClient";
+import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, Link2, UserPlus, UserMinus, Flag, Copy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import PostDetailModal from "./PostDetailModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { formatDistanceToNow } from "date-fns";
 import useEmblaCarousel from 'embla-carousel-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
-const PostCard = memo(function PostCard({ post, currentUser }) {
+const PostCard = memo(function PostCard({ post, currentUser, fullView = false }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const nativeShare = useNativeShare({ post, onFallback: () => setIsShareModalOpen(true) });
-  const [showFullContent, setShowFullContent] = useState(false);
+  const [showFullContent, setShowFullContent] = useState(fullView);
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -29,8 +38,21 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
   const postId = (post?.id || post?._id)?.toString();
   const authorUsername = post?.author_username;
   const isLiked = !!post?.is_liked;
+  const isOwner = currentUser?.username === authorUsername;
   const [optimisticLiked, setOptimisticLiked] = useState(isLiked);
   const [optimisticCount, setOptimisticCount] = useState(post?.likes_count || 0);
+
+  // Follow status check
+  const { data: followStatus } = useQuery({
+    queryKey: ["followStatus", currentUser?.username, authorUsername],
+    queryFn: () => followsAPI.check({
+      follower_username: currentUser?.username,
+      following_username: authorUsername
+    }),
+    enabled: !!currentUser?.username && !!authorUsername && !isOwner,
+  });
+
+  const isFollowing = followStatus?.is_following || false;
 
   useEffect(() => {
     setOptimisticLiked(isLiked);
@@ -163,27 +185,63 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await postsAPI.delete(postId);
+    },
+    onSuccess: () => {
+      toast.success("Post deleted");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+    onError: () => {
+      toast.error("Failed to delete post");
+    },
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (isFollowing) {
+        await followsAPI.unfollow({
+          follower_username: currentUser.username,
+          following_username: authorUsername
+        });
+      } else {
+        await followsAPI.follow(authorUsername, 'user');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["followStatus", currentUser?.username, authorUsername] });
+      queryClient.invalidateQueries({ queryKey: ["followCounts"] });
+      toast.success(isFollowing ? "Unfollowed" : "Following");
+    },
+    onError: () => {
+      toast.error("Failed to update follow status");
+    },
+  });
+
   if (!post) return null;
 
   const isVideoUrl = (url) => {
     if (!url) return false;
-    const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".m4v"];
+    const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".m4v", ".avi", ".mkv", ".flv", ".wmv", ".3gp"];
     return videoExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes("video/upload");
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300"
-    >
-      <ShareModal 
-        isOpen={isShareModalOpen} 
-        onOpenChange={setIsShareModalOpen} 
-        post={post} 
-        currentUser={currentUser} 
-      />
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300"
+      >
+        <ShareModal 
+          isOpen={isShareModalOpen} 
+          onOpenChange={setIsShareModalOpen} 
+          post={post} 
+          currentUser={currentUser} 
+        />
 
       {/* Header */}
       <div className="flex items-center justify-between p-4">
@@ -211,9 +269,84 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
             </div>
           </div>
         </Link>
-        <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors">
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {!isOwner && currentUser && (
+              <DropdownMenuItem
+                onClick={() => followMutation.mutate()}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {isFollowing ? (
+                  <>
+                    <UserMinus className="w-4 h-4" />
+                    <span>Unfollow</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    <span>Follow</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+            {isOwner && (
+              <DropdownMenuItem asChild>
+                <Link to={createPageUrl("CreatePost") + `?edit=${postId}`} className="flex items-center gap-2 cursor-pointer">
+                  <Edit className="w-4 h-4" />
+                  <span>Edit</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {isOwner && (
+              <DropdownMenuItem
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete this post?")) {
+                    deleteMutation.mutate();
+                  }
+                }}
+                className="flex items-center gap-2 cursor-pointer text-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            )}
+            {!isOwner && (
+              <DropdownMenuItem
+                onClick={() => setIsShareModalOpen(true)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.origin + createPageUrl("Home").replace("Home", "") + `post/${postId}`);
+                toast.success("Link copied to clipboard");
+              }}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copy link</span>
+            </DropdownMenuItem>
+            {!isOwner && (
+              <DropdownMenuItem
+                onClick={() => {
+                  toast.info("Report feature coming soon");
+                }}
+                className="flex items-center gap-2 cursor-pointer text-red-600"
+              >
+                <Flag className="w-4 h-4" />
+                <span>Report</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Content */}
@@ -222,7 +355,7 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
           <p className={`text-[14px] text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap ${!showFullContent && "line-clamp-3"}`}>
             {post.content}
           </p>
-          {post.content.length > 150 && (
+          {!fullView && post.content.length > 150 && (
             <button
               onClick={() => setShowFullContent(!showFullContent)}
               className="text-xs font-semibold text-orange-600 dark:text-orange-400 mt-1 hover:text-orange-700 dark:hover:text-orange-300"
@@ -235,10 +368,11 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
 
       {/* Media */}
       {post.media_urls?.length > 0 && (
-        <div className="mt-2 relative group select-none bg-slate-50 dark:bg-slate-950 aspect-square overflow-hidden">
+        <div className="mt-2 relative group select-none bg-slate-50 dark:bg-slate-950 overflow-hidden">
           <div 
-            className="h-full overflow-hidden cursor-pointer" 
+            className="overflow-hidden cursor-pointer" 
             ref={emblaRef}
+            onClick={() => !fullView && setIsDetailModalOpen(true)}
             onDoubleClick={() => {
               if (currentUser && !optimisticLiked) {
                 likeMutation.mutate();
@@ -247,26 +381,25 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
               }
             }}
           >
-            <div className="flex h-full">
+            <div className="flex">
               {post.media_urls.map((url, i) => {
                 const isVid = post.media_type === "video" || isVideoUrl(url);
                 return (
-                  <div key={`${url}-${i}`} className="flex-[0_0_100%] min-w-0 relative h-full">
+                  <div key={`${url}-${i}`} className="flex-[0_0_100%] min-w-0 relative">
                     {isVid ? (
                       <video 
                         ref={el => videoRefs.current[i] = el}
                         src={url} 
-                        className="w-full h-full object-cover" 
+                        className="w-full h-auto max-h-[600px] object-contain" 
                         controls 
-                        muted 
-                        loop 
                         playsInline 
+                        preload="metadata"
                       />
                     ) : (
                       <img 
                         src={url} 
                         alt="" 
-                        className="w-full h-full object-cover" 
+                        className="w-full h-auto max-h-[600px] object-contain" 
                         loading="lazy"
                         onError={(e) => {
                           e.target.src = "https://placehold.co/600x600/f8fafc/64748b?text=Image+Not+Found";
@@ -353,6 +486,19 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
         </div>
       )}
 
+      {/* Affiliate Links */}
+      {post.affiliate_links?.length > 0 && (
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 font-semibold">
+            <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+              <Link2 className="w-4 h-4" />
+            </div>
+            <span className="flex-1">Affiliate link attached</span>
+            <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">Earn commission</span>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 dark:border-slate-800/50">
         <div className="flex items-center gap-6">
@@ -375,12 +521,15 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
             </span>
           </button>
 
-          <Link to={createPageUrl("PostDetail") + `?id=${postId}`} className="flex items-center gap-1.5 group outline-none">
+          <button 
+            onClick={() => setIsDetailModalOpen(true)}
+            className="flex items-center gap-1.5 group outline-none"
+          >
             <MessageCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
             <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
               {post.comments_count > 0 ? post.comments_count.toLocaleString() : t("common.comment")}
             </span>
-          </Link>
+          </button>
 
           <button 
             onClick={() => currentUser && nativeShare()}
@@ -404,7 +553,15 @@ const PostCard = memo(function PostCard({ post, currentUser }) {
           <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
         </button>
       </div>
-    </motion.div>
+      </motion.div>
+
+      <PostDetailModal 
+        isOpen={isDetailModalOpen} 
+        onOpenChange={setIsDetailModalOpen} 
+        post={post} 
+        currentUser={currentUser} 
+      />
+    </>
   );
 });
 

@@ -25,6 +25,7 @@ export interface IMessage extends Document {
   read_at?: Date;
   is_edited: boolean;
   is_pinned: boolean;
+  reactions?: Record<string, number>;
   created_at: Date;
   updated_at: Date;
 }
@@ -109,6 +110,11 @@ const MessageSchema = new Schema<IMessage>({
   is_pinned: {
     type: Boolean,
     default: false,
+  },
+  reactions: {
+    type: Map,
+    of: Number,
+    default: {},
   },
 }, {
   timestamps: {

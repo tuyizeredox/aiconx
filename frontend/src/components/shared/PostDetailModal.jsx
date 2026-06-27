@@ -2,8 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
+import { 
+  Dialog, 
+  DialogContent 
+} from "@/components/ui/dialog";
 import PostCard from "@/components/shared/PostCard";
-import { ArrowLeft, Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -327,24 +331,11 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
   );
 }
 
-export default function PostDetail() {
+export default function PostDetailModal({ isOpen, onOpenChange, post, currentUser }) {
   const { t } = useTranslation();
-  const params = new URLSearchParams(window.location.search);
-  const postId = params.get("id");
+  const postId = (post?.id || post?._id)?.toString();
   const [commentText, setCommentText] = useState("");
   const queryClient = useQueryClient();
-  const { user: currentUser } = useAuth();
-
-  const { data: post, error: postError } = useQuery({
-    queryKey: ["postDetail", postId, currentUser?.username],
-    queryFn: async () => {
-      const p = {};
-      if (currentUser?.username) p.user_username = currentUser.username;
-      return postsAPI.get(postId, p);
-    },
-    enabled: !!postId,
-    retry: false,
-  });
 
   const { data: commentsData = [], isLoading: commentsLoading, error: commentsError } = useQuery({
     queryKey: ["postComments", postId, currentUser?.username],
@@ -353,7 +344,7 @@ export default function PostDetail() {
       if (currentUser?.username) p.user_username = currentUser.username;
       return commentsAPI.list(postId, p);
     },
-    enabled: !!postId,
+    enabled: !!isOpen && !!postId,
     retry: false,
   });
 
@@ -383,127 +374,122 @@ export default function PostDetail() {
     },
   });
 
-  if (!postId) {
-    return (
-      <div className="flex items-center justify-center h-64 text-slate-400">
-        No post ID provided
-      </div>
-    );
-  }
-
-  if (postError) {
-    return (
-      <div className="flex items-center justify-center h-64 text-slate-400">
-        {postError.status === 404 ? "Post not found" : "Error loading post"}
-      </div>
-    );
-  }
-
-  if (!post) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8 animate-pulse">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700" />
-          <div className="space-y-2">
-            <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
-            <div className="h-2 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
-          </div>
-        </div>
-        <div className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-3xl mb-4" />
-        <div className="space-y-2">
-          <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-800 rounded" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 lg:py-6">
-      <Link to={createPageUrl("Home")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-        <ArrowLeft className="w-4 h-4" /> Back
-      </Link>
-
-      <PostCard post={post} currentUser={currentUser} fullView={true} />
-
-      {/* Comments */}
-      <div className="mt-6">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          {t("common.comments")}
-          <span className="text-sm font-normal text-slate-400">({topLevelComments.length || post?.comments_count || 0})</span>
-        </h3>
-
-        {commentsError && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-2xl text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            Failed to load comments. Please refresh.
-          </div>
-        )}
-
-        {/* Add Comment */}
-        <AnimatePresence>
-          {currentUser && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0 border-2 border-white shadow-sm">
-                {currentUser.full_name?.[0]?.toUpperCase() || "U"}
-              </div>
-              <div className="flex-1 flex gap-2">
-                <Input
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder={t("chat.typeMessage")}
-                  className="rounded-2xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-11 focus:ring-orange-100"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && commentText.trim() && !addCommentMutation.isPending) {
-                      e.preventDefault();
-                      addCommentMutation.mutate();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={() => commentText.trim() && addCommentMutation.mutate()}
-                  disabled={!commentText.trim() || addCommentMutation.isPending}
-                  size="icon"
-                  className="rounded-2xl bg-orange-600 hover:bg-orange-700 w-11 h-11 shrink-0 shadow-lg shadow-orange-100 transition-all active:scale-95"
-                >
-                  {addCommentMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Comment List */}
-        <div className="space-y-5">
-          {commentsLoading ? (
-            Array(3).fill(0).map((_, i) => (
-              <div key={i} className="flex gap-3 animate-pulse">
-                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700" />
-                <div className="flex-1 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2">
-                  <div className="h-2.5 w-24 bg-slate-100 dark:bg-slate-700 rounded" />
-                  <div className="h-2 w-full bg-slate-50 dark:bg-slate-700/50 rounded" />
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full h-full max-w-4xl sm:max-w-5xl md:max-w-6xl lg:max-w-7xl p-0 gap-0 overflow-hidden border-0 rounded-none sm:rounded-2xl bg-slate-50 dark:bg-[#0a0a0c]">
+        <div className="flex flex-col lg:flex-row h-full max-h-[100vh]">
+          {/* Left side - Post */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm">
+                  {post.author_avatar ? (
+                    <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
+                      {post.author_name?.[0]?.toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{post.author_name || "User"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">@{post.author_username}</p>
                 </div>
               </div>
-            ))
-          ) : topLevelComments.length === 0 ? (
-            <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-800/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
-              <MessageCircle className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm font-medium">No comments yet. Be the first!</p>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          ) : (
-            topLevelComments.map((comment, i) => (
-              <CommentItem
-                key={comment.id || comment._id || i}
-                comment={comment}
-                currentUser={currentUser}
-                replies={repliesMap[(comment.id || comment._id)?.toString()] || []}
-                postId={postId}
-                onReplyPosted={() => queryClient.invalidateQueries({ queryKey: ["postComments"] })}
-              />
-            ))
-          )}
+            
+            <div className="p-4">
+              <PostCard post={post} currentUser={currentUser} fullView={true} />
+            </div>
+          </div>
+
+          {/* Right side - Comments */}
+          <div className="w-full lg:w-[400px] xl:w-[450px] border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col max-h-[50vh] lg:max-h-full">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                {t("common.comments")}
+                <span className="text-sm font-normal text-slate-400">({topLevelComments.length || post?.comments_count || 0})</span>
+              </h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-5">
+              {commentsError && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-2xl text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  Failed to load comments. Please refresh.
+                </div>
+              )}
+
+              {commentsLoading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="flex gap-3 animate-pulse">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700" />
+                    <div className="flex-1 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2">
+                      <div className="h-2.5 w-24 bg-slate-100 dark:bg-slate-700 rounded" />
+                      <div className="h-2 w-full bg-slate-50 dark:bg-slate-700/50 rounded" />
+                    </div>
+                  </div>
+                ))
+              ) : topLevelComments.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-800/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+                  <MessageCircle className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm font-medium">No comments yet. Be the first!</p>
+                </div>
+              ) : (
+                topLevelComments.map((comment, i) => (
+                  <CommentItem
+                    key={comment.id || comment._id || i}
+                    comment={comment}
+                    currentUser={currentUser}
+                    replies={repliesMap[(comment.id || comment._id)?.toString()] || []}
+                    postId={postId}
+                    onReplyPosted={() => queryClient.invalidateQueries({ queryKey: ["postComments"] })}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Add Comment */}
+            {currentUser && (
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0 border-2 border-white shadow-sm">
+                    {currentUser.full_name?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div className="flex-1 flex gap-2">
+                    <Input
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder={t("chat.typeMessage")}
+                      className="rounded-2xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-11 focus:ring-orange-100"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey && commentText.trim() && !addCommentMutation.isPending) {
+                          e.preventDefault();
+                          addCommentMutation.mutate();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={() => commentText.trim() && addCommentMutation.mutate()}
+                      disabled={!commentText.trim() || addCommentMutation.isPending}
+                      size="icon"
+                      className="rounded-2xl bg-orange-600 hover:bg-orange-700 w-11 h-11 shrink-0 shadow-lg shadow-orange-100 transition-all active:scale-95"
+                    >
+                      {addCommentMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

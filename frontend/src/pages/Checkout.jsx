@@ -1140,12 +1140,12 @@ export default function Checkout() {
                   value={orderNote} 
                   onChange={e => setOrderNote(e.target.value)} 
                   placeholder={t("checkout.orderNotePlaceholder")} 
-                  className="rounded-xl min-h-[80px] border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 resize-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" 
+                  className="rounded-xl min-h-[80px] border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" 
                 />
               </div>
 
               {/* Secure Badge */}
-              <div className="flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl px-4 py-3 border border-indigo-200/50 dark:border-indigo-800/30">
+              <div className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 rounded-xl px-4 py-3 border border-orange-200/50 dark:border-orange-800/30">
                 <Shield className="w-4 h-4 text-orange-600 flex-shrink-0" />
                 <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{t("checkout.securePaymentDesc")}</p>
               </div>
@@ -1196,7 +1196,7 @@ export default function Checkout() {
                 <Button 
                   onClick={() => checkoutMutation.mutate()} 
                   disabled={checkoutMutation.isPending}
-                  className="flex-[2] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white h-14 rounded-xl font-semibold text-lg shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 group"
+                  className="flex-[2] bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white h-14 rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 flex items-center justify-center gap-3 group"
                 >
                   {checkoutMutation.isPending ? (
                     <Loader2 className="w-6 h-6 animate-spin" />
@@ -1215,7 +1215,7 @@ export default function Checkout() {
         <div className="lg:col-span-4">
           <div className="sticky top-24 space-y-6">
             <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900/50 dark:to-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16 opacity-50" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-purple-100 dark:from-orange-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16 opacity-50" />
               
               <h3 className="font-semibold text-xl text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
                   <ShoppingBag className="w-5 h-5 text-orange-600" /> {t("cart.orderSummary")}
@@ -1250,7 +1250,7 @@ export default function Checkout() {
                 <Button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={checkoutMutation.isPending}
-                  className="w-full h-14 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl font-semibold text-lg shadow-lg shadow-indigo-500/30 transition-all active:scale-[0.98] mt-4"
+                  className="w-full h-14 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98] mt-4"
                 >
                   {checkoutMutation.isPending ? (
                     <><Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("checkout.processing")}</>
@@ -1269,26 +1269,26 @@ export default function Checkout() {
                                     value={couponCode} 
                                     onChange={e => setCouponCode(e.target.value)} 
                                     placeholder={t("checkout.couponPlaceholder")} 
-                                    className="rounded-xl h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                                    className="rounded-xl h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                                 />
                                 <Button 
                                     onClick={() => validateCouponMutation.mutate(couponCode)}
                                     disabled={!couponCode || validateCouponMutation.isPending}
                                     variant="outline" 
-                                    className="h-11 rounded-xl font-semibold border-indigo-200 text-orange-600 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+                                    className="h-11 rounded-xl font-semibold border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20"
                                 >
                                     {validateCouponMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.apply")}
                                 </Button>
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <div className="flex items-center justify-between p-3 bg-orange-50 rounded-xl border border-orange-100">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                                <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white">
                                     <Tag className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-black text-indigo-900 uppercase tracking-tight">{appliedCoupon.code}</p>
+                                    <p className="text-xs font-black text-orange-900 uppercase tracking-tight">{appliedCoupon.code}</p>
                                     <p className="text-[10px] text-orange-600 font-bold">{t("checkout.appliedSuccessfully")}</p>
                                 </div>
                             </div>
@@ -1313,7 +1313,7 @@ export default function Checkout() {
                 <p className="text-xs text-white/60 font-medium leading-relaxed mb-4">
                     {t("checkout.needHelpDesc")}
                 </p>
-                <Link to="/support" className="text-xs font-black text-white hover:text-indigo-400 underline underline-offset-4 decoration-white/20">{t("checkout.contactSupport")}</Link>
+                <Link to="/support" className="text-xs font-black text-white hover:text-orange-400 underline underline-offset-4 decoration-white/20">{t("checkout.contactSupport")}</Link>
             </div>
           </div>
         </div>
@@ -1340,7 +1340,7 @@ export default function Checkout() {
                     <button
                       key={m.id}
                       onClick={() => handleMethodSelect(m)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-all text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950 transition-all text-left"
                     >
                       {m.logo
                         ? <img src={m.logo} alt={m.label} className="w-10 h-10 object-contain rounded-lg" />
@@ -1374,10 +1374,10 @@ export default function Checkout() {
                 </p>
 
                 {/* Payment Information */}
-                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl p-3 mb-4">
+                <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900 rounded-xl p-3 mb-4">
                   <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                    <div className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                    <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                    <div className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
                       <p className="font-semibold mb-1">{t("subscription.paymentProcessTitle")}</p>
                       <p>{t("subscription.paymentProcessDesc")}</p>
                     </div>

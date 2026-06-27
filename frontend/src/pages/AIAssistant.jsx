@@ -349,7 +349,7 @@ export default function AIAssistant() {
       {/* Header */}
       <div className="px-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-200">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -417,7 +417,7 @@ export default function AIAssistant() {
           <Button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
-            className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 p-0 shrink-0"
+            className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-600 to-purple-600 hover:from-orange-700 hover:to-purple-700 p-0 shrink-0"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>

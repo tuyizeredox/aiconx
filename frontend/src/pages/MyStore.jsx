@@ -25,7 +25,8 @@ import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
 import VendorFinance from "./VendorFinance";
 import OrderDetailModal from "@/components/orders/OrderDetailModal";
-import { storesAPI, productsAPI, ordersAPI, filesAPI, vendorSubscriptionsAPI } from "@/api/apiClient";
+import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI } from "@/api/apiClient";
+import { uploadImage } from "@/lib/storage";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
@@ -159,7 +160,7 @@ export default function MyStore() {
 
     setUploadingAssets(prev => ({ ...prev, [type]: true }));
     try {
-      const res = await filesAPI.upload(file);
+      const res = await uploadImage(file, { folder: 'stores' });
       if (res.url) {
         setStoreForm(prev => ({ ...prev, [`${type}_url`]: res.url }));
         toast.success(t("store.assetUploaded", { type: t(`store.${type}`) }));
@@ -576,7 +577,7 @@ export default function MyStore() {
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
               {store.name?.[0]?.toUpperCase()}
             </div>
             <div>
@@ -728,7 +729,7 @@ export default function MyStore() {
                       </div>
 
                       {storeForm.payment_method === 'bank_transfer' && (
-                        <div className="space-y-4 border-l-2 border-indigo-100 pl-4 py-1 mt-4">
+                        <div className="space-y-4 border-l-2 border-orange-100 pl-4 py-1 mt-4">
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-600">{t("store.bankName")}</label>
                             <Input placeholder={t("store.bankNamePlaceholder")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
@@ -751,14 +752,14 @@ export default function MyStore() {
                       )}
 
                       {storeForm.payment_method === 'paypal' && (
-                        <div className="space-y-2 border-l-2 border-indigo-100 pl-4 py-1 mt-4">
+                        <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1 mt-4">
                           <label className="text-sm font-medium text-slate-600">{t("store.paypalEmail")}</label>
                           <Input type="email" placeholder="email@example.com" value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                         </div>
                       )}
 
                       {storeForm.payment_method === 'mobile_money' && (
-                        <div className="space-y-2 border-l-2 border-indigo-100 pl-4 py-1 mt-4">
+                        <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1 mt-4">
                           <label className="text-sm font-medium text-slate-600">{t("store.mobileMoneyNumber")}</label>
                           <Input placeholder="07XXXXXXXX" value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
                         </div>
@@ -790,7 +791,7 @@ export default function MyStore() {
                         </div>
 
                         {storeForm.delivery_settings.delivery_enabled && (
-                          <div className="space-y-4 border-l-2 border-indigo-100 pl-4 py-1">
+                          <div className="space-y-4 border-l-2 border-orange-100 pl-4 py-1">
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <Label className="text-sm font-medium text-slate-600">{t("store.deliveryFee")}</Label>
@@ -854,7 +855,7 @@ export default function MyStore() {
                         </div>
 
                         {storeForm.delivery_settings.pickup_enabled && (
-                          <div className="space-y-2 border-l-2 border-indigo-100 pl-4 py-1">
+                          <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1">
                             <Label className="text-sm font-medium text-slate-600">{t("store.pickupInstructions")}</Label>
                             <Textarea 
                               placeholder={t("store.pickupInstructionsPlaceholder2")} 
@@ -939,7 +940,7 @@ export default function MyStore() {
                   </div>
 
                   <div className="mt-6">
-                    <Button onClick={() => updateStoreMutation.mutate(storeForm)} disabled={!storeForm.name.trim() || updateStoreMutation.isPending} className="w-full bg-orange-600 hover:bg-indigo-700 h-11">
+                    <Button onClick={() => updateStoreMutation.mutate(storeForm)} disabled={!storeForm.name.trim() || updateStoreMutation.isPending} className="w-full bg-orange-600 hover:bg-orange-700 h-11">
                       {updateStoreMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       {t("store.saveAllChanges")}
                     </Button>
@@ -957,12 +958,12 @@ export default function MyStore() {
 
         {/* Onboarding Checklist */}
         {(!store.logo_url || !store.description || products.length === 0 || !store.payment_method) && (
-          <div className="mb-6 p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/50 dark:border-indigo-900/50">
+          <div className="mb-6 p-4 bg-orange-50/50 dark:bg-orange-950/30 rounded-2xl border border-orange-100/50 dark:border-orange-900/50">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-orange-900 dark:text-orange-300 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" /> {t("store.setupProgress")}
               </h3>
-              <span className="text-[10px] font-bold text-orange-600 bg-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {Math.round(
                   ((store.logo_url ? 1 : 0) + 
                   (store.description ? 1 : 0) + 
@@ -978,7 +979,7 @@ export default function MyStore() {
                 { label: t("store.setupAddProduct"), done: products.length > 0 },
                 { label: t("store.setupPayoutMethod"), done: !!store.payment_method },
               ].map((step, i) => (
-                <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-indigo-100 dark:border-indigo-900 text-orange-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
+                <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-orange-100 dark:border-orange-900 text-orange-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
                   {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200" />}
                   <span className="text-xs font-medium">{step.label}</span>
                 </div>
@@ -990,7 +991,7 @@ export default function MyStore() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: t("store.products"), value: products.length, icon: Package, color: "text-indigo-500 bg-indigo-50 dark:bg-indigo-950" },
+            { label: t("store.products"), value: products.length, icon: Package, color: "text-orange-500 bg-orange-50 dark:bg-orange-950" },
             { label: t("store.orders"), value: orders.length, icon: ShoppingCart, color: "text-purple-500 bg-purple-50 dark:bg-purple-950" },
             { label: t("store.revenue"), value: formatCurrency(totalRevenue), icon: DollarSign, color: "text-green-500 bg-green-50 dark:bg-green-950" },
             { label: t("store.pending"), value: pendingOrders, icon: BarChart3, color: "text-amber-500 bg-amber-50 dark:bg-amber-950" },
@@ -1015,7 +1016,7 @@ export default function MyStore() {
             <TabsTrigger value="coupons">{t("store.coupons")}</TabsTrigger>
             <TabsTrigger value="analytics" className="gap-1.5">
               {t("store.analytics")} 
-              {currentPlan === 'free' ? <Badge className="px-1 py-0 text-[8px] bg-indigo-100 text-orange-600 border-0">Standard</Badge> : <Badge className="px-1 py-0 text-[8px] bg-amber-100 text-amber-600 border-0">Pro+</Badge>}
+              {currentPlan === 'free' ? <Badge className="px-1 py-0 text-[8px] bg-orange-100 text-orange-600 border-0">Standard</Badge> : <Badge className="px-1 py-0 text-[8px] bg-amber-100 text-amber-600 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-1.5">
               {t("store.shipping")}
@@ -1034,13 +1035,13 @@ export default function MyStore() {
                   setActiveTab("subscription");
                   toast.error(t("store.subscriptionLimitReached", { plan: currentPlan, limit: limits.products === Infinity ? t("store.unlimited") : limits.products }));
                 }}
-                className="bg-orange-600 hover:bg-indigo-700 rounded-xl"
+                className="bg-orange-600 hover:bg-orange-700 rounded-xl"
               >
                 <Plus className="w-4 h-4 mr-1.5" /> {t("store.addProduct")}
               </Button>
             ) : (
               <DialogTrigger asChild>
-                <Button className="bg-orange-600 hover:bg-indigo-700 rounded-xl">
+                <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">
                   <Plus className="w-4 h-4 mr-1.5" /> {t("store.addProduct")}
                 </Button>
               </DialogTrigger>
@@ -1093,7 +1094,7 @@ export default function MyStore() {
                       );
                     })}
                     {(limits.images === Infinity || productImages.length < limits.images) && (
-                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all text-slate-400">
+                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition-all text-slate-400">
                         <Upload className="w-5 h-5" />
                         <span className="text-[10px] mt-1 font-medium">{t("store.upload")}</span>
                         <input type="file" accept={limits.videos === 0 ? "image/*" : "image/*,video/*"} multiple className="hidden" onChange={handleFileChange} />
@@ -1118,7 +1119,7 @@ export default function MyStore() {
                 <Button 
                   onClick={() => addProductMutation.mutate()} 
                   disabled={!productForm.title.trim() || !productForm.price || addProductMutation.isPending || uploading} 
-                  className="w-full bg-orange-600 hover:bg-indigo-700 h-11 rounded-xl font-bold"
+                  className="w-full bg-orange-600 hover:bg-orange-700 h-11 rounded-xl font-bold"
                 >
                   {addProductMutation.isPending || uploading ? (
                     <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploading ? t("store.uploadingMedia") : t("store.addingProduct")}</>
@@ -1170,7 +1171,7 @@ export default function MyStore() {
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.shippingZonesRestricted")}</h3>
              <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.shippingZonesRestrictedDesc")}</p>
-             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-indigo-700 rounded-xl">{t("store.upgradePlan")}</Button>
+             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
           <ShippingZoneManager store={store} vendorUsername={currentUser?.username} plan={currentPlan} onUpgrade={() => setActiveTab("subscription")} />
@@ -1196,7 +1197,7 @@ export default function MyStore() {
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.couponsRestricted")}</h3>
              <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.couponsRestrictedDesc")}</p>
-             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-indigo-700 rounded-xl">{t("store.upgradePlan")}</Button>
+             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
           <CouponManager store={store} vendorUsername={currentUser?.username} />
@@ -1285,7 +1286,7 @@ export default function MyStore() {
                             {order.delivery_method && (
                               <Badge className={`border-0 text-[9px] px-1.5 py-0.5 h-5 font-semibold flex items-center gap-1 ${
                                 order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
-                                order.delivery_method === "delivery" ? "bg-blue-100 text-blue-700" :
+                                order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
                                 "bg-slate-100 text-slate-500"
                               }`}>
                                 {order.delivery_method === "pickup" ? <Package className="w-2.5 h-2.5" /> :
@@ -1299,7 +1300,7 @@ export default function MyStore() {
                               status === 'delivered' ? 'bg-green-100 text-green-700' :
                               status === 'cancelled' ? 'bg-red-100 text-red-700' :
                               status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                              'bg-indigo-100 text-indigo-700'
+                              'bg-orange-100 text-orange-700'
                             } border-0 text-[10px] px-2 py-0.5 h-6 font-semibold capitalize`}>
                               {t(`orders.${status}`)}
                             </Badge>
@@ -1334,7 +1335,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-indigo-50"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50"
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               navigate(createPageUrl("Chat") + `?to=${order.buyer_username}`);

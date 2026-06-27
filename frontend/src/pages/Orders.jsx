@@ -21,7 +21,7 @@ import { toast } from "sonner";
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: "bg-amber-100 text-amber-700", label: "Pending" },
-  confirmed: { icon: CheckCircle2, color: "bg-blue-100 text-blue-700", label: "Confirmed" },
+  confirmed: { icon: CheckCircle2, color: "bg-orange-100 text-orange-700", label: "Confirmed" },
   processing: { icon: Package, color: "bg-orange-100 text-orange-700", label: "Processing" },
   shipped: { icon: Truck, color: "bg-purple-100 text-purple-700", label: "Shipped" },
   delivered: { icon: CheckCircle2, color: "bg-green-100 text-green-700", label: "Delivered" },
@@ -217,7 +217,7 @@ export default function Orders() {
                       {order.delivery_method && (
                         <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full w-fit ${
                           order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
-                          order.delivery_method === "delivery" ? "bg-blue-100 text-blue-700" :
+                          order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
                           "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
                         }`}>
                           {order.delivery_method === "pickup" ? t("orders.storePickup") : order.delivery_method === "delivery" ? t("orders.localDelivery") : t("orders.shippingMethod")}
@@ -230,7 +230,7 @@ export default function Orders() {
                         size="sm"
                         variant="ghost"
                         onClick={() => navigate(createPageUrl("Chat") + `?to=${order.vendor_username}`)}
-                        className="rounded-xl text-[10px] h-8 text-orange-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                        className="rounded-xl text-[10px] h-8 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30"
                         title="Contact Seller"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />

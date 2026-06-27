@@ -253,7 +253,7 @@ export default function VendorFinance() {
 
   const orderStatusColors = {
     pending: "bg-amber-50 text-amber-700",
-    confirmed: "bg-blue-50 text-blue-700",
+    confirmed: "bg-orange-50 text-orange-700",
     processing: "bg-orange-50 text-orange-700",
     shipped: "bg-purple-50 text-purple-700",
     delivered: "bg-green-50 text-green-700",
@@ -283,9 +283,9 @@ export default function VendorFinance() {
               )}
             </DialogHeader>
             <div className="space-y-4 mt-2">
-              <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                 <p className="text-xs text-slate-500 dark:text-slate-400">{t("finance.availableBalance")}</p>
-                <p className="text-2xl font-bold text-indigo-700">${availableBalance.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-orange-700">${availableBalance.toFixed(2)}</p>
               </div>
 
               {!store?.payment_method && (
@@ -322,28 +322,28 @@ export default function VendorFinance() {
                   <button 
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "bank_transfer" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "bank_transfer" ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "bank_transfer" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     Bank
                   </button>
                   <button 
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "paypal" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "paypal" ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "paypal" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     PayPal
                   </button>
                    <button 
                      type="button"
                      onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "itecpay" }))}
-                     className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "itecpay" ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                     className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "itecpay" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                    >
                      ITEC Pay
                    </button>
                   <button 
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "mobile_money" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "mobile_money" ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "mobile_money" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     M-Money
                   </button>
@@ -404,7 +404,7 @@ export default function VendorFinance() {
                   parseFloat(withdrawForm.amount) < 20 ||
                   parseFloat(withdrawForm.amount) > availableBalance
                 }
-                className="w-full bg-indigo-600 hover:bg-indigo-700 mt-2"
+                className="w-full bg-orange-600 hover:bg-orange-700 mt-2"
               >
                 {withdrawMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
                 {t("finance.submitWithdrawal")}
@@ -416,7 +416,7 @@ export default function VendorFinance() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard icon={DollarSign} label={t("finance.availableBalance")} value={formatCurrency(availableBalance)} color="bg-indigo-50 text-orange-600" />
+        <StatCard icon={DollarSign} label={t("finance.availableBalance")} value={formatCurrency(availableBalance)} color="bg-orange-50 text-orange-600" />
         <StatCard icon={TrendingUp} label={t("finance.totalEarned")} value={formatCurrency(totalEarned)} sub={t("finance.afterPlatformFee")} color="bg-green-50 text-green-600" />
         <StatCard icon={Clock} label={t("finance.pendingEarnings")} value={formatCurrency(pendingEarnings)} sub={t("finance.fromActiveOrders")} color="bg-amber-50 text-amber-600" />
         <StatCard icon={CheckCircle2} label={t("finance.totalWithdrawn")} value={formatCurrency(totalWithdrawn)} color="bg-purple-50 text-purple-600" />
@@ -426,7 +426,7 @@ export default function VendorFinance() {
       {chartData.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-indigo-500" />
+            <BarChart3 className="w-5 h-5 text-orange-500" />
             <h3 className="font-semibold text-slate-900 dark:text-white">{t("finance.monthlyRevenue")}</h3>
           </div>
           <div className="flex items-end gap-2 h-28">
@@ -434,7 +434,7 @@ export default function VendorFinance() {
               <div key={month} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">${val.toFixed(0)}</span>
                 <div
-                  className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-lg transition-all"
+                  className="w-full bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg transition-all"
                   style={{ height: `${Math.max(8, (val / maxVal) * 80)}px` }}
                 />
                 <span className="text-[10px] text-slate-400">{month}</span>

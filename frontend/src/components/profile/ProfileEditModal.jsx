@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { authAPI, filesAPI } from "@/api/apiClient";
+import { authAPI } from "@/api/apiClient";
+import { uploadAvatar, uploadImage } from "@/lib/storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
     if (!file) return;
     setUploading(true);
     try {
-      const res = await filesAPI.upload(file);
+      const res = await uploadAvatar(file);
       const file_url = res.url;
       if (!file_url) throw new Error("No URL returned from upload");
       setAvatarUrl(file_url);
@@ -37,7 +38,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
     if (!file) return;
     setUploadingBanner(true);
     try {
-      const res = await filesAPI.upload(file);
+      const res = await uploadImage(file, { folder: 'banners' });
       const file_url = res.url;
       if (!file_url) throw new Error("No URL returned from upload");
       setBannerUrl(file_url);

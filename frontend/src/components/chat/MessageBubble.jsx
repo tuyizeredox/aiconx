@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCheck, Smile, Reply, Pencil, Trash2, Forward, Pin, MoreHorizontal } from "lucide-react";
 import OrderStatusCard from "@/components/chat/OrderStatusCard";
@@ -23,6 +23,20 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
   const [showActions, setShowActions] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(msg.content || "");
+  const [localReactions, setLocalReactions] = useState(() => {
+    const r = msg.reactions;
+    if (!r) return {};
+    if (r instanceof Map) return Object.fromEntries(r);
+    if (typeof r === 'object') return r;
+    return {};
+  });
+
+  useEffect(() => {
+    const r = msg.reactions;
+    if (!r) return;
+    const normalized = r instanceof Map ? Object.fromEntries(r) : r;
+    setLocalReactions(normalized);
+  }, [msg.reactions]);
   const queryClient = useQueryClient();
 
   const invalidateConvo = () => {
@@ -77,6 +91,20 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
     },
   });
 
+  const reactionMutation = useMutation({
+    mutationFn: (updatedReactions) => messagesAPI.update(msg._id || msg.id, {
+      reactions: updatedReactions,
+    }),
+    onSuccess: () => invalidateConvo(),
+  });
+
+  const handleReact = (emoji) => {
+    const updated = { ...localReactions, [emoji]: (localReactions[emoji] || 0) + 1 };
+    setLocalReactions(updated);
+    setShowReactions(false);
+    reactionMutation.mutate(updated);
+  };
+
   const ACTIONS = [
     { icon: Reply, label: "Reply", onClick: () => { onReply?.(msg); setShowActions(false); } },
     { icon: Forward, label: "Forward", onClick: () => { onForward?.(msg); setShowActions(false); } },
@@ -111,7 +139,7 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
               className={`absolute ${isMine ? "right-0" : "left-0"} -top-11 flex gap-1 bg-white rounded-2xl shadow-xl border border-slate-100 px-2 py-1.5 z-20`}
             >
               {EMOJI_QUICK.map(e => (
-                <button key={e} onClick={() => setShowReactions(false)} className="text-base hover:scale-125 transition-transform">{e}</button>
+                <button key={e} onClick={() => handleReact(e)} className="text-base hover:scale-125 transition-transform px-0.5">{e}</button>
               ))}
             </motion.div>
           )}
@@ -196,14 +224,6 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
           </div>
         )}
 
-        {/* Reply context */}
-        {msg.reply_to_content && (
-          <div className={`mb-1 px-3 py-1.5 rounded-xl border-l-2 ${isMine ? "bg-orange-500/30 border-orange-200" : "bg-slate-100 border-slate-300"}`}>
-            <p className={`text-[10px] font-semibold ${isMine ? "text-orange-200" : "text-slate-500"}`}>{msg.reply_to_name || "Reply"}</p>
-            <p className={`text-[11px] truncate ${isMine ? "text-orange-100" : "text-slate-600"}`}>{msg.reply_to_content}</p>
-          </div>
-        )}
-
         {/* Message bubble */}
         {editing ? (
           <div className="flex gap-2">
@@ -224,18 +244,50 @@ export default function MessageBubble({ msg, isMine, showAvatar, senderName, onR
           <div
             onDoubleClick={() => setShowReactions(v => !v)}
             onClick={() => setShowActions(false)}
-            className={`px-4 py-2.5 rounded-2xl text-sm cursor-pointer select-none ${
+            className={`rounded-2xl text-sm cursor-pointer select-none overflow-hidden ${
               isMine
                 ? "bg-orange-600 text-white rounded-br-sm"
                 : "bg-white text-slate-700 border border-slate-100 rounded-bl-sm shadow-sm"
             }`}
           >
-            {msg.content && <p className="leading-relaxed">{msg.content}</p>}
-            {msg.is_edited && <span className={`text-[9px] italic ${isMine ? "text-orange-200" : "text-slate-400"}`}> (edited)</span>}
-            <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${isMine ? "text-orange-200 justify-end" : "text-slate-400"}`}>
-              {new Date(msg.created_at || msg.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-              {isMine && <CheckCheck className={`w-3 h-3 ${msg.is_read ? "text-orange-300" : "text-orange-300"}`} />}
+            {/* Reply context — inside bubble */}
+            {msg.reply_to_content && (
+              <div className={`flex items-stretch gap-0 mx-1 mt-1 mb-0 rounded-xl overflow-hidden ${isMine ? "bg-orange-700/50" : "bg-slate-100"}`}>
+                <div className={`w-1 shrink-0 rounded-l-xl ${isMine ? "bg-orange-300" : "bg-orange-500"}`} />
+                <div className="px-2.5 py-1.5 min-w-0">
+                  <p className={`text-[10px] font-bold truncate ${isMine ? "text-orange-200" : "text-orange-500"}`}>
+                    {msg.reply_to_name || "Reply"}
+                  </p>
+                  <p className={`text-[11px] truncate ${isMine ? "text-orange-100" : "text-slate-500"}`}>
+                    {msg.reply_to_content}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="px-4 py-2.5">
+              {msg.content && <p className="leading-relaxed">{msg.content}</p>}
+              {msg.is_edited && <span className={`text-[9px] italic ${isMine ? "text-orange-200" : "text-slate-400"}`}> (edited)</span>}
+              <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${isMine ? "text-orange-200 justify-end" : "text-slate-400"}`}>
+                {new Date(msg.created_at || msg.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                {isMine && <CheckCheck className={`w-3 h-3 ${msg.is_read ? "text-orange-300" : "text-orange-300"}`} />}
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Reaction display */}
+        {localReactions && typeof localReactions === "object" && Object.keys(localReactions).length > 0 && (
+          <div className={`flex flex-wrap gap-1 mt-1 ${isMine ? "justify-end" : "justify-start"}`}>
+            {Object.entries(localReactions).map(([emoji, count]) => count > 0 ? (
+              <button
+                key={emoji}
+                onClick={() => handleReact(emoji)}
+                className="flex items-center gap-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full px-1.5 py-0.5 text-xs shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+              >
+                <span>{emoji}</span>
+                <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">{count}</span>
+              </button>
+            ) : null)}
           </div>
         )}
 

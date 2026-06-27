@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import { filesAPI } from "@/api/apiClient";
+import { uploadImage } from "@/lib/storage";
 import { toast } from "sonner";
 
 export default function ChatImageUpload({ onImageReady, onClear, previewUrl }) {
@@ -13,7 +13,7 @@ export default function ChatImageUpload({ onImageReady, onClear, previewUrl }) {
     if (!file.type.startsWith("image/")) { toast.error("Only images allowed"); return; }
     setUploading(true);
     try {
-      const res = await filesAPI.upload(file);
+      const res = await uploadImage(file, { folder: 'chat' });
       const file_url = res.url;
       if (!file_url) throw new Error("No URL returned from upload");
       onImageReady(file_url);

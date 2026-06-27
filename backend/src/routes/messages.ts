@@ -286,7 +286,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
       const updateData = request.body as any;
 
       const message = await Message.findOneAndUpdate(
-        { _id: id, receiver_username: user.username },
+        { _id: id, $or: [{ receiver_username: user.username }, { sender_username: user.username }] },
         { ...updateData, updated_at: new Date() },
         { new: true }
       );

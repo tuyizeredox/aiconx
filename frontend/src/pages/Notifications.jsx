@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/AuthContext";
 
 const TYPE_ICONS = {
   like: { icon: Heart, color: "bg-red-100 text-red-500" },
-  comment: { icon: MessageCircle, color: "bg-blue-100 text-blue-500" },
+  comment: { icon: MessageCircle, color: "bg-orange-100 text-orange-500" },
   follow: { icon: UserPlus, color: "bg-purple-100 text-purple-500" },
   order_update: { icon: Package, color: "bg-green-100 text-green-500" },
   message: { icon: MessageCircle, color: "bg-orange-100 text-orange-500" },
@@ -128,7 +128,7 @@ export default function Notifications() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className={`flex items-start gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
-                  notif.is_read ? "bg-white hover:bg-slate-50" : "bg-indigo-50/50 hover:bg-indigo-50"
+                  notif.is_read ? "bg-white hover:bg-slate-50" : "bg-orange-50/50 hover:bg-orange-50"
                 }`}
                 onClick={() => handleNotificationClick(notif)}
               >
@@ -142,7 +142,7 @@ export default function Notifications() {
                     {new Date(notif.created_at || notif.created_date).toLocaleDateString(i18n.language, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
-                {!notif.is_read && <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0" />}
+                {!notif.is_read && <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 shrink-0" />}
               </motion.div>
             );
           })}

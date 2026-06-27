@@ -148,6 +148,15 @@ fastify.setErrorHandler((error, request, reply) => {
   
   const statusCode = error.statusCode || 500;
   
+  // Special handling for body too large errors
+  if (statusCode === 413) {
+    return reply.status(statusCode).send({
+      error: 'File too large',
+      message: 'The file you are trying to upload is too large. Please try a smaller file.',
+      statusCode
+    });
+  }
+  
   reply.status(statusCode).send({
     error: 'Internal server error',
     message: statusCode < 500 ? error.message : 'Internal server error',
@@ -155,10 +164,10 @@ fastify.setErrorHandler((error, request, reply) => {
   });
 });
 
-// Stricter rate limit for auth endpoints (10 req / 15 min per IP)
+// Stricter rate limit for auth endpoints (100 req / 15 min per IP)
 fastify.register(async (authScope) => {
   authScope.register(rateLimit, {
-    max: 10,
+    max: 100,
     timeWindow: '15 minutes',
   });
   authScope.register(authRoutes);

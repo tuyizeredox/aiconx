@@ -148,7 +148,7 @@ export default function Support() {
         ))}
       </div>
 
-      <div className="bg-indigo-600 rounded-[3rem] p-8 md:p-12 text-white relative overflow-hidden">
+      <div className="bg-orange-600 rounded-[3rem] p-8 md:p-12 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
         <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -162,11 +162,11 @@ export default function Support() {
             </p>
             <div className="flex flex-wrap gap-4">
                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-indigo-200" />
+                  <Clock className="w-4 h-4 text-orange-200" />
                   <span className="text-xs font-bold">{t('support.buyerProtection.monitoring')}</span>
                </div>
                <div className="flex items-center gap-2">
-                  <LifeBuoy className="w-4 h-4 text-indigo-200" />
+                  <LifeBuoy className="w-4 h-4 text-orange-200" />
                   <span className="text-xs font-bold">{t('support.buyerProtection.prioritySupport')}</span>
                </div>
             </div>
@@ -176,10 +176,10 @@ export default function Support() {
             <Accordion type="single" collapsible className="w-full space-y-2">
               {faqs.map((faq, i) => (
                 <AccordionItem key={i} value={`item-${i}`} className="border-white/10 border-b last:border-0">
-                  <AccordionTrigger className="text-sm font-bold py-4 hover:text-indigo-200 hover:no-underline text-left">
+                  <AccordionTrigger className="text-sm font-bold py-4 hover:text-orange-200 hover:no-underline text-left">
                     {faq.q}
                   </AccordionTrigger>
-                  <AccordionContent className="text-indigo-100 text-xs leading-relaxed font-medium pb-4">
+                  <AccordionContent className="text-orange-100 text-xs leading-relaxed font-medium pb-4">
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>

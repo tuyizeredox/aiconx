@@ -67,7 +67,7 @@ function ProductPill({ product, currentUser }) {
       <button
         onClick={() => currentUser ? addMutation.mutate() : toast.error(t("live.signInToBuy"))}
         disabled={addMutation.isPending}
-        className={`shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${added ? "bg-green-500 text-white" : "bg-white text-slate-900 hover:bg-indigo-50"}`}
+        className={`shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${added ? "bg-green-500 text-white" : "bg-white text-slate-900 hover:bg-orange-50"}`}
       >
         {addMutation.isPending ? "..." : added ? t("live.added") : t("live.buyNow")}
       </button>
@@ -304,7 +304,7 @@ function LiveStreamViewer({ session: initialSession, onBack }) {
         {/* Host info */}
         <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 lg:pb-6 z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shrink-0 ring-2 ring-white/20">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shrink-0 ring-2 ring-white/20">
               {session.host_name?.[0]}
             </div>
             <div>
@@ -329,7 +329,7 @@ function LiveStreamViewer({ session: initialSession, onBack }) {
                     ? "bg-white/10 text-white/70 hover:bg-white/20 backdrop-blur-sm border border-white/20"
                     : isFollowing 
                       ? "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm" 
-                      : isFollowedBy ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200" : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20"
+                      : isFollowedBy ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : "bg-orange-600 text-white hover:bg-orange-500 shadow-lg shadow-orange-600/20"
                 }`}
               >
                 {followMutation.isPending || unfollowMutation.isPending 
@@ -387,8 +387,8 @@ function LiveStreamViewer({ session: initialSession, onBack }) {
         {!currentUser && guestName && (
           <div className="px-3 pt-2 shrink-0">
             <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-1.5">
-              <span className="w-2 h-2 rounded-full bg-indigo-400" />
-              <span className="text-white/70 text-xs">Chatting as <span className="text-indigo-300 font-semibold">{guestName}</span></span>
+              <span className="w-2 h-2 rounded-full bg-orange-400" />
+              <span className="text-white/70 text-xs">Chatting as <span className="text-orange-300 font-semibold">{guestName}</span></span>
               <button onClick={() => { setGuestName(""); }} className="ml-auto text-[10px] text-slate-500 hover:text-slate-300 transition-colors">Change</button>
             </div>
           </div>
@@ -408,7 +408,7 @@ function LiveStreamViewer({ session: initialSession, onBack }) {
               exit={{ opacity: 0, y: 10 }}
               className="px-3 pb-2 shrink-0"
             >
-              <div className="bg-indigo-900/80 border border-indigo-500/40 rounded-2xl p-3">
+              <div className="bg-orange-900/80 border border-orange-500/40 rounded-2xl p-3">
                 <p className="text-white text-xs font-semibold mb-2">{t("live.guestNamePrompt")}</p>
                 <div className="flex gap-2">
                   <Input
@@ -422,13 +422,13 @@ function LiveStreamViewer({ session: initialSession, onBack }) {
                   />
                   <button
                     onClick={confirmGuestName}
-                    className="px-3 h-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shrink-0 transition-colors"
+                    className="px-3 h-8 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold shrink-0 transition-colors"
                   >
                     {t("live.join")}
                   </button>
                 </div>
                 <p className="text-slate-400 text-[10px] mt-1.5">
-                  {t("live.orText")} <a href="/login" className="text-indigo-400 hover:text-indigo-300 underline">{t("live.signIn")}</a> {t("live.forYourProfile")}
+                  {t("live.orText")} <a href="/login" className="text-orange-400 hover:text-orange-300 underline">{t("live.signIn")}</a> {t("live.forYourProfile")}
                 </p>
               </div>
             </motion.div>
@@ -446,7 +446,7 @@ function LiveStreamViewer({ session: initialSession, onBack }) {
           <button
             onClick={sendMessage}
             disabled={sendChatMutation.isPending}
-            className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center shrink-0 transition-colors disabled:opacity-50"
+            className="w-9 h-9 rounded-xl bg-orange-600 hover:bg-orange-500 flex items-center justify-center shrink-0 transition-colors disabled:opacity-50"
           >
             {sendChatMutation.isPending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
           </button>
@@ -670,9 +670,9 @@ function VendorBroadcast({ onClose, currentUser, store }) {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-orange-900 via-purple-900 to-slate-900 flex items-center justify-center">
               <div className="text-center">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4">
                   {currentUser?.full_name?.[0]}
                 </div>
                 <p className="text-white font-bold text-lg">{currentUser?.full_name}</p>
@@ -686,7 +686,7 @@ function VendorBroadcast({ onClose, currentUser, store }) {
           {isLive && (
             <div className="absolute bottom-24 left-4 z-10 text-white">
                <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0 ring-2 ring-white/20">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0 ring-2 ring-white/20">
                   {currentUser?.full_name?.[0]}
                 </div>
                 <div>
@@ -728,7 +728,7 @@ function VendorBroadcast({ onClose, currentUser, store }) {
                   <img src={p.image} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-xs font-semibold truncate">{p.title}</p>
-                    <p className="text-indigo-300 text-xs font-bold">{formatCurrency(p.price)}</p>
+                    <p className="text-orange-300 text-xs font-bold">{formatCurrency(p.price)}</p>
                   </div>
                   <span className="text-xs bg-white text-slate-900 font-bold px-2 py-1 rounded-lg">{t("live.buyNow")}</span>
                   <button onClick={() => unpinProduct(p.id)} className="shrink-0 w-6 h-6 bg-red-500/80 rounded-lg flex items-center justify-center">
@@ -771,7 +771,7 @@ function VendorBroadcast({ onClose, currentUser, store }) {
                   type="checkbox" 
                   checked={isScheduled} 
                   onChange={e => setIsScheduled(e.target.checked)}
-                  className="w-4 h-4 rounded bg-indigo-600"
+                  className="w-4 h-4 rounded bg-orange-600"
                 />
               </div>
               {isScheduled && (
@@ -791,7 +791,7 @@ function VendorBroadcast({ onClose, currentUser, store }) {
             <Button
               onClick={() => startLiveMutation.mutate()}
               disabled={!title.trim() || (isScheduled && !scheduledDate) || startLiveMutation.isPending}
-              className={`${isScheduled ? "bg-indigo-600 hover:bg-indigo-700" : "bg-red-500 hover:bg-red-600"} w-full rounded-xl h-12 text-base font-bold transition-all shadow-lg`}
+              className={`${isScheduled ? "bg-orange-600 hover:bg-orange-700" : "bg-red-500 hover:bg-red-600"} w-full rounded-xl h-12 text-base font-bold transition-all shadow-lg`}
             >
               {startLiveMutation.isPending ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -817,10 +817,10 @@ function VendorBroadcast({ onClose, currentUser, store }) {
                         {p.images?.[0] && <img src={p.images[0]} alt="" className="w-full h-full object-cover" />}
                       </div>
                       <p className="text-xs text-white flex-1 truncate">{p.title}</p>
-                      <p className="text-xs text-indigo-300 font-bold shrink-0">{formatCurrency(p.price)}</p>
+                      <p className="text-xs text-orange-300 font-bold shrink-0">{formatCurrency(p.price)}</p>
                       <button
                         onClick={() => isPinned ? unpinProduct(p.id) : pinProductMutation.mutate(p)}
-                        className={`shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isPinned ? "bg-red-500/80 hover:bg-red-500" : "bg-indigo-600 hover:bg-indigo-500"}`}
+                        className={`shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isPinned ? "bg-red-500/80 hover:bg-red-500" : "bg-orange-600 hover:bg-orange-500"}`}
                       >
                         {isPinned ? <PinOff className="w-3 h-3 text-white" /> : <Pin className="w-3 h-3 text-white" />}
                       </button>
@@ -851,7 +851,7 @@ function VendorBroadcast({ onClose, currentUser, store }) {
                 placeholder={t("live.replyToViewers")}
                 className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 text-xs rounded-xl h-8"
               />
-              <button onClick={() => chatInput.trim() && sendHostMessage.mutate()} className="w-8 h-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center shrink-0">
+              <button onClick={() => chatInput.trim() && sendHostMessage.mutate()} className="w-8 h-8 rounded-xl bg-orange-600 hover:bg-orange-500 flex items-center justify-center shrink-0">
                 <Send className="w-3.5 h-3.5 text-white" />
               </button>
             </div>
@@ -995,7 +995,7 @@ export default function Live() {
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-white">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-white">
                         {session.host_name?.[0]}
                       </div>
                       <span className="text-white text-xs font-medium">{session.host_name}</span>
@@ -1041,7 +1041,7 @@ export default function Live() {
                   <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-1 font-medium">{session.host_name} · {session.store_name}</p>
                   
                   <div className="flex items-center gap-2.5 mt-2">
-                    <span className="text-[10px] text-orange-600 font-bold bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <span className="text-[10px] text-orange-600 font-bold bg-orange-50 dark:bg-orange-950 px-2 py-0.5 rounded-md flex items-center gap-1">
                       <Radio className="w-2.5 h-2.5" />
                       {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : t("live.soon")}
                     </span>
@@ -1050,7 +1050,7 @@ export default function Live() {
                 </div>
                 <button 
                   onClick={() => toast.success(t("live.reminderSet", { title: session.title }))}
-                  className="shrink-0 w-10 h-10 bg-indigo-50 dark:bg-indigo-950 text-orange-600 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900 flex items-center justify-center transition-colors self-center"
+                  className="shrink-0 w-10 h-10 bg-orange-50 dark:bg-orange-950 text-orange-600 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-900 flex items-center justify-center transition-colors self-center"
                 >
                   <Heart className="w-5 h-5" />
                 </button>
@@ -1063,7 +1063,7 @@ export default function Live() {
       {/* No Store Dialog — shown to regular users without a store */}
       <Dialog open={accessDialog === "no-store"} onOpenChange={open => !open && setAccessDialog(null)}>
         <DialogContent className="max-w-sm rounded-3xl p-0 overflow-hidden">
-          <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 text-white text-center">
+          <div className="bg-gradient-to-br from-orange-500 via-purple-500 to-pink-500 p-6 text-white text-center">
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <Store className="w-7 h-7 text-white" />
             </div>
@@ -1074,8 +1074,8 @@ export default function Live() {
           </div>
           <div className="p-6 space-y-4 bg-white dark:bg-slate-900">
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-indigo-50 dark:bg-indigo-950 rounded-2xl">
-                <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-xl flex items-center justify-center shrink-0">
+              <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-950 rounded-2xl">
+                <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900 rounded-xl flex items-center justify-center shrink-0">
                   <Store className="w-4 h-4 text-orange-600" />
                 </div>
                 <div>
@@ -1094,7 +1094,7 @@ export default function Live() {
               </div>
             </div>
             <Link to={createPageUrl("MyStore")} onClick={() => setAccessDialog(null)}>
-              <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-2xl h-11 font-bold text-sm">
+              <Button className="w-full bg-gradient-to-r from-orange-600 to-purple-600 hover:from-orange-700 hover:to-purple-700 rounded-2xl h-11 font-bold text-sm">
                 {t("live.createMyStore")}
               </Button>
             </Link>
@@ -1122,7 +1122,7 @@ export default function Live() {
               {[
                 { icon: Radio, tKey: "live.unlimitedLiveStreams", color: "text-red-500 bg-red-50 dark:bg-red-950" },
                 { icon: Zap, tKey: "live.affiliateMarketplaceAccess", color: "text-amber-500 bg-amber-50 dark:bg-amber-950" },
-                { icon: ShoppingBag, tKey: "live.instreamProductPinning", color: "text-indigo-500 bg-indigo-50 dark:bg-indigo-950" },
+                { icon: ShoppingBag, tKey: "live.instreamProductPinning", color: "text-orange-500 bg-orange-50 dark:bg-orange-950" },
               ].map(({ icon: Icon, tKey, color }) => (
                 <div key={tKey} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${color}`}>

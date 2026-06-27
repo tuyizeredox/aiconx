@@ -169,7 +169,7 @@ export default function CouponManager({ store, vendorUsername }) {
               <Button
                 onClick={() => createMutation.mutate()}
                 disabled={!form.code.trim() || !form.discount_value || createMutation.isPending}
-                className="w-full bg-orange-600 hover:bg-indigo-700"
+                className="w-full bg-orange-600 hover:bg-orange-700"
               >
                 {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Tag className="w-4 h-4 mr-2" />}
                 {t("store.createCoupon")}
@@ -211,7 +211,7 @@ export default function CouponManager({ store, vendorUsername }) {
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    isInactive ? "bg-slate-100" : "bg-indigo-50"
+                    isInactive ? "bg-slate-100" : "bg-orange-50"
                   }`}>
                     <Tag className={`w-4 h-4 ${isInactive ? "text-slate-400" : "text-orange-600"}`} />
                   </div>

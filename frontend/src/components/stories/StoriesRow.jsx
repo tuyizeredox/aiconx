@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { storiesAPI } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -9,6 +9,13 @@ import CreateStoryModal from "./CreateStoryModal";
 export default function StoriesRow({ currentUser }) {
   const [viewingGroup, setViewingGroup] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+
+  // Listen for custom event to open create story modal
+  useEffect(() => {
+    const handleOpenCreate = () => setShowCreate(true);
+    window.addEventListener('open-create-story', handleOpenCreate);
+    return () => window.removeEventListener('open-create-story', handleOpenCreate);
+  }, []);
 
   const { data: response } = useQuery({
     queryKey: ["stories"],
@@ -26,20 +33,21 @@ export default function StoriesRow({ currentUser }) {
   // Group by author
   const authorMap = {};
   stories.forEach(s => {
-    if (!authorMap[s.author_username]) {
-      authorMap[s.author_username] = { 
-        username: s.author_username, 
-        name: s.author_name, 
+    const username = s.author_username?.toLowerCase();
+    if (!authorMap[username]) {
+      authorMap[username] = {
+        username: username,
+        name: s.author_name,
         avatar: s.author_avatar,
-        stories: [] 
+        stories: []
       };
     }
-    authorMap[s.author_username].stories.push(s);
+    authorMap[username].stories.push(s);
   });
   const groups = Object.values(authorMap);
 
-  // Check if current user has a story
-  const myStory = groups.find(g => g.username === currentUser?.username);
+  // Check if current user has a story (case-insensitive comparison)
+  const myStory = groups.find(g => g.username === currentUser?.username?.toLowerCase());
 
   // Helper to change groups
   const playGroup = (index) => {
@@ -62,7 +70,7 @@ export default function StoriesRow({ currentUser }) {
           <button
             onClick={() => {
               if (myStory) {
-                const myIndex = groups.findIndex(g => g.username === currentUser?.username);
+                const myIndex = groups.findIndex(g => g.username === currentUser?.username?.toLowerCase());
                 playGroup(myIndex);
               } else {
                 setShowCreate(true);
@@ -120,7 +128,7 @@ export default function StoriesRow({ currentUser }) {
               )}
 
               {!myStory && (
-                <div className="absolute bottom-0 right-0 w-5 h-5 bg-indigo-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm">
+                <div className="absolute bottom-0 right-0 w-5 h-5 bg-orange-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm">
                   <Plus className="w-3 h-3 text-white" />
                 </div>
               )}
@@ -129,7 +137,7 @@ export default function StoriesRow({ currentUser }) {
           </button>
 
           {/* Other stories */}
-          {groups.filter(g => g.username !== currentUser?.username).map(group => {
+          {groups.filter(g => g.username !== currentUser?.username?.toLowerCase()).map(group => {
             const latestStory = group.stories[0];
             const hasMedia = !!latestStory.media_url?.trim();
             const isVideo = latestStory.media_type === "video";
@@ -164,7 +172,7 @@ export default function StoriesRow({ currentUser }) {
                         </span>
                       </div>
                     ) : (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
                         {group.name?.[0]?.toUpperCase() || group.username?.[0]?.toUpperCase() || "U"}
                       </div>
                     )}

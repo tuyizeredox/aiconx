@@ -1,11 +1,12 @@
 import { formatCurrency } from "@/lib/utils";
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search, Send, ArrowLeft, MoreVertical, X, Phone, Video,
-  ShoppingBag, Star, Package, Loader2, Reply, Smile, PenSquare, CheckCheck,
+  ShoppingBag, Star, Package, Loader2, Reply, PenSquare, CheckCheck,
   History
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -14,26 +15,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import MessageBubble from "@/components/chat/MessageBubble";
 import ChatImageUpload from "@/components/chat/ChatImageUpload";
+import StandaloneEmojiPicker from "@/components/chat/StandaloneEmojiPicker";
 import IncomingCallOverlay from "@/components/chat/IncomingCallOverlay";
 import ActiveCallScreen from "@/components/chat/ActiveCallScreen";
 import { authAPI, productsAPI, messagesAPI, ordersAPI, usersAPI, callsAPI } from "@/api/apiClient";
 import { useSocket } from "@/lib/SocketContext";
 
 const EMOJI_QUICK = ["❤️", "😂", "🔥", "👍", "😍", "💯", "🎉", "😎", "✨", "🙌", "🤔", "👏", "🚀", "💡", "✅", "❌"];
-
-const EMOJI_PACK = [
-  "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰",
-  "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏",
-  "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠",
-  "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥",
-  "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐",
-  "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻",
-  "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾",
-  "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆",
-  "🖕", "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✍️",
-  "💅", "🤳", "💪", "🦾", "🦵", "🦿", "🦶", "👣", "👂", "🦻", "👃", "🧠", "🫀", "🫁", "🦷", "🦴",
-  "👀", "👁️", "👅", "👄", "💋", "🩸"
-];
 
 function Avatar({ name, size = 10 }) {
   return (
@@ -141,7 +129,7 @@ export default function Chat() {
   const [newMessage, setNewMessage] = useState("");
   const [search, setSearch] = useState("");
   const [showProductPicker, setShowProductPicker] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [enableEmojiPicker, setEnableEmojiPicker] = useState(true);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showActionMenu, setShowActionMenu] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
@@ -163,6 +151,7 @@ export default function Chat() {
   const incomingTypingTimeoutRef = useRef(null);
   const queryClient = useQueryClient();
   const { on, emit } = useSocket();
+  const navigate = useNavigate();
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -431,10 +420,33 @@ export default function Chat() {
     emitTyping();
   };
 
+  const handleEmojiSelect = (emoji) => {
+    const input = messageInputRef.current;
+    if (!input) return;
+    const start = input.selectionStart ?? newMessage.length;
+    const end = input.selectionEnd ?? newMessage.length;
+    const updated = newMessage.slice(0, start) + emoji + newMessage.slice(end);
+    setNewMessage(updated);
+    setTimeout(() => {
+      input.focus();
+      const pos = start + emoji.length;
+      input.setSelectionRange(pos, pos);
+    }, 0);
+  };
+
+  const replyContent = (msg) => {
+    if (!msg) return "";
+    if (msg.content) return msg.content;
+    if (msg.message_type === "image") return "📷 Photo";
+    if (msg.message_type === "product_share") return `🛍️ ${msg.product_data?.title || "Product"}`;
+    if (msg.message_type === "offer") return `💰 Offer: ${msg.offer_amount}`;
+    return "Message";
+  };
+
   const sendText = () => {
-    if (!newMessage.trim() || !selectedConvo) return;
+    if ((!newMessage.trim() && !pendingImageUrl) || !selectedConvo) return;
     const extra = replyingTo ? {
-      reply_to_content: replyingTo.content,
+      reply_to_content: replyContent(replyingTo),
       reply_to_name: replyingTo.sender_username === currentUser?.username ? "You" : selectedConvoName,
     } : {};
 
@@ -446,7 +458,6 @@ export default function Chat() {
       sendMutation.mutate({ ...baseMsg, content: newMessage, message_type: "text" });
     }
     setReplyingTo(null);
-    setShowEmojiPicker(false);
     stopTyping();
   };
 
@@ -455,18 +466,21 @@ export default function Chat() {
   };
 
   const executeForward = async () => {
-    if (!forwardToUsername.trim() || !forwardMsg || !currentUser?.username) return;
+    const recipient = (forwardToUsername || "").trim();
+    if (!recipient || !forwardMsg || !currentUser?.username) return;
     try {
       await messagesAPI.send({
-        conversation_id: `chat_${[currentUser.username, forwardToUsername].sort().join("_")}`,
+        conversation_id: `chat_${[currentUser.username, recipient].sort().join("_")}`,
         sender_username: currentUser.username,
         sender_name: currentUser.display_name || currentUser.full_name,
-        recipient_username: forwardToUsername.trim(),
-        content: `Forwarded: ${forwardMsg.content || ""}`,
-        message_type: forwardMsg.message_type,
+        recipient_username: recipient,
+        content: `Forwarded: ${replyContent(forwardMsg)}`,
+        message_type: forwardMsg.message_type === "text" ? "text" : forwardMsg.message_type,
+        image_url: forwardMsg.image_url,
         product_id: forwardMsg.product_id,
         product_data: forwardMsg.product_data,
       });
+      queryClient.invalidateQueries({ queryKey: ["unreadMessages"] });
       toast.success(t("chat.messageForwarded"));
       setForwardMsg(null);
       setForwardToUsername("");
@@ -635,7 +649,7 @@ export default function Chat() {
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     placeholder={t("chat.searchByName")}
-                    className="pl-8 h-9 rounded-xl text-sm bg-indigo-50 border-indigo-100 focus:border-indigo-300"
+                    className="pl-8 h-9 rounded-xl text-sm bg-orange-50 border-orange-100 focus:border-orange-300"
                   />
                 </div>
                 {userSearch.trim().length >= 2 && (
@@ -650,9 +664,9 @@ export default function Chat() {
                           setComposing(false);
                           setUserSearch("");
                         }}
-                        className="w-full flex items-center gap-2.5 px-2 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-colors text-left"
+                        className="w-full flex items-center gap-2.5 px-2 py-2 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-xl transition-colors text-left"
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
                           {(u.display_name || u.username)?.[0]?.toUpperCase() || "U"}
                         </div>
                         <div className="min-w-0">
@@ -698,7 +712,7 @@ export default function Chat() {
                 <button
                   key={convo.other_user_username}
                   onClick={() => setSelectedConvo(convo.other_user_username)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 ${selectedConvo === convo.other_user_username ? "bg-indigo-50 dark:bg-indigo-900/30" : ""}`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 ${selectedConvo === convo.other_user_username ? "bg-orange-50 dark:bg-orange-900/30" : ""}`}
                 >
                   <div className="relative shrink-0">
                     <Avatar name={convo.other_user_name} size={11} />
@@ -715,7 +729,7 @@ export default function Chat() {
                     </p>
                   </div>
                   {convo.unread_count > 0 && (
-                    <div className="bg-indigo-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-bold">
+                    <div className="bg-orange-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-bold">
                       {convo.unread_count > 9 ? "9+" : convo.unread_count}
                     </div>
                   )}
@@ -726,7 +740,7 @@ export default function Chat() {
       </div>
 
       {/* Chat Area */}
-      <div className={`flex-1 flex flex-col ${!selectedConvo ? "hidden lg:flex" : "flex"}`}>
+      <div className={`flex-1 flex flex-col min-h-0 ${!selectedConvo ? "hidden lg:flex" : "flex"}`}>
         {selectedConvo ? (
           <>
             {/* Header */}
@@ -750,39 +764,69 @@ export default function Chat() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  onClick={handleVoiceCall}
-                  disabled={callStatus === "initiating" || !!activeCall || !!incomingCall}
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 rounded-full"
-                  title={t("chat.voiceCall")}
+              <div className="flex items-center gap-1 relative">
+                <button
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                  onClick={() => setShowActionMenu(v => !v)}
                 >
-                  <Phone className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                </Button>
-                <Button
-                  onClick={handleVideoCall}
-                  disabled={callStatus === "initiating" || !!activeCall || !!incomingCall}
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 rounded-full"
-                  title={t("chat.videoCall")}
-                >
-                  <Video className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                </Button>
-                <Button
-                  onClick={() => setShowCallHistory(v => !v)}
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 rounded-full"
-                  title={t("chat.callHistory")}
-                >
-                  <History className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                </Button>
-                <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors" onClick={() => setShowActionMenu(v => !v)}>
                   <MoreVertical className="w-5 h-5 text-slate-400" />
                 </button>
+                <AnimatePresence>
+                  {showActionMenu && (
+                    <>
+                      {/* Backdrop to close on outside click */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowActionMenu(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl z-50 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => { setShowActionMenu(false); navigate(`/profile?username=${selectedConvo}`); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left"
+                        >
+                          <span className="text-base">👤</span> View Profile
+                        </button>
+                        <div className="h-px bg-slate-100 dark:bg-slate-700 mx-3" />
+                        <button
+                          onClick={() => {
+                            setShowActionMenu(false);
+                            toast("Clear this conversation?", {
+                              action: {
+                                label: "Clear",
+                                onClick: () => {
+                                  queryClient.cancelQueries({ queryKey: ["conversationMessages", conversationId] });
+                                  queryClient.removeQueries({ queryKey: ["conversationMessages", conversationId] });
+                                  toast.success("Chat cleared");
+                                },
+                              },
+                              cancel: { label: "Cancel" },
+                            });
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left"
+                        >
+                          <span className="text-base">🗑️</span> Clear Chat
+                        </button>
+                        <div className="h-px bg-slate-100 dark:bg-slate-700 mx-3" />
+                        <button
+                          onClick={() => {
+                            setShowActionMenu(false);
+                            setSelectedConvo(null);
+                            toast.success("Conversation closed");
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                        >
+                          <span className="text-base">🚫</span> Close Chat
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -795,7 +839,7 @@ export default function Chat() {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50/60 dark:bg-slate-900/60">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 bg-slate-50/60 dark:bg-slate-900/60">
               {selectedMessages.length === 0 && (
                 <div className="text-center py-12 text-slate-400 text-sm">
                   <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -833,12 +877,12 @@ export default function Chat() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800"
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/30 border-b border-orange-100 dark:border-orange-800"
                   >
-                    <Reply className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <Reply className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] text-indigo-500 font-semibold">{t("chat.replyingTo")}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{replyingTo.content}</p>
+                      <p className="text-[10px] text-orange-500 font-semibold">{t("chat.replyingTo")}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{replyContent(replyingTo)}</p>
                     </div>
                     <button onClick={() => setReplyingTo(null)} className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
                       <X className="w-3 h-3 text-slate-500 dark:text-slate-300" />
@@ -846,71 +890,32 @@ export default function Chat() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
               <div className="p-3 relative">
                 <AnimatePresence>
                   {showProductPicker && <ProductSharePicker onShare={sendProduct} onClose={() => setShowProductPicker(false)} currentUser={currentUser} />}
                   {showOfferModal && <OfferModal onSend={sendOffer} onClose={() => setShowOfferModal(false)} />}
-                  {showEmojiPicker && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4"
-                      onClick={() => setShowEmojiPicker(false)}
-                    >
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl p-4 w-full max-w-sm max-h-[60vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{t("chat.emojis")}</p>
-                          <button
-                            type="button"
-                            onClick={() => setShowEmojiPicker(false)}
-                            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                          >
-                            <X className="w-4 h-4 text-slate-400" />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-8 gap-2">
-                          {EMOJI_PACK.map(e => (
-                            <button
-                              key={e}
-                              type="button"
-                              onClick={() => {
-                                setNewMessage(prev => prev + e);
-                                setShowEmojiPicker(false);
-                                messageInputRef.current?.focus();
-                              }}
-                              className="text-2xl p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                            >
-                              {e}
-                            </button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  )}
                 </AnimatePresence>
 
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3 py-1.5">
+                {/* New modern input design */}
+                <div className="flex items-end gap-2">
+                  {/* Left action buttons */}
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => { setShowProductPicker(v => !v); setShowOfferModal(false); setShowEmojiPicker(false); }}
-                      className={`p-1.5 rounded-xl transition-colors ${showProductPicker ? "bg-indigo-100 text-orange-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
+                      type="button"
+                      onClick={() => { setShowProductPicker(v => !v); setShowOfferModal(false); }}
+                      className={`p-2 rounded-full transition-colors ${showProductPicker ? "bg-orange-100 text-orange-600" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"}`}
                       title={t("chat.shareProductTooltip")}
                     >
-                      <ShoppingBag className="w-4 h-4" />
+                      <ShoppingBag className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => { setShowOfferModal(v => !v); setShowProductPicker(false); setShowEmojiPicker(false); }}
-                      className={`p-1.5 rounded-xl transition-colors ${showOfferModal ? "bg-indigo-100 text-orange-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
+                      type="button"
+                      onClick={() => { setShowOfferModal(v => !v); setShowProductPicker(false); }}
+                      className={`p-2 rounded-full transition-colors ${showOfferModal ? "bg-orange-100 text-orange-600" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"}`}
                       title={t("chat.makeAnOffer")}
                     >
-                      <Star className="w-4 h-4" />
+                      <Star className="w-5 h-5" />
                     </button>
                     <ChatImageUpload
                       onImageReady={(url) => setPendingImageUrl(url)}
@@ -919,34 +924,36 @@ export default function Chat() {
                     />
                   </div>
 
-                  <input
-                    ref={messageInputRef}
-                    value={newMessage}
-                    onChange={handleMessageChange}
-                    placeholder={t("chat.typeMessage")}
-                    className="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder:text-slate-400 outline-none py-1"
-                    onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendText()}
-                  />
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => { setShowEmojiPicker(v => !v); setShowProductPicker(false); setShowOfferModal(false); }}
-                      className={`p-2 rounded-xl transition-colors ${showEmojiPicker ? "bg-indigo-100 text-orange-600" : "hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400"}`}
-                      title="Emoji picker"
-                    >
-                      <Smile className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={sendText}
-                      disabled={!newMessage.trim() || sendMutation.isPending}
-                      className="w-8 h-8 rounded-xl bg-orange-600 hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center ml-1 shrink-0 transition-colors"
-                    >
-                      <Send className="w-3.5 h-3.5 text-white" />
-                    </button>
+                  {/* Input field */}
+                  <div 
+                    className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-2xl px-3 py-1.5 cursor-text flex items-center gap-2 min-w-0"
+                    onClick={() => messageInputRef.current?.focus()}
+                  >
+                    <input
+                      ref={messageInputRef}
+                      value={newMessage}
+                      onChange={handleMessageChange}
+                      placeholder={t("chat.typeMessage")}
+                      className="w-full bg-transparent text-sm text-left text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                      onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendText()}
+                    />
+                    <div className="shrink-0" onClick={e => e.stopPropagation()}>
+                      <StandaloneEmojiPicker enabled={enableEmojiPicker} onEmojiSelect={handleEmojiSelect} />
+                    </div>
                   </div>
+
+                  {/* Send button */}
+                  <button
+                    type="button"
+                    onClick={sendText}
+                    disabled={(!newMessage.trim() && !pendingImageUrl) || sendMutation.isPending}
+                    className="w-9 h-9 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 transition-colors"
+                  >
+                    <Send className="w-5 h-5 text-white" />
+                  </button>
                 </div>
               </div>
+
             </div>
 
             {/* Forward Modal */}
@@ -965,21 +972,21 @@ export default function Chat() {
                     className="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl"
                   >
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{t("chat.forwardMessage")}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 bg-slate-50 dark:bg-slate-700 rounded-xl px-3 py-2 line-clamp-2">{forwardMsg.content}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 bg-slate-50 dark:bg-slate-700 rounded-xl px-3 py-2 line-clamp-2">{replyContent(forwardMsg)}</p>
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">{t("chat.sendTo")}</p>
                     {conversations.length > 0 ? (
                       <div className="space-y-1 max-h-52 overflow-y-auto mb-3">
                         {conversations.map(c => (
                           <button
                             key={c.other_user_username}
-                            onClick={() => setForwardToUsername(c.other_user_username)}
+                            onClick={() => setForwardToUsername(c.other_user_username || "")}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors text-left border-2 ${
                               forwardToUsername === c.other_user_username
-                                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
+                                ? "border-orange-500 bg-orange-50 dark:bg-orange-900/30"
                                 : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-700"
                             }`}
                           >
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
                               {(c.other_user_name)?.[0]?.toUpperCase() || "U"}
                             </div>
                             <div className="min-w-0">
@@ -999,7 +1006,7 @@ export default function Chat() {
                     )}
                     <div className="flex gap-2">
                       <Button onClick={() => { setForwardMsg(null); setForwardToUsername(""); }} variant="outline" className="flex-1 rounded-xl" size="sm">{t("chat.cancel")}</Button>
-                      <Button onClick={executeForward} disabled={!forwardToUsername.trim()} className="flex-1 bg-orange-600 hover:bg-indigo-700 rounded-xl" size="sm">{t("chat.forward")}</Button>
+                      <Button onClick={executeForward} disabled={!(forwardToUsername || "").trim()} className="flex-1 bg-orange-600 hover:bg-orange-700 rounded-xl" size="sm">{t("chat.forward")}</Button>
                     </div>
                   </motion.div>
                 </motion.div>
@@ -1009,8 +1016,8 @@ export default function Chat() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center mx-auto mb-4">
-                <Send className="w-9 h-9 text-indigo-400" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-100 to-purple-100 dark:from-orange-900 dark:to-purple-900 flex items-center justify-center mx-auto mb-4">
+                <Send className="w-9 h-9 text-orange-400" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{t("chat.yourMessages")}</h3>
               <p className="text-sm text-slate-400">{t("chat.selectConversation")}</p>

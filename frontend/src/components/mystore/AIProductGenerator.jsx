@@ -139,7 +139,7 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
                   <Button
                     onClick={generate}
                     disabled={generating || !keyFeatures.trim()}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl gap-2"
+                    className="w-full bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 rounded-xl gap-2"
                   >
                     {generating ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> {t("aiProduct.generating")}</>
@@ -183,7 +183,7 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
                         </div>
                       )}
 
-                      <Button onClick={apply} className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl gap-2">
+                      <Button onClick={apply} className="w-full bg-orange-600 hover:bg-orange-700 rounded-xl gap-2">
                         <Check className="w-4 h-4" /> {t("aiProduct.applyToForm")}
                       </Button>
                     </motion.div>

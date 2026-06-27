@@ -151,7 +151,7 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
           <Button
             onClick={() => onSelect(plan)}
             disabled={isPending}
-            className={`w-full rounded-xl ${plan.id === "free" ? "variant-outline border border-slate-200" : plan.id === "pro" ? "bg-orange-600 hover:bg-indigo-700" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
+            className={`w-full rounded-xl ${plan.id === "free" ? "variant-outline border border-slate-200" : plan.id === "pro" ? "bg-orange-600 hover:bg-orange-700" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
             variant={plan.id === "free" ? "outline" : "default"}
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
@@ -202,7 +202,7 @@ function CustomDomainManager({ subscription, vendorUsername }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
       <div className="flex items-center gap-2 mb-3">
-        <Globe className="w-5 h-5 text-indigo-500" />
+        <Globe className="w-5 h-5 text-orange-500" />
         <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{t("subscription.customDomainTitle")}{isElite && " & SSL"}</h4>
         {subscription?.custom_domain ? (
           <Badge className="ml-auto bg-green-100 text-green-700 border-0 text-xs">{t("subscription.domainActive")}</Badge>
@@ -221,13 +221,13 @@ function CustomDomainManager({ subscription, vendorUsername }) {
           placeholder="shop.yourbrand.com"
           className="rounded-xl text-sm"
         />
-        <Button onClick={save} disabled={saving || !domain.trim()} className="bg-orange-600 hover:bg-indigo-700 rounded-xl shrink-0">
+        <Button onClick={save} disabled={saving || !domain.trim()} className="bg-orange-600 hover:bg-orange-700 rounded-xl shrink-0">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.save")}
         </Button>
       </div>
       {domain && (
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-          Add a CNAME record: <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded text-indigo-700 dark:text-indigo-400">store.iqon.app</code>
+          Add a CNAME record: <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded text-orange-700 dark:text-orange-400">store.iqon.app</code>
         </p>
       )}
     </div>
@@ -528,7 +528,7 @@ try {
   return (
     <div className="space-y-6">
       {/* Current Plan Banner */}
-      <div className={`relative rounded-2xl p-5 flex items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-indigo-200 dark:border-indigo-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
+      <div className={`relative rounded-2xl p-5 flex items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-orange-200 dark:border-orange-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
         {currentPlanInfo && <currentPlanInfo.icon className={`w-8 h-8 shrink-0 ${currentPlanInfo.iconColor}`} />}
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -550,7 +550,7 @@ try {
         
         <div className="flex flex-col items-end gap-2">
           {subscription?.plan !== "free" && (
-            <Badge className={`text-xs border-0 ${subscription?.plan === "elite" ? "bg-amber-100 text-amber-700" : "bg-indigo-100 text-indigo-700"}`}>
+            <Badge className={`text-xs border-0 ${subscription?.plan === "elite" ? "bg-amber-100 text-amber-700" : "bg-orange-100 text-orange-700"}`}>
               {subscription?.billing_cycle === "annual" ? t("subscription.annual") : t("subscription.monthly")}
             </Badge>
           )}
@@ -559,7 +559,7 @@ try {
               size="sm"
               variant="default"
               disabled={payingNow}
-              className="h-9 text-xs font-bold bg-orange-600 hover:bg-indigo-700 rounded-lg px-5 shadow-sm shadow-indigo-100 min-w-[90px]"
+              className="h-9 text-xs font-bold bg-orange-600 hover:bg-orange-700 rounded-lg px-5 shadow-sm shadow-orange-100 min-w-[90px]"
               onClick={handlePayNow}
             >
               {payingNow ? (
@@ -651,7 +651,7 @@ try {
       {/* Feature comparison callout */}
       <div className="grid grid-cols-3 gap-3 text-center">
         {[
-          { icon: TrendingUp, label: t("subscription.prioritySearch"), plans: ["Pro", "Elite"], color: "text-indigo-500" },
+          { icon: TrendingUp, label: t("subscription.prioritySearch"), plans: ["Pro", "Elite"], color: "text-orange-500" },
           { icon: Image, label: t("subscription.unlimitedMedia"), plans: ["Elite"], color: "text-amber-500" },
           { icon: Globe, label: t("subscription.customDomain"), plans: ["Pro", "Elite"], color: "text-green-500" },
         ].map(f => (
@@ -684,7 +684,7 @@ try {
                     <button
                       key={m.id}
                       onClick={() => handleMethodSelect(m)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-all text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950 transition-all text-left"
                     >
                       {m.logo
                         ? <img src={m.logo} alt={m.label} className="w-10 h-10 object-contain rounded-lg" />
@@ -718,10 +718,10 @@ try {
                 </p>
 
                 {/* Payment Information */}
-                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl p-3 mb-4">
+                <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900 rounded-xl p-3 mb-4">
                   <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                    <div className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                    <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                    <div className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
                       <p className="font-semibold mb-1">{t("subscription.paymentProcessTitle")}</p>
                       <p>{t("subscription.paymentProcessDesc")}</p>
                     </div>
@@ -755,7 +755,7 @@ try {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 rounded-xl bg-orange-600 hover:bg-indigo-700"
+                      className="flex-1 rounded-xl bg-orange-600 hover:bg-orange-700"
                       disabled={phoneSaving || payingNow || phoneInput.trim().length < 9}
                     >
                       {phoneSaving || payingNow
@@ -791,8 +791,8 @@ try {
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                     {t("subscription.paymentPendingDesc")}
                   </p>
-                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl p-3 mb-4 text-left">
-                    <div className="text-xs text-blue-700 dark:text-blue-300">
+                  <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900 rounded-xl p-3 mb-4 text-left">
+                    <div className="text-xs text-orange-700 dark:text-orange-300">
                       <p className="font-semibold mb-1">{t("subscription.paymentInstructionsTitle")}</p>
                       <p>{t("subscription.paymentInstructionsDesc")}</p>
                     </div>
@@ -806,7 +806,7 @@ try {
                       {t("common.close")}
                     </Button>
                     <Button
-                      className="flex-1 rounded-xl bg-orange-600 hover:bg-indigo-700"
+                      className="flex-1 rounded-xl bg-orange-600 hover:bg-orange-700"
                       onClick={() => {
                         verifyPayment({
                           id: subscription.id || subscription._id,
@@ -837,7 +837,7 @@ try {
                     </div>
                   </div>
                   <Button
-                    className="w-full rounded-xl bg-orange-600 hover:bg-indigo-700"
+                    className="w-full rounded-xl bg-orange-600 hover:bg-orange-700"
                     onClick={() => setPendingPayment(null)}
                   >
                     {t("subscription.tryAgain")}

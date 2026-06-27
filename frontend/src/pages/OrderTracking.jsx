@@ -88,7 +88,7 @@ function TrackingTimeline({ status }) {
                   {t(`orderTracking.steps.${step.key}.label`)}
                 </p>
                 {isCurrent && (
-                  <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                  <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
                     {t("orderTracking.current")}
                   </span>
                 )}
@@ -110,8 +110,8 @@ function OrderTrackCard({ order, defaultExpanded = false }) {
 
   const statusColors = {
     pending: "bg-amber-100 text-amber-700",
-    confirmed: "bg-blue-100 text-blue-700",
-    processing: "bg-indigo-100 text-indigo-700",
+    confirmed: "bg-orange-100 text-orange-700",
+    processing: "bg-orange-100 text-orange-700",
     shipped: "bg-purple-100 text-purple-700",
     delivered: "bg-green-100 text-green-700",
     cancelled: "bg-red-100 text-red-700",
@@ -162,9 +162,9 @@ function OrderTrackCard({ order, defaultExpanded = false }) {
               <TrackingTimeline status={order.status} />
 
               {order.tracking_number && (
-                <div className="mt-4 p-3 bg-indigo-50 rounded-xl">
+                <div className="mt-4 p-3 bg-orange-50 rounded-xl">
                   <p className="text-xs text-slate-500">{t("orderTracking.trackingNumber")}</p>
-                  <p className="text-sm font-bold text-indigo-700 font-mono">{order.tracking_number}</p>
+                  <p className="text-sm font-bold text-orange-700 font-mono">{order.tracking_number}</p>
                 </div>
               )}
 
@@ -263,7 +263,7 @@ export default function OrderTracking() {
         <Button
           onClick={handleSearch}
           disabled={searching || !searchId.trim()}
-          className="bg-orange-600 hover:bg-indigo-700 rounded-xl px-4 shrink-0"
+          className="bg-orange-600 hover:bg-orange-700 rounded-xl px-4 shrink-0"
         >
           {searching ? (
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
@@ -316,7 +316,7 @@ export default function OrderTracking() {
             description={t("orderTracking.noOrdersDesc")}
             action={
               <Link to={createPageUrl("Marketplace")}>
-                <Button className="bg-orange-600 hover:bg-indigo-700 rounded-xl">{t("orderTracking.browseMarketplace")}</Button>
+                <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("orderTracking.browseMarketplace")}</Button>
               </Link>
             }
           />

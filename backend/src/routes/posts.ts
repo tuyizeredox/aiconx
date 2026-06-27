@@ -12,6 +12,7 @@ const createPostSchema = z.object({
   media_urls: z.array(z.string()).default([]),
   media_type: z.enum(['image', 'video', 'text', 'product_review']).default('text'),
   tagged_products: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string')).default([]),
+  affiliate_links: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string')).default([]),
   community_id: z.string().optional().nullable(),
   visibility: z.enum(['public', 'followers', 'community']).default('public'),
   // Optional fields that can be provided but are not required
@@ -63,9 +64,12 @@ export async function postRoutes(fastify: FastifyInstance) {
         }
 
         if (follower_username) {
-          const follows = await Follow.find({ follower_username: follower_username.toLowerCase() }).lean();
+          const follows = await Follow.find({
+            follower_username: follower_username.toLowerCase(),
+            follow_type: 'user'
+          }).lean();
           const followingUsernames = follows.map(f => f.following_username).filter(Boolean);
-          
+
           if (followingUsernames.length > 0) {
             filter.author_username = { $in: followingUsernames };
           } else {

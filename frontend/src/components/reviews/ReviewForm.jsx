@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { reviewsAPI, filesAPI } from "@/api/apiClient";
+import { reviewsAPI } from "@/api/apiClient";
+import { uploadImage } from "@/lib/storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Star, Upload, X, Loader2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
       let uploadedUrls = [];
       try {
         for (const file of mediaFiles) {
-          const res = await filesAPI.upload(file);
+          const res = await uploadImage(file, { folder: 'reviews' });
           if (res.url) {
             uploadedUrls.push(res.url);
           }

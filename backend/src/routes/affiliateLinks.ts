@@ -3,8 +3,7 @@ import { AffiliateLink, IAffiliateLink } from '../models/AffiliateLink';
 import { Product } from '../models/Product';
 import { User } from '../models/User';
 import { Order } from '../models/Order';
-import { VendorSubscription } from '../models/VendorSubscription';
-import { PLAN_LIMITS } from '../middleware/subscription';
+import { getVendorPlan } from '../middleware/subscription';
 
 export async function affiliateLinkRoutes(fastify: FastifyInstance) {
   // List affiliate links with filtering
@@ -213,18 +212,13 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
       }
 
       // Check if vendor has affiliate program enabled in their plan
-      // We can use the denormalized plan or check active subscription for reliability
-      const vendorSubscription = await VendorSubscription.findOne({
-        vendor_username: product.vendor_username,
-        status: 'active'
-      });
-      const vendorPlan = vendorSubscription?.plan || 'free';
-      const planLimits = PLAN_LIMITS[vendorPlan as keyof typeof PLAN_LIMITS];
+      // This respects subscription_mode - when disabled, all vendors get elite access
+      const vendorPlan = await getVendorPlan(product.vendor_username, request);
 
-      if (!planLimits?.affiliate_program) {
-        return reply.code(403).send({ 
-          error: 'Affiliate program restricted', 
-          message: `The store owner (${product.vendor_username}) is on the ${vendorPlan.toUpperCase()} plan which does not support affiliate links. Only Elite stores can have affiliate programs.` 
+      if (!vendorPlan.limits?.affiliate_program) {
+        return reply.code(403).send({
+          error: 'Affiliate program restricted',
+          message: `The store owner (${product.vendor_username}) is on the ${vendorPlan.plan.toUpperCase()} plan which does not support affiliate links. Only Elite stores can have affiliate programs.`
         });
       }
 

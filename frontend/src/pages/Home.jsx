@@ -165,7 +165,7 @@ export default function Home() {
                   icon={TrendingUp}
                   title={activeTab === "following" ? t("home.noFollowingTitle") : t("home.feedEmptyTitle")}
                   description={
-                    activeTab === "following" 
+                    activeTab === "following"
                       ? t("home.noFollowingDesc")
                       : t("home.feedEmptyDesc")
                   }
@@ -188,26 +188,29 @@ export default function Home() {
                     </div>
                   }
                 />
-                
+
                 {activeTab === "following" && (
-                  <div className="max-w-md mx-auto">
-                    <SuggestedUsers currentUser={currentUser} />
-                  </div>
+                  <SuggestedUsers currentUser={currentUser} />
                 )}
               </div>
             ) : (
               <>
                 {posts.map((post, idx) => (
-                  <PostCard 
-                    key={post.id || post._id || `home-post-${idx}`} 
-                    post={post} 
-                    currentUser={currentUser} 
-                  />
+                  <React.Fragment key={post.id || post._id || `home-post-${idx}`}>
+                    <PostCard
+                      post={post}
+                      currentUser={currentUser}
+                    />
+                    {/* Show suggested users after every 3 posts */}
+                    {(idx + 1) % 3 === 0 && idx < posts.length - 1 && (
+                      <SuggestedUsers currentUser={currentUser} />
+                    )}
+                  </React.Fragment>
                 ))}
-                
+
                 {/* Infinite Scroll Trigger */}
-                <div 
-                  ref={loadMoreRef} 
+                <div
+                  ref={loadMoreRef}
                   className="py-8 flex justify-center"
                 >
                   {isFetchingNextPage ? (

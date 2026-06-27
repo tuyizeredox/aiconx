@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { reviewsAPI, storeReviewsAPI, filesAPI } from "@/api/apiClient";
+import { reviewsAPI, storeReviewsAPI } from "@/api/apiClient";
+import { uploadImage } from "@/lib/storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,7 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
       const uploadedUrls = [];
       try {
         for (const file of mediaFiles) {
-          const res = await filesAPI.upload(file);
+          const res = await uploadImage(file, { folder: 'reviews' });
           if (res.url) uploadedUrls.push(res.url);
         }
       } catch (err) {

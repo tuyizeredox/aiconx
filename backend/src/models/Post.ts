@@ -10,6 +10,7 @@ export interface IPost extends Document {
   media_urls: string[];
   media_type: 'image' | 'video' | 'text' | 'product_review';
   tagged_products: string[];
+  affiliate_links: string[];
   likes_count: number;
   comments_count: number;
   shares_count: number;
@@ -53,6 +54,9 @@ const PostSchema = new Schema<IPost>({
     default: 'text',
   },
   tagged_products: [{
+    type: String,
+  }],
+  affiliate_links: [{
     type: String,
   }],
   likes_count: {

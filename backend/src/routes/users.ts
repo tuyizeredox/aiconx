@@ -87,9 +87,30 @@ export async function userRoutes(fastify: FastifyInstance) {
       return users;
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error', 
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Get suggested users (random users with high follower count)
+  fastify.get('/suggested', async (request, reply) => {
+    try {
+      const { limit = 10 } = request.query as any;
+
+      const users = await User.find({})
+        .sort({ follower_count: -1, created_at: -1 })
+        .limit(parseInt(limit))
+        .select('username display_name avatar_url is_verified follower_count')
+        .lean();
+
+      return { users };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

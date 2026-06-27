@@ -60,7 +60,7 @@ const COMMUNITY_CATEGORIES = [
      queryKey: ["communityMembership", communityId, currentUser?.email], 
      queryFn: async () => { 
        if (!currentUser?.email) return null;
-       const res = await communityMembersAPI.list({ community_id: communityId, member_email: currentUser.email });
+       const res = await communityMembersAPI.list({ community_id: communityId, member_username: currentUser.username });
        return res.data?.[0] || null;
      }, 
      enabled: !!communityId && !!currentUser?.email, 
@@ -75,8 +75,8 @@ const COMMUNITY_CATEGORIES = [
      enabled: !!communityId, 
    }); 
 
-   const isMember = !!membershipData || community?.owner_email === currentUser?.email; 
-   const isAdmin = community?.owner_email === currentUser?.email; 
+   const isMember = !!membershipData || community?.owner_username === currentUser?.username; 
+   const isAdmin = community?.owner_username === currentUser?.username; 
 
    const joinMutation = useMutation({ 
      mutationFn: async () => { 
@@ -120,8 +120,12 @@ const COMMUNITY_CATEGORIES = [
            )} 
          </div> 
          <div className="p-5 -mt-8 relative"> 
-           <div className="w-16 h-16 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-2xl mb-3"> 
-             {catEmoji} 
+           <div className="w-16 h-16 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-2xl mb-3 overflow-hidden">
+             {community.icon_url ? (
+               <img src={community.icon_url} alt={community.name} className="w-full h-full object-cover" />
+             ) : (
+               catEmoji
+             )}
            </div> 
            <div className="flex items-start justify-between gap-3"> 
              <div className="flex-1 min-w-0"> 
@@ -186,7 +190,7 @@ const COMMUNITY_CATEGORIES = [
                    <p className="text-sm text-slate-400">{t("communities.noPosts")}</p> 
                    {isMember && ( 
                      <Link to={`/CreatePost?community_id=${communityId}`}> 
-                       <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl" size="sm">{t("communities.beFirstToPost")}</Button> 
+                       <Button className="mt-4 bg-orange-600 hover:bg-orange-700 rounded-xl" size="sm">{t("communities.beFirstToPost")}</Button> 
                      </Link> 
                    )} 
                  </div> 
@@ -204,13 +208,13 @@ const COMMUNITY_CATEGORIES = [
              members.map(m => ( 
                <div key={m._id} className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"> 
                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
-                   {m.member_email?.[0]?.toUpperCase()} 
+                   {m.member_username?.[0]?.toUpperCase()} 
                  </div> 
                  <div className="flex-1 min-w-0"> 
-                   <p className="text-sm font-medium text-slate-800 truncate">@{m.member_email?.split('@')[0]}</p> 
+                   <p className="text-sm font-medium text-slate-800 truncate">@{m.member_username}</p> 
                    <p className="text-xs text-slate-400">{t("communities.joinedOn", { date: new Date(m.created_at).toLocaleDateString() })}</p> 
                  </div> 
-                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${m.role === "admin" ? "bg-indigo-100 text-indigo-700" : m.role === "moderator" ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-600"}`}> 
+                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${m.role === "admin" ? "bg-orange-100 text-orange-700" : m.role === "moderator" ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-600"}`}> 
                    {m.role} 
                  </span> 
                </div> 

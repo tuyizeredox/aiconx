@@ -563,6 +563,10 @@ export const usersAPI = {
   getProfile: (usernameOrEmail) => apiClient.get(`/users/${usernameOrEmail}`),
   getStatus: (usernameOrEmail) => apiClient.get(`/users/${usernameOrEmail}/status`),
   search: (query) => apiClient.get(`/users/search?q=${encodeURIComponent(query)}`),
+  getSuggested: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/users/suggested?${query}`);
+  },
   registerPushToken: (token) => apiClient.post('/users/push-token', { token }),
   unregisterPushToken: (token) => apiClient.delete('/users/push-token', { token })
 };
@@ -725,39 +729,125 @@ export const liveSessionsAPI = {
 };
 
 export const filesAPI = {
-  getUploadSignature: () => apiClient.get('/files/upload-signature'),
-  upload: async (file) => {
-    // Convert file to base64
+  getStorageStatus: () => apiClient.get('/files/storage-status'),
+  getPresignedUrl: (filename, contentType, folder = 'media') => {
+    const query = apiClient.buildQueryString({ filename, contentType, folder });
+    return apiClient.get(`/files/presigned-url?${query}`);
+  },
+  // Upload to S3 using presigned URL (client-side direct upload)
+  uploadToS3: async (file, presignedData) => {
+    try {
+      const { uploadUrl, key, cloudFrontDomain } = presignedData;
+      
+      // Direct upload to S3 using presigned URL
+      const response = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`S3 upload failed: ${response.statusText}`);
+      }
+
+      // Construct CloudFront URL
+      const url = cloudFrontDomain 
+        ? `https://${cloudFrontDomain}/${key}`
+        : uploadUrl.split('?')[0];
+
+      return {
+        url,
+        key,
+        provider: 's3',
+      };
+    } catch (error) {
+      console.error('S3 upload error:', error);
+      throw error;
+    }
+  },
+  // Fallback to Cloudinary upload
+  uploadToCloudinary: async (file, signatureData) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', signatureData.api_key);
+    formData.append('timestamp', signatureData.timestamp);
+    formData.append('signature', signatureData.signature);
+    formData.append('folder', signatureData.folder);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${signatureData.cloud_name}/auto/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Cloudinary upload failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  },
+  // Backend upload (base64)
+  upload: async (file, options = {}) => {
+    const { onProgress } = options;
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      
+      reader.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          // Reading progress (0-50%)
+          const progress = Math.round((e.loaded / e.total) * 50);
+          onProgress(progress);
+        }
+      };
+      
       reader.onloadend = async () => {
         try {
           const base64 = reader.result;
           
-          // Log file info for debugging
+          if (onProgress) onProgress(50); // Reading complete
+          
           console.log('Uploading file:', {
             name: file.name,
             type: file.type,
             size: `${Math.round(file.size / 1024)}KB`,
           });
           
-          const response = await apiClient.post('/files/upload', { file: base64 });
+          const response = await apiClient.post('/files/upload', { 
+            file: base64,
+            filename: file.name,
+            contentType: file.type,
+            folder: options.folder || 'media',
+          });
+          
+          if (onProgress) onProgress(100); // Upload complete
           resolve(response);
         } catch (error) {
           console.error('File upload failed:', error);
           reject(error);
         }
       };
+      
       reader.onerror = () => {
         const error = new Error('Failed to read file');
         console.error('FileReader error:', error);
         reject(error);
       };
+      
       reader.readAsDataURL(file);
     });
   },
-  uploadDirect: (fileBase64) => apiClient.post('/files/upload', { file: fileBase64 }),
-  delete: (publicId) => apiClient.delete(`/files/${publicId}`),
+  uploadDirect: (fileBase64, options = {}) => apiClient.post('/files/upload', { 
+    file: fileBase64,
+    ...options 
+  }),
+  delete: (keyOrPublicId, provider) => {
+    const query = provider ? apiClient.buildQueryString({ provider }) : '';
+    return apiClient.delete(`/files/${keyOrPublicId}${query ? `?${query}` : ''}`);
+  },
 };
 
 export const paymentAPI = {

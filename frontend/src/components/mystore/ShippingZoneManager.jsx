@@ -202,7 +202,7 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
             setShowAdd(true);
           }} 
           size="sm" 
-          className="bg-orange-600 hover:bg-indigo-700 rounded-xl gap-1.5"
+          className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5"
         >
           <Plus className="w-4 h-4" /> {t("store.addZone")}
         </Button>
@@ -243,8 +243,8 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${zone.is_active ? "bg-indigo-50" : "bg-slate-100"}`}>
-                        <MapPin className={`w-4 h-4 ${zone.is_active ? "text-indigo-500" : "text-slate-400"}`} />
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${zone.is_active ? "bg-orange-50" : "bg-slate-100"}`}>
+                        <MapPin className={`w-4 h-4 ${zone.is_active ? "text-orange-500" : "text-slate-400"}`} />
                       </div>
                       <div>
                         <p className={`text-sm font-semibold ${zone.is_active ? "text-slate-900" : "text-slate-400 line-through"}`}>{zone.zone_name}</p>
@@ -258,7 +258,7 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => toggleActive(zone)}
-                        className={`w-8 h-5 rounded-full transition-colors relative ${zone.is_active ? "bg-indigo-500" : "bg-slate-200"}`}
+                        className={`w-8 h-5 rounded-full transition-colors relative ${zone.is_active ? "bg-orange-500" : "bg-slate-200"}`}
                       >
                         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${zone.is_active ? "left-3.5" : "left-0.5"}`} />
                       </button>

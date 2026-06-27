@@ -1,16 +1,39 @@
-import React, { useState } from "react";
-import { communitiesAPI, communityMembersAPI, postsAPI } from "@/api/apiClient";
+﻿import React, { useState } from "react";
+import { communitiesAPI, communityMembersAPI, postsAPI, filesAPI } from "@/api/apiClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Trash2, Pin, PinOff, Users, UserX, Check, Settings } from "lucide-react";
+import { Shield, Trash2, Pin, PinOff, Users, UserX, Check, Settings, Image, Type, Globe, Lock, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+const COMMUNITY_CATEGORIES = [
+  { id: "fashion", label: "Fashion", emoji: "👗" },
+  { id: "tech", label: "Tech", emoji: "💻" },
+  { id: "fitness", label: "Fitness", emoji: "💪" },
+  { id: "food", label: "Food", emoji: "🍕" },
+  { id: "art", label: "Art", emoji: "🎨" },
+  { id: "music", label: "Music", emoji: "🎵" },
+  { id: "gaming", label: "Gaming", emoji: "🎮" },
+  { id: "travel", label: "Travel", emoji: "✈️" },
+  { id: "diy", label: "DIY", emoji: "🛠️" },
+];
+
 export default function AdminPanel({ community, posts, members }) {
   const [rulesText, setRulesText] = useState(community?.rules || "");
+  const [description, setDescription] = useState(community?.description || "");
+  const [coverImage, setCoverImage] = useState(community?.cover_image || "");
+  const [iconUrl, setIconUrl] = useState(community?.icon_url || "");
+  const [category, setCategory] = useState(community?.category || "other");
+  const [isPublic, setIsPublic] = useState(community?.is_public !== false);
   const [open, setOpen] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
   const queryClient = useQueryClient();
 
   const updateCommunityMutation = useMutation({
@@ -33,7 +56,6 @@ export default function AdminPanel({ community, posts, members }) {
     mutationFn: async ({ post, pin }) => {
       const postId = post._id || post.id;
       const communityId = community._id || community.id;
-      // Store pinned_post_ids on community
       const currentPinned = community.pinned_post_ids || [];
       await communitiesAPI.update(communityId, {
         pinned_post_ids: pin ? [postId, ...currentPinned.filter(id => id !== postId)] : currentPinned.filter(id => id !== postId)
@@ -53,6 +75,40 @@ export default function AdminPanel({ community, posts, members }) {
     },
   });
 
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const result = await filesAPI.upload(file, { folder: 'community-covers' });
+      setCoverImage(result.url);
+      toast.success("Cover image uploaded!");
+    } catch (error) {
+      toast.error("Failed to upload cover image");
+      console.error(error);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleIconUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingIcon(true);
+    try {
+      const result = await filesAPI.upload(file, { folder: 'community-icons' });
+      setIconUrl(result.url);
+      toast.success("Icon uploaded!");
+    } catch (error) {
+      toast.error("Failed to upload icon");
+      console.error(error);
+    } finally {
+      setUploadingIcon(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -68,6 +124,142 @@ export default function AdminPanel({ community, posts, members }) {
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
+          {/* Community Description */}
+          <div>
+            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+              <Type className="w-4 h-4" /> Description
+            </h4>
+            <Textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Describe your community..."
+              className="h-20 text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={() => updateCommunityMutation.mutate({ description })}
+              className="mt-2 bg-orange-600 hover:bg-orange-700 rounded-lg"
+            >
+              <Check className="w-3.5 h-3.5 mr-1" /> Save Description
+            </Button>
+          </div>
+
+          {/* Cover Image (Banner) */}
+          <div>
+            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+              <Image className="w-4 h-4" /> Cover Image (Banner)
+            </h4>
+            <div className="space-y-2">
+              <Label htmlFor="cover-upload" className="cursor-pointer">
+                <div className="flex items-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-orange-400 transition-colors">
+                  <Upload className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm text-slate-600">
+                    {uploadingCover ? "Uploading..." : "Click to upload cover image"}
+                  </span>
+                  {uploadingCover && <Loader2 className="w-4 h-4 animate-spin" />}
+                </div>
+              </Label>
+              <Input
+                id="cover-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverUpload}
+                className="hidden"
+                disabled={uploadingCover}
+              />
+              {coverImage && (
+                <img src={coverImage} alt="Cover preview" className="w-full h-32 object-cover rounded-lg" />
+              )}
+              <Button
+                size="sm"
+                onClick={() => updateCommunityMutation.mutate({ cover_image: coverImage })}
+                disabled={!coverImage || updateCommunityMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700 rounded-lg"
+              >
+                <Check className="w-3.5 h-3.5 mr-1" /> Save Banner
+              </Button>
+            </div>
+          </div>
+
+          {/* Profile Icon */}
+          <div>
+            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+              <Image className="w-4 h-4" /> Profile Icon
+            </h4>
+            <div className="space-y-2">
+              <Label htmlFor="icon-upload" className="cursor-pointer">
+                <div className="flex items-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-orange-400 transition-colors">
+                  <Upload className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm text-slate-600">
+                    {uploadingIcon ? "Uploading..." : "Click to upload icon"}
+                  </span>
+                  {uploadingIcon && <Loader2 className="w-4 h-4 animate-spin" />}
+                </div>
+              </Label>
+              <Input
+                id="icon-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleIconUpload}
+                className="hidden"
+                disabled={uploadingIcon}
+              />
+              {iconUrl && (
+                <img src={iconUrl} alt="Icon preview" className="w-16 h-16 rounded-lg object-cover" />
+              )}
+              <Button
+                size="sm"
+                onClick={() => updateCommunityMutation.mutate({ icon_url: iconUrl })}
+                disabled={!iconUrl || updateCommunityMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700 rounded-lg"
+              >
+                <Check className="w-3.5 h-3.5 mr-1" /> Save Icon
+              </Button>
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+              <Settings className="w-4 h-4" /> Category
+            </h4>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="rounded-lg">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg">
+                {COMMUNITY_CATEGORIES.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.emoji} {c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={() => updateCommunityMutation.mutate({ category })}
+              className="mt-2 bg-orange-600 hover:bg-orange-700 rounded-lg"
+            >
+              <Check className="w-3.5 h-3.5 mr-1" /> Save Category
+            </Button>
+          </div>
+
+          {/* Visibility */}
+          <div>
+            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+              {isPublic ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />} Visibility
+            </h4>
+            <div className="flex items-center gap-2">
+              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+              <span className="text-sm text-slate-600">{isPublic ? "Public" : "Private"}</span>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => updateCommunityMutation.mutate({ is_public: isPublic })}
+              className="mt-2 bg-orange-600 hover:bg-orange-700 rounded-lg"
+            >
+              <Check className="w-3.5 h-3.5 mr-1" /> Save Visibility
+            </Button>
+          </div>
+
           {/* Community Rules */}
           <div>
             <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
@@ -131,10 +323,10 @@ export default function AdminPanel({ community, posts, members }) {
                 const memberId = m._id || m.id;
                 return (
                   <div key={memberId} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                      {m.member_email?.[0]?.toUpperCase()}
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                      {m.member_username?.[0]?.toUpperCase()}
                     </div>
-                    <p className="flex-1 text-xs text-slate-700 truncate">{m.member_email}</p>
+                    <p className="flex-1 text-xs text-slate-700 truncate">@{m.member_username}</p>
                     <Badge className="text-[10px] bg-slate-100 text-slate-600 border-0 capitalize">{m.role}</Badge>
                     <button
                       onClick={() => removeMemberMutation.mutate(memberId)}

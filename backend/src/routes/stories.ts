@@ -73,6 +73,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
   // List stories with filtering
   fastify.get('/', {
     preHandler: [fastify.authenticateOptional],
+    config: { compress: { threshold: 1024 * 1024 } } // Disable compression for this route (1MB threshold)
   }, async (request, reply) => {
     try {
       const query = request.query as any;
@@ -88,7 +89,10 @@ export async function storyRoutes(fastify: FastifyInstance) {
       const filter: any = {};
 
       if (author_username) filter.author_username = author_username;
-      if (is_active !== undefined) filter.is_active = is_active === 'true';
+      if (is_active !== undefined) {
+        // Handle both string 'true' and boolean true
+        filter.is_active = is_active === 'true' || is_active === true;
+      }
 
       // Build sort object
       const sortObj: any = {};
@@ -101,10 +105,12 @@ export async function storyRoutes(fastify: FastifyInstance) {
       const stories = await Story
         .find(filter)
         .sort(sortObj)
-        .limit(parseInt(limit))
+        .limit(Math.min(parseInt(limit), 10)) // Limit to max 10 to prevent response size issues
         .skip(parseInt(skip))
-        .select('author_username author_name author_avatar media_url media_type caption bg_color created_at expires_at')
+        .select('author_username author_name author_avatar media_url media_type caption bg_color created_at expires_at is_active')
         .lean();
+
+      fastify.log.info({ storyCount: stories.length, stories: stories.map(s => ({ id: s._id, author: s.author_username, is_active: s.is_active, expires_at: s.expires_at })) }, 'Stories found');
 
       const total = await Story.countDocuments(filter);
 
@@ -112,17 +118,14 @@ export async function storyRoutes(fastify: FastifyInstance) {
       const storiesWithId = stories.map(story => ({
         ...story,
         id: story._id.toString(),
-        is_liked: false // Default false; can be updated client-side if needed
       }));
 
+      // Simplified response to avoid stream issues
       reply.send({
         data: storiesWithId,
-        pagination: {
-          total,
-          limit: parseInt(limit),
-          skip: parseInt(skip),
-          hasMore: total > parseInt(skip) + parseInt(limit)
-        }
+        total,
+        limit: parseInt(limit),
+        skip: parseInt(skip)
       });
     } catch (error: any) {
       fastify.log.error(error);

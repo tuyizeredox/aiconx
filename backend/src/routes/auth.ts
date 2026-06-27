@@ -19,7 +19,7 @@ const googleClient = new OAuth2Client({
 });
 
 const AUTH_RATE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const AUTH_RATE_MAX = 20; // max attempts per window per IP
+const AUTH_RATE_MAX = 200; // max attempts per window per IP
 const authRateBuckets = new Map<string, { count: number; resetAt: number }>();
 
 function checkAuthRateLimit(ip: string): boolean {

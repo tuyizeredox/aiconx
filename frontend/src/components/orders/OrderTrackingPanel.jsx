@@ -134,7 +134,7 @@ export default function OrderTrackingPanel({ order }) {
                     <p className="text-[10px] text-slate-400">Tracking Number</p>
                     <p className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300">{order.tracking_number}</p>
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
+                  <ExternalLink className="w-3.5 h-3.5 text-orange-500" />
                 </div>
               )}
 

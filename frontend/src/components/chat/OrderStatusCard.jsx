@@ -63,7 +63,7 @@ export default function OrderStatusCard({ orderId, isVendor }) {
                 <step.icon className="w-2.5 h-2.5" />
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 ${i < currentStep ? "bg-indigo-400" : "bg-slate-200 dark:bg-slate-600"}`} />
+                <div className={`flex-1 h-0.5 ${i < currentStep ? "bg-orange-400" : "bg-slate-200 dark:bg-slate-600"}`} />
               )}
             </React.Fragment>
           ))}
@@ -81,7 +81,7 @@ export default function OrderStatusCard({ orderId, isVendor }) {
           <div key={i} className="flex items-center gap-2 py-1">
             {item.product_image && <img src={item.product_image} className="w-7 h-7 rounded-lg object-cover" alt="" />}
             <p className="text-xs text-slate-600 dark:text-slate-300 truncate flex-1">{item.product_title}</p>
-            <p className="text-xs font-bold text-indigo-600">${item.price?.toFixed(2)}</p>
+            <p className="text-xs font-bold text-orange-600">${item.price?.toFixed(2)}</p>
           </div>
         ))}
         <div className="flex items-center justify-between mt-1">
@@ -98,7 +98,7 @@ export default function OrderStatusCard({ orderId, isVendor }) {
           <button
             onClick={() => updateMutation.mutate(nextStep.key)}
             disabled={updateMutation.isPending}
-            className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5"
+            className="w-full py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5"
           >
             <nextStep.icon className="w-3 h-3" />
             Mark as {nextStep.label}
