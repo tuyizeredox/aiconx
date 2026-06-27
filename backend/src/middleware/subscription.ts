@@ -68,7 +68,7 @@ async function isSubscriptionModeEnabled(): Promise<boolean> {
  * Helper to get the active plan and its limits for a vendor
  * Caches the plan in the request object if provided
  */
-async function getVendorPlan(username: string, request?: FastifyRequest) {
+export async function getVendorPlan(username: string, request?: FastifyRequest) {
   const normalizedUsername = username.toLowerCase();
   
   // Check if already cached in request
