@@ -193,12 +193,42 @@ export async function adminRoutes(fastify: FastifyInstance) {
       const stores = await Store.find(query)
         .sort({ created_at: -1 })
         .skip(skip)
-        .limit(parseInt(limit));
+        .limit(parseInt(limit))
+        .lean();
+
+      // Enrich stores with product counts and income data
+      const enrichedStores = await Promise.all(stores.map(async (store) => {
+        const productCount = await Product.countDocuments({ store_id: store._id.toString() });
+        
+        // Calculate total revenue from orders for this store
+        const revenueResult = await Order.aggregate([
+          { $match: { 
+            store_id: store._id.toString(),
+            status: { $ne: 'cancelled' },
+            payment_status: 'paid'
+          }},
+          { $group: { _id: null, total: { $sum: '$total' } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+        // Count orders for this store
+        const ordersCount = await Order.countDocuments({ 
+          store_id: store._id.toString(),
+          status: { $ne: 'cancelled' }
+        });
+
+        return {
+          ...store,
+          products_count: productCount,
+          orders_count: ordersCount,
+          total_revenue: totalRevenue
+        };
+      }));
 
       const total = await Store.countDocuments(query);
 
       return {
-        stores,
+        stores: enrichedStores,
         pagination: {
           total,
           page: parseInt(page),
@@ -289,6 +319,184 @@ export async function adminRoutes(fastify: FastifyInstance) {
       await logActivity(request, is_verified ? 'verify_store' : 'unverify_store', store._id, 'store');
 
       return store;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Get store products
+  fastify.get('/stores/:id/products', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { page = 1, limit = 20, status } = request.query as any;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const query: any = { store_id: id };
+      if (status) query.status = status;
+
+      const products = await Product.find(query)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await Product.countDocuments(query);
+
+      return {
+        products,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // --- Subscription Management ---
+
+  // Get all vendor subscriptions
+  fastify.get('/subscriptions', async (request, reply) => {
+    try {
+      const { page = 1, limit = 20, status, search = '' } = request.query as any;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const query: any = {};
+      if (status) query.status = status;
+      if (search) {
+        const escaped = escapeRegex(search);
+        query.$or = [
+          { vendor_username: { $regex: escaped, $options: 'i' } },
+          { store_id: { $regex: escaped, $options: 'i' } }
+        ];
+      }
+
+      const subscriptions = await VendorSubscription.find(query)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      // Fetch user roles for each subscription
+      const vendorUsernames = [...new Set(subscriptions.map(s => s.vendor_username))];
+      const users = await User.find({ username: { $in: vendorUsernames } }).select('username role');
+      const userRoleMap = new Map(users.map(u => [u.username, u.role]));
+
+      // Fetch plan prices from Settings for amount calculation
+      const settings = await Settings.findOne();
+      const storedPlanPrices = settings?.plan_prices;
+      const DEFAULT_PLAN_PRICES = {
+        free: { monthly: 0, annual: 0 },
+        pro: { monthly: 29000, annual: 23000 },
+        elite: { monthly: 99000, annual: 79000 }
+      };
+
+      // Add user_role and calculate amounts based on current plan prices
+      const subscriptionsWithRoles = await Promise.all(subscriptions.map(async (sub) => {
+        const subObj = sub.toObject() as any;
+        subObj.user_role = userRoleMap.get(sub.vendor_username) || 'user';
+
+        // Always calculate amount from current plan prices for admin view
+        const plan = (sub.plan || 'free') as string;
+        const billingCycle = (sub.billing_cycle || 'monthly') as string;
+        const prices = (storedPlanPrices as any)?.[plan] || (DEFAULT_PLAN_PRICES as any)[plan];
+        const calculatedAmount = prices ? (billingCycle === 'annual' ? prices.annual : prices.monthly) : 0;
+        subObj.amount = calculatedAmount;
+
+        // Update DB if stored amount differs from current plan price
+        if (subObj.amount !== calculatedAmount && calculatedAmount > 0) {
+          await VendorSubscription.updateOne({ _id: sub._id }, { $set: { amount: calculatedAmount } });
+        }
+
+        return subObj;
+      }));
+
+      const total = await VendorSubscription.countDocuments(query);
+
+      return {
+        subscriptions: subscriptionsWithRoles,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Cancel subscription
+  fastify.post('/subscriptions/:id/cancel', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+
+      const subscription = await VendorSubscription.findByIdAndUpdate(
+        id,
+        { status: 'cancelled', cancelled_at: new Date() },
+        { new: true }
+      );
+
+      if (!subscription) {
+        return reply.code(404).send({ error: 'Subscription not found' });
+      }
+
+      await logActivity(request, 'cancel_subscription', subscription._id, 'vendor_subscription');
+
+      return subscription;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Get plan prices
+  fastify.get('/subscriptions/plans', async (request, reply) => {
+    try {
+      const settings = await Settings.findOne();
+      const planPrices = settings?.plan_prices || {
+        free: { monthly: 0, annual: 0 },
+        pro: { monthly: 29000, annual: 23000 },
+        elite: { monthly: 99000, annual: 79000 }
+      };
+
+      return { plans: planPrices };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Update plan prices
+  fastify.put('/subscriptions/plans', async (request, reply) => {
+    try {
+      const { plan_prices } = z.object({
+        plan_prices: z.object({
+          free: z.object({ monthly: z.number(), annual: z.number() }),
+          pro: z.object({ monthly: z.number(), annual: z.number() }),
+          elite: z.object({ monthly: z.number(), annual: z.number() })
+        })
+      }).parse(request.body);
+
+      const settings = await Settings.findOne();
+      if (settings) {
+        settings.plan_prices = plan_prices;
+        await settings.save();
+      } else {
+        await Settings.create({ plan_prices });
+      }
+
+      await logActivity(request, 'update_plan_prices', null, 'settings', { plan_prices });
+
+      return { plans: plan_prices };
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: 'Invalid request data', details: error.errors });

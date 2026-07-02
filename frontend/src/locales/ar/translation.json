@@ -95,7 +95,6 @@
   "nav": {
     "home": "الرئيسية",
     "explore": "استكشاف",
-    "live": "بث مباشر",
     "shop": "متجر",
     "communities": "مجتمعات",
     "messages": "رسائل",
@@ -193,28 +192,6 @@
       "handmade": "يدوي",
       "other": "أخرى"
     }
-  },
-  "live": {
-    "title": "بث مباشر",
-    "goLive": "بث مباشر",
-    "watching": "يشاهدون",
-    "viewers": "المشاهدون",
-    "joinStream": "انضمام",
-    "endStream": "إنهاء",
-    "chat": "دردشة",
-    "products": "منتجات",
-    "pinned": "مثبت",
-    "pin": "تثبيت",
-    "unpin": "إلغاء التثبيت",
-    "typePlaceholder": "قل شيئاً...",
-    "noLiveSessions": "لا توجد جلسات مباشرة الآن",
-    "startLive": "بدء جلسة مباشرة",
-    "streamTitle": "عنوان البث",
-    "selectStore": "اختر متجراً",
-    "going": "جاري بدء البث...",
-    "liveEnded": "انتهت الجلسة المباشرة",
-    "subscribe": "اشتراك",
-    "subscribed": "مشترك"
   },
   "shop": {
     "title": "السوق",
@@ -465,10 +442,10 @@
     "payingVia": "الدفع عبر",
     "creditDebitCard": "بطاقة ائتمان/خصم",
     "mobileMoney": "المحفظة المحمولة",
-     "safeSecurePaystack": "آمن مع ITEC Pay",
+    "safeSecurePaystack": "آمن مع ITEC Pay",
     "mobileMoneyProviders": "Airtel وMTN وغيرها",
     "securePaymentGuarantee": "ضمان الدفع الآمن",
-     "securePaymentDesc": "تتم معالجة جميع المعاملات عبر البنية التحتية الآمنة لـ ITEC Pay. لا يخزن Aicon X بيانات الدفع الخاصة بك.",
+    "securePaymentDesc": "تتم معالجة جميع المعاملات عبر البنية التحتية الآمنة لـ ITEC Pay. لا يخزن Aicon X بيانات الدفع الخاصة بك.",
     "itemsCount_one": "{{count}} منتج",
     "itemsCount_other": "{{count}} منتجات",
     "qty": "الكمية: {{qty}} × {{price}}",
@@ -765,7 +742,7 @@
     "category": "الفئة",
     "configureEarnings": "قم بتكوين كيفية استلام أرباحك.",
     "bankTransfer": "تحويل بنكي",
-     "mobileMoney": "أموال الجوال (ITEC Pay)",
+    "mobileMoney": "أموال الجوال (ITEC Pay)",
     "defaultPayoutMethod": "طريقة الدفع الافتراضية",
     "bankName": "اسم البنك",
     "bankNamePlaceholder": "مثال. البنك الأهلي، مصرف الراجحي",
@@ -1301,7 +1278,7 @@
       "q3": "كيف أصبح بائعاً؟",
       "a3": "ببساطة اذهب إلى 'متجري' في قائمة التنقل واتبع تعليمات الإعداد. ستحتاج إلى تقديم بعض المعلومات الأساسية والتحقق من هويتك.",
       "q4": "هل مدفوعاتي آمنة؟",
-       "a4": "نعم، تتم معالجة جميع المدفوعات عبر بوابات آمنة ومشفرة مثل ITEC Pay. لا نخزن أبداً تفاصيل بطاقتك الكاملة على خوادمنا."
+      "a4": "نعم، تتم معالجة جميع المدفوعات عبر بوابات آمنة ومشفرة مثل ITEC Pay. لا نخزن أبداً تفاصيل بطاقتك الكاملة على خوادمنا."
     },
     "report": {
       "title": "الإبلاغ عن مشكلة",
@@ -1331,8 +1308,6 @@
     "createPostDesc": "شارك صوراً أو تحديثات مع خلاصتك",
     "addStory": "إضافة قصة",
     "addStoryDesc": "انشر صورة أو نصاً مؤقتاً",
-    "goLive": "البث المباشر",
-    "goLiveDesc": "ابدأ جلسة تسوق مباشرة",
     "addProduct": "إضافة منتج",
     "addProductDesc": "أضف عنصراً جديداً إلى متجرك",
     "postPlaceholder": "ما الذي يدور في ذهنك؟ شارك اكتشافاً، مراجعة أو تحديثاً...",

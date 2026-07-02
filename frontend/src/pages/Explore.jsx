@@ -259,18 +259,18 @@ export default function Explore() {
               {filteredSuggestedUsers.map((user) => {
                 const isFollowing = followStatuses?.[user.username] || false;
                 return (
-                  <div key={user.username} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                    <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600">
+                  <div key={user.username} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
                         {user.avatar_url ? (
                           <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <User className="w-6 h-6 text-slate-400" />
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{user.display_name || user.username}</p>
-                        <p className="text-xs text-slate-500">@{user.username}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.display_name || user.username}</p>
+                        <p className="text-xs text-slate-500 truncate">@{user.username}</p>
                       </div>
                     </Link>
                     <button
@@ -281,7 +281,7 @@ export default function Explore() {
                         isFollowing
                       })}
                       disabled={followMutation.isPending}
-                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${
                         isFollowing
                           ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           : 'bg-orange-600 text-white hover:bg-orange-700'
@@ -295,18 +295,18 @@ export default function Explore() {
               {filteredSuggestedStores.map((store) => {
                 const isFollowing = followStatuses?.[store.owner_username] || false;
                 return (
-                  <div key={store._id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                    <Link to={createPageUrl("StoreDetail") + `?id=${store._id}`} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600">
+                  <div key={store._id} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <Link to={createPageUrl("StoreDetail") + `?id=${store._id}`} className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <Store className="w-6 h-6 text-slate-400" />
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{store.name}</p>
-                        <p className="text-xs text-slate-500">@{store.owner_username}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{store.name}</p>
+                        <p className="text-xs text-slate-500 truncate">@{store.owner_username}</p>
                       </div>
                     </Link>
                     <button
@@ -317,7 +317,7 @@ export default function Explore() {
                         isFollowing
                       })}
                       disabled={followMutation.isPending}
-                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${
                         isFollowing
                           ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           : 'bg-orange-600 text-white hover:bg-orange-700'

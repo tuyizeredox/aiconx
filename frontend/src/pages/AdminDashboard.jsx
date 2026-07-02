@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { formatCurrency } from '@/lib/utils';
-import { adminAPI, vendorSubscriptionsAPI } from '@/api/apiClient';
+import { adminAPI } from '@/api/apiClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/components/providers/LanguageContext';
 import { 
@@ -93,13 +93,13 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 
-const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpdateVerification, onDelete }) => {
+const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpdateVerification, onDelete, products, productsLoading }) => {
   const { t } = useTranslation();
   if (!store) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             {store.name}
@@ -152,22 +152,75 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.rating')}</div>
-                  <div className="text-xl font-bold">{store.rating || 'N/A'}</div>
+                  <div className="text-xl font-bold">{store.rating_avg || 'N/A'}</div>
                 </div>
               </div>
             </div>
 
-            {store.logo && (
+            {store.logo_url && (
               <div>
                 <Label className="text-muted-foreground">{t('admin.storeModal.logo')}</Label>
                 <img 
-                  src={store.logo} 
+                  src={store.logo_url} 
                   alt={store.name} 
                   className="mt-2 w-24 h-24 object-cover rounded-md border"
                 />
               </div>
             )}
           </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            {t('admin.storeModal.products')} ({products.length})
+          </h4>
+          {productsLoading ? (
+            <div className="text-center py-8 text-muted-foreground">{t('admin.products.loading')}</div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">{t('admin.storeModal.noProducts')}</div>
+          ) : (
+            <div className="max-h-60 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.products.colProduct')}</TableHead>
+                    <TableHead>{t('admin.products.colPrice')}</TableHead>
+                    <TableHead>{t('admin.products.colStatus')}</TableHead>
+                    <TableHead>{t('admin.products.colSales')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product._id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {product.images && product.images[0] && (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.title}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{product.title}</div>
+                            <div className="text-xs text-muted-foreground">{product.category}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatCurrency(product.price)}</TableCell>
+                      <TableCell>
+                        <Badge variant={product.status === 'active' ? 'success' : 'outline'}>
+                          {product.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{product.sales_count || 0}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2 border-t pt-4 mt-4">
@@ -234,6 +287,8 @@ const AdminDashboard = () => {
   const [selectedStoreIds, setSelectedStoreIds] = useState([]);
   const [storePage, setStorePage] = useState(1);
   const [storePagination, setStorePagination] = useState(null);
+  const [storeProducts, setStoreProducts] = useState([]);
+  const [storeProductsLoading, setStoreProductsLoading] = useState(false);
 
   // Products State
   const [products, setProducts] = useState([]);
@@ -300,12 +355,12 @@ const AdminDashboard = () => {
 
   const fetchPlanPrices = useCallback(async () => {
     try {
-      const data = await vendorSubscriptionsAPI.getPlans();
+      const data = await adminAPI.getSubscriptionPlans();
       if (data?.plans) {
         setPlanPrices({
-          free:  { monthly: data.plans.free?.price_monthly  ?? 0,     annual: data.plans.free?.price_annual  ?? 0 },
-          pro:   { monthly: data.plans.pro?.price_monthly   ?? 29000, annual: data.plans.pro?.price_annual   ?? 23000 },
-          elite: { monthly: data.plans.elite?.price_monthly ?? 79000, annual: data.plans.elite?.price_annual ?? 63000 },
+          free:  { monthly: data.plans.free?.monthly  ?? 0,     annual: data.plans.free?.annual  ?? 0 },
+          pro:   { monthly: data.plans.pro?.monthly   ?? 29000, annual: data.plans.pro?.annual   ?? 23000 },
+          elite: { monthly: data.plans.elite?.monthly ?? 99000, annual: data.plans.elite?.annual ?? 79000 },
         });
       }
     } catch { /* keep defaults */ }
@@ -316,7 +371,7 @@ const AdminDashboard = () => {
   const handleSavePlanPrices = async () => {
     setPlanPricesSaving(true);
     try {
-      await vendorSubscriptionsAPI.updatePlans(planPrices);
+      await adminAPI.updateSubscriptionPlans(planPrices);
       toast({ title: t('common.success'), description: t('admin.subscriptions.pricesSaved') });
     } catch (err) {
       toast({ title: t('common.error'), description: err?.message || t('admin.subscriptions.pricesSaveFailed'), variant: 'destructive' });
@@ -405,6 +460,22 @@ const AdminDashboard = () => {
       });
     } finally {
       setStoreLoading(false);
+    }
+  };
+
+  const fetchStoreProducts = async (storeId) => {
+    try {
+      setStoreProductsLoading(true);
+      const data = await adminAPI.getStoreProducts(storeId, { limit: 50 });
+      setStoreProducts(data.products || []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('admin.products.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setStoreProductsLoading(false);
     }
   };
 
@@ -538,7 +609,7 @@ const AdminDashboard = () => {
   const fetchSubscriptions = async () => {
     try {
       setSubscriptionsLoading(true);
-      const data = await vendorSubscriptionsAPI.list({ search: subscriptionSearch });
+      const data = await adminAPI.getSubscriptions({ search: subscriptionSearch });
       setSubscriptions(data.subscriptions || []);
     } catch (error) {
       toast({
@@ -879,8 +950,8 @@ const AdminDashboard = () => {
   const PaginationControls = ({ pagination, page, setPage, onFetch }) => {
     if (!pagination || pagination.pages <= 1) return null;
     return (
-      <div className="flex items-center justify-between pt-4">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+        <p className="text-sm text-muted-foreground text-center sm:text-left">
           {t('admin.pagination.showing', {
             from: ((page - 1) * pagination.limit) + 1,
             to: Math.min(page * pagination.limit, pagination.total),
@@ -1408,6 +1479,7 @@ const AdminDashboard = () => {
                           <div className="flex flex-col text-xs">
                             <span>{t('admin.stores.productCount', { count: s.products_count || 0 })}</span>
                             <span>{t('admin.stores.orderCount', { count: s.orders_count || 0 })}</span>
+                            <span className="text-success font-medium">{formatCurrency(s.total_revenue || 0)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -1418,6 +1490,7 @@ const AdminDashboard = () => {
                               className="h-8 w-8 p-0"
                               onClick={() => {
                                 setSelectedStore(s);
+                                fetchStoreProducts(s._id);
                                 setIsStoreModalOpen(true);
                               }}
                             >
@@ -1476,20 +1549,22 @@ const AdminDashboard = () => {
             onUpdateStatus={handleUpdateStoreStatus}
             onUpdateVerification={handleUpdateStoreVerification}
             onDelete={handleDeleteStore}
+            products={storeProducts}
+            productsLoading={storeProductsLoading}
           />
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle>{t('admin.products.title')}</CardTitle>
                   <CardDescription>{t('admin.products.desc')}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 mr-4">
-                    <Label htmlFor="product-status" className="text-xs">{t('admin.products.statusLabel')}</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="product-status" className="text-xs whitespace-nowrap">{t('admin.products.statusLabel')}</Label>
                     <Select value={productFilter} onValueChange={setProductFilter}>
                       <SelectTrigger id="product-status" className="w-[120px] h-9">
                         <SelectValue placeholder={t('admin.products.allStatus')} />
@@ -1503,7 +1578,7 @@ const AdminDashboard = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="relative flex-1 sm:flex-none">
+                  <div className="relative flex-1 sm:flex-none min-w-[140px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder={t('admin.products.searchPlaceholder')}
@@ -1633,12 +1708,12 @@ const AdminDashboard = () => {
         <TabsContent value="orders" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle>{t('admin.orders.title')}</CardTitle>
                   <CardDescription>{t('admin.orders.desc')}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-muted-foreground" />
                     <Select value={orderFilter} onValueChange={(v) => { setOrderFilter(v); setOrderPage(1); }}>
@@ -1657,7 +1732,7 @@ const AdminDashboard = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="relative flex-1 sm:flex-none">
+                  <div className="relative flex-1 sm:flex-none min-w-[140px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder={t('admin.orders.searchPlaceholder')}
@@ -1770,12 +1845,12 @@ const AdminDashboard = () => {
 
         <TabsContent value="withdrawals" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
               <div>
                 <CardTitle>{t('admin.withdrawals.title')}</CardTitle>
                 <CardDescription>{t('admin.withdrawals.desc')}</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select value={withdrawalFilter} onValueChange={(v) => { setWithdrawalFilter(v); fetchWithdrawals(v); }}>
                   <SelectTrigger className="w-[140px] h-9">
                     <SelectValue placeholder={t('admin.withdrawals.allStatus')} />
@@ -2053,7 +2128,7 @@ const AdminDashboard = () => {
                               <DropdownMenuLabel>{t('admin.subscriptions.menuLabel')}</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => {
                                 if (confirm(t('admin.subscriptions.cancelConfirm'))) {
-                                  vendorSubscriptionsAPI.cancel(sub._id).then(() => {
+                                  adminAPI.cancelSubscription(sub._id).then(() => {
                                     toast({ title: t('common.success'), description: t('admin.subscriptions.cancelledSuccess') });
                                     fetchSubscriptions();
                                   });
@@ -2076,12 +2151,12 @@ const AdminDashboard = () => {
 
         <TabsContent value="moderation" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
               <div>
                 <CardTitle>{t('admin.moderation.title')}</CardTitle>
                 <CardDescription>{t('admin.moderation.desc')}</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select value={reportFilter} onValueChange={(v) => { setReportFilter(v); fetchReports(v); }}>
                   <SelectTrigger className="w-[140px] h-9">
                     <SelectValue placeholder={t('admin.moderation.allReports')} />
@@ -2239,8 +2314,8 @@ const AdminDashboard = () => {
               <CardDescription>{t('admin.posts.desc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 mb-4">
-                <div className="relative flex-1">
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className="relative flex-1 min-w-[160px]">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t('admin.posts.searchPlaceholder')}
@@ -2357,7 +2432,7 @@ const AdminDashboard = () => {
         <TabsContent value="announcements" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle>{t('admin.announcements.title')}</CardTitle>
                   <CardDescription>{t('admin.announcements.desc')}</CardDescription>
@@ -2373,7 +2448,7 @@ const AdminDashboard = () => {
                     expires_at: ''
                   });
                   setIsAnnouncementModalOpen(true);
-                }} size="sm" className="flex items-center gap-2">
+                }} size="sm" className="shrink-0 flex items-center gap-2">
                   <Plus className="w-4 h-4" /> {t('admin.announcements.newButton')}
                 </Button>
               </div>
@@ -2667,7 +2742,7 @@ const AdminDashboard = () => {
 
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-semibold">{t('admin.settings.subscriptionTitle')}</h3>
-                <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50">
+                <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
                   <div className="flex flex-col space-y-1">
                     <Label htmlFor="subscription-mode" className="text-base flex items-center gap-2">
                       <Crown className="w-4 h-4 text-yellow-500" />
@@ -2687,7 +2762,7 @@ const AdminDashboard = () => {
                   />
                 </div>
                 {!settings.subscription_mode && (
-                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
                     {t('admin.settings.subscriptionWarning')}
                   </p>
                 )}

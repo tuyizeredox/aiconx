@@ -130,7 +130,7 @@ export default function ProductDetail() {
   // Early return if no productId (moved after all hooks)
   if (!productId) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400">
+      <div className="flex items-center justify-center h-64 text-slate-400 dark:text-slate-500">
         {t("product.noProductId")}
       </div>
     );
@@ -139,7 +139,7 @@ export default function ProductDetail() {
   // Handle 404 or other errors
   if (productError) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400">
+      <div className="flex items-center justify-center h-64 text-slate-400 dark:text-slate-500">
         {productError.status === 404 ? t("product.productNotFound") : t("product.errorLoadingProduct")}
       </div>
     );
@@ -149,18 +149,18 @@ export default function ProductDetail() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6 animate-pulse">
         <div className="grid lg:grid-cols-2 gap-8">
-          <div className="aspect-square bg-slate-200 rounded-3xl" />
+          <div className="aspect-square bg-slate-200 dark:bg-slate-700 rounded-3xl" />
           <div className="space-y-4">
-            <div className="h-6 w-3/4 bg-slate-200 rounded" />
-            <div className="h-4 w-1/2 bg-slate-100 rounded" />
-            <div className="h-10 w-32 bg-slate-200 rounded" />
+            <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+            <div className="h-4 w-1/2 bg-slate-100 dark:bg-slate-700 rounded" />
+            <div className="h-10 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
           </div>
         </div>
       </div>
     );
   }
 
-  if (!product) return <div className="text-center py-20 text-slate-400">{t("product.productNotFound")}</div>;
+  if (!product) return <div className="text-center py-20 text-slate-400 dark:text-slate-500">{t("product.productNotFound")}</div>;
 
   const images = product.images?.length > 0 ? product.images : ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"];
   const discount = product.compare_at_price ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
@@ -190,7 +190,7 @@ export default function ProductDetail() {
       <div className="grid lg:grid-cols-2 gap-6 lg:gap-10">
         {/* Image Gallery */}
         <div>
-          <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 mb-3">
+          <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3">
             <AnimatePresence mode="wait">
               <motion.img
                 key={selectedImage}
@@ -253,36 +253,36 @@ export default function ProductDetail() {
             </Link>
           )}
 
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{product.title}</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mb-3">{product.title}</h1>
 
           {avgRating > 0 && (
             <div className="flex items-center gap-2 mb-4">
               <StarRow rating={Math.round(avgRating)} />
-              <span className="text-sm font-medium text-slate-600">{avgRating.toFixed(1)}</span>
-              <span className="text-sm text-slate-400">({t("product.reviewsCount", { count: reviews.length })})</span>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{avgRating.toFixed(1)}</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">({t("product.reviewsCount", { count: reviews.length })})</span>
             </div>
           )}
 
           <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-3xl font-bold text-slate-900">{formatCurrency(product.price)}</span>
+            <span className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(product.price)}</span>
             {product.compare_at_price > 0 && (
               <span className="text-lg text-slate-400 line-through">{formatCurrency(product.compare_at_price)}</span>
             )}
           </div>
 
           {product.description && (
-            <p className="text-slate-600 text-sm leading-relaxed mb-6">{product.description}</p>
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">{product.description}</p>
           )}
 
           {/* Quantity */}
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-sm font-medium text-slate-700">{t("product.quantity")}:</span>
-            <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden">
-              <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("product.quantity")}:</span>
+            <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+              <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800">
                 <Minus className="w-4 h-4" />
               </button>
               <span className="w-12 text-center font-medium text-sm">{quantity}</span>
-              <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50">
+              <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800">
                 <Plus className="w-4 h-4" />
               </button>
             </div>
@@ -303,7 +303,7 @@ export default function ProductDetail() {
               onClick={() => wishlistMutation.mutate()}
               variant="outline"
               size="icon"
-              className={`h-12 w-12 rounded-xl transition-colors ${isWishlisted ? "bg-red-50 border-red-200 text-red-500" : ""}`}
+              className={`h-12 w-12 rounded-xl transition-colors ${isWishlisted ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900 text-red-500" : ""}`}
             >
               <Heart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
             </Button>
@@ -319,18 +319,18 @@ export default function ProductDetail() {
 
           {/* Trust Badges */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
               <Truck className="w-5 h-5 text-orange-500" />
               <div>
-                <p className="text-xs font-medium text-slate-700">{t("product.fastShipping")}</p>
-                <p className="text-xs text-slate-400">{t("product.businessDays")}</p>
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{t("product.fastShipping")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t("product.businessDays")}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
               <Shield className="w-5 h-5 text-green-500" />
               <div>
-                <p className="text-xs font-medium text-slate-700">{t("product.buyerProtection")}</p>
-                <p className="text-xs text-slate-400">{t("product.moneyBackGuarantee")}</p>
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{t("product.buyerProtection")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t("product.moneyBackGuarantee")}</p>
               </div>
             </div>
           </div>
@@ -338,9 +338,9 @@ export default function ProductDetail() {
       </div>
 
       {/* ===== REVIEWS SECTION ===== */}
-      <div className="mt-12 border-t border-slate-100 pt-8">
+      <div className="mt-12 border-t border-slate-100 dark:border-slate-700 pt-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900">{t("product.customerReviews")}</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t("product.customerReviews")}</h2>
           {currentUser && !showReviewForm && (
             <Button
               onClick={() => setShowReviewForm(true)}
@@ -370,21 +370,21 @@ export default function ProductDetail() {
         {reviews.length > 0 && (
           <>
             {/* Rating Summary */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-5 mb-6 flex flex-col sm:flex-row items-center gap-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 mb-6 flex flex-col sm:flex-row items-center gap-6">
               <div className="text-center shrink-0">
-                <p className="text-6xl font-bold text-slate-900">{avgRating.toFixed(1)}</p>
+                <p className="text-6xl font-bold text-slate-900 dark:text-white">{avgRating.toFixed(1)}</p>
                 <StarRow rating={Math.round(avgRating)} />
-                <p className="text-sm text-slate-400 mt-1">{t("product.reviewsCount", { count: reviews.length })}</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t("product.reviewsCount", { count: reviews.length })}</p>
               </div>
               <div className="flex-1 w-full space-y-1.5">
                 {ratingCounts.map(({ star, count, pct }) => (
                   <div key={`rating-stat-${star}`} className="flex items-center gap-2">
-                    <span className="text-xs w-4 text-slate-500">{star}</span>
+                    <span className="text-xs w-4 text-slate-500 dark:text-slate-400">{star}</span>
                     <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs text-slate-400 w-8 text-right">{count}</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 w-8 text-right">{count}</span>
                   </div>
                 ))}
               </div>
@@ -402,35 +402,35 @@ export default function ProductDetail() {
                     key={reviewId}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl border border-slate-100 p-5"
+                    className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5"
                   >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
                         {review.reviewer_name?.[0]?.toUpperCase() || "U"}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-900">{review.reviewer_name}</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{review.reviewer_name}</span>
                           {review.is_verified_purchase && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{t("product.verified")}</Badge>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{t("product.verified")}</Badge>
                           )}
                         </div>
                         <StarRow rating={review.rating} />
                       </div>
                     </div>
-                    <span className="text-xs text-slate-400">{new Date(review.created_at || review.created_date).toLocaleDateString()}</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap">{new Date(review.created_at || review.created_date).toLocaleDateString()}</span>
                   </div>
 
                   {review.title && (
-                    <p className="text-sm font-semibold text-slate-800 mb-1">{review.title}</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">{review.title}</p>
                   )}
-                  <p className="text-sm text-slate-600 leading-relaxed">{review.content}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{review.content}</p>
 
                   {review.media_urls?.length > 0 && (
                     <div className="flex gap-2 mt-3 overflow-x-auto hide-scrollbar">
                       {review.media_urls.map((url, j) => (
-                        <div key={`review-media-${review.id || review._id}-${j}`} className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-slate-100">
+                        <div key={`review-media-${review.id || review._id}-${j}`} className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700">
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
                       ))}
@@ -447,10 +447,10 @@ export default function ProductDetail() {
         <SimilarProducts product={product} />
 
         {reviews.length === 0 && !showReviewForm && (
-          <div className="text-center py-14 bg-white rounded-2xl border border-dashed border-slate-200">
-            <Images className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="font-medium text-slate-500">{t("product.noReviewsYet")}</p>
-            <p className="text-sm text-slate-400 mt-1 mb-4">{t("product.beFirstToReview")}</p>
+          <div className="text-center py-14 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+            <Images className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+            <p className="font-medium text-slate-500 dark:text-slate-400">{t("product.noReviewsYet")}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 mb-4">{t("product.beFirstToReview")}</p>
             {currentUser && (
               <Button onClick={() => setShowReviewForm(true)} className="bg-orange-600 hover:bg-orange-700 rounded-xl">
                 <PenLine className="w-4 h-4 mr-2" /> {t("product.writeReview")}

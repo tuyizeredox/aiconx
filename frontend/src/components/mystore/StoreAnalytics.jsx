@@ -12,15 +12,15 @@ const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6"
 
 function StatCard({ label, value, sub, icon: Icon, color }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
-      {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
+      {sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -28,8 +28,8 @@ function StatCard({ label, value, sub, icon: Icon, color }) {
 const CustomTooltip = ({ active, payload, label, prefix = "" }) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-white border border-slate-100 rounded-xl shadow-lg p-3">
-        <p className="text-xs text-slate-500 mb-1">{label}</p>
+      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-lg p-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</p>
         {payload.map((p, i) => (
           <p key={i} className="text-sm font-semibold" style={{ color: p.color }}>
             {prefix}{typeof p.value === "number" ? p.value.toLocaleString() : p.value}
@@ -112,15 +112,15 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4"
+          className="bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-100 dark:border-orange-900 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3 text-center md:text-left">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950 flex items-center justify-center shrink-0">
               <Star className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900">{t("store.unlockAdvancedInsights")}</p>
-              <p className="text-xs text-slate-500">{t("store.upgradeForInsights")}</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{t("store.unlockAdvancedInsights")}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.upgradeForInsights")}</p>
             </div>
           </div>
           <Button onClick={onUpgrade} size="sm" className="bg-orange-600 hover:bg-orange-700 rounded-xl whitespace-nowrap">{t("store.upgradePlan")}</Button>
@@ -134,11 +134,11 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
         <StatCard label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} icon={Users} color="bg-amber-50 text-amber-600" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.dailyRevenue7Days")}</h3>
-        <p className="text-xs text-slate-400 mb-4">{t("store.dailyRevenueDesc")}</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.dailyRevenue7Days")}</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.dailyRevenueDesc")}</p>
         {dailyRevenue.every(d => d.revenue === 0) ? (
-          <div className="h-[200px] flex items-center justify-center text-sm text-slate-400">{t("store.noOrderLast7Days")}</div>
+          <div className="h-[200px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.noOrderLast7Days")}</div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={dailyRevenue}>
@@ -158,11 +158,11 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.topPerformingProducts")}</h3>
-        <p className="text-xs text-slate-400 mb-4">{t("store.unitsSoldAllOrders")}</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.topPerformingProducts")}</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.unitsSoldAllOrders")}</p>
         {topProducts.length === 0 || topProducts.every(p => p.sales === 0) ? (
-          <div className="h-[180px] flex items-center justify-center text-sm text-slate-400">{t("store.noSalesDataYet")}</div>
+          <div className="h-[180px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.noSalesDataYet")}</div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={topProducts} layout="vertical">
@@ -177,11 +177,11 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.orderStatusBreakdown")}</h3>
-          <p className="text-xs text-slate-400 mb-4">{t("store.orderStatusDesc")}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.orderStatusBreakdown")}</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.orderStatusDesc")}</p>
           {orderStatusData.length === 0 ? (
-            <div className="h-[140px] flex items-center justify-center text-sm text-slate-400">{t("store.noOrdersYetAnalytics")}</div>
+            <div className="h-[140px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.noOrdersYetAnalytics")}</div>
           ) : (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width="50%" height={140}>
@@ -196,8 +196,8 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
                 {orderStatusData.map((d, i) => (
                   <div key={d.name} className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                    <span className="text-xs text-slate-600">{d.name}</span>
-                    <span className="text-xs font-semibold text-slate-900 ml-auto">{d.value}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300">{d.name}</span>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white ml-auto">{d.value}</span>
                   </div>
                 ))}
               </div>
@@ -205,19 +205,19 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-1 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" /> {t("store.lowStockAlert")}
           </h3>
-          <p className="text-xs text-slate-400 mb-4">{t("store.lowStockDesc")}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.lowStockDesc")}</p>
           {lowStockProducts.length === 0 ? (
-            <div className="h-[100px] flex items-center justify-center text-sm text-slate-400">{t("store.wellStocked")}</div>
+            <div className="h-[100px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.wellStocked")}</div>
           ) : (
             <div className="space-y-2">
               {lowStockProducts.map(p => (
-                <div key={p._id || p.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                  <span className="text-xs font-medium text-slate-700 truncate max-w-[60%]">{p.title}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.inventory_count === 0 ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
+                <div key={p._id || p.id} className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-700 last:border-0">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[60%]">{p.title}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.inventory_count === 0 ? "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" : "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400"}`}>
                     {p.inventory_count === 0 ? t("store.outOfStockLabel") : t("store.itemsLeft", { count: p.inventory_count })}
                   </span>
                 </div>

@@ -442,37 +442,37 @@ export default function Settings() {
         onClick={() => setActiveSection(activeSection === "account" ? "" : "account")}
       >
         <div className="space-y-4">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-            <div>
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.emailAddress")}</p>
-                <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">{t("settings.private")}</span>
+                <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600 shrink-0">{t("settings.private")}</span>
               </div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{currentUser?.email}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentUser?.email}</p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 shrink-0"
               onClick={() => setShowEmailModal(true)}
             >
               {t("settings.change")}
             </Button>
           </div>
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-            <div>
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.phoneNumber")}</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                 {currentUser?.phone_number || t("settings.notSet")}
                 {currentUser?.is_phone_verified && (
-                  <span className="ml-2 text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full border border-green-100">{t("common.verified")}</span>
+                  <span className="ml-2 text-[10px] bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full border border-green-100 dark:border-green-900">{t("common.verified")}</span>
                 )}
               </p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 shrink-0"
               onClick={() => setShowPhoneModal(true)}
             >
               {currentUser?.phone_number ? t("settings.change") : t("settings.add")}
@@ -735,12 +735,12 @@ export default function Settings() {
           </DialogHeader>
           <div className="flex flex-col items-center space-y-6 py-4">
             {twoFactorData.qrCode && (
-              <div className="p-4 bg-white rounded-2xl border-4 border-slate-50 shadow-inner">
+              <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl border-4 border-slate-50 dark:border-slate-700 shadow-inner">
                 <img src={twoFactorData.qrCode} alt="QR Code" className="w-48 h-48" />
               </div>
             )}
             <div className="space-y-2 text-center">
-              <p className="text-xs font-bold text-slate-500 uppercase">{t("settings.verificationCode")}</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{t("settings.verificationCode")}</p>
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otpToken} onChange={setOtpToken}>
                   <InputOTPGroup>
@@ -846,15 +846,15 @@ export default function Settings() {
           <DialogHeader><DialogTitle>{t("settings.updatePhone")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase ml-1">{t("settings.newPhoneWhatsapp")}</label>
-              <Input 
-                type="tel" 
-                placeholder="+1234567890" 
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">{t("settings.newPhoneWhatsapp")}</label>
+              <Input
+                type="tel"
+                placeholder="+1234567890"
                 value={phoneForm.newPhone}
                 onChange={e => setPhoneForm({...phoneForm, newPhone: e.target.value})}
                 className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900"
               />
-              <p className="text-[10px] text-slate-400 ml-1">{t("settings.phoneHint")}</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">{t("settings.phoneHint")}</p>
             </div>
             <Button 
               className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-orange-600 dark:hover:bg-orange-700 rounded-xl h-11 font-bold"

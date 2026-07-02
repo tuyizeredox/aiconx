@@ -95,7 +95,6 @@
   "nav": {
     "home": "首页",
     "explore": "探索",
-    "live": "直播",
     "shop": "商城",
     "communities": "社区",
     "messages": "消息",
@@ -193,28 +192,6 @@
       "handmade": "手工艺品",
       "other": "其他"
     }
-  },
-  "live": {
-    "title": "直播",
-    "goLive": "开始直播",
-    "watching": "人在看",
-    "viewers": "观众",
-    "joinStream": "进入直播",
-    "endStream": "结束直播",
-    "chat": "聊天",
-    "products": "商品",
-    "pinned": "已置顶",
-    "pin": "置顶",
-    "unpin": "取消置顶",
-    "typePlaceholder": "说点什么...",
-    "noLiveSessions": "暂无直播",
-    "startLive": "开启直播",
-    "streamTitle": "直播标题",
-    "selectStore": "选择店铺",
-    "going": "直播开始中...",
-    "liveEnded": "直播已结束",
-    "subscribe": "订阅",
-    "subscribed": "已订阅"
   },
   "shop": {
     "title": "商城",
@@ -1300,7 +1277,7 @@
       "q3": "如何成为卖家？",
       "a3": "进入导航菜单中的「我的店铺」，按照设置说明操作即可。您需要提供基本信息并完成身份验证。",
       "q4": "我的付款安全吗？",
-       "a4": "是的，所有付款均通过 ITEC Pay 等安全加密网关处理。我们从不将您的完整卡片信息存储在服务器上。"
+      "a4": "是的，所有付款均通过 ITEC Pay 等安全加密网关处理。我们从不将您的完整卡片信息存储在服务器上。"
     },
     "report": {
       "title": "反馈问题",
@@ -1330,8 +1307,6 @@
     "createPostDesc": "与您的动态流分享照片或更新",
     "addStory": "添加故事",
     "addStoryDesc": "发布临时照片或文字",
-    "goLive": "开始直播",
-    "goLiveDesc": "开始一场直播购物活动",
     "addProduct": "添加商品",
     "addProductDesc": "在您的店铺中列出新商品",
     "postPlaceholder": "你在想什么？分享商品发现、评价或动态...",

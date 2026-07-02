@@ -78,11 +78,11 @@ export default function Notifications() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t("notifications.title")}</h1>
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("notifications.title")}</h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-slate-500">{t("notifications.unread", { count: unreadCount })}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("notifications.unread", { count: unreadCount })}</p>
           )}
         </div>
         {unreadCount > 0 && (
@@ -90,7 +90,7 @@ export default function Notifications() {
             variant="ghost"
             size="sm"
             onClick={() => markAllRead.mutate()}
-            className="text-orange-600 hover:text-orange-700"
+            className="text-orange-600 hover:text-orange-700 shrink-0"
           >
             <CheckCheck className="w-4 h-4 mr-1.5" />
             {t("notifications.markAllRead")}
@@ -101,11 +101,11 @@ export default function Notifications() {
       {isLoading ? (
         <div className="space-y-2">
           {Array(5).fill(0).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-4 animate-pulse flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-200" />
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-4 animate-pulse flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3 w-3/4 bg-slate-200 rounded" />
-                <div className="h-2.5 w-1/2 bg-slate-100 rounded" />
+                <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-2.5 w-1/2 bg-slate-100 dark:bg-slate-700 rounded" />
               </div>
             </div>
           ))}
@@ -128,7 +128,7 @@ export default function Notifications() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className={`flex items-start gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
-                  notif.is_read ? "bg-white hover:bg-slate-50" : "bg-orange-50/50 hover:bg-orange-50"
+                  notif.is_read ? "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" : "bg-orange-50/50 dark:bg-orange-950/50 hover:bg-orange-50 dark:hover:bg-orange-950"
                 }`}
                 onClick={() => handleNotificationClick(notif)}
               >
@@ -136,9 +136,9 @@ export default function Notifications() {
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-900 font-medium">{notif.title}</p>
-                  {notif.body && <p className="text-xs text-slate-500 mt-0.5">{notif.body}</p>}
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-sm text-slate-900 dark:text-white font-medium">{notif.title}</p>
+                  {notif.body && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{notif.body}</p>}
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     {new Date(notif.created_at || notif.created_date).toLocaleDateString(i18n.language, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>

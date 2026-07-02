@@ -262,14 +262,14 @@ export default function VendorFinance() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("finance.title")}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("finance.subtitle")}</p>
         </div>
         <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-2">
+            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-2 shrink-0 w-full sm:w-auto">
               <Wallet className="w-4 h-4" /> {t("finance.requestWithdrawal")}
             </Button>
           </DialogTrigger>
@@ -318,32 +318,32 @@ export default function VendorFinance() {
               
               <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
                 <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">{t("finance.payoutMethod")}</label>
-                <div className="flex gap-2">
-                  <button 
+                <div className="grid grid-cols-2 gap-2">
+                  <button
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "bank_transfer" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "bank_transfer" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "bank_transfer" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     Bank
                   </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "paypal" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "paypal" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "paypal" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     PayPal
                   </button>
-                   <button 
+                   <button
                      type="button"
                      onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "itecpay" }))}
-                     className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "itecpay" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                     className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "itecpay" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                    >
                      ITEC Pay
                    </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "mobile_money" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "mobile_money" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "mobile_money" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     M-Money
                   </button>

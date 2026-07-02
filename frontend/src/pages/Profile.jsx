@@ -293,18 +293,18 @@ export default function Profile() {
         </div>
 
         <div className="px-5 pb-5">
-          <div className="flex items-end justify-between -mt-12 mb-4">
+          <div className="flex flex-wrap items-end justify-between gap-2 -mt-12 mb-4">
             {/* Avatar */}
             <div className="relative">
               {avatarUrl ? (
                 <button
                   onClick={() => setImageModalOpen(true)}
-                  className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300 cursor-pointer p-0"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300 cursor-pointer p-0"
                 >
                   <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                 </button>
               ) : (
-                <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
                   <span className="text-white font-bold text-3xl">{displayName[0]?.toUpperCase()}</span>
                 </div>
               )}
@@ -316,13 +316,13 @@ export default function Profile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-end">
               {isOwnProfile ? (
                 <>
-                  <Button 
+                  <Button
                       type="button"
-                      variant="outline" 
-                      size="sm" 
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         setActiveTab("plan");
                         setTimeout(() => {
@@ -330,31 +330,31 @@ export default function Profile() {
                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 100);
                       }}
-                      className={`relative rounded-xl gap-1.5 transition-all font-bold h-9 px-4 shadow-sm border-orange-200 ${
-                        activeTab === "plan" 
-                          ? "bg-orange-600 text-white border-orange-600 shadow-orange-100" 
+                      className={`relative rounded-xl gap-1.5 transition-all font-bold h-9 px-3 sm:px-4 shadow-sm border-orange-200 ${
+                        activeTab === "plan"
+                          ? "bg-orange-600 text-white border-orange-600 shadow-orange-100"
                           : "bg-orange-50/80 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
                       }`}
                     >
-                      <CreditCard className="w-4 h-4" /> 
-                      <span>{t("profile.managePlan")}</span>
+                      <CreditCard className="w-4 h-4" />
+                      <span className="hidden sm:inline">{t("profile.managePlan")}</span>
                       {subscription?.status === 'pending' && (
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
                       )}
                     </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setEditOpen(true)} 
-                    className="rounded-xl gap-1.5 border-slate-200 hover:bg-slate-50 hover:text-orange-600 transition-all font-semibold h-9"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditOpen(true)}
+                    className="rounded-xl gap-1.5 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-orange-600 transition-all font-semibold h-9 px-3 sm:px-4"
                   >
-                    <Pencil className="w-3.5 h-3.5" /> {t("profile.editProfile")}
+                    <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{t("profile.editProfile")}</span>
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => logout()} 
-                    className="rounded-xl border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all h-9 w-9 p-0"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => logout()}
+                    className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all h-9 w-9 p-0 shrink-0"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                   </Button>
@@ -364,9 +364,9 @@ export default function Profile() {
                   <Button
                     onClick={() => followMutation.mutate()}
                     size="sm"
-                    className={`rounded-xl px-5 h-9 font-semibold transition-all ${
-                      isFollowing 
-                        ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
+                    className={`rounded-xl px-4 sm:px-5 h-9 font-semibold transition-all ${
+                      isFollowing
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                         : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100"
                     }`}
                     variant={isFollowing ? "secondary" : "default"}
@@ -380,10 +380,10 @@ export default function Profile() {
                     )}
                   </Button>
                   <Link to={createPageUrl("Chat") + `?to=${targetUsername || profileUser?.username}`}>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-xl border-slate-200 hover:bg-slate-50 h-9 px-4 font-semibold"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-9 px-3 sm:px-4 font-semibold"
                     >
                       <MessageCircle className="w-3.5 h-3.5 mr-1.5" /> {t("profile.message")}
                     </Button>
@@ -438,7 +438,7 @@ export default function Profile() {
           </div>
 
           {/* Stats row */}
-          <div className="flex gap-5 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700">
             {[
               { label: t("profile.posts"), value: posts.length, onClick: null },
               { 

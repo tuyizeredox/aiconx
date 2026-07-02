@@ -95,7 +95,6 @@
   "nav": {
     "home": "ホーム",
     "explore": "探索",
-    "live": "ライブ",
     "shop": "ショップ",
     "communities": "コミュニティ",
     "messages": "メッセージ",
@@ -193,28 +192,6 @@
       "handmade": "ハンドメイド",
       "other": "その他"
     }
-  },
-  "live": {
-    "title": "ライブ",
-    "goLive": "ライブ開始",
-    "watching": "視聴中",
-    "viewers": "視聴者",
-    "joinStream": "参加",
-    "endStream": "終了",
-    "chat": "チャット",
-    "products": "商品",
-    "pinned": "ピン留め",
-    "pin": "ピン留め",
-    "unpin": "ピン解除",
-    "typePlaceholder": "コメントする...",
-    "noLiveSessions": "ライブ配信がありません",
-    "startLive": "ライブを開始する",
-    "streamTitle": "タイトル",
-    "selectStore": "ストアを選択",
-    "going": "ライブ開始中...",
-    "liveEnded": "ライブ終了",
-    "subscribe": "登録",
-    "subscribed": "登録済み"
   },
   "shop": {
     "title": "マーケット",
@@ -468,7 +445,7 @@
     "safeSecurePaystack": "ITEC Payで安全に決済",
     "mobileMoneyProviders": "Airtel、MTNなど",
     "securePaymentGuarantee": "安全なお支払い",
-     "securePaymentDesc": "すべての取引はITEC Payの安全なインフラで処理されます。Aicon Xはお支払い情報を保存しません。",
+    "securePaymentDesc": "すべての取引はITEC Payの安全なインフラで処理されます。Aicon Xはお支払い情報を保存しません。",
     "itemsCount_one": "{{count}}点",
     "itemsCount_other": "{{count}}点",
     "qty": "数量: {{qty}} × {{price}}",
@@ -1301,7 +1278,7 @@
       "q3": "出品者になるにはどうすればよいですか？",
       "a3": "ナビゲーションメニューの「マイショップ」にアクセスし、設定手順に従ってください。基本情報の提供と本人確認が必要です。",
       "q4": "支払いは安全ですか？",
-       "a4": "はい、すべての支払いはITEC Payなどの安全な暗号化ゲートウェイを通じて処理されます。完全なカード情報をサーバーに保存することはありません。"
+      "a4": "はい、すべての支払いはITEC Payなどの安全な暗号化ゲートウェイを通じて処理されます。完全なカード情報をサーバーに保存することはありません。"
     },
     "report": {
       "title": "問題を報告",
@@ -1331,8 +1308,6 @@
     "createPostDesc": "フィードに写真や近況をシェアしましょう",
     "addStory": "ストーリーを追加",
     "addStoryDesc": "一時的な写真やテキストを投稿する",
-    "goLive": "ライブ配信",
-    "goLiveDesc": "ライブショッピングセッションを開始する",
     "addProduct": "商品を追加",
     "addProductDesc": "ストアに新しいアイテムを出品する",
     "postPlaceholder": "何を考えていますか？商品の紹介、レビュー、近況をシェアしましょう...",

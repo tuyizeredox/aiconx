@@ -41,10 +41,10 @@ export default function SimilarProducts({ product }) {
   if (!isLoading && combined.length === 0) return null;
 
   return (
-    <div className="mt-12 border-t border-slate-100 pt-8">
+    <div className="mt-12 border-t border-slate-100 dark:border-slate-700 pt-8">
       <div className="flex items-center gap-2 mb-4">
         <Zap className="w-5 h-5 text-amber-500" />
-        <h2 className="text-xl font-bold text-slate-900">You Might Also Like</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">You Might Also Like</h2>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {isLoading

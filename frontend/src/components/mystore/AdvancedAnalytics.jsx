@@ -16,8 +16,8 @@ const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6"
 const CustomTooltip = ({ active, payload, label, prefix = "" }) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-white border border-slate-100 rounded-xl shadow-lg p-3 text-xs">
-        <p className="text-slate-500 mb-1 font-medium">{label}</p>
+      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-lg p-3 text-xs">
+        <p className="text-slate-500 dark:text-slate-400 mb-1 font-medium">{label}</p>
         {payload.map((p, i) => (
           <p key={i} className="font-semibold" style={{ color: p.color }}>
             {p.name}: {prefix}{typeof p.value === "number" ? p.value.toLocaleString() : p.value}
@@ -32,7 +32,7 @@ const CustomTooltip = ({ active, payload, label, prefix = "" }) => {
 function KpiCard({ icon: Icon, label, value, change, color, sub }) {
   const isPos = change >= 0;
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl border border-slate-100 p-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
           <Icon className="w-4 h-4" />
@@ -44,9 +44,9 @@ function KpiCard({ icon: Icon, label, value, change, color, sub }) {
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
-      {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
+      {sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{sub}</p>}
     </motion.div>
   );
 }
@@ -163,17 +163,17 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={DollarSign} label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} color="bg-orange-50 text-orange-600" />
-        <KpiCard icon={ShoppingCart} label={t("store.totalOrders")} value={orders.length} sub={t("store.paidCount", { count: paidOrders })} color="bg-purple-50 text-purple-600" />
-        <KpiCard icon={Users} label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} color="bg-pink-50 text-pink-600" />
-        <KpiCard icon={Package} label={t("store.avgOrderValue")} value={`$${avgOrderValue.toFixed(2)}`} sub={t("store.completionRateSub", { rate: completionRate })} color="bg-green-50 text-green-600" />
+        <KpiCard icon={DollarSign} label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} color="bg-orange-50 dark:bg-orange-950 text-orange-600" />
+        <KpiCard icon={ShoppingCart} label={t("store.totalOrders")} value={orders.length} sub={t("store.paidCount", { count: paidOrders })} color="bg-purple-50 dark:bg-purple-950 text-purple-600" />
+        <KpiCard icon={Users} label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} color="bg-pink-50 dark:bg-pink-950 text-pink-600" />
+        <KpiCard icon={Package} label={t("store.avgOrderValue")} value={`$${avgOrderValue.toFixed(2)}`} sub={t("store.completionRateSub", { rate: completionRate })} color="bg-green-50 dark:bg-green-950 text-green-600" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-0.5">{t("store.revenueTrend")}</h3>
-        <p className="text-xs text-slate-400 mb-4">{t("store.revenueTrendDesc")}</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-0.5">{t("store.revenueTrend")}</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.revenueTrendDesc")}</p>
         {revenueOrderData.every(d => d.revenue === 0) ? (
-          <div className="h-[200px] flex items-center justify-center text-sm text-slate-400">{t("store.noOrderHistory")}</div>
+          <div className="h-[200px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.noOrderHistory")}</div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={revenueOrderData}>
@@ -199,18 +199,18 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.productPerformance")}</h3>
-        <p className="text-xs text-slate-400 mb-3">{t("store.productPerfDesc")}</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.productPerformance")}</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">{t("store.productPerfDesc")}</p>
         {productPerf.length === 0 ? (
-          <div className="py-8 text-center text-sm text-slate-400">{t("store.noSalesDataYet")}</div>
+          <div className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">{t("store.noSalesDataYet")}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-slate-100">
+                <tr className="border-b border-slate-100 dark:border-slate-700">
                   {[t("store.productTableProduct"), t("store.productTableUnits"), t("store.productTableRevenue")].map(h => (
-                    <th key={h} className="text-left pb-2 text-slate-500 font-medium pr-3 whitespace-nowrap">{h}</th>
+                    <th key={h} className="text-left pb-2 text-slate-500 dark:text-slate-400 font-medium pr-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -221,10 +221,10 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.05 }}
-                    className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
+                    className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                   >
-                    <td className="py-2.5 pr-3 font-semibold text-slate-800">{p.name}</td>
-                    <td className="py-2.5 pr-3 text-slate-600">{p.purchases.toLocaleString()}</td>
+                    <td className="py-2.5 pr-3 font-semibold text-slate-800 dark:text-slate-200">{p.name}</td>
+                    <td className="py-2.5 pr-3 text-slate-600 dark:text-slate-300">{p.purchases.toLocaleString()}</td>
                     <td className="py-2.5 font-bold text-orange-600">${p.revenue.toLocaleString()}</td>
                   </motion.tr>
                 ))}
@@ -235,11 +235,11 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.revenueByCategory")}</h3>
-          <p className="text-xs text-slate-400 mb-4">{t("store.revenueByCategoryDesc")}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.revenueByCategory")}</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.revenueByCategoryDesc")}</p>
           {categoryRevenue.length === 0 ? (
-            <div className="h-[160px] flex items-center justify-center text-sm text-slate-400">{t("store.noCategoryData")}</div>
+            <div className="h-[160px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.noCategoryData")}</div>
           ) : (
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={categoryRevenue} layout="vertical">
@@ -255,11 +255,11 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.deliveryMethods")}</h3>
-          <p className="text-xs text-slate-400 mb-4">{t("store.deliveryMethodsDesc")}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.deliveryMethods")}</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.deliveryMethodsDesc")}</p>
           {deliveryMethodData.length === 0 ? (
-            <div className="h-[160px] flex items-center justify-center text-sm text-slate-400">{t("store.noOrderDataYet")}</div>
+            <div className="h-[160px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">{t("store.noOrderDataYet")}</div>
           ) : (
             <div className="flex items-center gap-4 h-[160px]">
               <ResponsiveContainer width="50%" height={140}>
@@ -274,8 +274,8 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                 {deliveryMethodData.map(d => (
                   <div key={d.name} className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                    <span className="text-xs text-slate-600 flex-1">{d.name}</span>
-                    <span className="text-xs font-semibold text-slate-900">{d.value}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300 flex-1">{d.name}</span>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white">{d.value}</span>
                   </div>
                 ))}
               </div>
@@ -285,11 +285,11 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-1">{t("store.orderStatusPipeline")}</h3>
-          <p className="text-xs text-slate-400 mb-4">{t("store.orderStatusPipelineDesc")}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t("store.orderStatusPipeline")}</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.orderStatusPipelineDesc")}</p>
           {orderStatusData.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-400">{t("store.noOrdersYetAnalytics")}</div>
+            <div className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">{t("store.noOrdersYetAnalytics")}</div>
           ) : (
             <div className="space-y-2">
               {orderStatusData.map((s, i) => {
@@ -297,10 +297,10 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                 return (
                   <div key={s.name}>
                     <div className="flex justify-between text-xs mb-0.5">
-                      <span className="text-slate-600">{s.name}</span>
-                      <span className="font-semibold text-slate-900">{s.value} <span className="text-slate-400 font-normal">({pct}%)</span></span>
+                      <span className="text-slate-600 dark:text-slate-300">{s.name}</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">{s.value} <span className="text-slate-400 dark:text-slate-500 font-normal">({pct}%)</span></span>
                     </div>
-                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
@@ -312,38 +312,38 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                   </div>
                 );
               })}
-              <p className="text-xs text-slate-400 mt-3">{t("store.orderCompletionRate")} <span className="text-orange-600 font-semibold">{completionRate}%</span></p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">{t("store.orderCompletionRate")} <span className="text-orange-600 font-semibold">{completionRate}%</span></p>
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 relative overflow-hidden">
           {!isElite && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center p-6 text-center">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-3">
+            <div className="absolute inset-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center p-6 text-center">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center mb-3">
                 <Star className="w-5 h-5 text-amber-600" />
               </div>
-              <h4 className="text-sm font-bold text-slate-900 mb-1">{t("store.eliteAnalyticsFeature")}</h4>
-              <p className="text-[11px] text-slate-500 mb-4 max-w-[180px]">{t("store.upgradeForLocation")}</p>
-              <Button onClick={onUpgrade} size="sm" variant="outline" className="h-8 text-[10px] rounded-lg border-amber-200 text-amber-700 hover:bg-amber-50">{t("store.upgradePlan")}</Button>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{t("store.eliteAnalyticsFeature")}</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4 max-w-[180px]">{t("store.upgradeForLocation")}</p>
+              <Button onClick={onUpgrade} size="sm" variant="outline" className="h-8 text-[10px] rounded-lg border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950">{t("store.upgradePlan")}</Button>
             </div>
           )}
-          <h3 className="text-sm font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-red-500" /> {t("store.topShippingCountries")}
           </h3>
-          <p className="text-xs text-slate-400 mb-3">{t("store.topShippingCountriesDesc")}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">{t("store.topShippingCountriesDesc")}</p>
           {topCountries.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-400">{t("store.noShippingData")}</div>
+            <div className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">{t("store.noShippingData")}</div>
           ) : (
             <div className="space-y-2">
               {topCountries.map((loc, i) => (
                 <div key={loc.country} className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 w-4">{i + 1}</span>
-                  <span className="text-xs text-slate-700 flex-1">{loc.country}</span>
-                  <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 w-4">{i + 1}</span>
+                  <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">{loc.country}</span>
+                  <div className="w-20 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${loc.pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
                   </div>
-                  <span className="text-xs font-semibold text-slate-900 w-7 text-right">{loc.pct}%</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white w-7 text-right">{loc.pct}%</span>
                 </div>
               ))}
             </div>
@@ -351,19 +351,19 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-1 flex items-center gap-2">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-500" /> {t("store.lowStockAlert")}
         </h3>
-        <p className="text-xs text-slate-400 mb-4">{t("store.lowStockDesc")}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{t("store.lowStockDesc")}</p>
         {lowStockProducts.length === 0 ? (
-          <p className="text-sm text-slate-400">{t("store.wellStocked")}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("store.wellStocked")}</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {lowStockProducts.map(p => (
-              <div key={p._id || p.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100">
-                <span className="text-xs font-medium text-slate-700 truncate max-w-[60%]">{p.title}</span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.inventory_count === 0 ? "bg-red-100 text-red-600" : "bg-amber-200 text-amber-800"}`}>
+              <div key={p._id || p.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900">
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[60%]">{p.title}</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.inventory_count === 0 ? "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400" : "bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-300"}`}>
                   {p.inventory_count === 0 ? t("store.outOfStockLabel") : t("store.itemsLeft", { count: p.inventory_count })}
                 </span>
               </div>

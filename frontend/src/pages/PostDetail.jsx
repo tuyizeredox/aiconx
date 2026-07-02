@@ -82,15 +82,15 @@ function ReplyItem({ reply, currentUser }) {
           )}
         </div>
       </Link>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm px-3.5 py-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Link to={replyAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">{reply.author_name || "User"}</span>
-              <span className="text-[10px] text-slate-400">@{reply.author_username || "anonymous"}</span>
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+            <Link to={replyAuthorProfile} className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity">
+              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{reply.author_name || "User"}</span>
+              <span className="text-[10px] text-slate-400 truncate">@{reply.author_username || "anonymous"}</span>
             </Link>
-            <span className="text-[10px] text-slate-300">·</span>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-300 shrink-0">·</span>
+            <span className="text-[10px] text-slate-400 shrink-0">
               {new Date(reply.created_at || reply.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           </div>
@@ -211,14 +211,14 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
       </Link>
       <div className="flex-1 min-w-0">
         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 hover:shadow-md hover:shadow-slate-100 dark:hover:shadow-slate-700/50 transition-all">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <Link to={commentAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{comment.author_name || "User"}</span>
-                <span className="text-[10px] text-slate-400 font-medium">@{comment.author_username || "anonymous"}</span>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Link to={commentAuthorProfile} className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity">
+                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{comment.author_name || "User"}</span>
+                <span className="text-[10px] text-slate-400 font-medium truncate shrink-0">@{comment.author_username || "anonymous"}</span>
               </Link>
             </div>
-            <span className="text-[10px] font-medium text-slate-400">
+            <span className="text-[10px] font-medium text-slate-400 shrink-0">
               {new Date(comment.created_at || comment.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           </div>

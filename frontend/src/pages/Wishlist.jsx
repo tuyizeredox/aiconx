@@ -69,10 +69,10 @@ export default function Wishlist() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Heart className="w-6 h-6 fill-red-500 text-red-500" />
+            <Heart className="w-6 h-6 fill-red-500 text-red-500 shrink-0" />
             {t("common.wishlist")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{t("wishlist.savedItems_other", { count: wishlistItems.length })}</p>
@@ -80,7 +80,7 @@ export default function Wishlist() {
         {wishlistItems.length > 0 && (
           <Button
             onClick={moveAllToCart}
-            className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5"
+            className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5 shrink-0 w-full sm:w-auto"
           >
             <ShoppingCart className="w-4 h-4" /> {t("wishlist.addAllToCart")}
           </Button>

@@ -95,7 +95,6 @@
   "nav": {
     "home": "Início",
     "explore": "Explorar",
-    "live": "Ao vivo",
     "shop": "Loja",
     "communities": "Comunidades",
     "messages": "Mensagens",
@@ -193,28 +192,6 @@
       "handmade": "Artesanal",
       "other": "Outro"
     }
-  },
-  "live": {
-    "title": "Ao vivo",
-    "goLive": "Transmitir",
-    "watching": "assistindo",
-    "viewers": "Espectadores",
-    "joinStream": "Entrar",
-    "endStream": "Encerrar",
-    "chat": "Chat",
-    "products": "Produtos",
-    "pinned": "Fixado",
-    "pin": "Fixar",
-    "unpin": "Desafixar",
-    "typePlaceholder": "Diga algo...",
-    "noLiveSessions": "Nenhuma transmissão ao vivo",
-    "startLive": "Iniciar transmissão",
-    "streamTitle": "Título da transmissão",
-    "selectStore": "Selecionar loja",
-    "going": "Iniciando transmissão...",
-    "liveEnded": "Transmissão encerrada",
-    "subscribe": "Inscrever-se",
-    "subscribed": "Inscrito"
   },
   "shop": {
     "title": "Marketplace",
@@ -464,11 +441,11 @@
     "selectOrAddAddress": "Por favor selecione ou adicione um endereço de entrega",
     "payingVia": "Pagando com",
     "creditDebitCard": "Cartão de crédito/débito",
-     "mobileMoney": "Dinheiro móvel (ITEC Pay)",
-     "safeSecurePaystack": "Seguro com ITEC Pay",
+    "mobileMoney": "Dinheiro móvel (ITEC Pay)",
+    "safeSecurePaystack": "Seguro com ITEC Pay",
     "mobileMoneyProviders": "Airtel, MTN, etc.",
     "securePaymentGuarantee": "Garantia de pagamento seguro",
-     "securePaymentDesc": "Todas as transações são processadas pela infraestrutura segura do ITEC Pay. O Aicon X não armazena seus dados de pagamento.",
+    "securePaymentDesc": "Todas as transações são processadas pela infraestrutura segura do ITEC Pay. O Aicon X não armazena seus dados de pagamento.",
     "itemsCount_one": "{{count}} item",
     "itemsCount_other": "{{count}} itens",
     "qty": "Qtd: {{qty}} × {{price}}",
@@ -765,7 +742,7 @@
     "category": "Categoria",
     "configureEarnings": "Configure como deseja receber seus ganhos.",
     "bankTransfer": "Transferência Bancária",
-     "mobileMoney": "Dinheiro Móvel (ITEC Pay)",
+    "mobileMoney": "Dinheiro Móvel (ITEC Pay)",
     "defaultPayoutMethod": "Método de Pagamento Padrão",
     "bankName": "Nome do Banco",
     "bankNamePlaceholder": "ex. Itaú, Bradesco",
@@ -1301,7 +1278,7 @@
       "q3": "Como me torno um vendedor?",
       "a3": "Basta ir a 'Minha loja' no menu de navegação e seguir as instruções de configuração. Você precisará fornecer algumas informações básicas e verificar sua identidade.",
       "q4": "Meus pagamentos são seguros?",
-       "a4": "Sim, todos os pagamentos são processados por meio de gateways seguros e criptografados como o ITEC Pay. Nunca armazenamos seus dados completos do cartão em nossos servidores."
+      "a4": "Sim, todos os pagamentos são processados por meio de gateways seguros e criptografados como o ITEC Pay. Nunca armazenamos seus dados completos do cartão em nossos servidores."
     },
     "report": {
       "title": "Reportar um problema",
@@ -1331,8 +1308,6 @@
     "createPostDesc": "Compartilhe fotos ou atualizações com seu feed",
     "addStory": "Adicionar story",
     "addStoryDesc": "Publique uma foto ou texto temporário",
-    "goLive": "Ir ao vivo",
-    "goLiveDesc": "Inicie uma sessão de compras ao vivo",
     "addProduct": "Adicionar produto",
     "addProductDesc": "Liste um novo item na sua loja",
     "postPlaceholder": "O que você está pensando? Compartilhe uma descoberta, avaliação ou atualização...",

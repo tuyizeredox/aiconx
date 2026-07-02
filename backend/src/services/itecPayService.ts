@@ -265,32 +265,25 @@ export const itecPayService = {
       // Validate that payment is actually successful
       const res = response.data as any;
       const successfulStatuses = ['completed', 'success', 'paid', 'approved'];
-      // Extract status from various possible locations
+      // Prefer explicit transaction/payment status fields. A bare "status" field is
+      // often just the HTTP-style envelope code (e.g. 200) and does NOT confirm the
+      // transaction itself succeeded — trusting it caused cancelled payments to be
+      // approved, so it's only used as a last resort and never auto-treated as success.
       const status = String(
         res.transaction_status ||
         res.data?.transaction_status ||
         res.payment_status ||
         res.data?.payment_status ||
-        res.status ||
         res.data?.status ||
+        res.status ||
         ''
       ).toLowerCase();
 
       console.log('Extracted payment status:', status);
 
-      // If status is a number (like 200), it's likely an HTTP code, not payment status
-      if (!isNaN(Number(status))) {
-        console.warn(`ITEC Pay Verify: Status appears to be HTTP code, not payment status: ${status}`);
-        // Assume success if HTTP 200 and no explicit failure
-        if (status === '200') {
-          console.log('ITEC Pay Verify: Assuming success based on HTTP 200');
-          return response.data;
-        }
-      }
-
       if (!successfulStatuses.includes(status)) {
-        console.warn(`ITEC Pay Verify: Payment not successful - status: ${status}`);
-        throw new Error(`Payment not successful. Current status: ${status}`);
+        console.warn(`ITEC Pay Verify: Payment not successful - status: ${status || 'unknown'}`);
+        throw new Error(`Payment not successful. Current status: ${status || 'unknown'}`);
       }
 
       return response.data;

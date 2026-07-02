@@ -352,9 +352,9 @@ export default function MyStore() {
             <DialogHeader><DialogTitle>{t("store.createStoreTitle")}</DialogTitle></DialogHeader>
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="grid grid-cols-3 mb-4">
-                <TabsTrigger value="general">{t("store.basicInfo")}</TabsTrigger>
-                <TabsTrigger value="payment">{t("store.payouts")}</TabsTrigger>
-                <TabsTrigger value="delivery">{t("store.delivery")}</TabsTrigger>
+                <TabsTrigger value="general" className="px-1 sm:px-3 text-[11px] sm:text-sm">{t("store.basicInfo")}</TabsTrigger>
+                <TabsTrigger value="payment" className="px-1 sm:px-3 text-[11px] sm:text-sm">{t("store.payouts")}</TabsTrigger>
+                <TabsTrigger value="delivery" className="px-1 sm:px-3 text-[11px] sm:text-sm">{t("store.delivery")}</TabsTrigger>
               </TabsList>
 
               <div className="max-h-[60vh] overflow-y-auto pr-2">
@@ -362,22 +362,22 @@ export default function MyStore() {
                   <Input placeholder={t("store.storeNamePlaceholder")} value={storeForm.name} onChange={(e) => setStoreForm(p => ({ ...p, name: e.target.value }))} />
                   <Textarea placeholder={t("store.describeStorePlaceholder")} value={storeForm.description} onChange={(e) => setStoreForm(p => ({ ...p, description: e.target.value }))} />
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 block mb-1">{t("store.storeLogo")}</label>
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">{t("store.storeLogo")}</label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
                           {storeForm.logo_url ? (
                             <img src={storeForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                           ) : (
-                            <Upload className="w-5 h-5 text-slate-300" />
+                            <Upload className="w-5 h-5 text-slate-300 dark:text-slate-500" />
                           )}
                         </div>
                         <div className="relative flex-1">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
                             onChange={(e) => handleAssetUpload(e, 'logo')}
                             disabled={uploadingAssets.logo}
                           />
@@ -390,20 +390,20 @@ export default function MyStore() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 block mb-1">{t("store.storeBanner")}</label>
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">{t("store.storeBanner")}</label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
                           {storeForm.banner_url ? (
                             <img src={storeForm.banner_url} alt="Banner" className="w-full h-full object-cover" />
                           ) : (
-                            <Upload className="w-5 h-5 text-slate-300" />
+                            <Upload className="w-5 h-5 text-slate-300 dark:text-slate-500" />
                           )}
                         </div>
                         <div className="relative flex-1">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
                             onChange={(e) => handleAssetUpload(e, 'banner')}
                             disabled={uploadingAssets.banner}
                           />
@@ -436,10 +436,10 @@ export default function MyStore() {
                   </Select>
 
                   {storeForm.payment_method === 'bank_transfer' && (
-                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input placeholder={t("store.bankName")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
                       <Input placeholder={t("store.accountHolderName")} value={storeForm.bank_account_name} onChange={e => setStoreForm(p => ({ ...p, bank_account_name: e.target.value }))} />
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Input placeholder={t("store.accountNumber")} value={storeForm.bank_account_number} onChange={e => setStoreForm(p => ({ ...p, bank_account_number: e.target.value }))} />
                         <Input placeholder={t("store.routingNumber")} value={storeForm.routing_number} onChange={e => setStoreForm(p => ({ ...p, routing_number: e.target.value }))} />
                       </div>
@@ -447,25 +447,25 @@ export default function MyStore() {
                   )}
 
                   {storeForm.payment_method === 'paypal' && (
-                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input type="email" placeholder={t("store.paypalEmail")} value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                     </div>
                   )}
 
                   {storeForm.payment_method === 'mobile_money' && (
-                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input placeholder={t("store.mobileMoneyNumber")} value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
-                      <p className="text-[10px] text-slate-400">{t("store.mobileMoneyHint")}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("store.mobileMoneyHint")}</p>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="delivery" className="space-y-6 pt-2">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.shipping")}</Label>
-                        <p className="text-xs text-slate-500">{t("store.shippingDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.shippingDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.shipping_enabled} 
@@ -473,10 +473,10 @@ export default function MyStore() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.localDelivery")}</Label>
-                        <p className="text-xs text-slate-500">{t("store.localDeliveryDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.localDeliveryDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.delivery_enabled} 
@@ -485,7 +485,7 @@ export default function MyStore() {
                     </div>
 
                     {storeForm.delivery_settings.delivery_enabled && (
-                      <div className="space-y-3 border-l-2 border-orange-100 pl-4 py-1">
+                      <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-xs">{t("store.deliveryFee")}</Label>
@@ -533,10 +533,10 @@ export default function MyStore() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.storePickup")}</Label>
-                        <p className="text-xs text-slate-500">{t("store.storePickupDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.storePickupDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.pickup_enabled} 
@@ -545,7 +545,7 @@ export default function MyStore() {
                     </div>
 
                     {storeForm.delivery_settings.pickup_enabled && (
-                      <div className="space-y-1.5 border-l-2 border-orange-100 pl-4 py-1">
+                      <div className="space-y-1.5 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
                         <Label className="text-xs">{t("store.pickupInstructions")}</Label>
                         <Textarea 
                           placeholder={t("store.pickupInstructionsPlaceholder")} 
@@ -575,17 +575,17 @@ export default function MyStore() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Store Header */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold shrink-0">
               {store.name?.[0]?.toUpperCase()}
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{store.name}</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{store.description || t("store.noDescription")}</p>
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate">{store.name}</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{store.description || t("store.noDescription")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Dialog open={showEditStore} onOpenChange={setShowEditStore}>
               <DialogTrigger asChild>
                 <Button 
@@ -634,10 +634,10 @@ export default function MyStore() {
                 <DialogHeader><DialogTitle>{t("store.editStoreDetails")}</DialogTitle></DialogHeader>
                 <Tabs defaultValue="general" className="w-full">
                   <TabsList className="grid grid-cols-4 mb-4">
-                    <TabsTrigger value="general">{t("store.general")}</TabsTrigger>
-                    <TabsTrigger value="payment">{t("store.payment")}</TabsTrigger>
-                    <TabsTrigger value="delivery">{t("store.delivery")}</TabsTrigger>
-                    <TabsTrigger value="additional">{t("store.additional")}</TabsTrigger>
+                    <TabsTrigger value="general" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.general")}</TabsTrigger>
+                    <TabsTrigger value="payment" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.payment")}</TabsTrigger>
+                    <TabsTrigger value="delivery" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.delivery")}</TabsTrigger>
+                    <TabsTrigger value="additional" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.additional")}</TabsTrigger>
                   </TabsList>
                   
                   <div className="max-h-[60vh] overflow-y-auto pr-2">
@@ -650,11 +650,11 @@ export default function MyStore() {
                         <label className="text-sm font-medium">{t("store.description")}</label>
                         <Textarea placeholder={t("store.describeStorePlaceholder")} value={storeForm.description} onChange={(e) => setStoreForm(p => ({ ...p, description: e.target.value }))} />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.storeLogo")}</label>
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                               {storeForm.logo_url ? (
                                 <img src={storeForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                               ) : (
@@ -662,10 +662,10 @@ export default function MyStore() {
                               )}
                             </div>
                             <div className="relative flex-1">
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="absolute inset-0 opacity-0 cursor-pointer" 
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
                                 onChange={(e) => handleAssetUpload(e, 'logo')}
                                 disabled={uploadingAssets.logo}
                               />
@@ -680,7 +680,7 @@ export default function MyStore() {
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.storeBanner")}</label>
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                               {storeForm.banner_url ? (
                                 <img src={storeForm.banner_url} alt="Banner" className="w-full h-full object-cover" />
                               ) : (
@@ -688,10 +688,10 @@ export default function MyStore() {
                               )}
                             </div>
                             <div className="relative flex-1">
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="absolute inset-0 opacity-0 cursor-pointer" 
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
                                 onChange={(e) => handleAssetUpload(e, 'banner')}
                                 disabled={uploadingAssets.banner}
                               />
@@ -729,22 +729,22 @@ export default function MyStore() {
                       </div>
 
                       {storeForm.payment_method === 'bank_transfer' && (
-                        <div className="space-y-4 border-l-2 border-orange-100 pl-4 py-1 mt-4">
+                        <div className="space-y-4 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-600">{t("store.bankName")}</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.bankName")}</label>
                             <Input placeholder={t("store.bankNamePlaceholder")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-600">{t("store.accountHolderName")}</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.accountHolderName")}</label>
                             <Input placeholder={t("store.accountHolderNamePlaceholder")} value={storeForm.bank_account_name} onChange={e => setStoreForm(p => ({ ...p, bank_account_name: e.target.value }))} />
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-600">{t("store.accountNumber")}</label>
+                              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.accountNumber")}</label>
                               <Input placeholder={t("store.accountNumber")} value={storeForm.bank_account_number} onChange={e => setStoreForm(p => ({ ...p, bank_account_number: e.target.value }))} />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-600">{t("store.routingNumber")}</label>
+                              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.routingNumber")}</label>
                               <Input placeholder={t("store.routingNumber")} value={storeForm.routing_number} onChange={e => setStoreForm(p => ({ ...p, routing_number: e.target.value }))} />
                             </div>
                           </div>
@@ -752,15 +752,15 @@ export default function MyStore() {
                       )}
 
                       {storeForm.payment_method === 'paypal' && (
-                        <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1 mt-4">
-                          <label className="text-sm font-medium text-slate-600">{t("store.paypalEmail")}</label>
+                        <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
+                          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.paypalEmail")}</label>
                           <Input type="email" placeholder="email@example.com" value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                         </div>
                       )}
 
                       {storeForm.payment_method === 'mobile_money' && (
-                        <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1 mt-4">
-                          <label className="text-sm font-medium text-slate-600">{t("store.mobileMoneyNumber")}</label>
+                        <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
+                          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.mobileMoneyNumber")}</label>
                           <Input placeholder="07XXXXXXXX" value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
                         </div>
                       )}
@@ -768,10 +768,10 @@ export default function MyStore() {
 
                     <TabsContent value="delivery" className="space-y-6 pt-2">
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.shipping")}</Label>
-                            <p className="text-xs text-slate-500">{t("store.shippingDesc")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.shippingDesc")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.shipping_enabled} 
@@ -779,10 +779,10 @@ export default function MyStore() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.localDelivery")}</Label>
-                            <p className="text-xs text-slate-500">{t("store.localDeliveryDesc")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.localDeliveryDesc")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.delivery_enabled} 
@@ -791,49 +791,49 @@ export default function MyStore() {
                         </div>
 
                         {storeForm.delivery_settings.delivery_enabled && (
-                          <div className="space-y-4 border-l-2 border-orange-100 pl-4 py-1">
-                            <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-4 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.deliveryFee")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.deliveryFee")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="0.00"
-                                  value={storeForm.delivery_settings.delivery_fee} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_fee: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.delivery_fee}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_fee: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.deliveryRadiusKm")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.deliveryRadiusKm")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="10"
-                                  value={storeForm.delivery_settings.delivery_radius_km} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_radius_km: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.delivery_radius_km}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_radius_km: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.minOrderForDelivery")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.minOrderForDelivery")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="0.00"
-                                  value={storeForm.delivery_settings.min_order_for_delivery} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, min_order_for_delivery: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.min_order_for_delivery}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, min_order_for_delivery: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.freeDeliveryAbove")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.freeDeliveryAbove")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="0.00"
-                                  value={storeForm.delivery_settings.free_delivery_above} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, free_delivery_above: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.free_delivery_above}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, free_delivery_above: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium text-slate-600">{t("store.estDeliveryTime")}</Label>
+                              <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.estDeliveryTime")}</Label>
                               <Input 
                                 placeholder={t("store.estDeliveryTimePlaceholder2")} 
                                 value={storeForm.delivery_settings.delivery_time_est} 
@@ -843,10 +843,10 @@ export default function MyStore() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.storePickup")}</Label>
-                            <p className="text-xs text-slate-500">{t("store.storePickupDesc2")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.storePickupDesc2")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.pickup_enabled} 
@@ -855,8 +855,8 @@ export default function MyStore() {
                         </div>
 
                         {storeForm.delivery_settings.pickup_enabled && (
-                          <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1">
-                            <Label className="text-sm font-medium text-slate-600">{t("store.pickupInstructions")}</Label>
+                          <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
+                            <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.pickupInstructions")}</Label>
                             <Textarea 
                               placeholder={t("store.pickupInstructionsPlaceholder2")} 
                               className="min-h-[100px]"
@@ -869,7 +869,7 @@ export default function MyStore() {
                     </TabsContent>
 
                     <TabsContent value="additional" className="space-y-4 pt-2">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.phoneNumber")}</label>
                           <Input placeholder="+1 234 567 890" value={storeForm.phone_number} onChange={(e) => setStoreForm(p => ({ ...p, phone_number: e.target.value }))} />
@@ -884,12 +884,12 @@ export default function MyStore() {
                         <Input placeholder={t("store.storeAddressPlaceholder")} value={storeForm.address} onChange={(e) => setStoreForm(p => ({ ...p, address: e.target.value }))} />
                       </div>
                       <div className="space-y-3 pt-2">
-                        <label className="text-sm font-bold text-slate-800">{t("store.socialMediaHandles")}</label>
+                        <label className="text-sm font-bold text-slate-800 dark:text-slate-200">{t("store.socialMediaHandles")}</label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Instagram</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Instagram</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -899,9 +899,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">TikTok</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">TikTok</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -911,9 +911,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Twitter / X</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Twitter / X</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -923,9 +923,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Facebook</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Facebook</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-medium">fb.com/</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 font-medium">fb.com/</span>
                               <Input 
                                 className="pl-14 h-10 text-xs rounded-xl" 
                                 placeholder="page-handle" 
@@ -963,7 +963,7 @@ export default function MyStore() {
               <h3 className="text-sm font-bold text-orange-900 dark:text-orange-300 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" /> {t("store.setupProgress")}
               </h3>
-              <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {Math.round(
                   ((store.logo_url ? 1 : 0) + 
                   (store.description ? 1 : 0) + 
@@ -980,7 +980,7 @@ export default function MyStore() {
                 { label: t("store.setupPayoutMethod"), done: !!store.payment_method },
               ].map((step, i) => (
                 <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-orange-100 dark:border-orange-900 text-orange-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
-                  {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200" />}
+                  {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200 dark:border-slate-600" />}
                   <span className="text-xs font-medium">{step.label}</span>
                 </div>
               ))}
@@ -1008,9 +1008,9 @@ export default function MyStore() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between mb-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 w-full sm:w-auto">
+          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full sm:w-auto overflow-x-auto scrollbar-hide justify-start">
             <TabsTrigger value="products">{t("store.products")}</TabsTrigger>
             <TabsTrigger value="orders">{t("store.orders")}</TabsTrigger>
             <TabsTrigger value="coupons">{t("store.coupons")}</TabsTrigger>
@@ -1020,7 +1020,7 @@ export default function MyStore() {
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-1.5">
               {t("store.shipping")}
-              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 text-slate-400 border-0">Pro+</Badge>}
+              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="subscription">{t("store.plan")}</TabsTrigger>
             <TabsTrigger value="finance">{t("store.finance")}</TabsTrigger>
@@ -1066,16 +1066,16 @@ export default function MyStore() {
                 
                 {/* Image Upload */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5" /> {t("store.productMedia", { limit: limits.images === Infinity ? t("store.unlimited") : limits.images })}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {imagePreviews.map((url, i) => {
                       const isVideo = productImages[i]?.type?.startsWith("video/");
                       return (
-                        <div key={`preview-${i}-${url}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 group">
+                        <div key={`preview-${i}-${url}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 group">
                           {isVideo ? (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                            <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
                               <video src={url} className="w-full h-full object-cover" />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                 <Play className="w-6 h-6 text-white fill-white" />
@@ -1094,7 +1094,7 @@ export default function MyStore() {
                       );
                     })}
                     {(limits.images === Infinity || productImages.length < limits.images) && (
-                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition-all text-slate-400">
+                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 dark:hover:border-orange-600 hover:bg-orange-50/30 dark:hover:bg-orange-950/30 transition-all text-slate-400 dark:text-slate-500">
                         <Upload className="w-5 h-5" />
                         <span className="text-[10px] mt-1 font-medium">{t("store.upload")}</span>
                         <input type="file" accept={limits.videos === 0 ? "image/*" : "image/*,video/*"} multiple className="hidden" onChange={handleFileChange} />
@@ -1218,7 +1218,7 @@ export default function MyStore() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 mb-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
               <Input 
                 placeholder={t("store.searchOrders")}
                 value={orderSearch}
@@ -1251,7 +1251,7 @@ export default function MyStore() {
             });
 
             if (filtered.length === 0) {
-              return <div className="text-center py-16 text-slate-400">{t("store.noOrdersFound")}</div>;
+              return <div className="text-center py-16 text-slate-400 dark:text-slate-500">{t("store.noOrdersFound")}</div>;
             }
 
             return (
@@ -1269,25 +1269,25 @@ export default function MyStore() {
                       className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 hover:shadow-md transition-all cursor-pointer group"
                       onClick={() => setSelectedOrder(order)}
                     >
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                             {t("store.orderRef", { id: orderId?.slice(-8) })}
                           </p>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors truncate">
                             {order.buyer_name || `@${order.buyer_username}`}
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                             {new Date(order.created_at || order.created_date).toLocaleDateString()} · {t("store.itemsCount", { count: order.items?.length || 0 })}
                           </p>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col items-end gap-2 shrink-0">
                           <div className="flex items-center gap-1.5">
                             {order.delivery_method && (
                               <Badge className={`border-0 text-[9px] px-1.5 py-0.5 h-5 font-semibold flex items-center gap-1 ${
                                 order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
                                 order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
-                                "bg-slate-100 text-slate-500"
+                                "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
                               }`}>
                                 {order.delivery_method === "pickup" ? <Package className="w-2.5 h-2.5" /> :
                                  order.delivery_method === "delivery" ? <Navigation className="w-2.5 h-2.5" /> :
@@ -1326,7 +1326,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-slate-500"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-slate-500 dark:text-slate-400"
                             onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
                           >
                             <Info className="w-3 h-3" />
@@ -1335,7 +1335,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               navigate(createPageUrl("Chat") + `?to=${order.buyer_username}`);

@@ -446,9 +446,9 @@ export default function Affiliate() {
           <div className="grid lg:grid-cols-5 gap-6">
             {/* My Links */}
             <div className="lg:col-span-3 space-y-3">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t("affiliate.myLinks")}</h2>
-                <Button onClick={() => setCreating(v => !v)} size="sm" className={`rounded-xl gap-1.5 ${creating ? "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600" : "bg-orange-600 hover:bg-orange-700"}`}>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">{t("affiliate.myLinks")}</h2>
+                <Button onClick={() => setCreating(v => !v)} size="sm" className={`rounded-xl gap-1.5 shrink-0 ${creating ? "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600" : "bg-orange-600 hover:bg-orange-700"}`}>
                   <Plus className="w-4 h-4" /> {t("affiliate.newLink")}
                 </Button>
               </div>
@@ -497,12 +497,12 @@ export default function Affiliate() {
                       <ConversionBar clicks={link.clicks} conversions={link.conversions} />
 
                       <div className="flex gap-2 mt-3">
-                        <div className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 truncate font-mono">
+                        <div className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 truncate font-mono">
                           {window.location.origin}/Marketplace?ref={link.ref_code}
                         </div>
                         <button
                           onClick={() => copyLink(link.ref_code)}
-                          className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors"
+                          className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors shrink-0"
                           title="Copy link"
                         >
                           <Copy className="w-4 h-4" />
@@ -600,7 +600,7 @@ export default function Affiliate() {
                   <p className="text-sm text-slate-500 dark:text-slate-400">{t("affiliate.leaderboardSubtitle")}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl self-start sm:self-auto">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl self-start sm:self-auto max-w-full overflow-x-auto scrollbar-hide">
                 {[
                   { value: "week", label: t("affiliate.thisWeek") },
                   { value: "month", label: t("affiliate.thisMonth") },
@@ -609,7 +609,7 @@ export default function Affiliate() {
                   <button
                     key={opt.value}
                     onClick={() => setLeaderboardPeriod(opt.value)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                       leaderboardPeriod === opt.value
                         ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm"
                         : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -681,7 +681,7 @@ export default function Affiliate() {
         <TabsContent value="assets">
           <div className="space-y-6">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t("affiliate.marketingAssets")}</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t("affiliate.assetsSubtitle")}</p>
               </div>

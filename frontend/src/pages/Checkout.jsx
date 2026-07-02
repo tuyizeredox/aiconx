@@ -35,18 +35,18 @@ const PAYMENT_METHODS = [
 const CheckoutStep = ({ number, title, active, completed, children, onEdit, summary }) => {
   const { t } = useTranslation();
   return (
-  <div 
-    className={`bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border ${active ? "border-orange-500/50 shadow-lg shadow-orange-500/10 dark:shadow-orange-500/20" : "border-slate-200 dark:border-slate-800"} p-6 mb-6 transition-all duration-300`}
+  <div
+    className={`bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border ${active ? "border-orange-500/50 shadow-lg shadow-orange-500/10 dark:shadow-orange-500/20" : "border-slate-200 dark:border-slate-800"} p-4 sm:p-6 mb-6 transition-all duration-300`}
   >
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${completed ? "bg-emerald-500 text-white" : active ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`}>
+    <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all shrink-0 ${completed ? "bg-emerald-500 text-white" : active ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`}>
           {completed ? <CheckCircle2 className="w-5 h-5" /> : number}
         </div>
-        <h2 className={`font-semibold text-lg ${active ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{title}</h2>
+        <h2 className={`font-semibold text-base sm:text-lg truncate ${active ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{title}</h2>
       </div>
       {completed && onEdit && (
-        <button onClick={onEdit} className="text-xs font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors">{t("checkout.editDetails")}</button>
+        <button onClick={onEdit} className="text-xs font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors shrink-0">{t("checkout.editDetails")}</button>
       )}
     </div>
     {(active || !completed) && (
@@ -123,13 +123,13 @@ const FulfillmentMethodCard = ({ method, selected, onSelect, store, subtotal }) 
           : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
       }`}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${selected ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
           <Icon className="w-5 h-5" />
         </div>
-        <div>
-          <p className={`font-semibold text-sm ${selected ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{getMethodLabel(method)}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{getSubLabel()}</p>
+        <div className="min-w-0">
+          <p className={`font-semibold text-sm truncate ${selected ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{getMethodLabel(method)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate">{getSubLabel()}</p>
         </div>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
@@ -804,10 +804,10 @@ export default function Checkout() {
       const method = storeDeliverySelections[g.store_id] || "shipping";
       const Icon = FULFILLMENT_ICONS[method];
       return (
-        <div key={g.store_id} className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+        <div key={g.store_id} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
           <Icon className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-          <span className="font-bold text-slate-800">{g.store_name}</span>
-          <span className="text-slate-400">·</span>
+          <span className="font-bold text-slate-800 dark:text-white">{g.store_name}</span>
+          <span className="text-slate-400 dark:text-slate-500">·</span>
           <span className="capitalize">{method === "shipping" ? t("checkout.shippingLabel") : method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel")}</span>
         </div>
       );
@@ -867,11 +867,11 @@ export default function Checkout() {
 
                 return (
                   <div key={group.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-100 dark:border-slate-700" : ""}`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <StoreIcon className="w-4 h-4 text-orange-500" />
-                      <h3 className="font-black text-sm text-slate-900 dark:text-white tracking-tight">{group.store_name}</h3>
+                    <div className="flex items-center gap-2 mb-3 flex-wrap min-w-0">
+                      <StoreIcon className="w-4 h-4 text-orange-500 shrink-0" />
+                      <h3 className="font-black text-sm text-slate-900 dark:text-white tracking-tight truncate max-w-full">{group.store_name}</h3>
                       {enabledMethods.length === 1 && (
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-0.5 rounded-full capitalize">{t("checkout.methodOnly", { method: enabledMethods[0] === "shipping" ? t("checkout.shippingLabel") : enabledMethods[0] === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel") })}</span>
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-0.5 rounded-full capitalize shrink-0">{t("checkout.methodOnly", { method: enabledMethods[0] === "shipping" ? t("checkout.shippingLabel") : enabledMethods[0] === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel") })}</span>
                       )}
                     </div>
 
@@ -934,12 +934,12 @@ export default function Checkout() {
                             : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">{addr.label || "Address"}</span>
-                            {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full shrink-0">{addr.label || "Address"}</span>
+                            {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />}
                         </div>
                         <p className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-1">{addr.street}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{addr.city}, {addr.state} {addr.zip}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{addr.city}, {addr.state} {addr.zip}</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{addr.country}</p>
                       </button>
                     ))}
@@ -961,12 +961,12 @@ export default function Checkout() {
                           <h4 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{t("checkout.newAddressDetails")}</h4>
                           <button onClick={() => setIsAddingAddress(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">{t("common.cancel")}</button>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="col-span-1 sm:col-span-2">
                             <label htmlFor="addr-label" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.addressLabel")}</label>
                             <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-1 sm:col-span-2">
                           <label htmlFor="addr-street" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.streetAddress")}</label>
                           <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
@@ -1042,20 +1042,20 @@ export default function Checkout() {
                            : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                        }`}
                      >
-                       <div className="flex items-center gap-4">
-                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${paymentMethod === method.id ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
+                       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0 ${paymentMethod === method.id ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
                            {method.logo ? (
                              <img src={method.logo} alt={method.label} className="w-5 h-5 object-contain" />
                            ) : (
                              <span className="text-lg">{method.emoji}</span>
                            )}
                          </div>
-                         <div className="text-left">
-                           <p className={`font-semibold text-sm ${paymentMethod === method.id ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{method.label}</p>
-                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("checkout.mobileMoneyPayment")}</p>
+                         <div className="text-left min-w-0">
+                           <p className={`font-semibold text-sm truncate ${paymentMethod === method.id ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{method.label}</p>
+                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{t("checkout.mobileMoneyPayment")}</p>
                          </div>
                        </div>
-                       {paymentMethod === method.id && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
+                       {paymentMethod === method.id && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
                      </button>
                    ))}
                  </div>
@@ -1085,10 +1085,10 @@ export default function Checkout() {
                   const ds = storeInfo?.delivery_settings || {};
                   return (
                     <div key={store.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-200 dark:border-slate-700 mt-4" : ""}`}>
-                      <div className="flex items-center gap-2">
-                        <StoreIcon className="w-4 h-4 text-orange-600" />
-                        <h3 className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight">{store.store_name}</h3>
-                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">{t("checkout.itemsCount", { count: store.items.length })}</span>
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <StoreIcon className="w-4 h-4 text-orange-600 shrink-0" />
+                        <h3 className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight truncate max-w-full">{store.store_name}</h3>
+                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium shrink-0">{t("checkout.itemsCount", { count: store.items.length })}</span>
                       </div>
                       <div className="space-y-3">
                         {store.items.map(item => (
@@ -1100,18 +1100,18 @@ export default function Checkout() {
                               <h4 className="font-semibold text-slate-900 dark:text-white text-sm truncate">{item.product_title}</h4>
                               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("checkout.qty", { qty: item.quantity, price: formatCurrency(item.product_price) })}</p>
                             </div>
-                            <div className="text-right flex flex-col justify-center">
+                            <div className="text-right flex flex-col justify-center shrink-0">
                               <p className="font-semibold text-slate-900 dark:text-white text-sm">{formatCurrency(item.product_price * item.quantity)}</p>
                             </div>
                           </div>
                         ))}
                       </div>
-                      <div className="flex justify-between items-center py-2.5 px-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                          <FulfillIcon className="w-3.5 h-3.5" />
+                      <div className="flex justify-between items-center gap-2 py-2.5 px-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium min-w-0 truncate">
+                          <FulfillIcon className="w-3.5 h-3.5 shrink-0" />
                           {store.delivery_method === "shipping" ? t("checkout.shippingLabel") : store.delivery_method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel")}
                         </div>
-                        <span className="text-xs font-semibold text-slate-900 dark:text-white">{store.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(store.shipping)}</span>
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white shrink-0">{store.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(store.shipping)}</span>
                       </div>
                       {store.delivery_method === "pickup" && (
                         <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
@@ -1282,17 +1282,17 @@ export default function Checkout() {
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between p-3 bg-orange-50 rounded-xl border border-orange-100">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white">
+                        <div className="flex items-center justify-between gap-2 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl border border-orange-100 dark:border-orange-800">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white shrink-0">
                                     <Tag className="w-4 h-4" />
                                 </div>
-                                <div>
-                                    <p className="text-xs font-black text-orange-900 uppercase tracking-tight">{appliedCoupon.code}</p>
-                                    <p className="text-[10px] text-orange-600 font-bold">{t("checkout.appliedSuccessfully")}</p>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-black text-orange-900 dark:text-orange-300 uppercase tracking-tight truncate">{appliedCoupon.code}</p>
+                                    <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold">{t("checkout.appliedSuccessfully")}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 hover:text-red-500 p-1">
+                            <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 dark:text-slate-500 hover:text-red-500 p-1 shrink-0">
                                 <Trash2 className="w-4 h-4" />
                             </button>
                         </div>
@@ -1473,7 +1473,7 @@ export default function Checkout() {
 
       {/* Mobile Money Status Display */}
       {mobileMoneyStatus === 'pending' && !pendingPayment && (
-        <div className="fixed bottom-4 right-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-lg max-w-sm animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-lg sm:max-w-sm animate-in slide-in-from-bottom-4 duration-300">
           <div className="flex items-start gap-3">
             <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin shrink-0 mt-0.5" />
             <div className="flex-1">

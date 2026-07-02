@@ -118,51 +118,51 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
           </DialogTitle>
         </DialogHeader>
 
-        <div className="bg-slate-50 rounded-xl p-3 mb-2">
-          <p className="text-xs font-semibold text-slate-700">{order.store_name || t("profile.store")}</p>
-          <p className="text-[11px] text-slate-400">{t("orders.orderNumber", { id: order.id?.slice(-8) })}</p>
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-2">
+          <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{order.store_name || t("profile.store")}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">{t("orders.orderNumber", { id: order.id?.slice(-8) })}</p>
           {order.items?.slice(0, 2).map((item, i) => (
             <div key={i} className="flex items-center gap-2 mt-2">
               {item.product_image && <img src={item.product_image} className="w-8 h-8 rounded-lg object-cover" alt="" />}
-              <p className="text-xs text-slate-600 truncate">{item.product_title}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300 truncate">{item.product_title}</p>
             </div>
           ))}
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-2">{t("orders.yourRating")}</label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-2">{t("orders.yourRating")}</label>
           <StarRating value={rating} onChange={setRating} size={7} />
-          <p className="text-[11px] text-slate-400 mt-1">{getRatingLabel(rating)}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">{getRatingLabel(rating)}</p>
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-1">{t("orders.titleOptional")}</label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1">{t("orders.titleOptional")}</label>
           <input
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder={t("orders.titlePlaceholder")}
-            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-200"
+            className="w-full text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-200"
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-1">{t("orders.reviewOptional")}</label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1">{t("orders.reviewOptional")}</label>
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
             rows={3}
             placeholder={t("orders.reviewPlaceholder")}
-            className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-orange-300 resize-none"
+            className="w-full text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 outline-none focus:border-orange-300 resize-none"
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-2 flex items-center gap-1.5">
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-2 flex items-center gap-1.5">
             <Camera className="w-3.5 h-3.5" /> {t("orders.photosUpTo3")}
           </label>
           <div className="flex gap-2">
             {previews.map((url, i) => (
-              <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-100 group">
+              <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 group">
                 <img src={url} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={() => removeMedia(i)}
@@ -173,7 +173,7 @@ export default function OrderReviewModal({ open, onClose, order, currentUser }) 
               </div>
             ))}
             {mediaFiles.length < 3 && (
-              <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition-all text-slate-400">
+              <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 dark:hover:bg-orange-950/30 transition-all text-slate-400 dark:text-slate-500">
                 <Upload className="w-4 h-4" />
                 <span className="text-[9px] mt-0.5 font-medium">{t("common.upload")}</span>
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />

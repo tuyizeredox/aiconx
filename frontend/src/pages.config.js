@@ -61,7 +61,6 @@ import CommunityDetail from './pages/CommunityDetail';
 import CreatePost from './pages/CreatePost';
 import Explore from './pages/Explore';
 import Home from './pages/Home';
-import Live from './pages/Live';
 import Marketplace from './pages/Marketplace';
 import MyStore from './pages/MyStore';
 import Notifications from './pages/Notifications';
@@ -99,7 +98,6 @@ export const PAGES = {
     "CreatePost": CreatePost,
     "Explore": Explore,
     "Home": Home,
-    "Live": Live,
     "Marketplace": Marketplace,
     "MyStore": MyStore,
     "Notifications": Notifications,

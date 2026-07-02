@@ -95,7 +95,7 @@ const COMMUNITY_CATEGORIES = [
      }, 
    }); 
 
-   if (!community) return <div className="text-center py-20 text-slate-400">{t("common.loading")}</div>; 
+   if (!community) return <div className="text-center py-20 text-slate-400 dark:text-slate-500">{t("common.loading")}</div>;
 
    const catEmoji = COMMUNITY_CATEGORIES.find(c => c.id === community.category)?.emoji || "👥"; 
 
@@ -110,7 +110,7 @@ const COMMUNITY_CATEGORIES = [
        </Link> 
 
        {/* Banner */} 
-       <div className="rounded-2xl overflow-hidden mb-6 bg-white border border-slate-100 shadow-sm"> 
+       <div className="rounded-2xl overflow-hidden mb-6 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
          <div className="h-32 lg:h-40 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 relative"> 
            {community.cover_image && <img src={community.cover_image} alt="" className="w-full h-full object-cover" />} 
            {isAdmin && ( 
@@ -120,7 +120,7 @@ const COMMUNITY_CATEGORIES = [
            )} 
          </div> 
          <div className="p-5 -mt-8 relative"> 
-           <div className="w-16 h-16 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-2xl mb-3 overflow-hidden">
+           <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-700 shadow-lg border border-slate-100 dark:border-slate-600 flex items-center justify-center text-2xl mb-3 overflow-hidden">
              {community.icon_url ? (
                <img src={community.icon_url} alt={community.name} className="w-full h-full object-cover" />
              ) : (
@@ -129,12 +129,12 @@ const COMMUNITY_CATEGORIES = [
            </div> 
            <div className="flex items-start justify-between gap-3"> 
              <div className="flex-1 min-w-0"> 
-               <h1 className="text-2xl font-bold text-slate-900 mb-1">{community.name}</h1> 
-               <p className="text-sm text-slate-500 mb-3">{community.description}</p> 
-               <div className="flex items-center gap-4 text-sm text-slate-500"> 
-                 <span className="flex items-center gap-1.5"><Users className="w-4 h-4" /> {t("communities.members_other", { count: community.member_count || 0 })}</span> 
-                 <span className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /> {posts.length} {t("communities.posts")}</span> 
-               </div> 
+               <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{community.name}</h1>
+               <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{community.description}</p>
+               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+                 <span className="flex items-center gap-1.5"><Users className="w-4 h-4 shrink-0" /> {t("communities.members_other", { count: community.member_count || 0 })}</span>
+                 <span className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4 shrink-0" /> {posts.length} {t("communities.posts")}</span>
+               </div>
              </div> 
              <div className="flex items-center gap-2 shrink-0 mt-1"> 
                {isAdmin && <AdminPanel community={community} posts={posts} members={members} />} 
@@ -155,19 +155,19 @@ const COMMUNITY_CATEGORIES = [
        {/* Create Post CTA */} 
        {isMember && ( 
          <Link to={`/CreatePost?community_id=${communityId}`}> 
-           <div className="bg-white border border-slate-200 rounded-2xl p-3 flex items-center gap-3 mb-5 hover:border-orange-300 transition-colors cursor-pointer shadow-sm"> 
-             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
-               {currentUser?.display_name?.[0]?.toUpperCase() || "U"} 
-             </div> 
-             <span className="text-sm text-slate-400 flex-1">{t("communities.shareWithCommunity")}</span> 
-             <PenSquare className="w-4 h-4 text-orange-400" /> 
+           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 flex items-center gap-3 mb-5 hover:border-orange-300 dark:hover:border-orange-700 transition-colors cursor-pointer shadow-sm">
+             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+               {currentUser?.display_name?.[0]?.toUpperCase() || "U"}
+             </div>
+             <span className="text-sm text-slate-400 dark:text-slate-500 flex-1 min-w-0 truncate">{t("communities.shareWithCommunity")}</span>
+             <PenSquare className="w-4 h-4 text-orange-400 shrink-0" />
            </div> 
          </Link> 
        )} 
 
        {/* Tabs */} 
        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4"> 
-         <TabsList className="bg-white border border-slate-100 w-full rounded-xl"> 
+         <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full rounded-xl">
            <TabsTrigger value="posts" className="flex-1 rounded-lg">{t("communities.posts")}</TabsTrigger> 
            <TabsTrigger value="members" className="flex-1 rounded-lg">{t("communities.membersTab")}</TabsTrigger> 
            <TabsTrigger value="about" className="flex-1 rounded-lg">{t("communities.about")}</TabsTrigger> 
@@ -185,9 +185,9 @@ const COMMUNITY_CATEGORIES = [
                ? Array(3).fill(0).map((_, i) => <PostSkeleton key={i} />) 
                : regularPosts.length === 0 && pinnedPosts.length === 0 
                ? ( 
-                 <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200"> 
-                   <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" /> 
-                   <p className="text-sm text-slate-400">{t("communities.noPosts")}</p> 
+                 <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                   <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                   <p className="text-sm text-slate-400 dark:text-slate-500">{t("communities.noPosts")}</p>
                    {isMember && ( 
                      <Link to={`/CreatePost?community_id=${communityId}`}> 
                        <Button className="mt-4 bg-orange-600 hover:bg-orange-700 rounded-xl" size="sm">{t("communities.beFirstToPost")}</Button> 
@@ -201,20 +201,20 @@ const COMMUNITY_CATEGORIES = [
        )} 
 
        {activeTab === "members" && ( 
-         <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-50 overflow-hidden shadow-sm"> 
-           {members.length === 0 ? ( 
-             <div className="text-center py-12 text-slate-400">{t("communities.noMembers")}</div> 
-           ) : ( 
-             members.map(m => ( 
-               <div key={m._id} className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"> 
-                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0"> 
-                   {m.member_username?.[0]?.toUpperCase()} 
-                 </div> 
-                 <div className="flex-1 min-w-0"> 
-                   <p className="text-sm font-medium text-slate-800 truncate">@{m.member_username}</p> 
-                   <p className="text-xs text-slate-400">{t("communities.joinedOn", { date: new Date(m.created_at).toLocaleDateString() })}</p> 
-                 </div> 
-                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${m.role === "admin" ? "bg-orange-100 text-orange-700" : m.role === "moderator" ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-600"}`}> 
+         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-700 overflow-hidden shadow-sm">
+           {members.length === 0 ? (
+             <div className="text-center py-12 text-slate-400 dark:text-slate-500">{t("communities.noMembers")}</div>
+           ) : (
+             members.map(m => (
+               <div key={m._id} className="flex items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                   {m.member_username?.[0]?.toUpperCase()}
+                 </div>
+                 <div className="flex-1 min-w-0">
+                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">@{m.member_username}</p>
+                   <p className="text-xs text-slate-400 dark:text-slate-500">{t("communities.joinedOn", { date: new Date(m.created_at).toLocaleDateString() })}</p>
+                 </div>
+                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${m.role === "admin" ? "bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400" : m.role === "moderator" ? "bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}>
                    {m.role} 
                  </span> 
                </div> 
@@ -224,20 +224,20 @@ const COMMUNITY_CATEGORIES = [
        )} 
 
        {activeTab === "about" && ( 
-         <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4 shadow-sm"> 
-           <div> 
-             <h3 className="font-bold text-slate-900 mb-1">{t("communities.aboutThisCommunity")}</h3> 
-             <p className="text-sm text-slate-600 leading-relaxed">{community.description || t("communities.noDescription")}</p> 
-           </div> 
-           {community.rules && ( 
-             <div> 
-               <h3 className="font-bold text-slate-900 mb-1">{t("communities.communityRules")}</h3> 
-               <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{community.rules}</p> 
-             </div> 
-           )} 
-           <div className="pt-4 border-t border-slate-100 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500"> 
-             <span><strong className="text-slate-900">{community.member_count || 0}</strong> {t("communities.membersTab")}</span> 
-             <span><strong className="text-slate-900">{posts.length}</strong> {t("communities.posts")}</span> 
+         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 space-y-4 shadow-sm">
+           <div>
+             <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t("communities.aboutThisCommunity")}</h3>
+             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{community.description || t("communities.noDescription")}</p>
+           </div>
+           {community.rules && (
+             <div>
+               <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t("communities.communityRules")}</h3>
+               <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{community.rules}</p>
+             </div>
+           )}
+           <div className="pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
+             <span><strong className="text-slate-900 dark:text-white">{community.member_count || 0}</strong> {t("communities.membersTab")}</span>
+             <span><strong className="text-slate-900 dark:text-white">{posts.length}</strong> {t("communities.posts")}</span>
              <span>{t("communities.created", { date: new Date(community.created_at).toLocaleDateString() })}</span> 
            </div> 
          </div> 

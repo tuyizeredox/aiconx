@@ -536,7 +536,7 @@ try {
               {t("subscription.onPlan", { name: currentPlanInfo?.name })}
             </p>
             {isPending && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 animate-pulse">{t("subscription.pendingPayment")}</Badge>
+              <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 animate-pulse">{t("subscription.pendingPayment")}</Badge>
             )}
           </div>
           {subscription?.expires_at && (
@@ -623,7 +623,7 @@ try {
           onClick={() => setBilling(b => b === "monthly" ? "annual" : "monthly")}
           className={`relative w-12 h-6 rounded-full transition-colors ${billing === "annual" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
         >
-          <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${billing === "annual" ? "left-7" : "left-1"}`} />
+          <span className={`absolute top-1 w-4 h-4 bg-white dark:bg-slate-200 rounded-full shadow transition-all ${billing === "annual" ? "left-7" : "left-1"}`} />
         </button>
         <span className={`text-sm font-medium ${billing === "annual" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>
           {t("subscription.annual")} <span className="text-green-600 text-xs font-bold">{t("subscription.save20")}</span>

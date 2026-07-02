@@ -649,7 +649,7 @@ export default function Chat() {
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     placeholder={t("chat.searchByName")}
-                    className="pl-8 h-9 rounded-xl text-sm bg-orange-50 border-orange-100 focus:border-orange-300"
+                    className="pl-8 h-9 rounded-xl text-sm bg-orange-50 dark:bg-orange-950 border-orange-100 dark:border-orange-800 focus:border-orange-300 dark:text-white"
                   />
                 </div>
                 {userSearch.trim().length >= 2 && (
@@ -744,18 +744,18 @@ export default function Chat() {
         {selectedConvo ? (
           <>
             {/* Header */}
-            <div className="h-16 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between px-4 bg-white dark:bg-slate-800 shadow-sm">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setSelectedConvo(null)} className="lg:hidden p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <div className="h-16 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between px-4 bg-white dark:bg-slate-800 shadow-sm gap-2">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <button onClick={() => setSelectedConvo(null)} className="lg:hidden p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0">
                   <ArrowLeft className="w-5 h-5 dark:text-slate-300" />
                 </button>
-                <div className="relative">
+                <div className="relative shrink-0">
                   <Avatar name={selectedConvoName} size={9} />
                   <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white dark:border-slate-800 rounded-full ${userStatus.is_online ? "bg-green-400" : "bg-slate-400"}`} />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedConvoName}</p>
-                  <p className={`text-xs font-medium ${userStatus.is_online ? "text-green-500" : "text-slate-400"}`}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{selectedConvoName}</p>
+                  <p className={`text-xs font-medium truncate ${userStatus.is_online ? "text-green-500" : "text-slate-400"}`}>
                     {userStatus.is_online
                       ? t("chat.online")
                       : userStatus.last_seen_at
@@ -764,7 +764,7 @@ export default function Chat() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 relative">
+              <div className="flex items-center gap-1 relative shrink-0">
                 <button
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
                   onClick={() => setShowActionMenu(v => !v)}
@@ -900,7 +900,7 @@ export default function Chat() {
                 {/* New modern input design */}
                 <div className="flex items-end gap-2">
                   {/* Left action buttons */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => { setShowProductPicker(v => !v); setShowOfferModal(false); }}

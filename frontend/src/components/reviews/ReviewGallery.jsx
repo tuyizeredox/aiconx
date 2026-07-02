@@ -23,8 +23,8 @@ export default function ReviewGallery({ reviews }) {
     <div className="mt-6">
       <div className="flex items-center gap-2 mb-3">
         <Images className="w-5 h-5 text-orange-500" />
-        <h3 className="text-base font-bold text-slate-900">{t("product.reviewGallery")}</h3>
-        <span className="text-xs text-slate-400 font-medium">{t("product.photosAndVideos", { count: allMedia.length })}</span>
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">{t("product.reviewGallery")}</h3>
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{t("product.photosAndVideos", { count: allMedia.length })}</span>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
         {allMedia.slice(0, 10).map((media, i) => (
@@ -33,11 +33,11 @@ export default function ReviewGallery({ reviews }) {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setLightboxIndex(i)}
-            className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 group"
+            className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 group"
           >
             {isVideo(media.url) ? (
-              <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                <Play className="w-8 h-8 text-slate-500" />
+              <div className="w-full h-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                <Play className="w-8 h-8 text-slate-500 dark:text-slate-400" />
               </div>
             ) : (
               <img src={media.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -48,7 +48,7 @@ export default function ReviewGallery({ reviews }) {
         {allMedia.length > 10 && (
           <button
             onClick={() => setLightboxIndex(10)}
-            className="aspect-square rounded-xl bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+            className="aspect-square rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             +{allMedia.length - 10}
           </button>

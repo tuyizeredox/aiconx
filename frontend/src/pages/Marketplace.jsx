@@ -68,7 +68,7 @@ export default function Marketplace() {
       {/* Featured Stores */}
       {(stores.length > 0 || storesLoading) && (
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-slate-900 mb-3">{t("shop.stores")}</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-3">{t("shop.stores")}</h2>
           <div className="overflow-x-auto -mx-4 px-4 hide-scrollbar">
             <div className="flex gap-3" style={{ width: "max-content" }}>
               {storesLoading ? (
@@ -78,19 +78,19 @@ export default function Marketplace() {
                   <Link
                     key={store.id || store._id || `featured-store-${idx}`}
                     to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`}
-                    className="w-40 shrink-0 bg-white rounded-2xl border border-slate-100 p-4 text-center hover:shadow-lg transition-shadow"
+                    className="w-40 shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 text-center hover:shadow-lg transition-shadow"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center mx-auto mb-2 text-2xl overflow-hidden">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-950 dark:to-orange-900 flex items-center justify-center mx-auto mb-2 text-2xl overflow-hidden">
                       {store.logo_url ? (
                         <img src={store.logo_url} alt="" className="w-full h-full object-cover rounded-2xl" />
                       ) : (
                         store.name?.[0]?.toUpperCase()
                       )}
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 truncate">{store.name}</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{store.name}</h3>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       {store.is_verified && <span className="text-orange-500 text-xs">✓</span>}
-                      <span className="text-xs text-slate-400">{t("shop.storeItems", { count: store.product_count || 0 })}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{t("shop.storeItems", { count: store.product_count || 0 })}</span>
                     </div>
                   </Link>
                 ))

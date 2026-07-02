@@ -345,7 +345,7 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px)] lg:h-screen">
+    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px-5rem)] lg:h-screen">
       {/* Header */}
       <div className="px-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -396,7 +396,7 @@ export default function AIAssistant() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
             placeholder={t("ai.placeholder")}
-            className="rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 text-sm dark:text-slate-200 dark:placeholder:text-slate-500"
+            className="flex-1 min-w-0 rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 text-sm dark:text-slate-200 dark:placeholder:text-slate-500"
             disabled={isLoading}
           />
           <Button

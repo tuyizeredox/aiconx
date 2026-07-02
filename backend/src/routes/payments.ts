@@ -115,9 +115,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       const transactionId = body.transaction_id || body.transID || body.PCODE;
       const amount = body.amount;
       const status = body.status;
-     
+
      // For Pesapal card payments, we also receive the order reference
      const orderReference = body.reference || body.order_id;
+     const reqRef = body.req_ref || body.reqRef || orderReference;
 
      if (!transactionId || !amount) {
        return reply.code(400).send({
@@ -126,23 +127,45 @@ export async function paymentRoutes(fastify: FastifyInstance) {
        });
      }
 
-     const callbackData = {
-       transaction_id: transactionId,
-       amount: String(amount),
-       status: status || 'completed'
-     };
+     // A callback with no status must never be treated as a successful payment —
+     // that previously defaulted to 'completed' and approved cancelled/incomplete
+     // transactions. If the gateway didn't tell us the outcome, we don't assume one.
+     if (!status) {
+       fastify.log.warn(`ITEC Pay Callback: Missing status for transaction ${transactionId} — not approving without confirmation`);
 
-     // Verify the callback data
-     const isValid = itecPayService.verifyCallback(callbackData, EXPECTED_SECRET_KEY);
+       if (!reqRef) {
+         return reply.code(400).send({ error: 'Invalid callback data', details: 'Missing status and no reference available to verify' });
+       }
 
-     if (!isValid) {
-       return reply.code(400).send({ error: 'Invalid callback data format' });
+       // Fall back to asking ITEC Pay directly for the authoritative transaction status
+       // rather than trusting an unstated outcome.
+       try {
+         const provider: 'mtn' | 'airtel' | 'spenn' | 'card' = body.PCODE ? 'card' : (body.provider || 'mtn');
+         await itecPayService.verifyPayment(reqRef, provider);
+         // verifyPayment throws unless the gateway confirms success, so reaching here means it's genuinely paid.
+       } catch (verifyErr: any) {
+         fastify.log.warn(`ITEC Pay Callback: Could not confirm success for transaction ${transactionId}: ${verifyErr.message}`);
+         return reply.code(200).send({ status: 'ignored', message: 'Payment not confirmed successful' });
+       }
+     } else {
+       const callbackData = {
+         transaction_id: transactionId,
+         amount: String(amount),
+         status
+       };
+
+       // Verify the callback data - rejects cancelled/failed/unknown statuses
+       const isValid = itecPayService.verifyCallback(callbackData, EXPECTED_SECRET_KEY);
+
+       if (!isValid) {
+         return reply.code(200).send({ status: 'ignored', message: 'Payment not successful' });
+       }
      }
 
      try {
        // Use order reference if available, otherwise use transaction ID
        const orderRefForUpdate = orderReference || transactionId;
-       
+
        // Process successful payment
        await itecPayService.handleSuccessfulPayment(orderRefForUpdate, transactionId, String(amount));
 

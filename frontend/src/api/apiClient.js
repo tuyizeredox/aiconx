@@ -493,6 +493,10 @@ export const adminAPI = {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/admin/stores?${query}`);
   },
+  getStoreProducts: (storeId, params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/stores/${storeId}/products?${query}`);
+  },
   updateStoreStatus: (id, status) => apiClient.patch(`/admin/stores/${id}/status`, { status }),
   bulkUpdateStoreStatus: (storeIds, status) => apiClient.patch('/admin/stores/bulk-status', { storeIds, status }),
   updateStoreVerification: (id, is_verified) => apiClient.patch(`/admin/stores/${id}/verify`, { is_verified }),
@@ -541,6 +545,14 @@ export const adminAPI = {
   },
   updatePostVisibility: (id, visibility) => apiClient.patch(`/admin/posts/${id}/visibility`, { visibility }),
   deletePost: (id) => apiClient.delete(`/admin/posts/${id}`),
+  // Subscriptions
+  getSubscriptions: (params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/subscriptions?${query}`);
+  },
+  cancelSubscription: (id) => apiClient.post(`/admin/subscriptions/${id}/cancel`, {}),
+  getSubscriptionPlans: () => apiClient.get('/admin/subscriptions/plans'),
+  updateSubscriptionPlans: (planPrices) => apiClient.put('/admin/subscriptions/plans', { plan_prices: planPrices }),
 };
 
 export const announcementsAPI = {
@@ -706,26 +718,6 @@ export const storiesAPI = {
   reply: (id, text) => apiClient.post(`/stories/${id}/reply`, { text }),
   delete: (id) => apiClient.delete(`/stories/${id}`),
   cleanup: () => apiClient.post('/stories/cleanup', {})
-};
-
-export const liveSessionsAPI = {
-  list: (filters) => {
-    const query = apiClient.buildQueryString(filters);
-    return apiClient.get(`/live-sessions?${query}`);
-  },
-  get: (id) => apiClient.get(`/live-sessions/${id}`),
-  create: (data) => apiClient.post('/live-sessions', data),
-  update: (id, data) => apiClient.put(`/live-sessions/${id}`, data),
-  start: (id) => apiClient.post(`/live-sessions/${id}/start`, {}),
-  end: (id) => apiClient.post(`/live-sessions/${id}/end`, {}),
-  updateViewers: (id, count) => apiClient.post(`/live-sessions/${id}/viewers`, { count }),
-  like: (id) => likesAPI.like('live_session', id),
-  unlike: (id) => likesAPI.unlike('live_session', id),
-  delete: (id) => apiClient.delete(`/live-sessions/${id}`),
-  listForMe: (status = null) => {
-    const query = apiClient.buildQueryString({ status });
-    return apiClient.get(`/live-sessions/user/me?${query}`);
-  }
 };
 
 export const filesAPI = {
@@ -905,17 +897,6 @@ export const sentimentAPI = {
   update: (id, data) => apiClient.put(`/sentiment-summaries/${id}`, data),
   delete: (id) => apiClient.delete(`/sentiment-summaries/${id}`),
   getStats: () => apiClient.get('/sentiment-summaries/stats/overview'),
-};
-
-export const liveChatMessagesAPI = {
-  list: (sessionId, filters) => {
-    const query = apiClient.buildQueryString({ ...filters, session_id: sessionId });
-    return apiClient.get(`/live-chat-messages?${query}`);
-  },
-  send: (data) => apiClient.post('/live-chat-messages', data),
-  sendSystem: (data) => apiClient.post('/live-chat-messages/system', data),
-  getStats: (sessionId) => apiClient.get(`/live-chat-messages/stats/${sessionId}`),
-  delete: (id) => apiClient.delete(`/live-chat-messages/${id}`),
 };
 
 export default apiClient;
