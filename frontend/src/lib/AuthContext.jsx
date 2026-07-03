@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authAPI } from '@/api/apiClient';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import { setupPushNotifications, removePushNotifications } from '@/lib/pushNotifications';
+import { mergeGuestCartToServer } from '@/lib/guestCart';
 
 const AuthContext = createContext();
 
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }) => {
       }
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -92,6 +94,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.googleLogin(idToken);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -103,6 +106,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.verify2FALogin(twoFactorToken, token);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -114,6 +118,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.register(userData);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -144,6 +149,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.verifyWebAuthnLogin(email, asseResp);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       console.error('Biometric login failed:', error);

@@ -860,7 +860,6 @@ export const affiliateLinksAPI = {
   update: (id, data) => apiClient.put(`/affiliate-links/${id}`, data),
   delete: (id) => apiClient.delete(`/affiliate-links/${id}`),
   trackClick: (refCode) => apiClient.post(`/affiliate-links/ref/${refCode}/click`, {}),
-  trackConversion: (refCode, data) => apiClient.post(`/affiliate-links/ref/${refCode}/convert`, data),
   listForMe: (filters = {}) => {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/affiliate-links/influencer/me?${query}`);

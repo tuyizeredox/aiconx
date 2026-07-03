@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { SocketProvider } from '@/lib/SocketContext';
@@ -31,6 +31,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AppRoutes = () => {
   const { isLoadingAuth, isAuthenticated, authError, user } = useAuth();
+  const location = useLocation();
 
   // Show loading spinner while checking auth
   if (isLoadingAuth) {
@@ -64,6 +65,32 @@ const AppRoutes = () => {
         isAuthenticated ? <Navigate to="/" replace /> : <Pages.LandingPage />
       } />
 
+      {/* Product detail is publicly viewable so affiliate links work for logged-out visitors */}
+      <Route path="/productdetail" element={
+        isAuthenticated && user?.role === 'super_admin' ? <Navigate to="/admin-dashboard" replace /> :
+        <LayoutWrapper currentPageName="ProductDetail">
+          <Pages.ProductDetail />
+        </LayoutWrapper>
+      } />
+
+      {/* Cart is publicly viewable (guest cart lives in localStorage) so a guest can add to
+          cart from an affiliate link and only needs to sign in once they reach checkout */}
+      <Route path="/cart" element={
+        isAuthenticated && user?.role === 'super_admin' ? <Navigate to="/admin-dashboard" replace /> :
+        <LayoutWrapper currentPageName="Cart">
+          <Pages.Cart />
+        </LayoutWrapper>
+      } />
+
+      {/* Checkout requires login, but remembers where to return to so guest carts aren't lost */}
+      <Route path="/checkout" element={
+        !isAuthenticated ? <Navigate to="/login" state={{ from: location.pathname + location.search }} replace /> :
+        user?.role === 'super_admin' ? <Navigate to="/admin-dashboard" replace /> :
+        <LayoutWrapper currentPageName="Checkout">
+          <Pages.Checkout />
+        </LayoutWrapper>
+      } />
+
       {/* Main app routes (with layout & auth check) */}
       <Route path="/" element={
         !isAuthenticated ? <Pages.LandingPage /> :
@@ -76,8 +103,8 @@ const AppRoutes = () => {
 
       {Object.entries(Pages).map(([path, Page]) => {
         const lowerPath = path.toLowerCase();
-        // Skip Login and Register as they are handled above
-        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'LandingPage', 'Terms', 'Privacy'].includes(path)) return null;
+        // Skip Login and Register as they are handled above; ProductDetail, Cart and Checkout are handled above too
+        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'LandingPage', 'Terms', 'Privacy', 'ProductDetail', 'Cart', 'Checkout'].includes(path)) return null;
         
         return (
           <Route

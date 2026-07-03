@@ -8,6 +8,7 @@ import { CartItem } from '../models/CartItem';
 import { ShippingZone } from '../models/ShippingZone';
 import { AffiliateLink } from '../models/AffiliateLink';
 import { itecPayService } from '../services/itecPayService';
+import { creditAffiliateConversions } from '../services/affiliateService';
 import { Coupon } from '../models/Coupon';
 
 const checkoutSchema = z.object({
@@ -141,17 +142,19 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
         let subtotal = 0;
         let affiliate_commission = 0;
         let affiliate_username: string | undefined = undefined;
+        let affiliate_link_id: string | undefined = undefined;
 
         const orderItems = groupItems.map((gi: any) => {
           const price = gi.product.price;
           subtotal += price * gi.quantity;
-          
+
           let itemAffiliate = gi.affiliate_username;
           let itemCommissionPct = 0;
 
           if (globalAffLink && globalAffLink.product_id.toString() === gi.product_id.toString()) {
             itemAffiliate = globalAffLink.influencer_username;
             itemCommissionPct = globalAffLink.commission_pct;
+            affiliate_link_id = globalAffLink._id.toString();
           }
 
           if (itemAffiliate) {
@@ -167,6 +170,7 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
             product_image: gi.product.images[0],
             quantity: gi.quantity,
             price: price,
+            inventory_deducted: gi.product.inventory_count > 0,
           };
         });
 
@@ -308,8 +312,7 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
           payment_method: body.payment_method,
           affiliate_username,
           affiliate_commission,
-          affiliate_ref: body.affiliate_ref,
-          affiliate_time: body.affiliate_time,
+          affiliate_link_id,
         });
 
         // Inventory check and reduction
@@ -342,15 +345,6 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
 
         await order.save({ session });
         orders.push(order);
-
-        if (globalAffLink) {
-           await AffiliateLink.findByIdAndUpdate(globalAffLink._id, {
-             $inc: { 
-               conversions: 1,
-               total_commission_earned: affiliate_commission 
-             }
-           }, { session });
-        }
       }
 
       // 5.5 Increment coupon usage count if used
@@ -390,6 +384,19 @@ paymentData = await itecPayService.initializeTransaction(
       await CartItem.deleteMany({ user_username: user.username }, { session });
 
       await session.commitTransaction();
+
+      // Notify affiliates of the new (unpaid) referral in real time.
+      // Conversion counts only increment once payment is confirmed (see creditAffiliateConversions).
+      for (const o of orders) {
+        if (o.affiliate_username) {
+          fastify.io?.to(`user:${o.affiliate_username}`).emit('affiliate:new_referral', {
+            order_id: o._id,
+            product_title: o.items?.[0]?.product_title,
+            amount: o.total,
+            status: 'pending_payment',
+          });
+        }
+      }
 
       return {
         message: 'Checkout successful',
@@ -440,6 +447,8 @@ paymentData = await itecPayService.initializeTransaction(
         order.status = 'confirmed';
         order.payment_reference = reference;
         await order.save();
+
+        await creditAffiliateConversions([order._id.toString()], fastify.io);
 
         return {
           message: 'Payment verified successfully',

@@ -15,7 +15,8 @@ import { useAuth } from "@/lib/AuthContext";
 import {
   Grid3X3, ShoppingBag, UserPlus, UserCheck, LogOut,
   Store, Package, CheckCircle2, Clock, Truck, Pencil, Star, BadgeCheck, Heart,
-  Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X
+  Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X,
+  Settings as SettingsIcon
 } from "lucide-react";
 import StarRating from "@/components/reviews/StarRating";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
@@ -350,10 +351,24 @@ export default function Profile() {
                   >
                     <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{t("profile.editProfile")}</span>
                   </Button>
+                  <Link to={createPageUrl("Settings")}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      title={t("nav.settings")}
+                      aria-label={t("nav.settings")}
+                      className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all h-9 w-9 p-0 shrink-0"
+                    >
+                      <SettingsIcon className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => logout()}
+                    title={t("common.logout")}
+                    aria-label={t("common.logout")}
                     className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all h-9 w-9 p-0 shrink-0"
                   >
                     <LogOut className="w-3.5 h-3.5" />
@@ -554,16 +569,16 @@ export default function Profile() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
         <TabsList id="profile-tabs-list" className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full">
-          <TabsTrigger value="posts" className="flex-1 gap-1.5"><Grid3X3 className="w-4 h-4" />{t("profile.posts")}</TabsTrigger>
-          <TabsTrigger value="products" className="flex-1 gap-1.5"><ShoppingBag className="w-4 h-4" />{t("shop.products")}</TabsTrigger>
-          {isOwnProfile && <TabsTrigger value="orders" className="flex-1 gap-1.5"><Package className="w-4 h-4" />{t("orders.title")}</TabsTrigger>}
-          {isOwnProfile && <TabsTrigger value="liked" className="flex-1 gap-1.5"><Heart className="w-4 h-4" />{t("common.liked")}</TabsTrigger>}
+          <TabsTrigger value="posts" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><Grid3X3 className="w-4 h-4" /><span className="hidden sm:inline">{t("profile.posts")}</span></TabsTrigger>
+          <TabsTrigger value="products" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><ShoppingBag className="w-4 h-4" /><span className="hidden sm:inline">{t("shop.products")}</span></TabsTrigger>
+          {isOwnProfile && <TabsTrigger value="orders" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><Package className="w-4 h-4" /><span className="hidden sm:inline">{t("orders.title")}</span></TabsTrigger>}
+          {isOwnProfile && <TabsTrigger value="liked" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><Heart className="w-4 h-4" /><span className="hidden sm:inline">{t("common.liked")}</span></TabsTrigger>}
           {isOwnProfile && (
-            <TabsTrigger value="plan" className="flex-1 gap-1.5 text-orange-600 font-bold border-orange-100 data-[state=active]:bg-orange-50/50 relative">
+            <TabsTrigger value="plan" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm text-orange-600 font-bold border-orange-100 data-[state=active]:bg-orange-50/50 relative">
               <CreditCard className="w-4 h-4" />
-              <span>{t("profile.plan")}</span>
+              <span className="hidden sm:inline">{t("profile.plan")}</span>
               {subscription?.status === 'pending' && (
-                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shrink-0" />
               )}
             </TabsTrigger>
           )}

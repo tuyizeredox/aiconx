@@ -51,6 +51,7 @@ export async function productRoutes(fastify: FastifyInstance) {
         vendor_plan,
         store_id,
         search,
+        affiliate_enabled,
         sort = '-sales_count',
         limit = 50,
         skip = 0
@@ -64,6 +65,8 @@ export async function productRoutes(fastify: FastifyInstance) {
       if (vendor_username) filter.vendor_username = vendor_username;
       if (vendor_plan) filter.vendor_plan = vendor_plan;
       if (store_id) filter.store_id = store_id;
+      // affiliate_enabled defaults to true on the schema, so treat missing field as enabled
+      if (affiliate_enabled === 'true') filter.affiliate_enabled = { $ne: false };
 
       // Text search using index
       if (search) {
@@ -86,7 +89,7 @@ export async function productRoutes(fastify: FastifyInstance) {
         .sort(sortObj)
         .limit(parseInt(limit))
         .skip(parseInt(skip))
-        .select('title price compare_at_price images category store_name vendor_username rating_avg rating_count sales_count status')
+        .select('title description price compare_at_price images category store_name vendor_username rating_avg rating_count sales_count status inventory_count affiliate_enabled affiliate_commission_pct')
         .lean();
 
       const total = await Product.countDocuments(filter);
@@ -257,10 +260,18 @@ export async function productRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: 'Unauthorized - invalid user data' });
       }
 
+      if (safeUpdate.inventory_count !== undefined) {
+        const count = Number(safeUpdate.inventory_count);
+        if (!Number.isFinite(count) || count < 0 || !Number.isInteger(count)) {
+          return reply.code(400).send({ error: 'inventory_count must be a non-negative integer' });
+        }
+        safeUpdate.inventory_count = count;
+      }
+
       const product = await Product.findOneAndUpdate(
         { _id: id, vendor_username: user.username },
         { ...safeUpdate, updated_at: new Date() },
-        { new: true }
+        { new: true, runValidators: true }
       );
 
       if (!product) {

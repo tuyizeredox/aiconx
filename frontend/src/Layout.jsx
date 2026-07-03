@@ -36,6 +36,7 @@ import GlobalSearch from "@/components/layout/GlobalSearch";
 import CreateActionModal from "@/components/layout/CreateActionModal";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Logo from "@/components/layout/Logo";
+import { getGuestCartCount } from "@/lib/guestCart";
 
 const NAV_ITEMS = [
   { name: "Home", tKey: "nav.home", icon: Home, page: "Home" },
@@ -90,12 +91,21 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const hoverTimerRef = useRef(null);
+  const [guestCartCount, setGuestCartCount] = useState(() => getGuestCartCount());
 
   useEffect(() => {
     if (window.innerWidth >= 1024) {
       setSidebarOpen(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (currentUser) return;
+    const refresh = () => setGuestCartCount(getGuestCartCount());
+    refresh();
+    window.addEventListener('guestcart:updated', refresh);
+    return () => window.removeEventListener('guestcart:updated', refresh);
+  }, [currentUser]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -143,7 +153,9 @@ export default function Layout({ children, currentPageName }) {
 
   const unreadCount = unreadNotifs.length;
   const unreadMsgCount = unreadMessages.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
-  const cartItemCount = Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0;
+  const cartItemCount = currentUser
+    ? (Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0)
+    : guestCartCount;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] transition-colors duration-300">
@@ -310,8 +322,13 @@ export default function Layout({ children, currentPageName }) {
           )}
           <NotificationBell userEmail={currentUser?.email} />
           {currentUser?.role !== 'super_admin' && (
-            <Link to={createPageUrl("cart")} className="p-2">
+            <Link to={createPageUrl("cart")} className="relative p-2">
               <ShoppingBag className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              {cartItemCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-orange-600 text-white text-[10px] rounded-full flex items-center justify-center">
+                  {cartItemCount > 9 ? "9+" : cartItemCount}
+                </span>
+              )}
             </Link>
           )}
         </div>

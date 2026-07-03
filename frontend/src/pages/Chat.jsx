@@ -516,6 +516,8 @@ export default function Chat() {
           total: amount,
           status: "pending",
           payment_status: "pending",
+          affiliate_ref: localStorage.getItem('iqon_ref') || undefined,
+          affiliate_time: localStorage.getItem('iqon_ref_time') || undefined,
         });
         orderId = order.id;
       }

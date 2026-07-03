@@ -1,7 +1,7 @@
 // Remove unused imports
 import React, { useState, useEffect, memo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { postsAPI, bookmarksAPI, followsAPI } from "@/api/apiClient";
+import { postsAPI, bookmarksAPI, followsAPI, affiliateLinksAPI } from "@/api/apiClient";
 import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, Link2, UserPlus, UserMinus, Flag, Copy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -53,6 +53,14 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
   });
 
   const isFollowing = followStatus?.is_following || false;
+
+  const firstAffiliateLinkId = post?.affiliate_links?.[0];
+  const { data: postAffiliateLink } = useQuery({
+    queryKey: ["postAffiliateLink", firstAffiliateLinkId],
+    queryFn: () => affiliateLinksAPI.get(firstAffiliateLinkId),
+    enabled: !!firstAffiliateLinkId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     setOptimisticLiked(isLiked);
@@ -487,15 +495,18 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
       )}
 
       {/* Affiliate Links */}
-      {post.affiliate_links?.length > 0 && (
+      {post.affiliate_links?.length > 0 && postAffiliateLink && (
         <div className="px-4 py-3">
-          <div className="flex items-center gap-3 px-4 py-2.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 font-semibold">
+          <Link
+            to={createPageUrl("ProductDetail") + `?id=${postAffiliateLink.product_id}&ref=${postAffiliateLink.ref_code}`}
+            className="flex items-center gap-3 px-4 py-2.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+          >
             <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
               <Link2 className="w-4 h-4" />
             </div>
-            <span className="flex-1">Affiliate link attached</span>
-            <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">Earn commission</span>
-          </div>
+            <span className="flex-1 truncate">{postAffiliateLink.product_title || "Shop this product"}</span>
+            <span className="text-xs text-purple-600 dark:text-purple-400 font-bold shrink-0">Earn commission</span>
+          </Link>
         </div>
       )}
 

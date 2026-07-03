@@ -3,6 +3,7 @@ import { VendorSubscription } from '../models/VendorSubscription';
 import { PLAN_PRIORITY, PLAN_LIMITS } from '../middleware/subscription';
 import { Product } from '../models/Product';
 import { Settings } from '../models/Settings';
+import { creditAffiliateConversions } from './affiliateService';
 import axios from 'axios';
 
 export interface ITECPayPaymentResponse {
@@ -432,7 +433,7 @@ export const itecPayService = {
   /**
    * Handle successful ITEC Pay payment
    */
-  async handleSuccessfulPayment(orderIdsString: string, transID: string, amount: string) {
+  async handleSuccessfulPayment(orderIdsString: string, transID: string, amount: string, io?: any) {
     try {
       const allIds = orderIdsString.split(',').map(id => id.trim()).filter(id => id !== '');
 
@@ -527,6 +528,8 @@ export const itecPayService = {
         if (result.modifiedCount > 0) {
           console.log(`ITEC Pay: ${result.modifiedCount} order(s) marked as paid (Ref: ${transID})`);
         }
+
+        await creditAffiliateConversions(cleanOrderIds, io);
       }
     } catch (error) {
       console.error('Error handling ITEC Pay successful payment:', error);

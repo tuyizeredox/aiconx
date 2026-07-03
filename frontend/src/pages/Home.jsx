@@ -8,7 +8,7 @@ import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkelet
 import EmptyState from "@/components/shared/EmptyState";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2 } from "lucide-react";
+import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RecommendedSection from "@/components/home/RecommendedSection";
 import SuggestedUsers from "@/components/home/SuggestedUsers";
@@ -124,6 +124,23 @@ export default function Home() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
+          {/* Affiliate Marketing Promo */}
+          {activeTab === "for_you" && currentUser && (
+            <Link
+              to={createPageUrl("Affiliate")}
+              className="flex items-center gap-4 mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white overflow-hidden relative group"
+            >
+              <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Link2 className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold">{t("home.affiliateBannerTitle")}</p>
+                <p className="text-xs text-white/80 truncate">{t("home.affiliateBannerDesc")}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          )}
+
           {/* Recommended for You */}
           {activeTab === "for_you" && <RecommendedSection currentUser={currentUser} />}
 

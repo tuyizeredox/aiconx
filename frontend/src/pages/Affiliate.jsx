@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +6,7 @@ import {
   Link2, Copy, DollarSign, MousePointerClick, ShoppingCart,
   Plus, Loader2, Check, Search, Package, Zap, Trophy,
   ChevronDown, ChevronUp, Instagram, Mail, MessageSquare,
-  Twitter, Ruler, Medal, Crown, Star
+  Twitter, Ruler, Medal, Crown, Star, Radio, Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { affiliateLinksAPI, productsAPI, vendorSubscriptionsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
+import { useSocket } from "@/lib/SocketContext";
 import { useTranslation } from "react-i18next";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
@@ -286,6 +287,30 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
   );
 }
 
+function ActivityItem({ entry }) {
+  const { t } = useTranslation();
+  const config = {
+    new_referral: { icon: Zap, color: "text-orange-500 bg-orange-50 dark:bg-orange-950", label: t("affiliate.activityNewReferral", { product: entry.product_title || t("affiliate.aProduct") }) },
+    order_update: { icon: Package, color: "text-slate-500 bg-slate-100 dark:bg-slate-800", label: t("affiliate.activityOrderUpdate", { product: entry.product_title || t("affiliate.aProduct"), status: entry.status }) },
+    commission_credited: { icon: DollarSign, color: "text-green-600 bg-green-50 dark:bg-green-950", label: t("affiliate.activityCommissionCredited", { amount: formatCurrency(entry.amount || 0), product: entry.product_title || t("affiliate.aProduct") }) },
+  }[entry.type];
+  if (!config) return null;
+  const Icon = config.icon;
+  return (
+    <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3 py-2">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${config.color}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{config.label}</p>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+          <Clock className="w-2.5 h-2.5" /> {entry.time.toLocaleTimeString()}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
 function ConversionBar({ clicks, conversions }) {
   const { t } = useTranslation();
   const pct = clicks ? Math.min(100, (conversions / clicks) * 100) : 0;
@@ -296,7 +321,7 @@ function ConversionBar({ clicks, conversions }) {
         <span className="font-semibold text-orange-600">{pct.toFixed(1)}%</span>
       </div>
       <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-orange-500 to-purple-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -311,7 +336,40 @@ export default function Affiliate() {
   const [leaderboardPeriod, setLeaderboardPeriod] = useState("month");
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  const { on } = useSocket();
+  const [activity, setActivity] = useState([]);
   const { subscriptionMode } = usePlatformSettings();
+
+  useEffect(() => {
+    if (!currentUser?.username) return;
+
+    const pushActivity = (entry) => {
+      setActivity(prev => [{ id: `${Date.now()}-${Math.random()}`, time: new Date(), ...entry }, ...prev].slice(0, 20));
+    };
+
+    const cleanupNew = on('affiliate:new_referral', (data) => {
+      toast.success(t("affiliate.newReferralToast", { product: data.product_title || t("affiliate.aProduct") }));
+      pushActivity({ type: "new_referral", product_title: data.product_title, amount: data.amount });
+      queryClient.invalidateQueries({ queryKey: ["affiliateLinks", currentUser.username] });
+    });
+
+    const cleanupOrderUpdate = on('affiliate:order_update', (data) => {
+      pushActivity({ type: "order_update", product_title: data.product_title, status: data.status });
+    });
+
+    const cleanupCredited = on('affiliate:commission_credited', (data) => {
+      toast.success(t("affiliate.commissionCreditedToast", { amount: formatCurrency(data.commission || 0) }));
+      pushActivity({ type: "commission_credited", product_title: data.product_title, amount: data.commission });
+      queryClient.invalidateQueries({ queryKey: ["affiliateLinks", currentUser.username] });
+      queryClient.invalidateQueries({ queryKey: ["affiliateLeaderboard"] });
+    });
+
+    return () => {
+      cleanupNew();
+      cleanupOrderUpdate();
+      cleanupCredited();
+    };
+  }, [currentUser?.username, on, queryClient, t]);
 
   const { data: subscription } = useQuery({
     queryKey: ["vendorSubscription", currentUser?.username],
@@ -349,6 +407,7 @@ export default function Affiliate() {
         search: search || undefined,
         sort: "-sales_count",
         limit: 50,
+        affiliate_enabled: "true",
       };
       if (subscriptionMode) {
         params.vendor_plan = "elite";
@@ -360,7 +419,7 @@ export default function Affiliate() {
   });
 
   const filteredProducts = (search ? products : products.slice(0, 12))
-    .filter(p => p.vendor_username !== currentUser?.username);
+    .filter(p => p.vendor_username !== currentUser?.username && p.affiliate_enabled !== false);
 
   const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery({
     queryKey: ["affiliateLeaderboard", leaderboardPeriod],
@@ -393,9 +452,11 @@ export default function Affiliate() {
     }
   });
 
-  const copyLink = (refCode) => {
-    const url = `${window.location.origin}/Marketplace?ref=${refCode}`;
-    navigator.clipboard.writeText(url);
+  const buildAffiliateUrl = (link) =>
+    `${window.location.origin}${createPageUrl("ProductDetail")}?id=${link.product_id}&ref=${link.ref_code}`;
+
+  const copyLink = (link) => {
+    navigator.clipboard.writeText(buildAffiliateUrl(link));
     toast.success(t("affiliate.linkCopiedToast"));
   };
 
@@ -408,14 +469,12 @@ export default function Affiliate() {
   const alreadyLinked = (productId) => myLinks.some(l => l.product_id === productId);
 
   const activeLink = myLinks.find(l => l.status === "active");
-  const affiliateUrl = activeLink
-    ? `${window.location.origin}/Marketplace?ref=${activeLink.ref_code}`
-    : null;
+  const affiliateUrl = activeLink ? buildAffiliateUrl(activeLink) : null;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-orange-600 via-purple-600 to-pink-500 rounded-3xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-400 rounded-3xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200')] bg-cover" />
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
@@ -433,6 +492,28 @@ export default function Affiliate() {
         <StatCard icon={MousePointerClick} label={t("affiliate.totalClicks")} value={totalClicks.toLocaleString()} color="bg-orange-50 text-orange-600" />
         <StatCard icon={ShoppingCart} label={t("affiliate.conversions")} value={totalConversions} sub={totalClicks ? `${((totalConversions/totalClicks)*100).toFixed(1)}% ${t("affiliate.rateSuffix")}` : ""} color="bg-green-50 text-green-600" />
         <StatCard icon={DollarSign} label={t("affiliate.pendingPayout")} value={formatCurrency(pendingPayout)} sub={t("affiliate.totalEarnedSub", { amount: formatCurrency(totalEarned) })} color="bg-amber-50 text-amber-600" />
+      </div>
+
+      {/* Live Activity */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+          </span>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-slate-400" /> {t("affiliate.liveActivity")}
+          </h3>
+        </div>
+        {activity.length === 0 ? (
+          <p className="text-xs text-slate-400 dark:text-slate-500 pl-4">{t("affiliate.liveActivityEmpty")}</p>
+        ) : (
+          <div className="divide-y divide-slate-50 dark:divide-slate-700/50 max-h-56 overflow-y-auto">
+            <AnimatePresence initial={false}>
+              {activity.map(entry => <ActivityItem key={entry.id} entry={entry} />)}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="links" className="w-full">
@@ -498,10 +579,10 @@ export default function Affiliate() {
 
                       <div className="flex gap-2 mt-3">
                         <div className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 truncate font-mono">
-                          {window.location.origin}/Marketplace?ref={link.ref_code}
+                          {buildAffiliateUrl(link)}
                         </div>
                         <button
-                          onClick={() => copyLink(link.ref_code)}
+                          onClick={() => copyLink(link)}
                           className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors shrink-0"
                           title="Copy link"
                         >
@@ -645,7 +726,7 @@ export default function Affiliate() {
                   {leaderboardData.my_rank !== null && leaderboardData.my_rank !== undefined && (
                     <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-950 rounded-2xl border border-orange-100 dark:border-orange-800 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-black text-xs shrink-0">
                           {t("affiliate.youBadge")}
                         </div>
                         <div>

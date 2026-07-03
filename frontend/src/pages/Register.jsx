@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/AuthContext';
 import { getRedirectPath } from '@/lib/utils';
@@ -77,7 +77,9 @@ const Register = () => {
   const { register, googleLogin } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { resolvedTheme, setTheme } = useTheme();
+  const redirectAfterAuth = (user) => navigate(location.state?.from || getRedirectPath(user));
 
   useEffect(() => {
     return () => {
@@ -98,7 +100,7 @@ const Register = () => {
     try {
       const res = await googleLogin(credentialResponse.credential);
       toast({ title: "Account created!", description: "Welcome aboard. Google sign-up successful.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      redirectAfterAuth(res.user);
     } catch (err) {
       const msg = err.message || 'Google sign-up failed. Please try again.';
       setError(msg);
@@ -146,7 +148,7 @@ const Register = () => {
         display_name: formData.display_name
       });
       toast({ title: "Welcome aboard!", description: "Your account has been created successfully.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      redirectAfterAuth(res.user);
     } catch (err) {
       const msg = err.message || 'Failed to create account. Please try again.';
       setError(msg);
@@ -452,7 +454,7 @@ const Register = () => {
               <div className="text-center">
                 <p className="dark:text-slate-500 text-slate-500 text-sm">
                   {t("auth.haveAccount")}{' '}
-                  <Link to="/login" className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
+                  <Link to="/login" state={location.state} className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
                     {t("auth.signInLink")}
                     <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-orange-500 scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
                   </Link>

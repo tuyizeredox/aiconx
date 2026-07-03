@@ -6,6 +6,7 @@ export interface IOrderItem {
   product_image?: string;
   quantity: number;
   price: number;
+  inventory_deducted?: boolean;
 }
 
 export interface IOrder extends Document {
@@ -33,10 +34,13 @@ export interface IOrder extends Document {
   order_note?: string;
    affiliate_username?: string;
    affiliate_commission: number;
+   affiliate_link_id?: string;
+   affiliate_commission_credited: boolean;
    payment_method: 'card' | 'paypal' | 'crypto' | 'bank_transfer' | 'mobile_money' | 'itecpay' | 'mtn' | 'airtel' | 'spenn';
    payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
    payment_reference?: string;
    payment_provider?: 'stripe' | 'itecpay';
+  stock_restored: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -62,6 +66,10 @@ const OrderItemSchema = new Schema<IOrderItem>({
     type: Number,
     required: true,
     min: 0,
+  },
+  inventory_deducted: {
+    type: Boolean,
+    default: false,
   },
 }, { _id: false });
 
@@ -167,6 +175,13 @@ const OrderSchema = new Schema<IOrder>({
     default: 0,
     min: 0,
   },
+  affiliate_link_id: {
+    type: String,
+  },
+  affiliate_commission_credited: {
+    type: Boolean,
+    default: false,
+  },
    payment_method: {
      type: String,
      enum: ['card', 'paypal', 'crypto', 'bank_transfer', 'itecpay', 'mobile_money', 'mtn', 'airtel', 'spenn'],
@@ -186,6 +201,10 @@ const OrderSchema = new Schema<IOrder>({
      enum: ['stripe', 'itecpay'],
      default: 'itecpay',
    },
+  stock_restored: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: {
     createdAt: 'created_at',

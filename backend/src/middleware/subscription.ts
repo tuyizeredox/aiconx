@@ -434,9 +434,8 @@ export async function checkAffiliateLimit(request: FastifyRequest, reply: Fastif
     }
 
     const body = request.body as any;
-    // Only check if affiliate_commission_pct is being set to a non-default (usually non-zero) value
-    // or if the field is present in the request body
-    if (body?.affiliate_commission_pct === undefined) return;
+    // Only check if affiliate settings are present in the request body
+    if (body?.affiliate_commission_pct === undefined && body?.affiliate_enabled === undefined) return;
 
     const { plan, limits } = await getVendorPlan(user.username, request);
 

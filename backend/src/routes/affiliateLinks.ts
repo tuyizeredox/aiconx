@@ -82,6 +82,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
       } else if (period === 'week') {
         matchStage.created_at = { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
       }
+      // period === 'all' (or any unrecognized value): no date filter, aggregate across all time
 
       const raw = await Order.aggregate([
         { $match: matchStage },
@@ -211,6 +212,14 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Product not found' });
       }
 
+      // Check if the vendor has disabled affiliate marketing for this specific product
+      if (product.affiliate_enabled === false) {
+        return reply.code(403).send({
+          error: 'Affiliate marketing disabled',
+          message: 'The vendor has disabled affiliate marketing for this product.'
+        });
+      }
+
       // Check if vendor has affiliate program enabled in their plan
       // This respects subscription_mode - when disabled, all vendors get elite access
       const vendorPlan = await getVendorPlan(product.vendor_username, request);
@@ -222,47 +231,55 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         });
       }
 
-      // Generate unique ref code if not provided
-      let refCode = body.ref_code?.toUpperCase();
-      
-      if (refCode) {
-        const existingLink = await AffiliateLink.findOne({ ref_code: refCode });
+      // If the user requested a specific ref code, pre-check it (the unique
+      // index on the schema is still the real guarantee — see the save-retry
+      // loop below, which covers a concurrent request winning the race).
+      const requestedRefCode = body.ref_code?.toUpperCase();
+      if (requestedRefCode) {
+        const existingLink = await AffiliateLink.findOne({ ref_code: requestedRefCode });
         if (existingLink) {
           return reply.code(400).send({ error: 'Referral code already in use' });
         }
-      } else {
-        // Try generating until unique (max 5 attempts)
-        let attempts = 0;
-        let isUnique = false;
-        while (!isUnique && attempts < 5) {
-          refCode = generateRefCode();
-          const existing = await AffiliateLink.findOne({ ref_code: refCode });
-          if (!existing) {
-            isUnique = true;
+      }
+
+      // Generate (or use the requested) ref code and save, retrying on a
+      // duplicate-key error in case a concurrent request claimed the same
+      // generated code between the pre-check above and this save.
+      const MAX_SAVE_ATTEMPTS = 5;
+      let link: IAffiliateLink | undefined;
+      for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
+        const refCode = requestedRefCode || generateRefCode();
+        const candidate = new AffiliateLink({
+          influencer_email: user.email,
+          influencer_username: user.username,
+          influencer_name: user.display_name || user.username,
+          store_id: product.store_id,
+          store_name: product.store_name,
+          product_id: product._id,
+          product_title: product.title,
+          product_price: product.price,
+          ref_code: refCode,
+          commission_pct: body.commission_pct ?? 10,
+          status: 'active',
+        });
+
+        try {
+          await candidate.save();
+          link = candidate;
+          break;
+        } catch (saveError: any) {
+          const isDuplicateRefCode = saveError?.code === 11000 && saveError?.keyPattern?.ref_code;
+          if (!isDuplicateRefCode) throw saveError;
+          if (requestedRefCode) {
+            return reply.code(400).send({ error: 'Referral code already in use' });
           }
-          attempts++;
-        }
-        
-        if (!isUnique) {
-          return reply.code(500).send({ error: 'Failed to generate a unique referral code. Please try again.' });
+          // Generated code collided — loop and try another generated code.
         }
       }
 
-      const link = new AffiliateLink({
-        influencer_email: user.email,
-        influencer_username: user.username,
-        influencer_name: user.display_name || user.username,
-        store_id: product.store_id,
-        store_name: product.store_name,
-        product_id: product._id,
-        product_title: product.title,
-        product_price: product.price,
-        ref_code: refCode,
-        commission_pct: body.commission_pct ?? 10,
-        status: 'active',
-      });
-
-      await link.save();
+      if (!link) {
+        return reply.code(500).send({ error: 'Failed to generate a unique referral code. Please try again.' });
+      }
 
       reply.code(201).send(link);
     } catch (error: any) {
@@ -369,43 +386,6 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
       reply.send({
         message: 'Click tracked successfully',
         clicks: link.clicks
-      });
-    } catch (error: any) {
-      fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error', 
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined 
-      });
-    }
-  });
-
-  // Track conversion on affiliate link
-  fastify.post('/ref/:refCode/convert', async (request, reply) => {
-    try {
-      const { refCode } = request.params as { refCode: string };
-      const body = request.body as { commission_amount: number };
-
-      const link = await AffiliateLink.findOne({
-        ref_code: refCode.toUpperCase(),
-        status: 'active'
-      });
-
-      if (!link) {
-        return reply.code(404).send({ error: 'Affiliate link not found or inactive' });
-      }
-
-      // Calculate commission
-      const commissionAmount = body.commission_amount || 0;
-
-      // Update link stats
-      link.conversions += 1;
-      link.total_commission_earned += commissionAmount;
-      await link.save();
-
-      reply.send({
-        message: 'Conversion tracked successfully',
-        conversions: link.conversions,
-        total_commission_earned: link.total_commission_earned
       });
     } catch (error: any) {
       fastify.log.error(error);

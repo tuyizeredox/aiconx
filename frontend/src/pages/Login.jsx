@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/AuthContext';
 import { getRedirectPath } from '@/lib/utils';
@@ -51,7 +51,9 @@ const Login = () => {
   const { login, googleLogin, verify2FA, loginBiometrics } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { resolvedTheme, setTheme } = useTheme();
+  const redirectAfterLogin = (user) => navigate(location.state?.from || getRedirectPath(user));
 
   useEffect(() => {
     return () => {
@@ -72,7 +74,7 @@ const Login = () => {
     try {
       const res = await loginBiometrics(identifier);
       toast({ title: "Biometric verified!", description: "Welcome back. Redirecting you now.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      redirectAfterLogin(res.user);
     } catch (err) {
       console.error(err);
       const msg = err.message || 'Biometric login failed. Make sure you have registered biometrics for this account.';
@@ -94,7 +96,7 @@ const Login = () => {
     try {
       const res = await googleLogin(credentialResponse.credential);
       toast({ title: "Signed in!", description: "Welcome back. Google authentication successful.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      redirectAfterLogin(res.user);
     } catch (err) {
       const msg = err.message || 'Google login failed. Please try again.';
       setError(msg);
@@ -123,7 +125,7 @@ const Login = () => {
         toast({ title: "Verification required", description: "Enter your 6-digit authentication code to continue." });
       } else {
         toast({ title: "Welcome back!", description: "You've been signed in successfully.", variant: "success" });
-        navigate(getRedirectPath(res.user));
+        redirectAfterLogin(res.user);
       }
     } catch (err) {
       const msg = err.message || 'Failed to login. Please check your credentials.';
@@ -141,7 +143,7 @@ const Login = () => {
     try {
       const res = await verify2FA(twoFactorToken, otpToken);
       toast({ title: "Access granted!", description: "Two-factor authentication successful.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      redirectAfterLogin(res.user);
     } catch (err) {
       const msg = err.message || 'Invalid verification code.';
       setError(msg);
@@ -414,7 +416,7 @@ const Login = () => {
                   <div className="text-center">
                     <p className="dark:text-slate-500 text-slate-500 text-sm">
                       {t("auth.newHere")}{' '}
-                      <Link to="/register" className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
+                      <Link to="/register" state={location.state} className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
                         {t("auth.joinNetwork")}
                         <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-orange-500 scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
                       </Link>

@@ -169,6 +169,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
           price, // Use DB price
           product_title: dbProduct.title, // Use DB title
           product_image: dbProduct.images[0], // Use DB image
+          inventory_deducted: dbProduct.inventory_count > 0,
         };
       });
 
@@ -266,7 +267,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
       // Handle affiliate tracking
       let affiliate_username = body.affiliate_username;
       let affiliate_commission = 0;
-      let usedAffiliateRef = false;
+      let affiliate_link_id: string | undefined = undefined;
 
       if (body.affiliate_ref) {
         // 1. Check attribution window (default 30 days)
@@ -279,10 +280,10 @@ export async function orderRoutes(fastify: FastifyInstance) {
             ref_code: body.affiliate_ref.toUpperCase(),
             status: 'active'
           });
-          
+
           if (affLink) {
             // 2. Scope commission ONLY to the product in the affiliate link
-            const referredItems = validatedItems.filter(item => 
+            const referredItems = validatedItems.filter(item =>
               item.product_id.toString() === affLink.product_id.toString()
             );
 
@@ -290,7 +291,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
               affiliate_username = affLink.influencer_username;
               const referredSubtotal = referredItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
               affiliate_commission = (referredSubtotal * affLink.commission_pct) / 100;
-              usedAffiliateRef = true;
+              affiliate_link_id = affLink._id.toString();
             }
           }
         }
@@ -349,6 +350,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
             order_note: body.order_note,
             affiliate_username: affiliate_username || undefined,
             affiliate_commission: affiliate_commission,
+            affiliate_link_id,
             status: 'pending',
             payment_status: 'pending',
             created_at: new Date(),
@@ -356,21 +358,18 @@ export async function orderRoutes(fastify: FastifyInstance) {
           });
 
           await order.save({ session });
-
-          // Update affiliate link conversions and earnings if applicable
-          if (usedAffiliateRef) {
-            await AffiliateLink.findOneAndUpdate(
-              { ref_code: body.affiliate_ref!.toUpperCase(), status: 'active' },
-              { 
-                $inc: { 
-                  conversions: 1,
-                  total_commission_earned: affiliate_commission
-                } 
-              },
-              { session }
-            );
-          }
         });
+
+        // Notify the affiliate of the new (unpaid) referral in real time.
+        // Conversion counts only increment once payment is confirmed (see creditAffiliateConversions).
+        if (order! && (order as any).affiliate_username) {
+          fastify.io?.to(`user:${(order as any).affiliate_username}`).emit('affiliate:new_referral', {
+            order_id: (order as any)._id,
+            product_title: (order as any).items?.[0]?.product_title,
+            amount: (order as any).total,
+            status: 'pending_payment',
+          });
+        }
 
         return order;
       } finally {
@@ -432,7 +431,46 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
       order.status = status as any;
       order.updated_at = new Date();
-      await order.save();
+
+      // Restore inventory when an order is cancelled or refunded, so stock counts
+      // stay accurate instead of being permanently lost. Guarded by stock_restored
+      // to avoid double-crediting if status flips back and forth.
+      if (['cancelled', 'refunded'].includes(status) && !order.stock_restored) {
+        const session = await mongoose.startSession();
+        try {
+          await session.withTransaction(async () => {
+            for (const item of order.items) {
+              if (item.inventory_deducted) {
+                await Product.findByIdAndUpdate(
+                  item.product_id,
+                  {
+                    $inc: {
+                      inventory_count: item.quantity,
+                      sales_count: -item.quantity,
+                    },
+                  },
+                  { session }
+                );
+              }
+            }
+            order.stock_restored = true;
+            await order.save({ session });
+          });
+        } finally {
+          await session.endSession();
+        }
+      } else {
+        await order.save();
+      }
+
+      // Let the affiliate track the referral's fulfillment status in real time.
+      if (order.affiliate_username) {
+        fastify.io?.to(`user:${order.affiliate_username}`).emit('affiliate:order_update', {
+          order_id: order._id,
+          product_title: order.items?.[0]?.product_title,
+          status: order.status,
+        });
+      }
 
       return order;
     } catch (error: any) {
@@ -440,9 +478,9 @@ export async function orderRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
       }
       fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error', 
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

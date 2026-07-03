@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import ReviewGallery from "@/components/reviews/ReviewGallery";
 import ReviewForm from "@/components/reviews/ReviewForm";
@@ -9,11 +9,12 @@ import SentimentSummary from "@/components/product/SentimentSummary";
 import ShareModal from "@/components/shared/ShareModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI } from "@/api/apiClient";
+import { addToGuestCart } from "@/lib/guestCart";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
 import {
   Star, Heart, ShoppingCart, Share2, Truck, Shield, ArrowLeft,
-  ChevronLeft, ChevronRight, Minus, Plus, Store, Check, PenLine, Images
+  ChevronLeft, ChevronRight, Minus, Plus, Store, Check, PenLine, Images, Zap, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ export default function ProductDetail() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
   const { data: productResponse, isLoading, error: productError } = useQuery({
@@ -65,24 +67,56 @@ export default function ProductDetail() {
     retry: false,
   });
 
+  const buildCartItem = () => ({
+    product_id: productId,
+    product_title: product.title,
+    product_image: product.images?.[0],
+    product_price: product.price,
+    store_id: product.store_id,
+    store_name: product.store_name,
+    quantity,
+  });
+
+  const goToCart = () => navigate(createPageUrl("Cart"));
+
   const addToCartMutation = useMutation({
     mutationFn: async () => {
-      await cartAPI.add({
-        user_username: currentUser.username,
-        product_id: productId,
-        product_title: product.title,
-        product_image: product.images?.[0],
-        product_price: product.price,
-        store_id: product.store_id,
-        store_name: product.store_name,
-        quantity,
-      });
+      await cartAPI.add(buildCartItem());
     },
     onSuccess: () => {
       setAddedToCart(true);
-      toast.success(t("product.addedToCart"));
+      toast.success(t("product.addedToCart"), {
+        action: { label: t("product.viewCart"), onClick: goToCart },
+      });
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       setTimeout(() => setAddedToCart(false), 2000);
+    },
+  });
+
+  const handleAddToCart = () => {
+    if (!currentUser) {
+      addToGuestCart(buildCartItem());
+      setAddedToCart(true);
+      toast.success(t("product.addedToCart"), {
+        action: { label: t("product.viewCart"), onClick: goToCart },
+      });
+      setTimeout(() => setAddedToCart(false), 2000);
+      return;
+    }
+    addToCartMutation.mutate();
+  };
+
+  const buyNowMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser) {
+        addToGuestCart(buildCartItem());
+      } else {
+        await cartAPI.add(buildCartItem());
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+      }
+    },
+    onSuccess: () => {
+      navigate(createPageUrl("Checkout"));
     },
   });
 
@@ -289,21 +323,31 @@ export default function ProductDetail() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-3 mb-3">
             <Button
-              onClick={() => addToCartMutation.mutate()}
+              onClick={handleAddToCart}
               disabled={addToCartMutation.isPending || product.status === "sold_out"}
+              variant="outline"
               className={`flex-1 h-12 rounded-xl text-base font-semibold transition-all ${
-                addedToCart ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
+                addedToCart ? "border-green-600 text-green-600" : ""
               }`}
             >
               {addedToCart ? <><Check className="w-5 h-5 mr-2" /> {t("product.added")}</> : <><ShoppingCart className="w-5 h-5 mr-2" /> {t("product.addToCart")}</>}
             </Button>
             <Button
+              onClick={() => buyNowMutation.mutate()}
+              disabled={buyNowMutation.isPending || product.status === "sold_out"}
+              className="flex-1 h-12 rounded-xl text-base font-semibold bg-orange-600 hover:bg-orange-700 transition-all"
+            >
+              {buyNowMutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />} {t("product.buyNow")}
+            </Button>
+          </div>
+          <div className="flex gap-3 mb-6">
+            <Button
               onClick={() => wishlistMutation.mutate()}
               variant="outline"
               size="icon"
-              className={`h-12 w-12 rounded-xl transition-colors ${isWishlisted ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900 text-red-500" : ""}`}
+              className={`h-11 w-11 rounded-xl transition-colors ${isWishlisted ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900 text-red-500" : ""}`}
             >
               <Heart className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`} />
             </Button>
@@ -311,7 +355,7 @@ export default function ProductDetail() {
               onClick={() => nativeShare()}
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-xl"
+              className="h-11 w-11 rounded-xl"
             >
               <Share2 className="w-5 h-5" />
             </Button>

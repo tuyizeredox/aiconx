@@ -4,7 +4,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import {
   Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, BarChart3, Eye,
-  X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag
+  X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
 import VendorFinance from "./VendorFinance";
 import OrderDetailModal from "@/components/orders/OrderDetailModal";
-import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI } from "@/api/apiClient";
+import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI, filesAPI } from "@/api/apiClient";
 import { uploadImage } from "@/lib/storage";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -95,11 +95,16 @@ export default function MyStore() {
       tiktok: "",
     }
   });
-  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "" });
+  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10" });
   const [productImages, setProductImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadingAssets, setUploadingAssets] = useState({ logo: false, banner: false });
+  const [editingStockId, setEditingStockId] = useState(null);
+  const [stockValue, setStockValue] = useState("");
+  const [showEditProduct, setShowEditProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10" });
   const queryClient = useQueryClient();
 
   const handleFileChange = (e) => {
@@ -281,6 +286,10 @@ export default function MyStore() {
         price: parseFloat(productForm.price),
         compare_at_price: productForm.compare_at_price ? parseFloat(productForm.compare_at_price) : undefined,
         inventory_count: parseInt(productForm.inventory_count) || 0,
+        ...(currentPlan === 'elite' ? {
+          affiliate_enabled: productForm.affiliate_enabled,
+          affiliate_commission_pct: Math.min(100, Math.max(0, parseFloat(productForm.affiliate_commission_pct) || 0)),
+        } : { affiliate_enabled: undefined, affiliate_commission_pct: undefined }),
         store_id: storeId,
         store_name: store.name,
         vendor_username: currentUser.username,
@@ -290,7 +299,7 @@ export default function MyStore() {
     onSuccess: () => {
       toast.success("Product added!");
       setShowAddProduct(false);
-      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "" });
+      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10" });
       setProductImages([]);
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews([]);
@@ -314,7 +323,64 @@ export default function MyStore() {
       queryClient.invalidateQueries({ queryKey: ["myProducts"] });
     },
   });
-  
+
+  const updateStockMutation = useMutation({
+    mutationFn: ({ id, inventory_count }) => productsAPI.update(id, { inventory_count }),
+    onSuccess: () => {
+      toast.success(t("store.stockUpdated"));
+      setEditingStockId(null);
+      queryClient.invalidateQueries({ queryKey: ["myProducts"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.failedToUpdateStock"));
+    }
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }) => productsAPI.update(id, data),
+    onSuccess: () => {
+      toast.success(t("store.productUpdated"));
+      setShowEditProduct(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: ["myProducts"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.failedToUpdateProduct"));
+    }
+  });
+
+  const openEditProduct = (product) => {
+    setEditingProduct(product);
+    setEditForm({
+      title: product.title || "",
+      description: product.description || "",
+      price: String(product.price ?? ""),
+      compare_at_price: product.compare_at_price != null ? String(product.compare_at_price) : "",
+      category: product.category || "other",
+      inventory_count: String(product.inventory_count ?? 0),
+      affiliate_enabled: product.affiliate_enabled !== false,
+      affiliate_commission_pct: String(product.affiliate_commission_pct ?? 10),
+    });
+    setShowEditProduct(true);
+  };
+
+  const submitEditProduct = () => {
+    const productId = editingProduct.id || editingProduct._id;
+    const payload = {
+      title: editForm.title,
+      description: editForm.description,
+      price: parseFloat(editForm.price),
+      compare_at_price: editForm.compare_at_price ? parseFloat(editForm.compare_at_price) : undefined,
+      category: editForm.category,
+      inventory_count: Math.max(0, parseInt(editForm.inventory_count) || 0),
+      ...(currentPlan === 'elite' ? {
+        affiliate_enabled: editForm.affiliate_enabled,
+        affiliate_commission_pct: Math.min(100, Math.max(0, parseFloat(editForm.affiliate_commission_pct) || 0)),
+      } : {}),
+    };
+    updateProductMutation.mutate({ id: productId, data: payload });
+  };
+
   const updateOrderStatusMutation = useMutation({
     mutationFn: ({ id, status }) => ordersAPI.updateStatus(id, status),
     onSuccess: () => {
@@ -577,8 +643,12 @@ export default function MyStore() {
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold shrink-0">
-              {store.name?.[0]?.toUpperCase()}
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
+              {store.logo_url ? (
+                <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+              ) : (
+                store.name?.[0]?.toUpperCase()
+              )}
             </div>
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate">{store.name}</h1>
@@ -1116,14 +1186,55 @@ export default function MyStore() {
                   </Select>
                   <Input type="number" placeholder={t("store.inventoryCount")} value={productForm.inventory_count} onChange={(e) => setProductForm(p => ({ ...p, inventory_count: e.target.value }))} />
                 </div>
-                <Button 
-                  onClick={() => addProductMutation.mutate()} 
+
+                {/* Affiliate Marketing Settings */}
+                <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link2 className="w-4 h-4 text-orange-500 shrink-0" />
+                      <div className="min-w-0">
+                        <Label className="text-sm">{t("store.allowAffiliate")}</Label>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.allowAffiliateDesc")}</p>
+                      </div>
+                    </div>
+                    {currentPlan === 'elite' ? (
+                      <Switch
+                        checked={productForm.affiliate_enabled}
+                        onCheckedChange={(v) => setProductForm(p => ({ ...p, affiliate_enabled: v }))}
+                      />
+                    ) : (
+                      <Badge className="px-1.5 py-0.5 text-[9px] bg-amber-100 text-amber-600 border-0 shrink-0">{t("store.eliteFeature")}</Badge>
+                    )}
+                  </div>
+                  {currentPlan === 'elite' && productForm.affiliate_enabled && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("store.commissionRate")}</Label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={productForm.affiliate_commission_pct}
+                          onChange={(e) => setProductForm(p => ({ ...p, affiliate_commission_pct: e.target.value }))}
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                      </div>
+                    </div>
+                  )}
+                  {currentPlan !== 'elite' && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-500">{t("store.affiliateEliteOnlyDesc")}</p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => addProductMutation.mutate()}
                   disabled={!productForm.title.trim() || !productForm.price || addProductMutation.isPending || uploading} 
                   className="w-full bg-orange-600 hover:bg-orange-700 h-11 rounded-xl font-bold"
                 >
                   {addProductMutation.isPending || uploading ? (
                     <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploading ? t("store.uploadingMedia") : t("store.addingProduct")}</>
-                  ) : t("store.addProduct")}
+                  ) : t("store.publishProduct")}
                 </Button>
               </div>
             </DialogContent>
@@ -1149,9 +1260,48 @@ export default function MyStore() {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-sm font-bold text-orange-600">{formatCurrency(product.price)}</span>
                       <Badge variant="secondary" className="text-[10px]">{product.status}</Badge>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">{t("store.stock")}: {product.inventory_count || 0}</span>
+                      {editingStockId === productId ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            autoFocus
+                            value={stockValue}
+                            onChange={(e) => setStockValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                updateStockMutation.mutate({ id: productId, inventory_count: Math.max(0, parseInt(stockValue) || 0) });
+                              } else if (e.key === "Escape") {
+                                setEditingStockId(null);
+                              }
+                            }}
+                            className="h-6 w-16 text-xs px-1.5"
+                          />
+                          <button
+                            onClick={() => updateStockMutation.mutate({ id: productId, inventory_count: Math.max(0, parseInt(stockValue) || 0) })}
+                            disabled={updateStockMutation.isPending}
+                            className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-950 text-slate-400 hover:text-green-600"
+                          >
+                            {updateStockMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={() => setEditingStockId(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setEditingStockId(productId); setStockValue(String(product.inventory_count || 0)); }}
+                          className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                        >
+                          {t("store.stock")}: {product.inventory_count || 0}
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
+                  <button onClick={() => openEditProduct(product)} className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors">
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   <button onClick={() => deleteProductMutation.mutate(productId)} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1161,6 +1311,81 @@ export default function MyStore() {
           )}
         </div>
       )}
+
+      {/* Edit Product Dialog */}
+      <Dialog open={showEditProduct} onOpenChange={(open) => { setShowEditProduct(open); if (!open) setEditingProduct(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{t("store.editProduct")}</DialogTitle></DialogHeader>
+          <div className="space-y-3 max-h-[80vh] overflow-y-auto pr-1">
+            <Input placeholder={t("store.productTitle")} value={editForm.title} onChange={(e) => setEditForm(p => ({ ...p, title: e.target.value }))} />
+            <Textarea placeholder={t("store.productDescription")} value={editForm.description} onChange={(e) => setEditForm(p => ({ ...p, description: e.target.value }))} />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input type="number" placeholder={t("store.productPrice")} value={editForm.price} onChange={(e) => setEditForm(p => ({ ...p, price: e.target.value }))} />
+              <Input type="number" placeholder={t("store.compareAtPrice")} value={editForm.compare_at_price} onChange={(e) => setEditForm(p => ({ ...p, compare_at_price: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Select value={editForm.category} onValueChange={(v) => setEditForm(p => ({ ...p, category: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => <SelectItem key={c} value={c}>{t(`explore.cat.${c}`)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input type="number" placeholder={t("store.inventoryCount")} value={editForm.inventory_count} onChange={(e) => setEditForm(p => ({ ...p, inventory_count: e.target.value }))} />
+            </div>
+
+            {/* Affiliate Marketing Settings */}
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Link2 className="w-4 h-4 text-orange-500 shrink-0" />
+                  <div className="min-w-0">
+                    <Label className="text-sm">{t("store.allowAffiliate")}</Label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.allowAffiliateDesc")}</p>
+                  </div>
+                </div>
+                {currentPlan === 'elite' ? (
+                  <Switch
+                    checked={editForm.affiliate_enabled}
+                    onCheckedChange={(v) => setEditForm(p => ({ ...p, affiliate_enabled: v }))}
+                  />
+                ) : (
+                  <Badge className="px-1.5 py-0.5 text-[9px] bg-amber-100 text-amber-600 border-0 shrink-0">{t("store.eliteFeature")}</Badge>
+                )}
+              </div>
+              {currentPlan === 'elite' && editForm.affiliate_enabled && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("store.commissionRate")}</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.affiliate_commission_pct}
+                      onChange={(e) => setEditForm(p => ({ ...p, affiliate_commission_pct: e.target.value }))}
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+              )}
+              {currentPlan !== 'elite' && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-500">{t("store.affiliateEliteOnlyDesc")}</p>
+              )}
+            </div>
+
+            <Button
+              onClick={submitEditProduct}
+              disabled={!editForm.title.trim() || !editForm.price || updateProductMutation.isPending}
+              className="w-full bg-orange-600 hover:bg-orange-700 h-11 rounded-xl font-bold"
+            >
+              {updateProductMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {t("store.savingChanges")}</>
+              ) : t("store.saveChanges")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Shipping Tab */}
       {activeTab === "shipping" && (

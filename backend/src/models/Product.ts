@@ -25,6 +25,7 @@ export interface IProduct extends Document {
   clicks_count: number;
   add_to_cart_count: number;
   checkout_start_count: number;
+  affiliate_enabled: boolean;
   affiliate_commission_pct: number;
   created_at: Date;
   updated_at: Date;
@@ -137,6 +138,10 @@ const ProductSchema = new Schema<IProduct>({
     type: Number,
     default: 0,
     min: 0,
+  },
+  affiliate_enabled: {
+    type: Boolean,
+    default: true,
   },
   affiliate_commission_pct: {
     type: Number,

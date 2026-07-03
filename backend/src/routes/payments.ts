@@ -167,7 +167,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
        const orderRefForUpdate = orderReference || transactionId;
 
        // Process successful payment
-       await itecPayService.handleSuccessfulPayment(orderRefForUpdate, transactionId, String(amount));
+       await itecPayService.handleSuccessfulPayment(orderRefForUpdate, transactionId, String(amount), fastify.io);
 
        console.log(`ITEC Pay Callback: Payment processed - transaction_id: ${transactionId}, amount: ${amount}`);
 
