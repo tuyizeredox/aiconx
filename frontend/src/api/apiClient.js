@@ -95,9 +95,17 @@ class APIClient {
 
       let data;
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType?.includes('application/json')) {
         const text = await response.text();
+        if (!text && response.ok) {
+          // Server sent 200 with an empty body instead of JSON (e.g. the process
+          // crashed mid-response) — treat as a failure rather than silently {}.
+          console.error(`API Error [${endpoint}]: server returned an empty response body`);
+          const emptyBodyError = new Error('Empty server response');
+          emptyBodyError.status = response.status;
+          throw emptyBodyError;
+        }
         try {
           data = text ? JSON.parse(text) : {};
         } catch (e) {
