@@ -58,7 +58,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
         return acc;
       }, {} as Record<string, any>);
 
-      reply.send({
+      return reply.send({
         withdrawals,
         stats,
         pagination: {
@@ -70,7 +70,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -129,7 +129,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
         return acc;
       }, {} as Record<string, any>);
 
-      reply.send({
+      return reply.send({
         withdrawals,
         stats,
         pagination: {
@@ -141,7 +141,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -187,7 +187,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
 
       const total = await Withdrawal.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         withdrawals,
         pagination: {
           total,
@@ -198,7 +198,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -221,10 +221,10 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
         return reply.code(403).send({ error: 'You can only view your own withdrawals' });
       }
 
-      reply.send(withdrawal);
+      return reply.send(withdrawal);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -313,10 +313,10 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
       const withdrawal = new Withdrawal(body);
       await withdrawal.save();
 
-      reply.code(201).send(withdrawal);
+      return reply.code(201).send(withdrawal);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -358,10 +358,10 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
 
       await withdrawal.save();
 
-      reply.send(withdrawal);
+      return reply.send(withdrawal);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -416,10 +416,10 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
 
       await withdrawal.save();
 
-      reply.send(withdrawal);
+      return reply.send(withdrawal);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -449,10 +449,10 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
 
       await Withdrawal.findByIdAndDelete(id);
 
-      reply.send({ message: 'Withdrawal deleted successfully' });
+      return reply.send({ message: 'Withdrawal deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -515,7 +515,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
         avg_processing_time: null
       };
 
-      reply.send({
+      return reply.send({
         status_breakdown: statusBreakdown,
         overall: {
           total_withdrawals: overall.total_withdrawals,
@@ -527,7 +527,7 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

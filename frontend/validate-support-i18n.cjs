@@ -1,5 +1,6 @@
 const fs = require('fs');
-const locales = ['en','es','fr','de','ar','zh','pt','ja','rw','sw'];
+const path = require('path');
+const locales = ['en','rw'];
 const requiredKeys = [
   'support.backToHome',
   'support.title',
@@ -51,7 +52,7 @@ function getNestedKey(obj, path) {
 
 let allGood = true;
 locales.forEach(locale => {
-  const filePath = `d:/projects/vetora/src/locales/${locale}/translation.json`;
+  const filePath = path.join(__dirname, 'src', 'locales', locale, 'translation.json');
   let data;
   try {
     data = JSON.parse(fs.readFileSync(filePath, 'utf8'));

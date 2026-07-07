@@ -20,10 +20,10 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
         .find({ vendor_username: vendorUsername.toLowerCase(), is_active: true })
         .sort({ zone_name: 1 });
 
-      reply.send({ zones });
+      return reply.send({ zones });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -36,10 +36,10 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
         .find({ store_id: storeId, is_active: true })
         .sort({ zone_name: 1 });
 
-      reply.send({ zones });
+      return reply.send({ zones });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -86,7 +86,7 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
 
       const total = await ShippingZone.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         zones,
         pagination: {
           total,
@@ -97,7 +97,7 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -112,10 +112,10 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Shipping zone not found' });
       }
 
-      reply.send(zone);
+      return reply.send(zone);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -154,16 +154,16 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
       const zone = new ShippingZone(body);
       await zone.save();
 
-      reply.code(201).send(zone);
+      return reply.code(201).send(zone);
     } catch (error: any) {
       if (error && typeof error === 'object' && error.code === 11000) {
-        reply.code(409).send({ error: 'A shipping zone with this name already exists for this vendor/store' });
+        return reply.code(409).send({ error: 'A shipping zone with this name already exists for this vendor/store' });
       } else if (error.name === 'ValidationError') {
         const messages = Object.values(error.errors).map((err: any) => err.message);
-        reply.code(400).send({ error: 'Validation failed', details: messages });
+        return reply.code(400).send({ error: 'Validation failed', details: messages });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error', message: error.message });
+        return reply.code(500).send({ error: 'Internal server error', message: error.message });
       }
     }
   });
@@ -220,16 +220,16 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
 
       await zone.save();
 
-      reply.send(zone);
+      return reply.send(zone);
     } catch (error: any) {
       if (error && typeof error === 'object' && error.code === 11000) {
-        reply.code(409).send({ error: 'A shipping zone with this name already exists for this vendor/store' });
+        return reply.code(409).send({ error: 'A shipping zone with this name already exists for this vendor/store' });
       } else if (error.name === 'ValidationError') {
         const messages = Object.values(error.errors).map((err: any) => err.message);
-        reply.code(400).send({ error: 'Validation failed', details: messages });
+        return reply.code(400).send({ error: 'Validation failed', details: messages });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error', message: error.message });
+        return reply.code(500).send({ error: 'Internal server error', message: error.message });
       }
     }
   });
@@ -255,10 +255,10 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
 
       await ShippingZone.findByIdAndDelete(id);
 
-      reply.send({ message: 'Shipping zone deleted successfully' });
+      return reply.send({ message: 'Shipping zone deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -295,7 +295,7 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
         shipping_cost = 0;
       }
 
-      reply.send({
+      return reply.send({
         zone_id: id,
         zone_name: zone.zone_name,
         shipping_cost,
@@ -306,7 +306,7 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -331,10 +331,10 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
         .find(filter)
         .sort({ flat_rate: 1 }); // Sort by cheapest first
 
-      reply.send({ zones });
+      return reply.send({ zones });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

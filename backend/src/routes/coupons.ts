@@ -43,7 +43,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
 
       const total = await Coupon.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         coupons,
         pagination: {
           total,
@@ -54,7 +54,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -69,10 +69,10 @@ export async function couponRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Coupon not found' });
       }
 
-      reply.send(coupon);
+      return reply.send(coupon);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -100,10 +100,10 @@ export async function couponRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: 'Coupon usage limit exceeded' });
       }
 
-      reply.send(coupon);
+      return reply.send(coupon);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -146,10 +146,10 @@ export async function couponRoutes(fastify: FastifyInstance) {
 
       await coupon.save();
 
-      reply.code(201).send(coupon);
+      return reply.code(201).send(coupon);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -204,10 +204,10 @@ export async function couponRoutes(fastify: FastifyInstance) {
 
       await coupon.save();
 
-      reply.send(coupon);
+      return reply.send(coupon);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -237,10 +237,10 @@ export async function couponRoutes(fastify: FastifyInstance) {
 
       await Coupon.findByIdAndDelete(id);
 
-      reply.send({ message: 'Coupon deleted successfully' });
+      return reply.send({ message: 'Coupon deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -290,7 +290,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
         discount = Math.min(coupon.discount_value, cart_total);
       }
 
-      reply.send({
+      return reply.send({
         valid: true,
         coupon: {
           id: coupon._id,
@@ -303,7 +303,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -336,13 +336,13 @@ export async function couponRoutes(fastify: FastifyInstance) {
       coupon.uses_count += 1;
       await coupon.save();
 
-      reply.send({
+      return reply.send({
         message: 'Coupon applied successfully',
         uses_count: coupon.uses_count
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -367,7 +367,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
 
       const total = await Coupon.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         coupons,
         pagination: {
           total,
@@ -378,7 +378,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

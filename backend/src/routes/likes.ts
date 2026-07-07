@@ -8,6 +8,7 @@ import { Story } from '../models/Story';
 import { Product } from '../models/Product';
 import { Review } from '../models/Review';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 
 export async function likeRoutes(fastify: FastifyInstance) {
   // Get likes for a specific target
@@ -38,7 +39,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
 
       const total = await Like.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         data: likes,
         pagination: {
           total,
@@ -75,7 +76,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
         target_id
       });
 
-      reply.send({ has_liked: !!like });
+      return reply.send({ has_liked: !!like });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -145,6 +146,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
           });
           await notification.save();
           fastify.io?.to(`user:${targetOwnerUsername}`).emit('notification:new', notification);
+          NotificationService.sendPushNotification(targetOwnerUsername, notification, fastify);
         } catch (notifErr) {
           fastify.log.error(notifErr, 'Failed to create like notification');
         }
@@ -192,7 +194,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
           break;
       }
 
-      reply.code(201).send(result);
+      return reply.code(201).send(result);
     } catch (error: any) {
       if (error.message.includes('not found')) {
         return reply.code(404).send({ error: 'Target not found', message: error.message });
@@ -261,7 +263,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
           break;
       }
 
-      reply.send(result);
+      return reply.send(result);
     } catch (error: any) {
       if (error.message.includes('not found')) {
         // Return 200 instead of 404 for unliking something that isn't liked
@@ -285,7 +287,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
 
       const count = await Like.countDocuments({ target_type, target_id });
 
-      reply.send({ count });
+      return reply.send({ count });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -322,7 +324,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
 
       const total = await Like.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         data: likes,
         pagination: {
           total,

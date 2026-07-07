@@ -46,7 +46,7 @@ class APIClient {
   }
 
   // Generic fetch wrapper
-  async request(endpoint, options = {}) {
+  async request(endpoint, options = {}, retryCount = 0) {
     // Prevent common bugs by checking for 'undefined' or 'null' in the URL
     // We check for both string and actual values
     if (typeof endpoint !== 'string' || endpoint.includes('undefined') || endpoint.includes('null')) {
@@ -99,8 +99,14 @@ class APIClient {
       if (contentType?.includes('application/json')) {
         const text = await response.text();
         if (!text && response.ok) {
-          // Server sent 200 with an empty body instead of JSON (e.g. the process
-          // crashed mid-response) — treat as a failure rather than silently {}.
+          // Server sent 200 with an empty body instead of JSON (e.g. the dev
+          // server restarted mid-response, or a transient network blip cut the
+          // connection). This is safe to retry for idempotent GET requests.
+          const method = (options.method || 'GET').toUpperCase();
+          if (method === 'GET' && retryCount < 3) {
+            await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+            return this.request(endpoint, options, retryCount + 1);
+          }
           console.error(`API Error [${endpoint}]: server returned an empty response body`);
           const emptyBodyError = new Error('Empty server response');
           emptyBodyError.status = response.status;
@@ -588,7 +594,10 @@ export const usersAPI = {
     return apiClient.get(`/users/suggested?${query}`);
   },
   registerPushToken: (token) => apiClient.post('/users/push-token', { token }),
-  unregisterPushToken: (token) => apiClient.delete('/users/push-token', { token })
+  unregisterPushToken: (token) => apiClient.delete('/users/push-token', { token }),
+  getPushVapidPublicKey: () => apiClient.get('/users/push/vapid-public-key'),
+  subscribeToPush: (subscription) => apiClient.post('/users/push-subscription', subscription),
+  unsubscribeFromPush: (endpoint) => apiClient.delete('/users/push-subscription', { endpoint })
 };
 
 export const communitiesAPI = {

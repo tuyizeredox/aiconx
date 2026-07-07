@@ -36,6 +36,7 @@ import GlobalSearch from "@/components/layout/GlobalSearch";
 import CreateActionModal from "@/components/layout/CreateActionModal";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
 import { getGuestCartCount } from "@/lib/guestCart";
 
 const NAV_ITEMS = [
@@ -281,6 +282,7 @@ export default function Layout({ children, currentPageName }) {
         </nav>
 
         <div className={`p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
+          <LanguagePicker compact={!isDesktopExpanded && isDesktop} />
           {currentUser?.role !== 'super_admin' && (
             <button
               onClick={() => {
@@ -320,6 +322,7 @@ export default function Layout({ children, currentPageName }) {
               )}
             </Link>
           )}
+          <LanguagePicker compact />
           <NotificationBell userEmail={currentUser?.email} />
           {currentUser?.role !== 'super_admin' && (
             <Link to={createPageUrl("cart")} className="relative p-2">

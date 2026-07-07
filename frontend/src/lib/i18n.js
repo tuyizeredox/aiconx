@@ -2,10 +2,10 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
-// Load only default language initially for faster initial load
 import en from "@/locales/en/translation.json";
+import rw from "@/locales/rw/translation.json";
 
-export const SUPPORTED_LANG_CODES = ["en", "es", "fr", "de", "ar", "zh", "pt", "ja", "rw", "sw"];
+export const SUPPORTED_LANG_CODES = ["en", "rw"];
 
 i18n
   .use(LanguageDetector)
@@ -13,6 +13,7 @@ i18n
   .init({
     resources: {
       en: { translation: en },
+      rw: { translation: rw },
     },
     fallbackLng: "en",
     supportedLngs: SUPPORTED_LANG_CODES,

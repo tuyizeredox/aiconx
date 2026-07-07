@@ -39,6 +39,13 @@ export interface IUser extends Document {
   is_online: boolean;
   last_seen_at: Date;
   push_tokens?: string[];
+  push_subscriptions?: Array<{
+    endpoint: string;
+    keys: {
+      p256dh: string;
+      auth: string;
+    };
+  }>;
   saved_addresses?: Array<{
     label?: string;
     street: string;
@@ -119,7 +126,7 @@ const UserSchema = new Schema<IUser>({
   },
   preferences: {
     theme: { type: String, enum: ['light', 'dark'], default: 'light' },
-    language: { type: String, default: 'en' },
+    language: { type: String, enum: ['en', 'rw'], default: 'en' },
   },
   is_2fa_enabled: {
     type: Boolean,
@@ -196,6 +203,13 @@ const UserSchema = new Schema<IUser>({
   push_tokens: [{
     type: String,
     trim: true,
+  }],
+  push_subscriptions: [{
+    endpoint: { type: String, required: true },
+    keys: {
+      p256dh: { type: String, required: true },
+      auth: { type: String, required: true },
+    },
   }],
   saved_addresses: [{
     label: { type: String, trim: true, default: 'Default' },

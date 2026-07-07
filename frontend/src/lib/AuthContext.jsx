@@ -17,12 +17,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Just clear auth state — React Router (mounted below AuthProvider) already
+    // re-renders to the login/landing route once isAuthenticated flips to false.
+    // A hard window.location redirect here caused a full page reload every time
+    // any background poll (e.g. Chat's message polling) hit a 401.
     const handleUnauthorized = () => {
       setUser(null);
       setIsAuthenticated(false);
-      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-        window.location.href = '/';
-      }
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);

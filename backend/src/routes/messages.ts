@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { Message, IMessage } from '../models/Message';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 import { z } from 'zod';
 
 const sendMessageSchema = z.object({
@@ -229,8 +230,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
       try {
         if (body.recipient_username && body.recipient_username !== user.username) {
-          const recipientUser = await User.findOne({ username: body.recipient_username }).lean();
-          const senderName = recipientUser?.display_name || user.username;
+          const senderName = user.display_name || user.username;
           const newMessage = new Notification({
             recipient_username: body.recipient_username,
             type: body.message_type === 'offer' ? 'offer' : 'message',
@@ -247,6 +247,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
           });
           await newMessage.save();
           fastify.io?.to(`user:${body.recipient_username}`).emit('notification:new', newMessage);
+          NotificationService.sendPushNotification(body.recipient_username, newMessage, fastify);
         }
       } catch (notifErr: any) {
         fastify.log.error(notifErr, 'Failed to create message notification');

@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import { Store } from '../models/Store';
 import { Community } from '../models/Community';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 
 // Helper to parse pagination
 const getPagination = (query: any) => {
@@ -44,7 +45,7 @@ export async function followRoutes(fastify: FastifyInstance) {
 
       const total = await Follow.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         data: follows,
         pagination: {
           total,
@@ -55,7 +56,7 @@ export async function followRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -228,9 +229,10 @@ export async function followRoutes(fastify: FastifyInstance) {
                 }
               });
               await notification.save();
-              
+
               // Emit notification via socket
               fastify.io?.to(`user:${recipientUsername}`).emit('notification:new', notification);
+              NotificationService.sendPushNotification(recipientUsername, notification, fastify);
             } catch (notifErr: any) {
               fastify.log.error(notifErr, 'Failed to create/emit notification');
             }
@@ -264,11 +266,11 @@ export async function followRoutes(fastify: FastifyInstance) {
       // Actually, for better reliability and avoiding 500s from background issues, 
       // we already have the inner try-catch.
       
-      reply.code(201).send(follow);
+      return reply.code(201).send(follow);
     } catch (error: any) {
       fastify.log.error(error, 'Follow handler failed');
       const statusCode = error.statusCode || 500;
-      reply.code(statusCode).send({ 
+      return reply.code(statusCode).send({ 
         error: 'Internal server error', 
         message: error.message || 'An unexpected error occurred',
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -362,11 +364,11 @@ export async function followRoutes(fastify: FastifyInstance) {
         }
       })();
 
-      reply.send({ message: 'Successfully unfollowed' });
+      return reply.send({ message: 'Successfully unfollowed' });
     } catch (error: any) {
       fastify.log.error(error, 'Unfollow handler failed');
       const statusCode = error.statusCode || 500;
-      reply.code(statusCode).send({ 
+      return reply.code(statusCode).send({ 
         error: 'Internal server error', 
         message: error.message || 'An unexpected error occurred'
       });
@@ -408,10 +410,10 @@ export async function followRoutes(fastify: FastifyInstance) {
         is_followed_by = !!backFollow;
       }
 
-      reply.send({ is_following: !!follow, is_followed_by });
+      return reply.send({ is_following: !!follow, is_followed_by });
     } catch (error: any) {
       fastify.log.error(error, 'Check follow handler failed');
-      reply.code(500).send({ error: 'Internal server error', message: error.message });
+      return reply.code(500).send({ error: 'Internal server error', message: error.message });
     }
   });
 
@@ -561,13 +563,13 @@ export async function followRoutes(fastify: FastifyInstance) {
         });
       }
 
-      reply.send({
+      return reply.send({
         follower_count: followerCount,
         following_count: followingCount
       });
     } catch (error: any) {
       fastify.log.error(error, 'Get follow counts handler failed');
-      reply.code(500).send({ error: 'Internal server error', message: error.message });
+      return reply.code(500).send({ error: 'Internal server error', message: error.message });
     }
   });
 
@@ -593,7 +595,7 @@ export async function followRoutes(fastify: FastifyInstance) {
 
       const total = await Follow.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         following,
         pagination: {
           total,
@@ -604,7 +606,7 @@ export async function followRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -632,7 +634,7 @@ export async function followRoutes(fastify: FastifyInstance) {
 
       const total = await Follow.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         followers,
         pagination: {
           total,
@@ -643,7 +645,7 @@ export async function followRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

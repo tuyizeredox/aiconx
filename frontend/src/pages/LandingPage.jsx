@@ -6,6 +6,7 @@ import { productsAPI, storesAPI, storiesAPI } from "@/api/apiClient";
 import { formatCurrency } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
 import { ProductSkeleton, StoreSkeleton } from "@/components/shared/LoadingSkeleton";
 import { Search, ShoppingBag, Star, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -111,6 +112,7 @@ export default function LandingPage() {
           )}
 
           <div className="flex items-center gap-2 shrink-0">
+            <LanguagePicker compact />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-slate-700 dark:text-slate-300 font-semibold hover:text-slate-900 dark:hover:text-white">
                 {t("common.login")}

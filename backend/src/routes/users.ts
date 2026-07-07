@@ -171,8 +171,92 @@ export async function userRoutes(fastify: FastifyInstance) {
       return { success: true };
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error' 
+      return reply.code(500).send({
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  // Public VAPID key, needed by the browser to create a push subscription
+  fastify.get('/push/vapid-public-key', async (_request, reply) => {
+    if (!process.env.VAPID_PUBLIC_KEY) {
+      return reply.code(503).send({ error: 'Web push is not configured' });
+    }
+    return { publicKey: process.env.VAPID_PUBLIC_KEY };
+  });
+
+  // Register a browser push subscription so notifications can be delivered
+  // even when the site/app is closed.
+  fastify.post('/push-subscription', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const subscription = request.body as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+      const user = request.user as any;
+
+      if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+        return reply.code(400).send({ error: 'A valid push subscription is required' });
+      }
+
+      if (!user?.username) {
+        return reply.code(401).send({ error: 'Unauthorized - invalid user data' });
+      }
+
+      // Remove any existing subscription with the same endpoint before re-adding,
+      // since $addToSet would otherwise treat updated keys as a duplicate entry.
+      await User.updateOne(
+        { username: user.username },
+        { $pull: { push_subscriptions: { endpoint: subscription.endpoint } } }
+      );
+
+      await User.updateOne(
+        { username: user.username },
+        {
+          $push: {
+            push_subscriptions: {
+              endpoint: subscription.endpoint,
+              keys: { p256dh: subscription.keys.p256dh, auth: subscription.keys.auth },
+            },
+          },
+        }
+      );
+
+      return { success: true };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Unregister a browser push subscription (e.g. on logout)
+  fastify.delete('/push-subscription', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { endpoint } = request.body as { endpoint?: string };
+      const user = request.user as any;
+
+      if (!endpoint) {
+        return reply.code(400).send({ error: 'Endpoint is required' });
+      }
+
+      if (!user?.username) {
+        return reply.code(401).send({ error: 'Unauthorized - invalid user data' });
+      }
+
+      await User.updateOne(
+        { username: user.username },
+        { $pull: { push_subscriptions: { endpoint } } }
+      );
+
+      return { success: true };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error'
       });
     }
   });

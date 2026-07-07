@@ -159,7 +159,13 @@
     "usernameRequired": "Username is required",
     "biometrics": "Use Biometrics",
     "signUpLink": "Sign Up",
-    "signInLink": "Sign In"
+    "signInLink": "Sign In",
+    "loginHeroLine1": "BEYOND",
+    "loginHeroLine2": "COMMERCE.",
+    "loginHeroSubtitle": "Welcome to the elite social commerce network. Connect, showcase, and grow your digital empire.",
+    "registerHeroLine1": "JOIN THE",
+    "registerHeroLine2": "EVOLUTION.",
+    "registerHeroSubtitle": "Create your account and start building your presence in social commerce."
   },
   "home": {
     "feed": "Feed",

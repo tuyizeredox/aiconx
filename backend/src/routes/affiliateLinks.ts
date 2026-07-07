@@ -47,7 +47,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
 
       const total = await AffiliateLink.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         links,
         pagination: {
           total,
@@ -134,7 +134,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.send({
+      return reply.send({
         leaderboard: enriched.slice(0, parseInt(limit)),
         my_rank,
         period,
@@ -159,7 +159,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Affiliate link not found' });
       }
 
-      reply.send(link);
+      return reply.send(link);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -183,7 +183,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Affiliate link not found or inactive' });
       }
 
-      reply.send(link);
+      return reply.send(link);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -259,7 +259,9 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
           product_title: product.title,
           product_price: product.price,
           ref_code: refCode,
-          commission_pct: body.commission_pct ?? 10,
+          // Commission rate is set by the seller on the product, not by the
+          // affiliate creating the link — never trust body.commission_pct here.
+          commission_pct: product.affiliate_commission_pct,
           status: 'active',
         });
 
@@ -281,7 +283,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         return reply.code(500).send({ error: 'Failed to generate a unique referral code. Please try again.' });
       }
 
-      reply.code(201).send(link);
+      return reply.code(201).send(link);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -316,8 +318,10 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: 'Cannot change referral code' });
       }
 
-      // Update allowed fields
-      const allowedUpdates = ['commission_pct', 'status'];
+      // Update allowed fields. commission_pct is intentionally excluded —
+      // it's set by the seller on the product at link-creation time, not
+      // editable by the affiliate afterward.
+      const allowedUpdates = ['status'];
       allowedUpdates.forEach(field => {
         const key = field as keyof IAffiliateLink;
         if (body[key] !== undefined) {
@@ -327,7 +331,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
 
       await link.save();
 
-      reply.send(link);
+      return reply.send(link);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -358,7 +362,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
 
       await AffiliateLink.findByIdAndDelete(id);
 
-      reply.send({ message: 'Affiliate link deleted successfully' });
+      return reply.send({ message: 'Affiliate link deleted successfully' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -383,7 +387,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Affiliate link not found or inactive' });
       }
 
-      reply.send({
+      return reply.send({
         message: 'Click tracked successfully',
         clicks: link.clicks
       });
@@ -430,7 +434,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         }
       ]);
 
-      reply.send({
+      return reply.send({
         links,
         stats: stats[0] || {
           total_clicks: 0,
@@ -474,7 +478,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
 
       const total = await AffiliateLink.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         links,
         pagination: {
           total,

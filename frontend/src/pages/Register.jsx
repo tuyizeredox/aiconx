@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
 import { useTheme } from 'next-themes';
 import { toast } from '@/components/ui/use-toast';
 
@@ -175,14 +176,17 @@ const Register = () => {
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Toggle theme"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <button
+            type="button"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+            aria-label="Toggle theme"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <div className="hidden lg:flex absolute top-4 inset-x-4 z-20 items-center justify-between">
@@ -194,14 +198,17 @@ const Register = () => {
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Toggle theme"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <button
+            type="button"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+            aria-label="Toggle theme"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <div className="w-full relative z-10 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 max-w-6xl mx-auto lg:flex-1">
@@ -220,11 +227,11 @@ const Register = () => {
               <Logo size="lg" showText={false} className="!gap-0" />
             </motion.div>
             <h1 className="text-5xl xl:text-6xl font-black dark:text-white text-slate-900 tracking-tighter leading-[0.9]">
-              JOIN THE <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">EVOLUTION.</span>
+              {t("auth.registerHeroLine1")} <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">{t("auth.registerHeroLine2")}</span>
             </h1>
             <p className="text-base xl:text-lg dark:text-slate-400 text-slate-600 leading-relaxed max-w-sm">
-              Create your account and start building your presence in social commerce.
+              {t("auth.registerHeroSubtitle")}
             </p>
           </div>
         </motion.div>

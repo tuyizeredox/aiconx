@@ -37,7 +37,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
 
       const total = await WishlistItem.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         items: wishlist,
         pagination: {
           total,
@@ -68,7 +68,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
         product_id: productId
       });
 
-      reply.send({
+      return reply.send({
         product_id: productId,
         in_wishlist: !!item,
         item: item || null
@@ -121,13 +121,13 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
       const wishlistItem = new WishlistItem(body);
       await wishlistItem.save();
 
-      reply.code(201).send(wishlistItem);
+      return reply.code(201).send(wishlistItem);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-        reply.code(409).send({ error: 'Product is already in your wishlist' });
+        return reply.code(409).send({ error: 'Product is already in your wishlist' });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   });
@@ -149,7 +149,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Product not found in wishlist' });
       }
 
-      reply.send({ message: 'Product removed from wishlist successfully' });
+      return reply.send({ message: 'Product removed from wishlist successfully' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -195,7 +195,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
 
       await item.save();
 
-      reply.send(item);
+      return reply.send(item);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -245,7 +245,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
         avg_price: 0
       };
 
-      reply.send({
+      return reply.send({
         total_items: result.total_items,
         total_value: Math.round(result.total_value * 100) / 100,
         stores_count: result.stores_count.length,
@@ -305,7 +305,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.send({
+      return reply.send({
         message: 'Bulk operation completed',
         added: results.length,
         errors_count: errors.length,
@@ -330,7 +330,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
 
       const result = await WishlistItem.deleteMany({ user_username: user.username });
 
-      reply.send({
+      return reply.send({
         message: 'Wishlist cleared successfully',
         deleted_count: result.deletedCount
       });
@@ -366,7 +366,7 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
         { $limit: parseInt(limit) }
       ]);
 
-      reply.send({ popular_items: popular });
+      return reply.send({ popular_items: popular });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 

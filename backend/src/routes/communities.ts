@@ -4,6 +4,7 @@ import { Community, ICommunity } from '../models/Community';
 import { CommunityMember } from '../models/CommunityMember';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 
 export async function communityRoutes(fastify: FastifyInstance) {
   // List communities with filtering and search
@@ -58,7 +59,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
 
       const total = await Community.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         communities,
         pagination: {
           total,
@@ -87,7 +88,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Community not found' });
       }
 
-      reply.send(community);
+      return reply.send(community);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -108,7 +109,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Community not found' });
       }
 
-      reply.send(community);
+      return reply.send(community);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -162,7 +163,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         community: community.toObject()
       });
 
-      reply.code(201).send(community);
+      return reply.code(201).send(community);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -213,7 +214,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         community: community.toObject()
       });
 
-      reply.send(community);
+      return reply.send(community);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -251,7 +252,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         community_id: id
       });
 
-      reply.send({ message: 'Community deleted successfully' });
+      return reply.send({ message: 'Community deleted successfully' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -289,7 +290,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
 
       const total = await Community.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         communities,
         pagination: {
           total,
@@ -367,6 +368,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         });
         await notification.save();
         fastify.io?.to(`user:${community.owner_username}`).emit('notification:new', notification);
+        NotificationService.sendPushNotification(community.owner_username, notification, fastify);
       }
 
       // Emit real-time event
@@ -376,7 +378,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         member_count: community.member_count
       });
 
-      reply.send({ message: 'Successfully joined community' });
+      return reply.send({ message: 'Successfully joined community' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -431,7 +433,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
         member_count: community.member_count
       });
 
-      reply.send({ message: 'Successfully left community' });
+      return reply.send({ message: 'Successfully left community' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 

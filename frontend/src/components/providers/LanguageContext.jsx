@@ -4,19 +4,11 @@ import { useAuth } from "@/lib/AuthContext";
 import i18n, { SUPPORTED_LANG_CODES } from "@/lib/i18n";
 export { useTranslation } from "react-i18next";
 
-const RTL_LANGS = ["ar"];
+const RTL_LANGS = [];
 
 const LANG_META = [
   { code: "en", label: "English", flag: "🇺🇸" },
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "de", label: "Deutsch", flag: "🇩🇪" },
-  { code: "ar", label: "العربية", flag: "🇸🇦" },
-  { code: "zh", label: "中文", flag: "🇨🇳" },
-  { code: "pt", label: "Português", flag: "🇧🇷" },
-  { code: "ja", label: "日本語", flag: "🇯🇵" },
   { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
-  { code: "sw", label: "Kiswahili", flag: "🇰🇪" },
 ];
 
 export const SUPPORTED_LANGS = LANG_META.filter(l => SUPPORTED_LANG_CODES.includes(l.code));

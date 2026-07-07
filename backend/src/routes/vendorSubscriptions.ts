@@ -35,10 +35,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'No active subscription found' });
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -56,10 +56,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'No active subscription found for this store' });
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -143,7 +143,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
 
       const total = await VendorSubscription.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         subscriptions: subscriptionsWithRoles,
         pagination: {
           total,
@@ -154,7 +154,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -169,10 +169,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Vendor subscription not found' });
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -227,13 +227,13 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.code(201).send(subscription);
+      return reply.code(201).send(subscription);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-        reply.code(409).send({ error: 'An active subscription already exists for this vendor' });
+        return reply.code(409).send({ error: 'An active subscription already exists for this vendor' });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   });
@@ -313,13 +313,13 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-        reply.code(409).send({ error: 'Custom domain is already in use' });
+        return reply.code(409).send({ error: 'Custom domain is already in use' });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   });
@@ -400,7 +400,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       return reply.send({ ...subscription.toObject(), message, warning: syncWarning });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -452,10 +452,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         syncWarning = 'Subscription renewed but product plan sync failed. Contact support.';
       }
 
-      reply.send({ ...subscription.toObject(), warning: syncWarning });
+      return reply.send({ ...subscription.toObject(), warning: syncWarning });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -480,10 +480,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
 
       await VendorSubscription.findByIdAndDelete(id);
 
-      reply.send({ message: 'Vendor subscription deleted successfully' });
+      return reply.send({ message: 'Vendor subscription deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -513,7 +513,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         ? Math.ceil((subscription.expires_at.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
-      reply.send({
+      return reply.send({
         subscription_id: id,
         plan: subscription.plan,
         status: currentStatus,
@@ -525,7 +525,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -592,10 +592,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       };
 
-      reply.send({ plans, subscription_mode });
+      return reply.send({ plans, subscription_mode });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -621,10 +621,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         { upsert: true, new: true }
       );
 
-      reply.send({ success: true, plan_prices: settings.plan_prices });
+      return reply.send({ success: true, plan_prices: settings.plan_prices });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 

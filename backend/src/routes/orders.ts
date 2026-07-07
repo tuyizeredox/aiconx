@@ -5,6 +5,8 @@ import { User } from '../models/User';
 import { Store } from '../models/Store';
 import { ShippingZone } from '../models/ShippingZone';
 import { AffiliateLink } from '../models/AffiliateLink';
+import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 import { z } from 'zod';
 import mongoose from 'mongoose';
 
@@ -369,6 +371,32 @@ export async function orderRoutes(fastify: FastifyInstance) {
             amount: (order as any).total,
             status: 'pending_payment',
           });
+        }
+
+        // Notify the vendor that their product sold ("who bought" push/in-app notification)
+        try {
+          const vendorUsername = (order as any).vendor_username;
+          const buyerName = (order as any).buyer_name || user.username;
+          const orderItems = (order as any).items as Array<{ product_title: string }>;
+          const itemsSummary = orderItems.length > 1
+            ? `${orderItems[0].product_title} +${orderItems.length - 1} more`
+            : orderItems[0].product_title;
+
+          const orderNotification = new Notification({
+            recipient_username: vendorUsername,
+            type: 'order_update',
+            title: `New order from ${buyerName}`,
+            body: `${itemsSummary} — RWF ${(order as any).total.toLocaleString()}`,
+            link: `/Orders`,
+            sender_username: user.username,
+            sender_name: buyerName,
+            metadata: { order_id: (order as any)._id },
+          });
+          await orderNotification.save();
+          fastify.io?.to(`user:${vendorUsername}`).emit('notification:new', orderNotification);
+          NotificationService.sendPushNotification(vendorUsername, orderNotification, fastify);
+        } catch (notifErr: any) {
+          fastify.log.error(notifErr, 'Failed to create order notification');
         }
 
         return order;

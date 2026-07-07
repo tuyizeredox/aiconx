@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { VendorSubscription } from '../models/VendorSubscription';
 import { Product } from '../models/Product';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 import { Settings } from '../models/Settings';
 
 export const PLAN_LIMITS = {
@@ -144,6 +145,7 @@ async function sendLimitNotification(username: string, message: string, request:
       // Emit notification via socket
       const fastify = request.server as any;
       fastify.io?.to(`user:${username}`).emit('notification:new', notification);
+      NotificationService.sendPushNotification(username, notification, fastify);
     }
   } catch (err) {
     request.log.error(err, 'Failed to create subscription limit notification:');

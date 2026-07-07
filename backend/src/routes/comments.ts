@@ -4,6 +4,7 @@ import { Comment, IComment } from '../models/Comment';
 import { User } from '../models/User';
 import { Post } from '../models/Post';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 import { likeTarget, unlikeTarget, getLikesForTargets } from '../services/likeService';
 
 export async function commentRoutes(fastify: FastifyInstance) {
@@ -86,7 +87,7 @@ export async function commentRoutes(fastify: FastifyInstance) {
         is_liked: userLikesSet.has(comment._id.toString())
       }));
 
-      reply.send({
+      return reply.send({
         comments: commentsWithLikeStatus,
         pagination: {
           total,
@@ -97,7 +98,7 @@ export async function commentRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -112,10 +113,10 @@ export async function commentRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Comment not found' });
       }
 
-      reply.send(comment);
+      return reply.send(comment);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -181,6 +182,7 @@ export async function commentRoutes(fastify: FastifyInstance) {
           });
           await commentNotification.save();
           fastify.io?.to(`user:${postAuthor}`).emit('notification:new', commentNotification);
+          NotificationService.sendPushNotification(postAuthor, commentNotification, fastify);
         }
 
         if (body.parent_comment_id) {
@@ -205,16 +207,17 @@ export async function commentRoutes(fastify: FastifyInstance) {
             });
             await replyNotification.save();
             fastify.io?.to(`user:${parentAuthor}`).emit('notification:new', replyNotification);
+            NotificationService.sendPushNotification(parentAuthor, replyNotification, fastify);
           }
         }
       } catch (notifErr) {
         fastify.log.error(notifErr, 'Failed to create comment notification');
       }
 
-      reply.code(201).send(comment);
+      return reply.code(201).send(comment);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -256,10 +259,10 @@ export async function commentRoutes(fastify: FastifyInstance) {
         post_id: comment.post_id
       });
 
-      reply.send(comment);
+      return reply.send(comment);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -309,10 +312,10 @@ export async function commentRoutes(fastify: FastifyInstance) {
         post_id: comment.post_id
       });
 
-      reply.send({ message: 'Comment and replies deleted successfully' });
+      return reply.send({ message: 'Comment and replies deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -359,14 +362,14 @@ export async function commentRoutes(fastify: FastifyInstance) {
         author_avatar: userAvatarMap[reply.author_username] || reply.author_avatar
       }));
 
-      reply.send({
+      return reply.send({
         comment: commentWithAvatar,
         replies: repliesWithAvatars,
         total_replies: replies.length
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

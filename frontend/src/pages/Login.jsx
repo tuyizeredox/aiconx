@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
 import {
   InputOTP,
   InputOTPGroup,
@@ -170,15 +171,18 @@ const Login = () => {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <div className="hidden lg:flex absolute top-4 inset-x-4 z-20 items-center justify-between">
@@ -192,15 +196,18 @@ const Login = () => {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <div className="container relative z-10 flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-24 px-4 sm:px-6 max-w-7xl mx-auto py-6 lg:py-10">
@@ -220,11 +227,11 @@ const Login = () => {
               <Logo size="lg" showText={false} className="!gap-0" />
             </motion.div>
             <h1 className="text-5xl xl:text-6xl font-black dark:text-white text-slate-900 tracking-tighter leading-[0.9]">
-              BEYOND <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">COMMERCE.</span>
+              {t("auth.loginHeroLine1")} <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">{t("auth.loginHeroLine2")}</span>
             </h1>
             <p className="text-base xl:text-lg dark:text-slate-400 text-slate-600 leading-relaxed max-w-sm">
-              Welcome to the elite social commerce network. Connect, showcase, and grow your digital empire.
+              {t("auth.loginHeroSubtitle")}
             </p>
           </div>
         </motion.div>

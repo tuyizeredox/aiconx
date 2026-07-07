@@ -3,6 +3,7 @@ import { CommunityMember, ICommunityMember } from '../models/CommunityMember';
 import { Community } from '../models/Community';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
 
 export async function communityMemberRoutes(fastify: FastifyInstance) {
   // Get members of a community
@@ -36,7 +37,7 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
 
       const total = await CommunityMember.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         members,
         pagination: {
           total,
@@ -47,7 +48,7 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -123,6 +124,7 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
         });
         await notification.save();
         fastify.io?.to(`user:${community.owner_username}`).emit('notification:new', notification);
+        NotificationService.sendPushNotification(community.owner_username, notification, fastify);
       }
 
       // Emit real-time event
@@ -133,10 +135,10 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
         member_count: community.member_count
       });
 
-      reply.code(201).send(member);
+      return reply.code(201).send(member);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -185,10 +187,10 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
         role: member.role
       });
 
-      reply.send(member);
+      return reply.send(member);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -235,10 +237,10 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
         member_count: community?.member_count || 0
       });
 
-      reply.send({ message: 'Member removed from community' });
+      return reply.send({ message: 'Member removed from community' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -260,14 +262,14 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
         member_username: user.username
       });
 
-      reply.send({
+      return reply.send({
         is_member: !!membership,
         role: membership?.role || null,
         joined_at: membership?.joined_at || null
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -291,7 +293,7 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
 
       const total = await CommunityMember.countDocuments({ member_username: user.username });
 
-      reply.send({
+      return reply.send({
         memberships,
         pagination: {
           total,
@@ -302,7 +304,7 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -367,14 +369,14 @@ export async function communityMemberRoutes(fastify: FastifyInstance) {
         await community.save();
       }
 
-      reply.send({
+      return reply.send({
         message: `Bulk operation completed. ${addedCount} members added.`,
         results,
         added_count: addedCount
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

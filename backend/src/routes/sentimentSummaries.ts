@@ -13,10 +13,10 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Sentiment summary not found for this product' });
       }
 
-      reply.send(summary);
+      return reply.send(summary);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -58,7 +58,7 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
 
       const total = await SentimentSummary.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         summaries,
         pagination: {
           total,
@@ -69,7 +69,7 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -84,10 +84,10 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Sentiment summary not found' });
       }
 
-      reply.send(summary);
+      return reply.send(summary);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -139,10 +139,10 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
         }
       );
 
-      reply.code(201).send(summary);
+      return reply.code(201).send(summary);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -180,10 +180,10 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
       summary.last_updated = new Date();
       await summary.save();
 
-      reply.send(summary);
+      return reply.send(summary);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -200,10 +200,10 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Sentiment summary not found' });
       }
 
-      reply.send({ message: 'Sentiment summary deleted successfully' });
+      return reply.send({ message: 'Sentiment summary deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -247,7 +247,7 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.send({
+      return reply.send({
         message: 'Bulk update completed',
         updated: results.length,
         errors_count: errors.length,
@@ -256,7 +256,7 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -288,14 +288,14 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
         }
       ]);
 
-      reply.send({
+      return reply.send({
         total_summaries: totalSummaries,
         sentiment_distribution: stats,
         average_reviews_analyzed: avgReviewCount[0]?.avg_reviews || 0
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

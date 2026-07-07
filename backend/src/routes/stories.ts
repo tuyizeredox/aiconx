@@ -60,7 +60,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         return acc;
       }, {} as Record<string, any>);
 
-      reply.send({ feed: Object.values(groupedStories) });
+      return reply.send({ feed: Object.values(groupedStories) });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -121,7 +121,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
       }));
 
       // Simplified response to avoid stream issues
-      reply.send({
+      return reply.send({
         data: storiesWithId,
         total,
         limit: parseInt(limit),
@@ -147,7 +147,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Story not found' });
       }
 
-      reply.send(story);
+      return reply.send(story);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -207,7 +207,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         story: story.toObject()
       });
 
-      reply.code(201).send(story);
+      return reply.code(201).send(story);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -248,7 +248,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
 
       await story.save();
 
-      reply.send(story);
+      return reply.send(story);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -285,7 +285,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         author_username: story.author_username
       });
 
-      reply.send({ message: 'Story deleted successfully' });
+      return reply.send({ message: 'Story deleted successfully' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -320,7 +320,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
       // TODO: Track individual viewers to prevent multiple views from same user
       // For now, just increment the count
 
-      reply.send({ views_count: story.views_count });
+      return reply.send({ views_count: story.views_count });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -394,7 +394,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         fastify.io?.to(`user:${story.author_username}`).emit('new-message', message.toObject());
       }
       
-      reply.send({ message: 'Reply sent successfully', data: message });
+      return reply.send({ message: 'Reply sent successfully', data: message });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -419,7 +419,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         })
         .sort({ created_at: -1 });
 
-      reply.send({ stories });
+      return reply.send({ stories });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -446,7 +446,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
       // Instead, we'll manually fetch the user data if needed, or just return what we have.
       // The current Story model already has author_name and author_avatar.
 
-      reply.send({ stories });
+      return reply.send({ stories });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -474,7 +474,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         { is_active: false }
       );
 
-      reply.send({
+      return reply.send({
         message: 'Expired stories cleaned up',
         updated_count: result.modifiedCount
       });

@@ -72,14 +72,26 @@ if (typeof window !== 'undefined') {
 }
 
 export const removePushNotifications = async () => {
-  if (!Capacitor.isNativePlatform()) return;
-  
+  if (!Capacitor.isNativePlatform()) {
+    await unsubscribeFromPushNotifications();
+    return;
+  }
+
   try {
     await PushNotifications.removeAllListeners();
   } catch (error) {
     console.error('Error removing push notification listeners:', error);
   }
 };
+
+// Converts the VAPID public key (base64url) into the Uint8Array format
+// required by PushManager.subscribe().
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
 
 export const setupWebNotifications = async () => {
   if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -92,14 +104,62 @@ export const setupWebNotifications = async () => {
     if (permission === 'default') {
       permission = await Notification.requestPermission();
     }
-    
-    if (permission === 'granted') {
-      console.log('Web notification permission granted');
-    } else {
+
+    if (permission !== 'granted') {
       console.log('Web notification permission:', permission);
+      return;
     }
+
+    console.log('Web notification permission granted');
+    await subscribeToPushNotifications();
   } catch (err) {
     console.error('Error requesting web notification permission:', err);
+  }
+};
+
+// Registers the service worker and subscribes to push so notifications keep
+// arriving even when the browser tab/PWA is closed.
+export const subscribeToPushNotifications = async () => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('This browser does not support push notifications');
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      const { publicKey } = await usersAPI.getPushVapidPublicKey();
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
+
+    await usersAPI.subscribeToPush(subscription.toJSON());
+    console.log('Push subscription registered with backend');
+  } catch (err) {
+    console.error('Error subscribing to push notifications:', err);
+  }
+};
+
+// Unsubscribes this device from push, e.g. on logout.
+export const unsubscribeFromPushNotifications = async () => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    const subscription = await registration?.pushManager.getSubscription();
+
+    if (subscription) {
+      await usersAPI.unsubscribeFromPush(subscription.endpoint);
+      await subscription.unsubscribe();
+    }
+  } catch (err) {
+    console.error('Error unsubscribing from push notifications:', err);
   }
 };
 

@@ -48,7 +48,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
       const total = await Review.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         data: reviews,
         pagination: {
           total,
@@ -59,7 +59,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -74,10 +74,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Review not found' });
       }
 
-      reply.send(review);
+      return reply.send(review);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -129,7 +129,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
         product_id: body.product_id
       });
 
-      reply.code(201).send(review);
+      return reply.code(201).send(review);
     } catch (error: any) {
       fastify.log.error(error);
       
@@ -143,7 +143,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
         });
       }
 
-      reply.code(500).send({ error: 'Internal server error', message: error.message });
+      return reply.code(500).send({ error: 'Internal server error', message: error.message });
     }
   });
 
@@ -188,10 +188,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
         product_id: review.product_id
       });
 
-      reply.send(review);
+      return reply.send(review);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -222,10 +222,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
         product_id: review.product_id
       });
 
-      reply.send({ message: 'Review deleted successfully' });
+      return reply.send({ message: 'Review deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -255,7 +255,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
         ratingDistribution[review.rating as keyof typeof ratingDistribution]++;
       });
 
-      reply.send({
+      return reply.send({
         product_id: productId,
         total_reviews: totalReviews,
         average_rating: Math.round(averageRating * 10) / 10,
@@ -264,7 +264,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

@@ -142,7 +142,30 @@
     "passwordMismatch": "Amagambo y'ibanga ntahuye",
     "passwordTooShort": "Ijambo ry'ibanga rigomba kuba nibura inyuguti 8",
     "usernameRequired": "Izina ryo gukoresha rirakenewe",
-    "biometrics": "Koresha ibimenyetso by'umubiri"
+    "biometrics": "Koresha ibimenyetso by'umubiri",
+    "signIn": "Injira",
+    "fullName": "Amazina yombi",
+    "createAccount": "Fungura Konti",
+    "signingUp": "Kwiyandikisha...",
+    "signingIn": "Kwinjira...",
+    "passwordsMatch": "Amagambo y'ibanga arahuye",
+    "passwordsDoNotMatch": "Amagambo y'ibanga ntahuye",
+    "securedBy": "Birindwa na Aicon X",
+    "legalAgreement": "Mu gukoresha urubuga rwacu, wemeranya na",
+    "recover": "Garura?",
+    "emailOrUsernamePlaceholder": "Imeyili cyangwa @izina ryo gukoresha",
+    "displayNamePlaceholder": "Izina ryawe rigaragara",
+    "staySignedIn": "Guma winjiye",
+    "joinNetwork": "Injira mu muryango",
+    "newHere": "Uraje bwa mbere?",
+    "signUpLink": "Iyandikishe",
+    "signInLink": "Injira",
+    "loginHeroLine1": "BIRENZE",
+    "loginHeroLine2": "UBUCURUZI.",
+    "loginHeroSubtitle": "Murakaza neza kuri urusobe rw'ubucuruzi bwo mu mbuga nkoranyambaga rwo mu rwego rwo hejuru. Huza, erekana, kandi wagure ubukombe bwawe bwa digitale.",
+    "registerHeroLine1": "INJIRA MU",
+    "registerHeroLine2": "IHINDUKA.",
+    "registerHeroSubtitle": "Fungura konti yawe utangire kubaka umwanya wawe mu bucuruzi bwo mu mbuga nkoranyambaga."
   },
   "home": {
     "feed": "Amakuru",
@@ -163,7 +186,9 @@
     "recommendedForYou": "Ibigushimishije",
     "loadingMore": "Gutegereza amakuru menshi...",
     "scrollForMore": "Suka hasi kugira ngo ubone byinshi",
-    "endOfFeed": "Wageze ku mpera y'amakuru"
+    "endOfFeed": "Wageze ku mpera y'amakuru",
+    "affiliateBannerTitle": "Injiza amafaranga wamamaza ibicuruzwa",
+    "affiliateBannerDesc": "Injira muri gahunda y'umushirikiano wishyurwe ku buryo bwose wagejeje umuguzi."
   },
   "explore": {
     "title": "Shakisha",
@@ -285,7 +310,8 @@
     "ratingFair": "Birimo",
     "ratingGood": "Byiza",
     "ratingVeryGood": "Byiza cyane",
-    "ratingExcellent": "Bidasumbwa"
+    "ratingExcellent": "Bidasumbwa",
+    "viewCart": "Reba Igitebo"
   },
   "wishlist": {
     "empty": "Urutonde rw'ibifuzwa rurimo ubusa",
@@ -341,7 +367,13 @@
     "couponUsageLimitReached": "Iyi karita yageze ku mubare ntarengwa w'ikoreshwa",
     "couponMinOrder": "Itumiza rya nibura {{amount}} rirasabwa",
     "couponAppliedToast": "Ikarita yashyizwe mu bikorwa! {{discount}}",
-    "freeShippingProgress": "Ongeraho {{amount}} kugira ngo ubone kohereza ubuntu"
+    "freeShippingProgress": "Ongeraho {{amount}} kugira ngo ubone kohereza ubuntu",
+    "itemsCount_one": "Ikintu {{count}}",
+    "itemsCount_other": "Ibintu {{count}}",
+    "clearCart": "Siba Igitebo",
+    "clearCartConfirm": "Gukuramo ibintu byose mu gitebo?",
+    "cleared": "Igitebo cyasibwe",
+    "clearFailed": "Gusiba igitebo byanze"
   },
   "orders": {
     "title": "Amatumiza yanjye",
@@ -390,7 +422,8 @@
     "reviewPlaceholder": "Bwira abandi uburambe bwawe...",
     "photosUpTo3": "Amafoto (kugeza 3)",
     "uploading": "Kohereza...",
-    "reviewsSubmitted": "Ibitekerezo byoherejwe! Murakoze."
+    "reviewsSubmitted": "Ibitekerezo byoherejwe! Murakoze.",
+    "refundedTab": "Byasubijwe"
   },
   "checkout": {
     "continueToPayment": "Komeza no kwishyura",
@@ -442,7 +475,6 @@
     "payingVia": "Kwishyura na",
     "creditDebitCard": "Ikarita ya krediti/debiti",
     "mobileMoney": "Amafaranga ya telephone",
-    "safeSecurePaystack": "Bikingirwa na ITEC Pay",
     "mobileMoneyProviders": "Airtel, MTN, n.k.",
     "securePaymentGuarantee": "Ubwitambire bwo kwishyura bwikingirwa",
     "securePaymentDesc": "Ibikorwa byose bikorwa binyuze mu rwego rwa ITEC Pay rikingirwa. Aicon X ntibika amakuru yawe yo kwishyura.",
@@ -455,7 +487,14 @@
     "appliedSuccessfully": "Byakoreshejwe neza",
     "needHelp": "Ukeneye ubufasha?",
     "needHelpDesc": "Niba ufite ibibazo ku itumiza ryawe cyangwa inzira yo kwishyura, itsinda ryacu ry'inkunga riraboneka saa 24 ku munsi.",
-    "contactSupport": "Vugana n'inkunga"
+    "contactSupport": "Vugana n'inkunga",
+    "insufficientStock": "Nta bicuruzwa bihagije bisigaye. Nyamuneka gabanya umubare cyangwa uvugane n'ucuruza.",
+    "outOfStock": "Bimwe mu bicuruzwa ntibikiri bihari. Nyamuneka reba niba bihari.",
+    "safeSecureITEC": "Birindwa kandi bikingiwe na ITEC Pay",
+    "mobileMoneyPhone": "Nimero ya Telefone y'Amafaranga ya Mobile",
+    "mobileMoneyPhonePlaceholder": "078 XXXX XXX",
+    "mobileMoneyPhoneDesc": "Injiza nimero ya telefone ihuza na konti yawe y'amafaranga ya mobile.",
+    "mobileMoneyPhoneRequired": "Nyamuneka injiza nimero ya telefone y'amafaranga ya mobile"
   },
   "communities": {
     "title": "Imiryango",
@@ -516,11 +555,11 @@
     "priceOffer": "💰 Igiciro cyatanzwe",
     "startConversationWith": "Tangira ikiganiro na {{name}}",
     "replyingTo": "Gusubiza",
-    "emojis": "Emojis",
+    "emojis": "Emoji",
     "shareProductTooltip": "Sangira igicuruzwa",
     "makeAnOffer": "Tanga igiciro",
-    "voiceCall": "Indirimbo y'amajwi",
-    "videoCall": "Indirimbo ya video",
+    "voiceCall": "Ihamagara ry'Amajwi",
+    "videoCall": "Ihamagara rya Video",
     "forwardMessage": "Ohereza ubutumwa",
     "sendTo": "Ohereza kuri",
     "cancel": "Reka",
@@ -538,7 +577,18 @@
     "searchProductsPlaceholder": "Shakisha...",
     "noProductsFound": "Nta bicuruzwa bibonetse",
     "makeOfferTitle": "💰 Tanga Igiciro",
-    "enterPriceOffer": "Injiza igiciro utanga"
+    "enterPriceOffer": "Injiza igiciro utanga",
+    "lastSeenJustNow": "vuba aha",
+    "lastSeenMinutes": "iminota {{count}} ishize",
+    "lastSeenHours": "amasaha {{count}} ashize",
+    "lastSeenDays": "iminsi {{count}} ishize",
+    "failedToSend": "Kohereza ubutumwa byanze",
+    "typing": "Ararandika...",
+    "callInitiated": "Ihamagara ritangiye...",
+    "callAnswered": "Ihamagara ryasubijwe",
+    "callRejected": "Ihamagara ryanzwe",
+    "callEnded": "Ihamagara ryarangiye",
+    "failedToInitiateCall": "Gutangira ihamagara byanze"
   },
   "notifications": {
     "title": "Impuruza",
@@ -920,7 +970,18 @@
     "upgradeForLocation": "Vana kumutwe ugere ku gahunda yawe kugirango ubone ubumenyi bw'aho uri",
     "topShippingCountries": "Ibihugu bikurura ubutumwa bwinshi",
     "topShippingCountriesDesc": "Aho abakiriya bawe bari",
-    "noShippingData": "Nta makuru y'ubutumwa nawe"
+    "noShippingData": "Nta makuru y'ubutumwa nawe",
+    "allowAffiliate": "Emerera umushirikiano w'ubucuruzi",
+    "allowAffiliateDesc": "Reka abashirikiye bamamaze iki gicuruzwa banabone amafaranga y'umushirikiano",
+    "commissionRate": "Ijanisha ry'umushirikiano",
+    "eliteFeature": "Elite",
+    "affiliateEliteOnlyDesc": "Umushirikiano w'ubucuruzi uboneka gusa ku gahunda ya Elite. Zamura gahunda yawe kugira ngo abandi bamamaze igicuruzwa cyawe banabone amafaranga y'umushirikiano.",
+    "productUpdated": "Igicuruzwa cyahinduwe!",
+    "failedToUpdateProduct": "Kuvugurura igicuruzwa byanze",
+    "savingChanges": "Kubika impinduka...",
+    "saveChanges": "Bika Impinduka",
+    "stockUpdated": "Ibicuruzwa byavuguruwe!",
+    "failedToUpdateStock": "Kuvugurura ibicuruzwa byanze"
   },
   "storeDetail": {
     "invalidStore": "Iduka ritagira agaciro",
@@ -1023,7 +1084,15 @@
     "copyBtn": "Kopi",
     "assetCopied": "{{title}} yakopiwemo mu gitabo!",
     "linkCreated": "Inyunganira y'umushirikiano yakozwe!",
-    "linkCopiedToast": "Inyunganira yakopiwemo mu gitabo!"
+    "linkCopiedToast": "Inyunganira yakopiwemo mu gitabo!",
+    "liveActivity": "Ibikorwa Ako Kanya",
+    "liveActivityEmpty": "Amakuru mashya ku bantu wageneye aho kugurira azagaragara hano uko abaho.",
+    "aProduct": "igicuruzwa",
+    "activityNewReferral": "Umuntu mushya yakoze itumiza rya {{product}} — bitegereje kwishyura",
+    "activityOrderUpdate": "Itumiza rya {{product}} ubu ni {{status}}",
+    "activityCommissionCredited": "Amafaranga y'umushirikiano yinjijwe: {{amount}} avuye kuri {{product}}",
+    "newReferralToast": "Umuntu mushya! Hari uwakoresheje ihuza ryawe kuri {{product}}",
+    "commissionCreditedToast": "Amafaranga y'umushirikiano yinjijwe: +{{amount}}"
   },
   "ai": {
     "title": "Aicon AI",
@@ -1174,7 +1243,38 @@
     "eliteFeat4": "Aderesi yihariye + SSL",
     "eliteFeat5": "Inzira zo kohereza + ibiciro bya kuri ubu",
     "eliteFeat6": "Umujyanama w'konti wihariye",
-    "eliteFeat7": "Kwinjira muri porogaramu yo gutumanahana"
+    "eliteFeat7": "Kwinjira muri porogaramu yo gutumanahana",
+    "processing": "Bikorwa...",
+    "continueToPayment": "Komeza no Kwishyura",
+    "choosePaymentMethod": "Hitamo Uburyo bwo Kwishyura",
+    "choosePaymentMethodDesc": "Hitamo uburyo ushaka kwishyuza gahunda yawe.",
+    "phoneModalTitle": "Nimero ya Telefone Irakenewe",
+    "phoneModalDesc": "Kwishyura ukoresheje amafaranga ya mobile bisaba nimero ya telefone yawe (urugero: +250 7XX XXX XXX). Izabikwa kuri konti yawe.",
+    "phoneRequired": "Nyamuneka injiza nimero ya telefone yemewe.",
+    "checkPhonePrompt": "Kwishyura byatangiye! Reba kuri telefone yawe ubutumwa bwa MTN Mobile Money.",
+    "cancelPlan": "Hagarika Gahunda",
+    "cancelPending": "Hagarika Bitegerejwe",
+    "activatePlan": "Emeza Gahunda",
+    "paymentProcessTitle": "Ni iki gikurikira?",
+    "paymentProcessDesc": "Nyuma yo gukanda komeza, uzabona ubutumwa bwa USSD kuri telefone yawe kugira ngo wemeze kwishyura. Gahunda yawe izemezwa nyuma yo kwemeza kwishyura.",
+    "poweredBy": "Bikoreshwa na",
+    "paymentPendingTitle": "Kwishyura Bitegerejwe",
+    "paymentPendingDesc": "Reba kuri telefone yawe ubutumwa bwa USSD kugira ngo urangize kwishyura. Ibi bishobora gufata iminota itarenze 30.",
+    "paymentInstructionsTitle": "Amabwiriza:",
+    "paymentInstructionsDesc": "Injiza kode ya USSD kuri telefone yawe hanyuma ukurikize amabwiriza kugira ngo wemeze kwishyura. Ntukafunge iyi paji kugeza kwishyura birangiye.",
+    "checkStatus": "Reba Imiterere",
+    "paymentFailedTitle": "Kwishyura Byanze",
+    "paymentFailedDesc": "Kwishyura ntibyarangiye. Ibi bishobora guterwa no guhagarika, amafaranga adahagije, cyangwa ikibazo cy'urusobe.",
+    "paymentFailedReasonTitle": "Icyo ukwiye gukora:",
+    "paymentFailedReasonDesc": "Nyamuneka ongera ugerageze cyangwa uvugane n'inkunga niba ikibazo gikomeje. Gahunda yawe ntizemezwa kugeza kwishyura birangiye neza.",
+    "tryAgain": "Ongera Ugerageze",
+    "cancelPlanTitle": "Uhagarika gahunda yawe?",
+    "cancelPlanDesc": "Guhagarika bizahita bigabanya iduka ryawe ku gahunda ya Starter y'ubuntu. Ibi ntibishobora gusubizwa inyuma.",
+    "cancelPendingTitle": "Uhagarika izamuka ritegerejwe?",
+    "cancelPendingDesc": "Ibi bizahagarika izamuka ritegerejwe kandi bikomeze gahunda yawe ikorwa ubu.",
+    "confirmCancel": "Yego, Hagarika",
+    "cancelledSuccess": "Gahunda yahagaritswe neza.",
+    "cancelFailed": "Guhagarika gahunda byanze. Nyamuneka ongera ugerageze."
   },
   "aiProduct": {
     "title": "Umufasha w'Igicuruzwa wa AI",
@@ -1481,7 +1581,8 @@
       "suspendStore": "Hagarika Iduka",
       "removeVerification": "Kuraho Kwemezwa",
       "verifyStore": "Emeza Iduka",
-      "deleteStore": "Siba Iduka"
+      "deleteStore": "Siba Iduka",
+      "noProducts": "Nta bicuruzwa bibonetse muri iri duka"
     },
     "products": {
       "title": "Urutonde rw'Ibicuruzwa",
@@ -1511,7 +1612,8 @@
       "confirmDelete": "Urizera ko ushaka gusiba igicuruzwa iki?",
       "deletedSuccess": "Igicuruzwa cyasibwe neza",
       "failedDelete": "Gusiba igicuruzwa byanze",
-      "failedFetch": "Gugeraho ibicuruzwa byanze"
+      "failedFetch": "Gugeraho ibicuruzwa byanze",
+      "colSales": "Ibyagurishijwe"
     },
     "orders": {
       "title": "Amalagizo ya Sisitemu",
@@ -1588,7 +1690,16 @@
       "cancelSubscription": "Hagarika Kwiyandikisha",
       "cancelConfirm": "Urizera ko ushaka guhagarika kwiyandikisha kuno?",
       "cancelledSuccess": "Kwiyandikisha guhagaritswe",
-      "failedFetch": "Gugeraho kwiyandikisha byanze"
+      "failedFetch": "Gugeraho kwiyandikisha byanze",
+      "colRole": "Uruhare",
+      "pricingTitle": "Ibiciro by'Amagahunda",
+      "pricingDesc": "Shyiraho ibiciro bya buri kwezi n'umwaka kuri gahunda za Pro na Elite. Impinduka zikoreshwa ako kanya ku bakoresha bose.",
+      "planPrices": "Ibiciro by'Amagahunda",
+      "monthly": "Buri Kwezi",
+      "annual": "Buri Mwaka",
+      "savePrices": "Bika Ibiciro",
+      "pricesSaved": "Ibiciro by'amagahunda byavuguruwe neza.",
+      "pricesSaveFailed": "Kubika ibiciro by'amagahunda byanze."
     },
     "moderation": {
       "title": "Urutonde rwo Kugenzura",
@@ -1733,6 +1844,40 @@
       "update": "Vugurura",
       "updatedSuccess": "Igenamiterere rya sisitemu ryavuguruwe",
       "failedUpdate": "Guhindura igenamiterere byanze"
-    }
+    },
+    "subscriptionRevenue": "Amafaranga y'Amagahunda",
+    "activeSubscriptions": "Amagahunda {{count}} akorwa"
+  },
+  "payment": {
+    "verifying": "Kwemeza Kwishyura",
+    "verifyingDesc": "Nyamuneka tegereza mu gihe twemeza igikorwa cyawe...",
+    "success": "Kwishyura Byagenze Neza!",
+    "successDesc": "Murakoze kugura. Itumiza ryawe ryemejwe kandi ririmo gutunganywa.",
+    "viewOrders": "Reba Amatumiza Yanjye",
+    "continueShopping": "Komeza Kugura",
+    "failed": "Kwemeza Byanze",
+    "failedDesc": "Ntitwashoboye kwemeza inomero y'ubwishyu bwawe. Niba wishyuye, nyamuneka vugana n'inkunga.",
+    "tryAgain": "Ongera Ugerageze"
+  },
+  "legal": {
+    "termsTitle": "Amategeko y'Ikoreshwa",
+    "privacyTitle": "Politiki y'Ibanga",
+    "lastUpdated": "Byavuguruwe bwa nyuma: Kamena 2026",
+    "allRightsReserved": "Uburenganzira bwose burarinzwe.",
+    "termsAcceptance": "Kwemera Amategeko",
+    "termsUseOfService": "Ikoreshwa ry'Imirimo",
+    "termsAccounts": "Kwiyandikisha kwa Konti",
+    "termsTransactions": "Ibikorwa by'Ubucuruzi",
+    "termsLimitation": "Aho Inshingano Zigarukira",
+    "termsChanges": "Impinduka mu Mategeko",
+    "termsContact": "Twandikire",
+    "privacyIntroduction": "Intangiriro",
+    "privacyInformation": "Amakuru Tukusanya",
+    "privacyUse": "Uko Dukoresha Amakuru Yawe",
+    "privacySharing": "Gusangira Amakuru",
+    "privacySecurity": "Umutekano w'Amakuru",
+    "privacyRights": "Uburenganzira Bwawe",
+    "privacyChanges": "Impinduka kuri iyi Politiki",
+    "privacyContact": "Twandikire"
   }
 }
