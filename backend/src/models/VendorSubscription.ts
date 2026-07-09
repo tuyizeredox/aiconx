@@ -8,6 +8,7 @@ export interface IVendorSubscription extends Document {
   billing_cycle: 'monthly' | 'annual';
   pending_plan?: 'pro' | 'elite';
   pending_billing_cycle?: 'monthly' | 'annual';
+  pending_amount?: number;
   started_at: Date;
   expires_at?: Date;
   custom_domain?: string;
@@ -54,6 +55,9 @@ const VendorSubscriptionSchema = new Schema<IVendorSubscription>({
     type: String,
     enum: ['monthly', 'annual'],
     default: null
+  },
+  pending_amount: {
+    type: Number
   },
   started_at: {
     type: Date,

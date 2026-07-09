@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Loader2, ArrowRight, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { verifyITECPayPayment } from '@/lib/itecpay';
-import { cartAPI } from '@/api/apiClient';
+import { cartAPI, checkoutAPI } from '@/api/apiClient';
 import { createPageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,22 @@ useEffect(() => {
         if (response.status === 200 && response.data?.status) {
           const paymentStatus = response.data.status.toUpperCase();
           if (paymentStatus === 'SUCCESS' || paymentStatus === 'PAID' || paymentStatus === 'COMPLETED') {
+            // A card payment for a product checkout redirects here — mark the
+            // orders from that checkout as paid now that the gateway confirms
+            // success (verified again server-side against the real order total).
+            const storedOrderIds = localStorage.getItem('pending_order_ids');
+            const orderIds = storedOrderIds ? JSON.parse(storedOrderIds) : [];
+            if (orderIds.length > 0) {
+              try {
+                await checkoutAPI.verifyPayments(orderIds, reference);
+                localStorage.removeItem('pending_order_ids');
+              } catch (err) {
+                console.error('Order verification error:', err);
+                setStatus('error');
+                toast.error('Payment verification failed');
+                return;
+              }
+            }
             await cartAPI.clear();
             localStorage.removeItem('iqon_ref');
             localStorage.removeItem('iqon_ref_time');

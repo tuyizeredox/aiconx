@@ -348,6 +348,7 @@ export const cartAPI = {
 export const checkoutAPI = {
   process: (data) => apiClient.post('/checkout', data),
   verifyPayment: (orderId, reference) => apiClient.post(`/checkout/${orderId}/verify-payment`, { reference }),
+  verifyPayments: (orderIds, reference) => apiClient.post('/checkout/verify-payment', { order_ids: orderIds, reference }),
 };
 
 export const couponsAPI = {

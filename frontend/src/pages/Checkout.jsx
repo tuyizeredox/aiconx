@@ -488,15 +488,6 @@ export default function Checkout() {
         console.log('[Checkout] Validation passed, preparing payload');
         if (needsAddress && !selectedAddress) throw new Error(t("checkout.selectDeliveryAddress"));
 
-        // Show notification for mobile money payments
-        if (paymentMethod === 'mtn' || paymentMethod === 'airtel') {
-          toast({
-            title: "Payment Initiated",
-            description: "Please check your phone to confirm the payment. Do not close this page.",
-            variant: "default"
-          });
-        }
-
         const payload = {
             payment_method: paymentMethod,
             order_note: orderNote,
@@ -534,17 +525,45 @@ export default function Checkout() {
           console.log('[Checkout] No data returned (validation failed)');
           return; // Validation failed
         }
-        
-        // Store order data for payment verification
-        localStorage.setItem('pending_order_id', data.order_id || data._id);
-        console.log('[Checkout] Stored pending order ID:', data.order_id || data._id);
-        
-        // Open payment method selection modal
-        setPayModal(true);
-        setPayStep("method");
-        setSelectedPaymentMethod(null);
-        setPhoneInput(currentUser.phone_number || "");
-        console.log('[Checkout] Payment modal opened');
+
+        // The real order ids created by this checkout — needed to verify payment
+        // against the correct orders later (a multi-vendor cart creates one order
+        // per store, all paid together under a single reference).
+        const orderIds = (data.orders || []).map(id => String(id));
+        if (orderIds.length === 0) {
+          toast({ title: "Error", description: t("checkout.failedToPlaceOrder"), variant: "destructive" });
+          return;
+        }
+        localStorage.setItem('pending_order_ids', JSON.stringify(orderIds));
+        console.log('[Checkout] Stored pending order ids:', orderIds);
+
+        // Checkout already initialized the real payment above (using the method
+        // and phone chosen on this page, and the actual order ids/total) — use
+        // that transaction directly instead of starting a second, disconnected one.
+        if (paymentMethod === 'card') {
+          if (data.payment_url) {
+            window.location.href = data.payment_url;
+          } else {
+            toast({ title: "Error", description: t("subscription.paymentInitFailed"), variant: "destructive" });
+          }
+          return;
+        }
+
+        if (data.reference) {
+          toast({
+            title: "Payment Initiated",
+            description: "Please check your phone to confirm the payment. Do not close this page.",
+            variant: "default"
+          });
+          setPendingPayment({
+            reference: data.reference,
+            method: paymentMethod,
+            amount: data.total_amount,
+            status: 'pending'
+          });
+        } else {
+          toast({ title: "Error", description: t("subscription.paymentInitFailed"), variant: "destructive" });
+        }
     },
     onError: (err) => {
         console.log('[Checkout] Checkout API error:', err);
@@ -674,19 +693,20 @@ export default function Checkout() {
           });
         } else if (statusLower === 'completed' || statusLower === 'success' || statusLower === 'successful' || statusLower === 'paid' || statusLower === 'approved') {
           // Payment successful - complete order
-          const orderId = localStorage.getItem('pending_order_id');
-          if (orderId) {
-            await checkoutAPI.verifyPayment(orderId, pendingPayment.reference);
+          const storedOrderIds = localStorage.getItem('pending_order_ids');
+          const orderIds = storedOrderIds ? JSON.parse(storedOrderIds) : [];
+          if (orderIds.length > 0) {
+            await checkoutAPI.verifyPayments(orderIds, pendingPayment.reference);
           }
           setPendingPayment(null);
           setMobileMoneyStatus('completed');
           clearInterval(pollInterval);
-          toast({ 
-            title: "Success", 
+          toast({
+            title: "Success",
             description: t("checkout.orderPlaced"),
             variant: "default"
           });
-          localStorage.removeItem('pending_order_id');
+          localStorage.removeItem('pending_order_ids');
           localStorage.removeItem('iqon_ref');
           localStorage.removeItem('iqon_ref_time');
           queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -694,6 +714,16 @@ export default function Checkout() {
         }
       } catch (error) {
         console.error('Error polling payment status:', error);
+        // Surface the failure immediately instead of leaving the user staring at
+        // a spinner forever — let them retry from a clean state.
+        setPendingPayment(prev => (prev ? { ...prev, status: 'failed' } : prev));
+        setMobileMoneyStatus(null);
+        clearInterval(pollInterval);
+        toast({
+          title: "Payment Verification Failed",
+          description: error.message || "We couldn't confirm your payment. Please try again.",
+          variant: "destructive"
+        });
       }
     }, 5000);
 
@@ -701,6 +731,11 @@ export default function Checkout() {
       if (pendingPayment?.status === 'pending') {
         setPendingPayment(prev => ({ ...prev, status: 'failed' }));
         setMobileMoneyStatus(null);
+        toast({
+          title: "Payment Timed Out",
+          description: "We couldn't confirm your payment in time. Please try again.",
+          variant: "destructive"
+        });
       }
       clearInterval(pollInterval);
     }, 120000);

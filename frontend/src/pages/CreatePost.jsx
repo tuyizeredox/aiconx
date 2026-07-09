@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { authAPI, productsAPI, postsAPI, affiliateLinksAPI } from "@/api/apiClient";
+import { authAPI, productsAPI, postsAPI, affiliateLinksAPI, communitiesAPI } from "@/api/apiClient";
 import { uploadPostMedia } from "@/lib/storage";
 import { useTranslation } from "react-i18next";
 
@@ -24,6 +24,7 @@ export default function CreatePost() {
   const [searchParams] = useSearchParams();
   const editPostId = searchParams.get('edit');
   const isEditMode = !!editPostId;
+  const communityId = searchParams.get('community_id');
 
   const VISIBILITY_OPTIONS = [
     { value: "public", icon: Globe, label: t("create.visibilityPublic") },
@@ -33,7 +34,7 @@ export default function CreatePost() {
   const [content, setContent] = useState("");
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState([]);
-  const [visibility, setVisibility] = useState("public");
+  const [visibility, setVisibility] = useState(communityId ? "community" : "public");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileUploadProgress, setFileUploadProgress] = useState({});
@@ -48,6 +49,15 @@ export default function CreatePost() {
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => authAPI.me(),
+  });
+
+  const { data: postingCommunity } = useQuery({
+    queryKey: ["community", communityId],
+    queryFn: async () => {
+      const res = await communitiesAPI.get(communityId);
+      return res.data || res;
+    },
+    enabled: !!communityId && !isEditMode,
   });
 
   const { data: searchedProductsResponse } = useQuery({
@@ -215,6 +225,7 @@ export default function CreatePost() {
           })
           .filter(id => !!id && id !== "[object Object]"),
         visibility: visibility || "public",
+        ...(communityId && !isEditMode ? { community_id: communityId } : {}),
       };
 
       console.log(`${isEditMode ? 'Updating' : 'Creating'} post with final data:`, JSON.stringify(postData, null, 2));
@@ -240,6 +251,7 @@ export default function CreatePost() {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["postDetail", editPostId] });
       queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      if (communityId) queryClient.invalidateQueries({ queryKey: ["communityPosts", communityId] });
       // Clear local state
       setContent("");
       setMediaFiles([]);
@@ -248,7 +260,13 @@ export default function CreatePost() {
       setSelectedAffiliateLinks([]);
       setFileUploadProgress({});
 
-      navigate(isEditMode ? createPageUrl("PostDetail") + `?id=${editPostId}` : createPageUrl("Home"));
+      navigate(
+        isEditMode
+          ? createPageUrl("PostDetail") + `?id=${editPostId}`
+          : communityId
+          ? createPageUrl("CommunityDetail") + `?id=${communityId}`
+          : createPageUrl("Home")
+      );
     },
     onError: (error) => {
       console.error(`Post ${isEditMode ? 'update' : 'creation'} failed:`, error);
@@ -342,20 +360,27 @@ export default function CreatePost() {
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{currentUser?.full_name || t("create.you")}</p>
-            <Select value={visibility} onValueChange={setVisibility}>
-              <SelectTrigger className="h-6 text-xs w-auto border-none shadow-none p-0 px-1 text-slate-500 dark:text-slate-400 gap-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VISIBILITY_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    <div className="flex items-center gap-1.5">
-                      <opt.icon className="w-3 h-3" />{opt.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {communityId && !isEditMode ? (
+              <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                <Lock className="w-3 h-3" />
+                {t("create.postingInCommunity", { name: postingCommunity?.name || t("create.visibilityCommunity") })}
+              </p>
+            ) : (
+              <Select value={visibility} onValueChange={setVisibility}>
+                <SelectTrigger className="h-6 text-xs w-auto border-none shadow-none p-0 px-1 text-slate-500 dark:text-slate-400 gap-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VISIBILITY_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <div className="flex items-center gap-1.5">
+                        <opt.icon className="w-3 h-3" />{opt.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 

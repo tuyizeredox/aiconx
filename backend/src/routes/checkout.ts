@@ -434,7 +434,83 @@ paymentData = await itecPayService.initializeTransaction(
     }
   });
 
-  // Verify payment endpoint
+  // Verify payment for one or more orders from the same checkout (a multi-vendor
+  // cart produces one Order per store, all paid together under one reference).
+  // This is the single gate that flips payment_status to 'paid' from the client
+  // side, so it must confirm: the caller owns every order, the gateway actually
+  // confirms success, the amount paid covers the orders' combined total, and the
+  // reference hasn't already been consumed by a different order.
+  async function verifyAndMarkOrdersPaid(orderIds: string[], reference: string, username: string, io?: any) {
+    const orders = await Order.find({ _id: { $in: orderIds } });
+    if (orders.length !== new Set(orderIds).size) {
+      throw Object.assign(new Error('One or more orders not found'), { statusCode: 404 });
+    }
+
+    for (const o of orders) {
+      if (o.buyer_username !== username) {
+        throw Object.assign(new Error('You can only verify your own orders'), { statusCode: 403 });
+      }
+    }
+
+    if (orders.every(o => o.payment_status === 'paid' && o.payment_reference === reference)) {
+      return orders;
+    }
+
+    const conflicting = await Order.findOne({ payment_reference: reference, _id: { $nin: orders.map(o => o._id) } });
+    if (conflicting) {
+      throw Object.assign(new Error('This payment reference has already been used for a different order'), { statusCode: 409 });
+    }
+
+    const method = orders[0].payment_method;
+    const provider: 'mtn' | 'airtel' | 'spenn' | 'card' =
+      method === 'airtel' ? 'airtel' : method === 'spenn' ? 'spenn' : method === 'mtn' || method === 'mobile_money' ? 'mtn' : 'card';
+
+    const verificationResult = await itecPayService.verifyPayment(reference, provider);
+    const status = String(verificationResult.data?.status || '').toLowerCase();
+    const successfulStatuses = ['completed', 'success', 'successful', 'paid', 'approved'];
+    if (!successfulStatuses.includes(status)) {
+      throw Object.assign(new Error(`Payment not completed yet (status: ${status || 'unknown'})`), { statusCode: 400 });
+    }
+
+    const paidAmount = Number(verificationResult.data?.amount || 0);
+    const expectedTotal = orders.reduce((sum, o) => sum + o.total, 0);
+    const TOLERANCE = 1; // guard against gateway float rounding, not a discount
+    if (paidAmount + TOLERANCE < expectedTotal) {
+      throw Object.assign(new Error('Payment amount does not cover the order total'), { statusCode: 402 });
+    }
+
+    for (const o of orders) {
+      o.payment_status = 'paid';
+      o.status = 'confirmed';
+      o.payment_reference = reference;
+      await o.save();
+    }
+
+    await creditAffiliateConversions(orders.map(o => o._id.toString()), io);
+    return orders;
+  }
+
+  // Verify payment for every order created in one checkout (multi-vendor cart)
+  fastify.post('/verify-payment', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { order_ids, reference } = request.body as { order_ids: string[]; reference: string };
+      const user = request.user as any;
+
+      if (!Array.isArray(order_ids) || order_ids.length === 0 || !reference) {
+        return reply.code(400).send({ error: 'Missing order_ids or reference' });
+      }
+
+      const orders = await verifyAndMarkOrdersPaid(order_ids, reference, user.username, fastify.io);
+      return { message: 'Payment verified successfully', orders: orders.map(o => o._id), status: 'paid' };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(error.statusCode || 400).send({ error: 'Payment verification failed', message: error.message });
+    }
+  });
+
+  // Verify payment for a single order (back-compat)
   fastify.post('/:orderId/verify-payment', {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
@@ -443,47 +519,15 @@ paymentData = await itecPayService.initializeTransaction(
       const { reference } = request.body as { reference: string };
       const user = request.user as any;
 
-      // Find the order
-      const order = await Order.findOne({ _id: orderId });
-      if (!order) {
-        return reply.code(404).send({ error: 'Order not found' });
+      if (!reference) {
+        return reply.code(400).send({ error: 'Missing payment reference' });
       }
 
-      // Verify the payment with ITEC Pay
-      const verificationResult = await itecPayService.verifyPayment(reference, 'mtn');
-
-      if (verificationResult.data?.status === 'completed' || 
-          verificationResult.data?.status === 'success' || 
-          verificationResult.data?.status === 'successful' ||
-          verificationResult.data?.status === 'paid' ||
-          verificationResult.data?.status === 'approved') {
-        
-        // Update order payment status
-        order.payment_status = 'paid';
-        order.status = 'confirmed';
-        order.payment_reference = reference;
-        await order.save();
-
-        await creditAffiliateConversions([order._id.toString()], fastify.io);
-
-        return {
-          message: 'Payment verified successfully',
-          order: order._id,
-          status: 'paid'
-        };
-      } else {
-        return reply.code(400).send({ 
-          error: 'Payment verification failed', 
-          message: 'Payment not completed yet',
-          status: verificationResult.data?.status 
-        });
-      }
+      const orders = await verifyAndMarkOrdersPaid([orderId], reference, user.username, fastify.io);
+      return { message: 'Payment verified successfully', order: orders[0]._id, status: 'paid' };
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(400).send({ 
-        error: 'Payment verification failed', 
-        message: error.message 
-      });
+      return reply.code(error.statusCode || 400).send({ error: 'Payment verification failed', message: error.message });
     }
   });
 }

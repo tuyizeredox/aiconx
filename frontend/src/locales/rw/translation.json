@@ -1421,6 +1421,7 @@
     "visibilityPublic": "Rusange",
     "visibilityFollowers": "Abakurikira",
     "visibilityCommunity": "Umuryango",
+    "postingInCommunity": "Kohereza mu muryango {{name}}",
     "posting": "Kohereza...",
     "post": "Ohereza",
     "postCreated": "Ikiganiro cyoherejwe!",

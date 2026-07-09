@@ -5,12 +5,7 @@ import { Settings } from '../models/Settings';
 import { User } from '../models/User';
 import { checkCustomDomainLimit, PLAN_PRIORITY } from '../middleware/subscription';
 import { itecPayService } from '../services/itecPayService';
-
-const DEFAULT_PLAN_PRICES: { [key: string]: { monthly: number; annual: number } } = {
-  pro: { monthly: 29000, annual: 23000 },
-  elite: { monthly: 79000, annual: 63000 },
-  free: { monthly: 0, annual: 0 }
-};
+import { getPlanPrice, DEFAULT_PLAN_PRICES } from '../utils/planPricing';
 
 export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
   // Get subscription for a vendor
@@ -275,19 +270,27 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
           subscription.status = 'active';
           subscription.pending_plan = undefined;
           subscription.pending_billing_cycle = undefined;
+          subscription.pending_amount = undefined;
           subscription.set('custom_domain', null);
         } else if (subscription.status === 'active' && subscription.plan !== 'free' && subscription.plan !== body.plan) {
           // Upgrading from an active PAID plan (pro → elite):
           // Do NOT downgrade current plan — store target in pending_plan so the user
           // keeps their existing paid features while the new payment is processed.
+          const targetCycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
           subscription.pending_plan = body.plan as 'pro' | 'elite';
-          subscription.pending_billing_cycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+          subscription.pending_billing_cycle = targetCycle;
+          // Server-computed price for this plan/cycle — the amount actually charged
+          // and verified before activation must be checked against this, never
+          // against whatever amount the client later claims to have paid.
+          subscription.pending_amount = await getPlanPrice(subscription.pending_plan, targetCycle);
           // status and plan remain unchanged
         } else if (subscription.plan !== body.plan || subscription.status !== 'active') {
           // First-time paid sub, or free → paid upgrade, or re-attempting a pending payment:
           // Store target plan in pending_plan - only activate after payment verification
+          const targetCycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
           subscription.pending_plan = body.plan as 'pro' | 'elite';
-          subscription.pending_billing_cycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+          subscription.pending_billing_cycle = targetCycle;
+          subscription.pending_amount = await getPlanPrice(subscription.pending_plan, targetCycle);
           subscription.status = 'pending';
           // Keep current plan unchanged until payment is verified
           if (body.billing_cycle) {
@@ -350,6 +353,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       if (subscription.pending_plan) {
         subscription.pending_plan = undefined;
         subscription.pending_billing_cycle = undefined;
+        subscription.pending_amount = undefined;
         await subscription.save();
         message = 'Pending upgrade cancelled';
         return reply.send({ ...subscription.toObject(), message, warning: syncWarning });
@@ -362,6 +366,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         subscription.billing_cycle = 'monthly';
         subscription.pending_plan = undefined;
         subscription.pending_billing_cycle = undefined;
+        subscription.pending_amount = undefined;
         subscription.set('custom_domain', null);
         await subscription.save();
         message = 'Pending subscription cancelled';
@@ -383,6 +388,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       subscription.billing_cycle = 'monthly';
       subscription.pending_plan = undefined;
       subscription.pending_billing_cycle = undefined;
+      subscription.pending_amount = undefined;
       subscription.set('custom_domain', null);
       await subscription.save();
 
@@ -410,6 +416,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const { reference } = (request.body || {}) as { reference?: string };
       const user = request.user as any;
 
       const subscription = await VendorSubscription.findById(id);
@@ -421,6 +428,37 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       // Check if user owns the subscription
       if (subscription.vendor_username !== user.username) {
         return reply.code(403).send({ error: 'You can only renew your own subscription' });
+      }
+
+      // Renewing a paid plan must never just extend expiry on trust — it requires
+      // a real payment, verified with the gateway, for at least the plan's price.
+      if (subscription.plan !== 'free') {
+        if (!reference) {
+          return reply.code(400).send({ error: 'Missing payment reference. Renewals require a completed payment.' });
+        }
+
+        if (subscription.payment_reference === reference) {
+          return reply.code(409).send({ error: 'This payment reference has already been used.' });
+        }
+
+        let verifyResult: any;
+        try {
+          const provider = (subscription.payment_method || 'mtn') as 'mtn' | 'airtel' | 'spenn' | 'card';
+          verifyResult = await itecPayService.verifyPayment(reference, provider);
+        } catch (verifyErr: any) {
+          return reply.code(402).send({ error: 'Payment not confirmed', message: verifyErr.message });
+        }
+
+        const paidAmount = Number(verifyResult?.data?.amount || 0);
+        const expectedAmount = await getPlanPrice(subscription.plan, subscription.billing_cycle);
+        const TOLERANCE = 1; // guard against gateway float rounding, not a discount
+        if (paidAmount + TOLERANCE < expectedAmount) {
+          return reply.code(402).send({ error: 'Payment amount does not cover the renewal price' });
+        }
+
+        subscription.payment_reference = reference;
+        subscription.last_payment_date = new Date();
+        subscription.amount = paidAmount;
       }
 
       // Calculate new expiration date
@@ -528,12 +566,6 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ error: 'Internal server error' });
     }
   });
-
-  const DEFAULT_PLAN_PRICES = {
-    free:  { monthly: 0,     annual: 0 },
-    pro:   { monthly: 29000, annual: 23000 },
-    elite: { monthly: 79000, annual: 63000 },
-  };
 
   // Get subscription plans and pricing (public endpoint)
   fastify.get('/public/plans', async (request, reply) => {

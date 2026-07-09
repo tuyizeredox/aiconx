@@ -46,7 +46,7 @@ const COMMUNITY_CATEGORIES = [
    const { data: postsData, isLoading: postsLoading } = useQuery({ 
      queryKey: ["communityPosts", communityId, currentUser?.username], 
      queryFn: async () => {
-       const params = { community_id: communityId, limit: 50 };
+       const params = { community_id: communityId, visibility: "community", limit: 50 };
        if (currentUser?.username) params.user_username = currentUser.username;
        const res = await postsAPI.list(params);
        return res.data || [];
@@ -61,7 +61,7 @@ const COMMUNITY_CATEGORIES = [
      queryFn: async () => { 
        if (!currentUser?.email) return null;
        const res = await communityMembersAPI.list({ community_id: communityId, member_username: currentUser.username });
-       return res.data?.[0] || null;
+       return res.members?.[0] || null;
      }, 
      enabled: !!communityId && !!currentUser?.email, 
    }); 
@@ -70,7 +70,7 @@ const COMMUNITY_CATEGORIES = [
      queryKey: ["communityMembers", communityId], 
      queryFn: async () => {
        const res = await communityMembersAPI.list({ community_id: communityId, limit: 100 });
-       return res.data || [];
+       return res.members || [];
      },
      enabled: !!communityId, 
    }); 
@@ -212,7 +212,7 @@ const COMMUNITY_CATEGORIES = [
                  </div>
                  <div className="flex-1 min-w-0">
                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">@{m.member_username}</p>
-                   <p className="text-xs text-slate-400 dark:text-slate-500">{t("communities.joinedOn", { date: new Date(m.created_at).toLocaleDateString() })}</p>
+                   <p className="text-xs text-slate-400 dark:text-slate-500">{t("communities.joinedOn", { date: new Date(m.joined_at).toLocaleDateString() })}</p>
                  </div>
                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${m.role === "admin" ? "bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400" : m.role === "moderator" ? "bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}>
                    {m.role} 

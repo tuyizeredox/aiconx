@@ -2,7 +2,7 @@ import { Order } from '../models/Order';
 import { VendorSubscription } from '../models/VendorSubscription';
 import { PLAN_PRIORITY, PLAN_LIMITS } from '../middleware/subscription';
 import { Product } from '../models/Product';
-import { Settings } from '../models/Settings';
+import { getPlanPrice } from '../utils/planPricing';
 import { creditAffiliateConversions } from './affiliateService';
 import axios from 'axios';
 
@@ -230,23 +230,27 @@ export const itecPayService = {
   },
 
   /**
-   * Verify payment status via ITEC Pay
+   * Check payment status via ITEC Pay without throwing for a non-final or
+   * unsuccessful status (e.g. 'pending' while the customer hasn't yet approved
+   * the prompt on their phone). Used for polling, where the caller needs to
+   * distinguish "still pending, keep waiting" from "genuinely failed" instead
+   * of getting the same generic rejection for both.
    */
-  async verifyPayment(reqRef: string, provider: 'mtn' | 'airtel' | 'spenn' | 'card' = 'mtn'): Promise<ITECPayVerifyResponse> {
+  async checkPaymentStatus(reqRef: string, provider: 'mtn' | 'airtel' | 'spenn' | 'card' = 'mtn'): Promise<{ status: string; amount?: string; raw: any }> {
+    const apiKeyMap: Record<string, string> = {
+      mtn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
+      airtel: process.env.ITECPAY_API_KEY_AIRTEL_MONEY || '',
+      spenn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
+      card: process.env.ITECPAY_API_KEY_CARD || '',
+    };
+
+    const apiKey = apiKeyMap[provider];
+
+    if (!apiKey) {
+      throw new Error(`ITEC Pay API key not configured for provider: ${provider}`);
+    }
+
     try {
-      const apiKeyMap: Record<string, string> = {
-        mtn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
-        airtel: process.env.ITECPAY_API_KEY_AIRTEL_MONEY || '',
-        spenn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
-        card: process.env.ITECPAY_API_KEY_CARD || '',
-      };
-
-      const apiKey = apiKeyMap[provider];
-
-      if (!apiKey) {
-        throw new Error(`ITEC Pay API key not configured for provider: ${provider}`);
-      }
-
       const response = await axios.post(
         'https://pay.itecpay.rw/api2/verify',
         {
@@ -263,9 +267,7 @@ export const itecPayService = {
 
       console.log('ITEC Pay Verify Response:', JSON.stringify(response.data));
 
-      // Validate that payment is actually successful
       const res = response.data as any;
-      const successfulStatuses = ['completed', 'success', 'paid', 'approved'];
       // Prefer explicit transaction/payment status fields. A bare "status" field is
       // often just the HTTP-style envelope code (e.g. 200) and does NOT confirm the
       // transaction itself succeeded — trusting it caused cancelled payments to be
@@ -282,19 +284,35 @@ export const itecPayService = {
 
       console.log('Extracted payment status:', status);
 
-      if (!successfulStatuses.includes(status)) {
-        console.warn(`ITEC Pay Verify: Payment not successful - status: ${status || 'unknown'}`);
-        throw new Error(`Payment not successful. Current status: ${status || 'unknown'}`);
-      }
-
-      return response.data;
+      return { status, amount: res.data?.amount ?? res.amount, raw: response.data };
     } catch (error: any) {
       console.error('ITEC Pay Verify Error:', error.response?.data || error.message);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to verify ITEC Pay payment';
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to check ITEC Pay payment status';
       const newError: any = new Error(errorMessage);
       newError.statusCode = error.response?.status || 500;
       throw newError;
     }
+  },
+
+  /**
+   * Verify payment status via ITEC Pay, throwing unless the gateway confirms
+   * a successful terminal status. Used to gate activation (subscription
+   * upgrades, order payment confirmation) — never used for polling, since a
+   * 'pending' status must not be treated as an error there.
+   */
+  async verifyPayment(reqRef: string, provider: 'mtn' | 'airtel' | 'spenn' | 'card' = 'mtn'): Promise<ITECPayVerifyResponse> {
+    const { status, raw } = await this.checkPaymentStatus(reqRef, provider);
+    const successfulStatuses = ['completed', 'success', 'paid', 'approved'];
+
+    if (!successfulStatuses.includes(status)) {
+      console.warn(`ITEC Pay Verify: Payment not successful - status: ${status || 'unknown'}`);
+      const err: any = new Error(`Payment not successful. Current status: ${status || 'unknown'}`);
+      err.statusCode = 400;
+      err.paymentStatus = status || 'unknown';
+      throw err;
+    }
+
+    return raw;
   },
 
   /**
@@ -455,39 +473,48 @@ export const itecPayService = {
             continue;
           }
 
+          const paymentAmount = Number(amount) || 0;
+
+          // Never activate a plan for less than it costs. The amount charged at
+          // initialize time can be tampered with client-side, so the only trustworthy
+          // gate is comparing what the gateway confirms was actually paid against the
+          // server's own price for the plan being granted.
           if (subscription.pending_plan) {
+            const targetCycle = (subscription.pending_billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+            const expectedAmount = subscription.pending_amount ?? await getPlanPrice(subscription.pending_plan, targetCycle);
+            const TOLERANCE = 1;
+            if (paymentAmount + TOLERANCE < expectedAmount) {
+              console.error(
+                `ITEC Pay Webhook: Underpayment for subscription ${subscriptionId} (transaction ${transID}). ` +
+                `Paid ${paymentAmount}, expected ${expectedAmount} for plan ${subscription.pending_plan}/${targetCycle}. Refusing to activate.`
+              );
+              continue;
+            }
+
             subscription.plan = subscription.pending_plan;
-            subscription.billing_cycle = (subscription.pending_billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+            subscription.billing_cycle = targetCycle;
             subscription.pending_plan = undefined;
             subscription.pending_billing_cycle = undefined;
+            subscription.pending_amount = undefined;
+          } else {
+            // Renewal of the current plan (no tier change) — still must cover its price.
+            const expectedAmount = await getPlanPrice(subscription.plan, subscription.billing_cycle);
+            const TOLERANCE = 1;
+            if (expectedAmount > 0 && paymentAmount + TOLERANCE < expectedAmount) {
+              console.error(
+                `ITEC Pay Webhook: Underpayment renewing subscription ${subscriptionId} (transaction ${transID}). ` +
+                `Paid ${paymentAmount}, expected ${expectedAmount} for plan ${subscription.plan}/${subscription.billing_cycle}. Refusing to renew.`
+              );
+              continue;
+            }
           }
 
           subscription.status = 'active';
           subscription.payment_reference = transID;
           subscription.last_payment_date = new Date();
-          
-          // Calculate amount from plan if not provided
-          let paymentAmount = Number(amount) || 0;
-          if (paymentAmount === 0 && subscription.pending_plan) {
-            // Fetch plan prices from Settings
-            const settings = await Settings.findOne();
-            const plan = subscription.pending_plan as 'pro' | 'elite';
-            const billingCycle = (subscription.pending_billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
-            
-            if (settings?.plan_prices?.[plan]) {
-              paymentAmount = billingCycle === 'annual' 
-                ? settings.plan_prices[plan].annual 
-                : settings.plan_prices[plan].monthly;
-            } else {
-              // Fallback to default prices
-              const defaultPrices: Record<string, { monthly: number; annual: number }> = {
-                pro: { monthly: 29000, annual: 23000 },
-                elite: { monthly: 79000, annual: 63000 }
-              };
-              paymentAmount = defaultPrices[plan]?.[billingCycle] || 0;
-            }
-          }
-          subscription.amount = paymentAmount;
+          subscription.amount = paymentAmount > 0
+            ? paymentAmount
+            : await getPlanPrice(subscription.plan, subscription.billing_cycle);
 
           const now = new Date();
           subscription.expires_at = subscription.billing_cycle === 'annual'

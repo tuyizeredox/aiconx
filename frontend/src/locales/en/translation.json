@@ -1879,6 +1879,7 @@
     "visibilityPublic": "Public",
     "visibilityFollowers": "Followers",
     "visibilityCommunity": "Community",
+    "postingInCommunity": "Posting in {{name}}",
     "posting": "Posting...",
     "post": "Post",
     "postCreated": "Post created!",

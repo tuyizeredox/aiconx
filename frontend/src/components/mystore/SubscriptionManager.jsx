@@ -406,8 +406,9 @@ try {
         console.log('Payment status:', statusLower);
 
         if (statusLower === 'failed' || statusLower === 'cancelled' || statusLower === 'rejected') {
-          setPendingPayment(prev => ({ ...prev, status: 'failed' }));
+          setPendingPayment(prev => (prev ? { ...prev, status: 'failed' } : prev));
           clearInterval(pollInterval);
+          toast.error(t("subscription.paymentVerificationFailed"));
         } else if (statusLower === 'completed' || statusLower === 'success' || statusLower === 'successful' || statusLower === 'paid' || statusLower === 'approved') {
           // Payment successful - verify and close popup
           verifyPayment({
@@ -419,6 +420,11 @@ try {
         }
       } catch (error) {
         console.error('Error polling payment status:', error);
+        // Surface the failure immediately instead of leaving the user staring at
+        // a spinner forever — let them retry from a clean state.
+        setPendingPayment(prev => (prev ? { ...prev, status: 'failed' } : prev));
+        clearInterval(pollInterval);
+        toast.error(error?.message || t("subscription.paymentVerificationFailed"));
       }
     }, 5000); // Poll every 5 seconds
 
@@ -426,6 +432,7 @@ try {
     const timeout = setTimeout(() => {
       if (pendingPayment?.status === 'pending') {
         setPendingPayment(prev => ({ ...prev, status: 'failed' }));
+        toast.error(t("subscription.paymentVerificationFailed"));
       }
       clearInterval(pollInterval);
     }, 120000);
