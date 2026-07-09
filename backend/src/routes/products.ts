@@ -195,7 +195,7 @@ export async function productRoutes(fastify: FastifyInstance) {
               type: 'product_added',
               title,
               body,
-              link: `/product/${savedProduct._id}`,
+              link: `/ProductDetail?id=${savedProduct._id}`,
               sender_username: user.username,
               sender_name: vendorName,
               metadata: {
@@ -219,6 +219,7 @@ export async function productRoutes(fastify: FastifyInstance) {
               title,
               body,
               type: 'product_added',
+              link: `/ProductDetail?id=${savedProduct._id}`,
               metadata: { product_id: savedProduct._id }
             }, fastify);
           }

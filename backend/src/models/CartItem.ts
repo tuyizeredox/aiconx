@@ -10,6 +10,10 @@ export interface ICartItem extends Document {
   store_id: string;
   store_name?: string;
   quantity: number;
+  selected_color?: string;
+  selected_size?: string;
+  selected_options?: { name: string; value: string }[];
+  selected_image?: string;
   affiliate_username?: string;
   created_at: Date;
   updated_at: Date;
@@ -51,6 +55,22 @@ const CartItemSchema = new Schema<ICartItem>({
     required: true,
     min: 1,
     default: 1,
+  },
+  selected_color: {
+    type: String,
+    trim: true,
+  },
+  selected_size: {
+    type: String,
+    trim: true,
+  },
+  selected_options: [{
+    name: { type: String, trim: true },
+    value: { type: String, trim: true },
+    _id: false,
+  }],
+  selected_image: {
+    type: String,
   },
   affiliate_username: {
     type: String,

@@ -200,6 +200,19 @@ export default function Cart() {
                         {item.product_title}
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{item.store_name}</p>
+                      {(item.selected_color || item.selected_size || item.selected_options?.length > 0) && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 flex flex-wrap gap-x-3">
+                          {item.selected_color && (
+                            <span>{t("product.color")}: <span className="font-medium text-slate-700 dark:text-slate-300">{item.selected_color}</span></span>
+                          )}
+                          {item.selected_size && (
+                            <span>{t("product.size")}: <span className="font-medium text-slate-700 dark:text-slate-300">{item.selected_size}</span></span>
+                          )}
+                          {item.selected_options?.map((opt) => (
+                            <span key={opt.name}>{opt.name}: <span className="font-medium text-slate-700 dark:text-slate-300">{opt.value}</span></span>
+                          ))}
+                        </p>
+                      )}
                       <p className="text-base font-bold text-orange-600 dark:text-orange-400">
                         {formatCurrency(item.product_price)}
                       </p>

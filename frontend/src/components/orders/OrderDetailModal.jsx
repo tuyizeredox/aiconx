@@ -23,7 +23,8 @@ import {
   ShoppingBag,
   User,
   Navigation,
-  Info
+  Info,
+  Palette
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -168,6 +169,26 @@ export default function OrderDetailModal({
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {item.quantity} x {formatCurrency(item.price)}
                     </p>
+                    {(item.selected_color || item.selected_size || item.selected_options?.length > 0) && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {item.selected_color && (
+                          <Badge variant="secondary" className="w-fit text-[10px] px-1.5 py-0 gap-1">
+                            <Palette className="w-2.5 h-2.5" />
+                            {item.selected_color}
+                          </Badge>
+                        )}
+                        {item.selected_size && (
+                          <Badge variant="secondary" className="w-fit text-[10px] px-1.5 py-0">
+                            Size: {item.selected_size}
+                          </Badge>
+                        )}
+                        {item.selected_options?.map((opt) => (
+                          <Badge key={opt.name} variant="secondary" className="w-fit text-[10px] px-1.5 py-0">
+                            {opt.name}: {opt.value}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center">
                     {formatCurrency(item.quantity * item.price)}

@@ -11,6 +11,7 @@ import { postsAPI, commentsAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/AuthContext";
 import { useSocket } from "@/lib/SocketContext";
+import { toast } from "sonner";
 
 function ReplyItem({ reply, currentUser }) {
   const queryClient = useQueryClient();
@@ -39,11 +40,11 @@ function ReplyItem({ reply, currentUser }) {
   }, [replyId, currentUser?.username, on]);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      return isLiked ? await commentsAPI.unlike(replyId) : await commentsAPI.like(replyId);
+    mutationFn: async (wasLiked) => {
+      return wasLiked ? await commentsAPI.unlike(replyId) : await commentsAPI.like(replyId);
     },
-    onMutate: () => {
-      const next = !isLiked;
+    onMutate: (wasLiked) => {
+      const next = !wasLiked;
       setIsLiked(next);
       setLikesCount(prev => next ? prev + 1 : Math.max(0, prev - 1));
     },
@@ -61,7 +62,18 @@ function ReplyItem({ reply, currentUser }) {
         return old;
       });
     },
-    onError: () => {
+    onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["postComments"] });
+        return;
+      }
+      if (error?.status === 404) {
+        toast.error("This reply is no longer available");
+      } else {
+        toast.error("Failed to update like. Please try again.");
+      }
       setIsLiked(!!reply.is_liked);
       setLikesCount(reply.likes_count || 0);
     },
@@ -97,8 +109,9 @@ function ReplyItem({ reply, currentUser }) {
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{reply.content}</p>
         </div>
         <button
-          onClick={() => currentUser && likeMutation.mutate()}
-          className={`flex items-center gap-1 text-[10px] font-bold mt-1.5 ml-1 transition-colors ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+          onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
+          disabled={likeMutation.isPending}
+          className={`flex items-center gap-1 text-[10px] font-bold mt-1.5 ml-1 transition-colors disabled:opacity-60 ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
         >
           <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
           {likesCount > 0 && likesCount} {isLiked ? "Liked" : "Like"}
@@ -146,11 +159,11 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
   }, [commentId, currentUser?.username, on]);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      return isLiked ? await commentsAPI.unlike(commentId) : await commentsAPI.like(commentId);
+    mutationFn: async (wasLiked) => {
+      return wasLiked ? await commentsAPI.unlike(commentId) : await commentsAPI.like(commentId);
     },
-    onMutate: () => {
-      const next = !isLiked;
+    onMutate: (wasLiked) => {
+      const next = !wasLiked;
       setIsLiked(next);
       setLikesCount(prev => next ? prev + 1 : Math.max(0, prev - 1));
     },
@@ -168,7 +181,18 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
         return old;
       });
     },
-    onError: () => {
+    onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["postComments"] });
+        return;
+      }
+      if (error?.status === 404) {
+        toast.error("This comment is no longer available");
+      } else {
+        toast.error("Failed to update like. Please try again.");
+      }
       setIsLiked(!!comment.is_liked);
       setLikesCount(comment.likes_count || 0);
     },
@@ -226,8 +250,9 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => currentUser && likeMutation.mutate()}
-              className={`flex items-center gap-1 text-[10px] font-bold transition-colors ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+              onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
+              disabled={likeMutation.isPending}
+              className={`flex items-center gap-1 text-[10px] font-bold transition-colors disabled:opacity-60 ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
             >
               <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
               {likesCount > 0 && likesCount} {isLiked ? "Liked" : "Like"}

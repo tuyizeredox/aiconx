@@ -6,6 +6,10 @@ export interface IOrderItem {
   product_image?: string;
   quantity: number;
   price: number;
+  selected_color?: string;
+  selected_size?: string;
+  selected_options?: { name: string; value: string }[];
+  selected_image?: string;
   inventory_deducted?: boolean;
 }
 
@@ -66,6 +70,22 @@ const OrderItemSchema = new Schema<IOrderItem>({
     type: Number,
     required: true,
     min: 0,
+  },
+  selected_color: {
+    type: String,
+    trim: true,
+  },
+  selected_size: {
+    type: String,
+    trim: true,
+  },
+  selected_options: [{
+    name: { type: String, trim: true },
+    value: { type: String, trim: true },
+    _id: false,
+  }],
+  selected_image: {
+    type: String,
   },
   inventory_deducted: {
     type: Boolean,

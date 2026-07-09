@@ -360,7 +360,7 @@ export async function communityRoutes(fastify: FastifyInstance) {
           title: `${display_name} joined your community: ${community.name}`,
           sender_username: user.username,
           sender_name: display_name,
-          link: `/community/${community._id}`,
+          link: `/CommunityDetail?id=${community._id}`,
           metadata: {
             community_id: community._id,
             member_id: member._id

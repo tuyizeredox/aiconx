@@ -16,7 +16,7 @@ import {
   Grid3X3, ShoppingBag, UserPlus, UserCheck, LogOut,
   Store, Package, CheckCircle2, Clock, Truck, Pencil, Star, BadgeCheck, Heart,
   Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X,
-  Settings as SettingsIcon
+  Settings as SettingsIcon, Link2
 } from "lucide-react";
 import StarRating from "@/components/reviews/StarRating";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
@@ -351,6 +351,18 @@ export default function Profile() {
                   >
                     <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{t("profile.editProfile")}</span>
                   </Button>
+                  <Link to={createPageUrl("Affiliate")}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      title={t("nav.affiliate")}
+                      aria-label={t("nav.affiliate")}
+                      className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all h-9 w-9 p-0 shrink-0"
+                    >
+                      <Link2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
                   <Link to={createPageUrl("Settings")}>
                     <Button
                       type="button"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
@@ -6,19 +6,23 @@ import ReviewGallery from "@/components/reviews/ReviewGallery";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import SimilarProducts from "@/components/product/SimilarProducts";
 import SentimentSummary from "@/components/product/SentimentSummary";
+import ImageZoomGallery from "@/components/product/ImageZoomGallery";
+import ColorSelector from "@/components/product/ColorSelector";
+import SizeSelector from "@/components/product/SizeSelector";
+import OptionSelector from "@/components/product/OptionSelector";
 import ShareModal from "@/components/shared/ShareModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI } from "@/api/apiClient";
-import { addToGuestCart } from "@/lib/guestCart";
+import { addToGuestCart, getGuestCart } from "@/lib/guestCart";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
 import {
   Star, Heart, ShoppingCart, Share2, Truck, Shield, ArrowLeft,
-  ChevronLeft, ChevronRight, Minus, Plus, Store, Check, PenLine, Images, Zap, Loader2
+  Minus, Plus, Store, Check, PenLine, Images, Zap, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 function StarRow({ rating }) {
@@ -34,8 +38,11 @@ function StarRow({ rating }) {
 export default function ProductDetail() {
   const params = new URLSearchParams(window.location.search);
   const productId = params.get("id");
-  const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -67,40 +74,93 @@ export default function ProductDetail() {
     retry: false,
   });
 
+  const requiresColor = product?.colors?.length > 0;
+  const requiresSize = product?.sizes?.length > 0;
+  const customOptions = product?.custom_options || [];
+
+  const missingSelection = () => {
+    if (requiresColor && !selectedColor) return t("product.selectColorPrompt");
+    if (requiresSize && !selectedSize) return t("product.selectSizePrompt");
+    const missingOption = customOptions.find(opt => !selectedOptions[opt.name]);
+    if (missingOption) return t("product.selectOptionPrompt", { option: missingOption.name });
+    return null;
+  };
+
   const buildCartItem = () => ({
     product_id: productId,
     product_title: product.title,
-    product_image: product.images?.[0],
+    product_image: selectedImage || product.images?.[0],
     product_price: product.price,
     store_id: product.store_id,
     store_name: product.store_name,
     quantity,
+    selected_color: selectedColor || undefined,
+    selected_size: selectedSize || undefined,
+    selected_options: customOptions.length > 0
+      ? Object.entries(selectedOptions).map(([name, value]) => ({ name, value }))
+      : undefined,
+    selected_image: selectedImage || undefined,
   });
 
   const goToCart = () => navigate(createPageUrl("Cart"));
 
+  const { data: cartResponse } = useQuery({
+    queryKey: ["cart", currentUser?.username],
+    queryFn: () => cartAPI.get(),
+    enabled: !!currentUser?.username,
+  });
+
+  const [guestCartItems, setGuestCartItems] = useState(() => getGuestCart());
+  useEffect(() => {
+    const sync = () => setGuestCartItems(getGuestCart());
+    window.addEventListener("guestcart:updated", sync);
+    return () => window.removeEventListener("guestcart:updated", sync);
+  }, []);
+
+  const normalizeOptions = (options) => [...(options || [])]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(o => `${o.name}:${o.value}`)
+    .join("|");
+
+  const currentSelectionOptions = customOptions.length > 0
+    ? Object.entries(selectedOptions).map(([name, value]) => ({ name, value }))
+    : [];
+
+  const cartItems = currentUser ? (cartResponse?.items || []) : guestCartItems;
+  const isInCart = cartItems.some(item =>
+    item.product_id === productId &&
+    (item.selected_color || "") === (selectedColor || "") &&
+    (item.selected_size || "") === (selectedSize || "") &&
+    (item.selected_image || "") === (selectedImage || "") &&
+    normalizeOptions(item.selected_options) === normalizeOptions(currentSelectionOptions)
+  );
+
+  const showAddedToCartToast = (alreadyInCart) => {
+    setAddedToCart(true);
+    const toastFn = alreadyInCart ? toast.info : toast.success;
+    toastFn(alreadyInCart ? t("product.alreadyInCart") : t("product.addedToCart"), {
+      action: { label: t("product.viewCart"), onClick: goToCart },
+    });
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
+
   const addToCartMutation = useMutation({
-    mutationFn: async () => {
-      await cartAPI.add(buildCartItem());
-    },
-    onSuccess: () => {
-      setAddedToCart(true);
-      toast.success(t("product.addedToCart"), {
-        action: { label: t("product.viewCart"), onClick: goToCart },
-      });
+    mutationFn: async () => cartAPI.add(buildCartItem()),
+    onSuccess: (result) => {
+      showAddedToCartToast(result?.already_in_cart);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
-      setTimeout(() => setAddedToCart(false), 2000);
     },
   });
 
   const handleAddToCart = () => {
+    const missing = missingSelection();
+    if (missing) {
+      toast.error(missing);
+      return;
+    }
     if (!currentUser) {
-      addToGuestCart(buildCartItem());
-      setAddedToCart(true);
-      toast.success(t("product.addedToCart"), {
-        action: { label: t("product.viewCart"), onClick: goToCart },
-      });
-      setTimeout(() => setAddedToCart(false), 2000);
+      const { alreadyInCart } = addToGuestCart(buildCartItem());
+      showAddedToCartToast(alreadyInCart);
       return;
     }
     addToCartMutation.mutate();
@@ -119,6 +179,15 @@ export default function ProductDetail() {
       navigate(createPageUrl("Checkout"));
     },
   });
+
+  const handleBuyNow = () => {
+    const missing = missingSelection();
+    if (missing) {
+      toast.error(missing);
+      return;
+    }
+    buyNowMutation.mutate();
+  };
 
   const { data: wishlistItems = [] } = useQuery({
     queryKey: ["wishlist", currentUser?.username],
@@ -224,55 +293,16 @@ export default function ProductDetail() {
       <div className="grid lg:grid-cols-2 gap-6 lg:gap-10">
         {/* Image Gallery */}
         <div>
-          <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={selectedImage}
-                src={images[selectedImage]}
-                alt={product.title}
-                className="w-full h-full object-cover"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              />
-            </AnimatePresence>
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={() => setSelectedImage(i => Math.max(0, i - 1))}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setSelectedImage(i => Math.min(images.length - 1, i + 1))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
-            {discount > 0 && (
+          <ImageZoomGallery
+            images={images}
+            title={product.title}
+            onSelectedImageChange={(url) => setSelectedImage(url)}
+            badge={discount > 0 ? (
               <div className="absolute top-4 left-4 px-3 py-1.5 bg-red-500 text-white text-sm font-bold rounded-xl">
                 -{discount}%
               </div>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-              {images.map((img, i) => (
-                <button
-                  key={`thumb-${i}-${img}`}
-                  onClick={() => setSelectedImage(i)}
-                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                    selectedImage === i ? "border-orange-500 ring-2 ring-orange-100" : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
-                >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+            ) : null}
+          />
         </div>
 
         {/* Product Info */}
@@ -308,6 +338,14 @@ export default function ProductDetail() {
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">{product.description}</p>
           )}
 
+          <ColorSelector colors={product.colors} value={selectedColor} onChange={setSelectedColor} />
+          <SizeSelector sizes={product.sizes} value={selectedSize} onChange={setSelectedSize} />
+          <OptionSelector
+            options={customOptions}
+            values={selectedOptions}
+            onChange={(name, value) => setSelectedOptions(prev => ({ ...prev, [name]: value }))}
+          />
+
           {/* Quantity */}
           <div className="flex items-center gap-3 mb-6">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("product.quantity")}:</span>
@@ -325,17 +363,23 @@ export default function ProductDetail() {
           {/* Actions */}
           <div className="flex gap-3 mb-3">
             <Button
-              onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending || product.status === "sold_out"}
+              onClick={isInCart && !addedToCart ? goToCart : handleAddToCart}
+              disabled={addToCartMutation.isPending || (product.status === "sold_out" && !isInCart)}
               variant="outline"
               className={`flex-1 h-12 rounded-xl text-base font-semibold transition-all ${
-                addedToCart ? "border-green-600 text-green-600" : ""
+                addedToCart || isInCart ? "border-green-600 text-green-600" : ""
               }`}
             >
-              {addedToCart ? <><Check className="w-5 h-5 mr-2" /> {t("product.added")}</> : <><ShoppingCart className="w-5 h-5 mr-2" /> {t("product.addToCart")}</>}
+              {addedToCart ? (
+                <><Check className="w-5 h-5 mr-2" /> {t("product.added")}</>
+              ) : isInCart ? (
+                <><ShoppingCart className="w-5 h-5 mr-2" /> {t("product.viewInCart")}</>
+              ) : (
+                <><ShoppingCart className="w-5 h-5 mr-2" /> {t("product.addToCart")}</>
+              )}
             </Button>
             <Button
-              onClick={() => buyNowMutation.mutate()}
+              onClick={handleBuyNow}
               disabled={buyNowMutation.isPending || product.status === "sold_out"}
               className="flex-1 h-12 rounded-xl text-base font-semibold bg-orange-600 hover:bg-orange-700 transition-all"
             >

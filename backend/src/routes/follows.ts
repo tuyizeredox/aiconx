@@ -199,14 +199,14 @@ export async function followRoutes(fastify: FastifyInstance) {
               await Store.findByIdAndUpdate(target_id, { $inc: { follower_count: 1 } });
               recipientUsername = targetEntity.owner_username;
               title = `${currentUserDisplayName} started following your store: ${targetEntity.name}`;
-              link = `/store?id=${targetEntity._id}`;
+              link = `/StoreDetail?id=${targetEntity._id}`;
             }
           } else if (follow_type === 'community' && target_id) {
             if (targetEntity) {
               await Community.findByIdAndUpdate(target_id, { $inc: { member_count: 1 } });
               recipientUsername = targetEntity.owner_username;
               title = `${currentUserDisplayName} joined your community: ${targetEntity.name}`;
-              link = `/communities/${targetEntity._id}`;
+              link = `/CommunityDetail?id=${targetEntity._id}`;
             }
           }
 

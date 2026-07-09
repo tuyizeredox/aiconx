@@ -111,16 +111,16 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
   const [showFollowButton, setShowFollowButton] = useState(false);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      if (optimisticLiked) {
+    mutationFn: async (wasLiked) => {
+      if (wasLiked) {
         return await postsAPI.unlike(postId);
       } else {
         return await postsAPI.like(postId);
       }
     },
-    onMutate: () => {
-      setOptimisticLiked(!optimisticLiked);
-      setOptimisticCount(prev => optimisticLiked ? Math.max(0, prev - 1) : prev + 1);
+    onMutate: (wasLiked) => {
+      setOptimisticLiked(!wasLiked);
+      setOptimisticCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
     },
     onSuccess: (data) => {
       if (data && data.likes_count !== undefined) {
@@ -165,6 +165,12 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
       );
     },
     onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["posts"] });
+        return;
+      }
       if (error.status === 404) {
         toast.error("This post is no longer available");
         queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -382,8 +388,8 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
             ref={emblaRef}
             onClick={() => !fullView && setIsDetailModalOpen(true)}
             onDoubleClick={() => {
-              if (currentUser && !optimisticLiked) {
-                likeMutation.mutate();
+              if (currentUser && !optimisticLiked && !likeMutation.isPending) {
+                likeMutation.mutate(optimisticLiked);
                 setShowHeartAnimation(true);
                 setTimeout(() => setShowHeartAnimation(false), 1000);
               }
@@ -514,8 +520,9 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 dark:border-slate-800/50">
         <div className="flex items-center gap-6">
           <button
-            onClick={() => currentUser && likeMutation.mutate()}
-            className="flex items-center gap-1.5 group outline-none"
+            onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(optimisticLiked)}
+            disabled={likeMutation.isPending}
+            className="flex items-center gap-1.5 group outline-none disabled:opacity-60"
           >
             <motion.div 
               whileTap={{ scale: 1.4 }}

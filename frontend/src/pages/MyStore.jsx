@@ -23,6 +23,9 @@ import CouponManager from "@/components/mystore/CouponManager";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
 import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
+import ColorInput from "@/components/product/ColorInput";
+import SizeInput from "@/components/product/SizeInput";
+import CustomOptionsInput from "@/components/product/CustomOptionsInput";
 import VendorFinance from "./VendorFinance";
 import OrderDetailModal from "@/components/orders/OrderDetailModal";
 import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI, filesAPI } from "@/api/apiClient";
@@ -95,7 +98,7 @@ export default function MyStore() {
       tiktok: "",
     }
   });
-  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10" });
+  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
   const [productImages, setProductImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -104,7 +107,7 @@ export default function MyStore() {
   const [stockValue, setStockValue] = useState("");
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10" });
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
   const queryClient = useQueryClient();
 
   const handleFileChange = (e) => {
@@ -299,7 +302,7 @@ export default function MyStore() {
     onSuccess: () => {
       toast.success("Product added!");
       setShowAddProduct(false);
-      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10" });
+      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
       setProductImages([]);
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews([]);
@@ -360,6 +363,9 @@ export default function MyStore() {
       inventory_count: String(product.inventory_count ?? 0),
       affiliate_enabled: product.affiliate_enabled !== false,
       affiliate_commission_pct: String(product.affiliate_commission_pct ?? 10),
+      colors: product.colors || [],
+      sizes: product.sizes || [],
+      custom_options: product.custom_options || [],
     });
     setShowEditProduct(true);
   };
@@ -373,6 +379,9 @@ export default function MyStore() {
       compare_at_price: editForm.compare_at_price ? parseFloat(editForm.compare_at_price) : undefined,
       category: editForm.category,
       inventory_count: Math.max(0, parseInt(editForm.inventory_count) || 0),
+      colors: editForm.colors,
+      sizes: editForm.sizes,
+      custom_options: editForm.custom_options,
       ...(currentPlan === 'elite' ? {
         affiliate_enabled: editForm.affiliate_enabled,
         affiliate_commission_pct: Math.min(100, Math.max(0, parseFloat(editForm.affiliate_commission_pct) || 0)),
@@ -1187,6 +1196,10 @@ export default function MyStore() {
                   <Input type="number" placeholder={t("store.inventoryCount")} value={productForm.inventory_count} onChange={(e) => setProductForm(p => ({ ...p, inventory_count: e.target.value }))} />
                 </div>
 
+                <ColorInput colors={productForm.colors} onChange={(colors) => setProductForm(p => ({ ...p, colors }))} />
+                <SizeInput sizes={productForm.sizes} onChange={(sizes) => setProductForm(p => ({ ...p, sizes }))} />
+                <CustomOptionsInput options={productForm.custom_options} onChange={(custom_options) => setProductForm(p => ({ ...p, custom_options }))} />
+
                 {/* Affiliate Marketing Settings */}
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
                   <div className="flex items-center justify-between gap-3">
@@ -1333,6 +1346,10 @@ export default function MyStore() {
               </Select>
               <Input type="number" placeholder={t("store.inventoryCount")} value={editForm.inventory_count} onChange={(e) => setEditForm(p => ({ ...p, inventory_count: e.target.value }))} />
             </div>
+
+            <ColorInput colors={editForm.colors} onChange={(colors) => setEditForm(p => ({ ...p, colors }))} />
+            <SizeInput sizes={editForm.sizes} onChange={(sizes) => setEditForm(p => ({ ...p, sizes }))} />
+            <CustomOptionsInput options={editForm.custom_options} onChange={(custom_options) => setEditForm(p => ({ ...p, custom_options }))} />
 
             {/* Affiliate Marketing Settings */}
             <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">

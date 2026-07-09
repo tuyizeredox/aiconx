@@ -24,6 +24,10 @@ const createOrderSchema = z.object({
     product_image: z.string().optional(),
     quantity: z.number().min(1),
     price: z.number().min(0),
+    selected_color: z.string().optional(),
+    selected_size: z.string().optional(),
+    selected_options: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
+    selected_image: z.string().optional(),
   })),
   subtotal: z.number().min(0),
   shipping_fee: z.number().default(0),
@@ -166,11 +170,13 @@ export async function orderRoutes(fastify: FastifyInstance) {
         const dbProduct = productMap.get(item.product_id)!;
         const price = dbProduct.price;
         computedSubtotal += price * item.quantity;
+        const validImage = item.selected_image && dbProduct.images.includes(item.selected_image) ? item.selected_image : undefined;
         return {
           ...item,
           price, // Use DB price
           product_title: dbProduct.title, // Use DB title
-          product_image: dbProduct.images[0], // Use DB image
+          product_image: validImage || dbProduct.images[0], // Use selected image if valid, else default
+          selected_image: validImage,
           inventory_deducted: dbProduct.inventory_count > 0,
         };
       });

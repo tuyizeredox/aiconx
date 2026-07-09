@@ -9,6 +9,9 @@ export interface IProduct extends Document {
   currency: string;
   images: string[];
   videos: string[];
+  colors: { name: string; hex?: string; image?: string }[];
+  sizes: string[];
+  custom_options: { name: string; values: string[] }[];
   category: string;
   tags: string[];
   store_id: string;
@@ -60,6 +63,21 @@ const ProductSchema = new Schema<IProduct>({
   }],
   videos: [{
     type: String,
+  }],
+  colors: [{
+    name: { type: String, required: true, trim: true },
+    hex: { type: String, trim: true },
+    image: { type: String },
+    _id: false,
+  }],
+  sizes: [{
+    type: String,
+    trim: true,
+  }],
+  custom_options: [{
+    name: { type: String, required: true, trim: true },
+    values: [{ type: String, trim: true }],
+    _id: false,
   }],
   category: {
     type: String,

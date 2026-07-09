@@ -197,20 +197,24 @@ function AssetCard({ asset, affiliateUrl }) {
     ? asset.content.replace(/\{YOUR_LINK\}/g, affiliateUrl)
     : asset.content;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(resolvedContent);
-    setCopied(true);
-    toast.success(t("affiliate.assetCopied", { title: asset.title }));
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(resolvedContent);
+      setCopied(true);
+      toast.success(t("affiliate.assetCopied", { title: asset.title }));
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error(t("affiliate.assetCopyFailed"));
+    }
   };
 
   const renderPreview = () => {
     if (!affiliateUrl) {
-      return <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">{resolvedContent}</pre>;
+      return <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap break-words font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">{resolvedContent}</pre>;
     }
     const parts = asset.content.split(/(\{YOUR_LINK\})/g);
     return (
-      <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">
+      <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap break-words font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">
         {parts.map((part, i) =>
           part === "{YOUR_LINK}" ? (
             <span key={i} className="text-orange-600 dark:text-orange-400 font-semibold break-all">{affiliateUrl}</span>
@@ -276,13 +280,13 @@ function AssetCard({ asset, affiliateUrl }) {
 
 function StatCard({ icon: Icon, label, value, color, sub }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${color}`}>
-        <Icon className="w-5 h-5" />
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 sm:p-5 min-w-0">
+      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-3 ${color}`}>
+        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
       </div>
-      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-      {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{sub}</p>}
+      <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{label}</p>
+      {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{sub}</p>}
     </div>
   );
 }
@@ -333,6 +337,7 @@ export default function Affiliate() {
   const [creating, setCreating] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [pendingProductId, setPendingProductId] = useState(null);
+  const [copiedLinkId, setCopiedLinkId] = useState(null);
   const [leaderboardPeriod, setLeaderboardPeriod] = useState("month");
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -455,9 +460,16 @@ export default function Affiliate() {
   const buildAffiliateUrl = (link) =>
     `${window.location.origin}${createPageUrl("ProductDetail")}?id=${link.product_id}&ref=${link.ref_code}`;
 
-  const copyLink = (link) => {
-    navigator.clipboard.writeText(buildAffiliateUrl(link));
-    toast.success(t("affiliate.linkCopiedToast"));
+  const copyLink = async (link) => {
+    const linkId = link._id || link.id;
+    try {
+      await navigator.clipboard.writeText(buildAffiliateUrl(link));
+      setCopiedLinkId(linkId);
+      toast.success(t("affiliate.linkCopiedToast"));
+      setTimeout(() => setCopiedLinkId(current => (current === linkId ? null : current)), 2000);
+    } catch (err) {
+      toast.error(t("affiliate.linkCopyFailed"));
+    }
   };
 
   // Totals from backend stats
@@ -517,10 +529,10 @@ export default function Affiliate() {
       </div>
 
       <Tabs defaultValue="links" className="w-full">
-        <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-6 w-full lg:w-auto overflow-x-auto justify-start lg:justify-center">
-          <TabsTrigger value="links" className="rounded-xl px-6 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.links")}</TabsTrigger>
-          <TabsTrigger value="leaderboard" className="rounded-xl px-6 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.leaderboard")}</TabsTrigger>
-          <TabsTrigger value="assets" className="rounded-xl px-6 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.marketingAssets")}</TabsTrigger>
+        <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-6 w-full lg:w-auto overflow-x-auto justify-start lg:justify-center scrollbar-hide">
+          <TabsTrigger value="links" className="rounded-xl px-4 sm:px-6 py-2 whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.links")}</TabsTrigger>
+          <TabsTrigger value="leaderboard" className="rounded-xl px-4 sm:px-6 py-2 whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.leaderboard")}</TabsTrigger>
+          <TabsTrigger value="assets" className="rounded-xl px-4 sm:px-6 py-2 whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.marketingAssets")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="links" className="mt-0">
@@ -577,16 +589,19 @@ export default function Affiliate() {
 
                       <ConversionBar clicks={link.clicks} conversions={link.conversions} />
 
-                      <div className="flex gap-2 mt-3">
-                        <div className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 truncate font-mono">
+                      <div className="flex items-start gap-2 mt-3">
+                        <div className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 break-all font-mono">
                           {buildAffiliateUrl(link)}
                         </div>
                         <button
                           onClick={() => copyLink(link)}
-                          className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors shrink-0"
+                          className={`w-10 h-10 flex items-center justify-center text-white rounded-xl transition-colors shrink-0 ${
+                            copiedLinkId === linkId ? "bg-green-600 hover:bg-green-600" : "bg-orange-600 hover:bg-orange-700 active:bg-orange-800"
+                          }`}
                           title="Copy link"
+                          aria-label={t("affiliate.copyBtn")}
                         >
-                          <Copy className="w-4 h-4" />
+                          {copiedLinkId === linkId ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         </button>
                       </div>
                     </motion.div>
@@ -613,7 +628,7 @@ export default function Affiliate() {
                   </Link>
                 </div>
               )}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 sticky top-4">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 lg:sticky lg:top-4">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4 text-orange-500" /> {t("affiliate.chooseProduct")}
                 </h3>
@@ -775,7 +790,7 @@ export default function Affiliate() {
                 <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-xs text-green-800 dark:text-green-400 font-semibold mb-0.5">Your link is auto-filled in every template</p>
-                  <p className="text-[11px] text-green-700 dark:text-green-500 font-mono truncate">{affiliateUrl}</p>
+                  <p className="text-[11px] text-green-700 dark:text-green-500 font-mono break-all">{affiliateUrl}</p>
                 </div>
               </div>
             ) : (

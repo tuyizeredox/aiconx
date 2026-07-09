@@ -1,8 +1,9 @@
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation, useParams } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { SocketProvider } from '@/lib/SocketContext';
@@ -22,6 +23,24 @@ if (!googleClientId) {
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
+
+// Redirects for legacy notification links (already stored in the DB, or already
+// delivered to devices as push notifications) that used path params instead of
+// the app's actual `?id=` query-param routes.
+const LegacyProductRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/ProductDetail?id=${id}`} replace />;
+};
+
+const LegacyCommunityRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/CommunityDetail?id=${id}`} replace />;
+};
+
+const LegacyStoreRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/StoreDetail${location.search}`} replace />;
+};
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>
@@ -123,6 +142,12 @@ const AppRoutes = () => {
         );
       })}
       
+      {/* Legacy notification link redirects — see LegacyProductRedirect etc. above */}
+      <Route path="/product/:id" element={<LegacyProductRedirect />} />
+      <Route path="/community/:id" element={<LegacyCommunityRedirect />} />
+      <Route path="/communities/:id" element={<LegacyCommunityRedirect />} />
+      <Route path="/store" element={<LegacyStoreRedirect />} />
+
       <Route path="/admin-dashboard" element={
         !isAuthenticated ? <Navigate to="/welcome" replace /> :
         user?.role !== 'super_admin' ? <Navigate to="/" replace /> :
@@ -155,6 +180,7 @@ function App() {
                   <AppRoutes />
                 </Router>
                 <Toaster />
+                <SonnerToaster position="top-center" richColors closeButton />
               </LanguageProvider>
             </QueryClientProvider>
           </SocketProvider>

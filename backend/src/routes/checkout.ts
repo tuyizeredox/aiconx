@@ -52,7 +52,11 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
            cartItemsToProcess.push({
              product_id: item.product_id,
              quantity: item.quantity,
-             affiliate_username: ci?.affiliate_username
+             affiliate_username: ci?.affiliate_username,
+             selected_color: ci?.selected_color,
+             selected_size: ci?.selected_size,
+             selected_options: ci?.selected_options,
+             selected_image: ci?.selected_image,
            });
         }
       } else {
@@ -63,7 +67,11 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
         cartItemsToProcess = cartItems.map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
-          affiliate_username: item.affiliate_username
+          affiliate_username: item.affiliate_username,
+          selected_color: item.selected_color,
+          selected_size: item.selected_size,
+          selected_options: item.selected_options,
+          selected_image: item.selected_image,
         }));
       }
 
@@ -164,12 +172,20 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
              }
           }
 
+          const itemImage = gi.selected_image && gi.product.images.includes(gi.selected_image)
+            ? gi.selected_image
+            : gi.product.images[0];
+
           return {
             product_id: gi.product_id,
             product_title: gi.product.title,
-            product_image: gi.product.images[0],
+            product_image: itemImage,
             quantity: gi.quantity,
             price: price,
+            selected_color: gi.selected_color || undefined,
+            selected_size: gi.selected_size || undefined,
+            selected_options: gi.selected_options && gi.selected_options.length > 0 ? gi.selected_options : undefined,
+            selected_image: gi.selected_image && gi.product.images.includes(gi.selected_image) ? gi.selected_image : undefined,
             inventory_deducted: gi.product.inventory_count > 0,
           };
         });

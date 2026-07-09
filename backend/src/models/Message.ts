@@ -26,6 +26,7 @@ export interface IMessage extends Document {
   is_edited: boolean;
   is_pinned: boolean;
   reactions?: Record<string, number>;
+  deleted_for?: string[];
   created_at: Date;
   updated_at: Date;
 }
@@ -115,6 +116,11 @@ const MessageSchema = new Schema<IMessage>({
     type: Map,
     of: Number,
     default: {},
+  },
+  deleted_for: {
+    type: [String],
+    default: [],
+    index: true,
   },
 }, {
   timestamps: {

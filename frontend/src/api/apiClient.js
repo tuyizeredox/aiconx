@@ -646,6 +646,7 @@ export const messagesAPI = {
   delete: (id) => apiClient.delete(`/messages/${id}`),
   markAsRead: (id) => apiClient.patch(`/messages/${id}/read`, {}),
   markConversationAsRead: (conversationId) => apiClient.patch(`/messages/conversation/${conversationId}/read`, {}),
+  deleteConversation: (conversationId) => apiClient.delete(`/messages/conversation/${conversationId}`),
 };
 
 export const callsAPI = {

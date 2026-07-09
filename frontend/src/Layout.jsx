@@ -191,15 +191,23 @@ export default function Layout({ children, currentPageName }) {
                 className={!isDesktopExpanded && isDesktop ? "justify-center w-full !gap-0" : ""}
               />
             </Link>
-            {(!isDesktop || isDesktopExpanded) && (
-              <button
-                onClick={toggleSidebar}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                {!isDesktop ? <X className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {(!isDesktop || isDesktopExpanded) && <LanguagePicker />}
+              {(!isDesktop || isDesktopExpanded) && (
+                <button
+                  onClick={toggleSidebar}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {!isDesktop ? <X className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                </button>
+              )}
+            </div>
           </div>
+          {isDesktop && !isDesktopExpanded && (
+            <div className="flex justify-center">
+              <LanguagePicker compact />
+            </div>
+          )}
           {(isDesktopExpanded || !isDesktop) && currentUser?.role !== 'super_admin' && <GlobalSearch />}
         </div>
 
@@ -282,7 +290,6 @@ export default function Layout({ children, currentPageName }) {
         </nav>
 
         <div className={`p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
-          <LanguagePicker compact={!isDesktopExpanded && isDesktop} />
           {currentUser?.role !== 'super_admin' && (
             <button
               onClick={() => {
@@ -325,13 +332,8 @@ export default function Layout({ children, currentPageName }) {
           <LanguagePicker compact />
           <NotificationBell userEmail={currentUser?.email} />
           {currentUser?.role !== 'super_admin' && (
-            <Link to={createPageUrl("cart")} className="relative p-2">
-              <ShoppingBag className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              {cartItemCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-orange-600 text-white text-[10px] rounded-full flex items-center justify-center">
-                  {cartItemCount > 9 ? "9+" : cartItemCount}
-                </span>
-              )}
+            <Link to={createPageUrl("orders")} className="relative p-2">
+              <Package className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </Link>
           )}
         </div>

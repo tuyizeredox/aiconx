@@ -96,7 +96,8 @@ export async function messageRoutes(fastify: FastifyInstance) {
             $or: [
               { sender_username: user.username },
               { receiver_username: user.username }
-            ]
+            ],
+            deleted_for: { $ne: user.username }
           }
         },
         {
@@ -148,9 +149,11 @@ export async function messageRoutes(fastify: FastifyInstance) {
         const otherUser = userMap[conv.other_user_username];
         return {
           ...conv,
-          other_user_name: otherUser?.display_name || otherUser?.username,
+          other_user_name: otherUser?.display_name || otherUser?.username || conv.other_user_username,
           other_user_avatar: otherUser?.avatar_url,
-          other_user_username: otherUser?.username
+          // Keep the aggregated username even if the account was deleted/renamed,
+          // so the conversation stays openable/deletable instead of turning into undefined.
+          other_user_username: otherUser?.username || conv.other_user_username
         };
       });
 
@@ -170,10 +173,14 @@ export async function messageRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { conversationId } = request.params as { conversationId: string };
-      const messages = await Message.find({ conversation_id: conversationId })
+      const user = request.user as any;
+      const messages = await Message.find({
+        conversation_id: conversationId,
+        deleted_for: { $ne: user.username }
+      })
         .sort({ created_at: 1 })
         .lean();
-      
+
       return messages;
     } catch (error: any) {
       fastify.log.error(error);
@@ -411,9 +418,52 @@ export async function messageRoutes(fastify: FastifyInstance) {
       return { success: true };
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error', 
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Delete a conversation (hides it for the current user only; the other party keeps their history)
+  fastify.delete('/conversation/:conversationId', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { conversationId } = request.params as { conversationId: string };
+      const user = request.user as any;
+
+      const unreadCount = await Message.countDocuments({
+        conversation_id: conversationId,
+        receiver_username: user.username,
+        is_read: false,
+        deleted_for: { $ne: user.username }
+      });
+
+      const result = await Message.updateMany(
+        {
+          conversation_id: conversationId,
+          $or: [
+            { sender_username: user.username },
+            { receiver_username: user.username }
+          ]
+        },
+        { $addToSet: { deleted_for: user.username } }
+      );
+
+      if (unreadCount > 0) {
+        await User.updateOne(
+          { username: user.username },
+          { $inc: { unread_messages_count: -unreadCount } }
+        );
+      }
+
+      return { success: true, count: result.modifiedCount };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });
