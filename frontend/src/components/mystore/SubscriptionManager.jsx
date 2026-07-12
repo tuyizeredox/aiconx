@@ -3,7 +3,7 @@ import { vendorSubscriptionsAPI, authAPI, paymentAPI } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Crown, Zap, Star, Check, Globe, TrendingUp, Image, Infinity, Loader2, Shield, BadgeCheck, AlertCircle, Info
+  Crown, Zap, Star, Check, Globe, TrendingUp, Image, Infinity, Loader2, Shield, BadgeCheck, AlertCircle, Info, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +69,6 @@ const PLANS = [
       "subscription.proFeat1",
       "subscription.proFeat2",
       "subscription.proFeat3",
-      "subscription.proFeat4",
       "subscription.proFeat5",
       "subscription.proFeat6",
     ],
@@ -90,7 +89,6 @@ const PLANS = [
       "subscription.eliteFeat1",
       "subscription.eliteFeat2",
       "subscription.eliteFeat3",
-      "subscription.eliteFeat4",
       "subscription.eliteFeat5",
       "subscription.eliteFeat6",
       "subscription.eliteFeat7",
@@ -101,8 +99,14 @@ const PLANS = [
 
 function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
   const { t } = useTranslation();
-  const isActive = currentPlan?.plan === plan.id;
-  const isDowngrade = currentPlan && PLANS.findIndex(p => p.id === plan.id) < PLANS.findIndex(p => p.id === currentPlan.plan);
+  const planIndex = PLANS.findIndex(p => p.id === plan.id);
+  // A subscription still in 'pending' status hasn't been paid for yet, so the vendor
+  // hasn't actually gained access to it — treat their real tier as whatever they had before.
+  const currentPlanId = currentPlan?.status === "pending" ? "free" : (currentPlan?.plan || "free");
+  const currentIndex = PLANS.findIndex(p => p.id === currentPlanId);
+  const isActive = currentPlan?.plan === plan.id && currentPlan?.status !== "pending";
+  const isUnlocked = planIndex <= currentIndex;
+  const isDowngrade = currentPlan && planIndex < PLANS.findIndex(p => p.id === currentPlan.plan);
   const planPrices = prices?.[plan.id];
   const price = billing === "annual" ? (planPrices?.annual ?? plan.priceAnnual) : (planPrices?.monthly ?? plan.price);
   const basePrice = planPrices?.monthly ?? plan.price;
@@ -112,33 +116,35 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className={`relative rounded-2xl border-2 ${plan.color} ${isActive ? "ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-slate-900" : ""} overflow-hidden flex flex-col`}
+      className={`relative min-w-0 rounded-2xl border-2 ${plan.color} ${isActive ? "ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-slate-900" : ""} overflow-hidden flex flex-col h-full`}
     >
       {plan.badge && (
-        <div className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full ${plan.id === "pro" ? "bg-orange-600 text-white" : "bg-amber-500 text-white"}`}>
+        <div className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${plan.id === "pro" ? "bg-orange-600 text-white" : "bg-amber-500 text-white"}`}>
           {t(plan.badge)}
         </div>
       )}
-      <div className={`p-5 ${plan.headerBg}`}>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${plan.id === "free" ? "bg-slate-200 dark:bg-slate-700" : plan.id === "pro" ? "bg-orange-100 dark:bg-orange-900" : "bg-amber-100 dark:bg-amber-900"}`}>
+      <div className={`p-4 sm:p-5 ${plan.headerBg}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 shrink-0 ${plan.id === "free" ? "bg-slate-200 dark:bg-slate-700" : plan.id === "pro" ? "bg-orange-100 dark:bg-orange-900" : "bg-amber-100 dark:bg-amber-900"}`}>
           <PlanIcon className={`w-5 h-5 ${plan.iconColor}`} />
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">{plan.name}</h3>
-        <div className="flex items-end gap-1 mt-1">
-          <span className="text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(price)}</span>
+        <div className="flex items-end flex-wrap gap-1 mt-1">
+          <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white whitespace-nowrap">{formatCurrency(price)}</span>
           <span className="text-slate-500 dark:text-slate-400 text-sm mb-0.5">{t("subscription.perMonth")}</span>
         </div>
-        {billing === "annual" && basePrice > 0 && (
+        {billing === "annual" && basePrice > 0 && baseAnnual < basePrice && (
           <p className="text-xs text-green-600 font-medium mt-0.5">{t("subscription.savePerYear", { amount: formatCurrency((basePrice - baseAnnual) * 12) })}</p>
         )}
       </div>
 
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-4 sm:p-5 flex flex-col flex-1">
         <ul className="space-y-2.5 flex-1 mb-5">
           {plan.features.map((f, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-              {t(f)}
+            <li key={i} className={`flex items-start gap-2 text-sm ${isUnlocked ? "text-slate-600 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}`}>
+              {isUnlocked
+                ? <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                : <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0 mt-0.5" />}
+              <span className="min-w-0 break-words">{t(f)}</span>
             </li>
           ))}
         </ul>
@@ -154,7 +160,7 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
             className={`w-full rounded-xl ${plan.id === "free" ? "variant-outline border border-slate-200" : plan.id === "pro" ? "bg-orange-600 hover:bg-orange-700" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
             variant={plan.id === "free" ? "outline" : "default"}
           >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : !isUnlocked ? <Lock className="w-3.5 h-3.5 mr-1" /> : null}
             {t("subscription.upgradeButton", { action: isDowngrade ? t("subscription.downgrade") : t("subscription.upgrade"), name: plan.name })}
           </Button>
         )}
@@ -535,27 +541,29 @@ try {
   return (
     <div className="space-y-6">
       {/* Current Plan Banner */}
-      <div className={`relative rounded-2xl p-5 flex items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-orange-200 dark:border-orange-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
-        {currentPlanInfo && <currentPlanInfo.icon className={`w-8 h-8 shrink-0 ${currentPlanInfo.iconColor}`} />}
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-slate-900 dark:text-white">
-              {t("subscription.onPlan", { name: currentPlanInfo?.name })}
-            </p>
-            {isPending && (
-              <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 animate-pulse">{t("subscription.pendingPayment")}</Badge>
+      <div className={`relative rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-orange-200 dark:border-orange-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
+        <div className="flex items-center gap-4">
+          {currentPlanInfo && <currentPlanInfo.icon className={`w-8 h-8 shrink-0 ${currentPlanInfo.iconColor}`} />}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center flex-wrap gap-2">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {t("subscription.onPlan", { name: currentPlanInfo?.name })}
+              </p>
+              {isPending && (
+                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 animate-pulse">{t("subscription.pendingPayment")}</Badge>
+              )}
+            </div>
+            {subscription?.expires_at && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {subscription.status === 'cancelled'
+                  ? t("subscription.expires", { date: new Date(subscription.expires_at).toLocaleDateString() })
+                  : t("subscription.renews", { date: new Date(subscription.expires_at).toLocaleDateString() })}
+              </p>
             )}
           </div>
-          {subscription?.expires_at && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {subscription.status === 'cancelled'
-                ? t("subscription.expires", { date: new Date(subscription.expires_at).toLocaleDateString() })
-                : t("subscription.renews", { date: new Date(subscription.expires_at).toLocaleDateString() })}
-            </p>
-          )}
         </div>
-        
-        <div className="flex flex-col items-end gap-2">
+
+        <div className="flex flex-row sm:flex-col flex-wrap items-end gap-2 sm:ml-auto">
           {subscription?.plan !== "free" && (
             <Badge className={`text-xs border-0 ${subscription?.plan === "elite" ? "bg-amber-100 text-amber-700" : "bg-orange-100 text-orange-700"}`}>
               {subscription?.billing_cycle === "annual" ? t("subscription.annual") : t("subscription.monthly")}
@@ -624,11 +632,11 @@ try {
       )}
 
       {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center flex-wrap gap-3 text-center">
         <span className={`text-sm font-medium ${billing === "monthly" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{t("subscription.monthly")}</span>
         <button
           onClick={() => setBilling(b => b === "monthly" ? "annual" : "monthly")}
-          className={`relative w-12 h-6 rounded-full transition-colors ${billing === "annual" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
+          className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${billing === "annual" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
         >
           <span className={`absolute top-1 w-4 h-4 bg-white dark:bg-slate-200 rounded-full shadow transition-all ${billing === "annual" ? "left-7" : "left-1"}`} />
         </button>
@@ -638,7 +646,7 @@ try {
       </div>
 
       {/* Plan Cards */}
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
         {PLANS.map(plan => (
           <PlanCard
             key={plan.id}
@@ -656,18 +664,25 @@ try {
       <CustomDomainManager subscription={subscription} vendorUsername={vendorUsername} />
 
       {/* Feature comparison callout */}
-      <div className="grid grid-cols-3 gap-3 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-center">
         {[
           { icon: TrendingUp, label: t("subscription.prioritySearch"), plans: ["Pro", "Elite"], color: "text-orange-500" },
           { icon: Image, label: t("subscription.unlimitedMedia"), plans: ["Elite"], color: "text-amber-500" },
-          { icon: Globe, label: t("subscription.customDomain"), plans: ["Pro", "Elite"], color: "text-green-500" },
-        ].map(f => (
-          <div key={f.label} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-3">
-            <f.icon className={`w-5 h-5 mx-auto mb-1.5 ${f.color}`} />
-            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{f.label}</p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("subscription.onlyPlans", { plans: f.plans.join(", ") })}</p>
-          </div>
-        ))}
+        ].map(f => {
+          const currentIndex = PLANS.findIndex(pl => pl.id === (subscription?.status === "pending" ? "free" : currentPlanInfo?.id));
+          const requiredIndex = Math.min(...f.plans.map(p => PLANS.findIndex(pl => pl.name === p)));
+          const unlocked = currentIndex >= requiredIndex;
+          return (
+            <div key={f.label} className="relative bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-3 min-w-0">
+              {!unlocked && (
+                <Lock className="w-3.5 h-3.5 absolute top-2 right-2 text-slate-300 dark:text-slate-600" />
+              )}
+              <f.icon className={`w-5 h-5 mx-auto mb-1.5 ${unlocked ? f.color : "text-slate-300 dark:text-slate-600"}`} />
+              <p className={`text-xs font-semibold ${unlocked ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}`}>{f.label}</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("subscription.onlyPlans", { plans: f.plans.join(", ") })}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* Payment Method Modal */}

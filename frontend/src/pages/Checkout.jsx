@@ -5,7 +5,7 @@ import { createPageUrl } from "@/lib/utils";
 import { 
   ArrowLeft, CreditCard, Shield, Truck, 
   MapPin, CheckCircle2, Loader2,
-  Info, Wallet, Plus, Trash2, Tag, 
+  Info, Plus, Trash2, Tag, 
   ChevronRight, ShoppingBag, Store as StoreIcon,
   Package, Navigation, AlertCircle
 } from "lucide-react";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { cartAPI, checkoutAPI, authAPI, couponsAPI, shippingZonesAPI, storesAPI, paymentAPI } from "@/api/apiClient";
+import { cartAPI, checkoutAPI, authAPI, couponsAPI, shippingZonesAPI, storesAPI, paymentAPI, ordersAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/lib/utils";
@@ -664,6 +664,16 @@ export default function Checkout() {
     await doInitiatePayment(selectedPaymentMethod.id, cleaned);
   };
 
+  // A cancelled/failed/timed-out mobile money payment leaves the orders created
+  // at checkout time stuck at status 'pending' unless we explicitly cancel them
+  // (this also restores the inventory that was deducted at order creation).
+  const cancelPendingOrders = async () => {
+    const storedOrderIds = localStorage.getItem('pending_order_ids');
+    const orderIds = storedOrderIds ? JSON.parse(storedOrderIds) : [];
+    localStorage.removeItem('pending_order_ids');
+    await Promise.all(orderIds.map(id => ordersAPI.cancelOrder(id).catch(() => {})));
+  };
+
   // Poll payment status when pending
   useEffect(() => {
     if (!pendingPayment || pendingPayment.status !== 'pending') return;
@@ -686,6 +696,7 @@ export default function Checkout() {
           setPendingPayment(prev => ({ ...prev, status: 'failed' }));
           setMobileMoneyStatus(null);
           clearInterval(pollInterval);
+          await cancelPendingOrders();
           toast({
             title: "Payment Cancelled",
             description: "You cancelled the payment on your phone. Please try again.",
@@ -719,6 +730,7 @@ export default function Checkout() {
         setPendingPayment(prev => (prev ? { ...prev, status: 'failed' } : prev));
         setMobileMoneyStatus(null);
         clearInterval(pollInterval);
+        await cancelPendingOrders();
         toast({
           title: "Payment Verification Failed",
           description: error.message || "We couldn't confirm your payment. Please try again.",
@@ -727,10 +739,11 @@ export default function Checkout() {
       }
     }, 5000);
 
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       if (pendingPayment?.status === 'pending') {
         setPendingPayment(prev => ({ ...prev, status: 'failed' }));
         setMobileMoneyStatus(null);
+        await cancelPendingOrders();
         toast({
           title: "Payment Timed Out",
           description: "We couldn't confirm your payment in time. Please try again.",
@@ -873,7 +886,7 @@ export default function Checkout() {
       </Link>
 
       <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-12">
-        <div className="lg:col-span-8">
+        <div className="min-w-0 lg:col-span-8">
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-8 sm:mb-10 tracking-tight">{t("common.checkout")}</h1>
           
           {/* STEP 1: DELIVERY OPTIONS */}
@@ -1247,7 +1260,7 @@ export default function Checkout() {
         </div>
 
         {/* SUMMARY SIDEBAR */}
-        <div className="lg:col-span-4">
+        <div className="min-w-0 lg:col-span-4">
           <div className="sticky top-24 space-y-6">
             <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900/50 dark:to-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 overflow-hidden relative">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-purple-100 dark:from-orange-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16 opacity-50" />

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storesAPI, followsAPI, usersAPI } from "@/api/apiClient";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { UserPlus, Store, UserMinus, User, Sparkles } from "lucide-react";
+import { UserPlus, Store, User, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 

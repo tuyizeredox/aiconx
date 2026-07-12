@@ -5,9 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Search, Send, ArrowLeft, MoreVertical, X, Phone, Video,
-  ShoppingBag, Star, Package, Loader2, Reply, PenSquare, CheckCheck,
-  History, Trash2
+  Search, Send, ArrowLeft, MoreVertical, X,
+  ShoppingBag, Star, Package, Loader2, Reply, PenSquare, CheckCheck, Trash2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

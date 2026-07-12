@@ -336,10 +336,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Message not found or unauthorized' });
       }
 
-      // Decrement user's unread count
+      // Decrement user's unread count (clamped at 0 to avoid violating the schema's min constraint)
       await User.updateOne(
         { username: user.username },
-        { $inc: { unread_messages_count: -1 } }
+        [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', 1] }] } } }]
       );
 
       return message;
@@ -366,10 +366,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
       );
 
       if (result.modifiedCount > 0) {
-        // Decrement user's unread count by the number of messages marked as read
+        // Decrement user's unread count by the number of messages marked as read (clamped at 0)
         await User.updateOne(
           { username: user.username },
-          { $inc: { unread_messages_count: -result.modifiedCount } }
+          [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', result.modifiedCount] }] } } }]
         );
       }
 
@@ -408,10 +408,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
       await Message.deleteOne({ _id: id });
 
       if (wasUnread) {
-        // Decrement recipient's count (could be me OR the other user)
+        // Decrement recipient's count (could be me OR the other user), clamped at 0
         await User.updateOne(
           { username: message.receiver_username },
-          { $inc: { unread_messages_count: -1 } }
+          [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', 1] }] } } }]
         );
       }
 
@@ -454,7 +454,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
       if (unreadCount > 0) {
         await User.updateOne(
           { username: user.username },
-          { $inc: { unread_messages_count: -unreadCount } }
+          [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', unreadCount] }] } } }]
         );
       }
 

@@ -250,7 +250,7 @@ export default function ImageZoomGallery({ images, title, badge, onSelectedImage
 
   React.useEffect(() => {
     onSelectedImageChange?.(list[selected], selected);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selected, list[selected]]);
 
   const handleMouseMove = useCallback((e) => {

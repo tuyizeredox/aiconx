@@ -19,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 const PostCard = memo(function PostCard({ post, currentUser, fullView = false }) {
   const { t } = useTranslation();

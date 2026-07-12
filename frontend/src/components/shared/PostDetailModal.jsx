@@ -11,9 +11,8 @@ import { Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, Chev
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { postsAPI, commentsAPI } from "@/api/apiClient";
+import { commentsAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/lib/AuthContext";
 import { useSocket } from "@/lib/SocketContext";
 import { toast } from "sonner";
 
