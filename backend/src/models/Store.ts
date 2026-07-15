@@ -159,7 +159,9 @@ const StoreSchema = new Schema<IStore>({
 });
 
 // Indexes for performance
-StoreSchema.index({ owner_username: 1 });
+// unique: every plan currently caps a vendor at 1 store (see PLAN_LIMITS.stores in
+// middleware/subscription.ts); drop this constraint if multi-store plans are introduced.
+StoreSchema.index({ owner_username: 1 }, { unique: true });
 StoreSchema.index({ status: 1 });
 StoreSchema.index({ category: 1, status: 1 });
 StoreSchema.index({ follower_count: -1 });

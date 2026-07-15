@@ -14,9 +14,14 @@ import {
 import { User } from '../models/User';
 import { sendVerificationCode, sendWhatsAppVerification } from '../services/mailService';
 
-const googleClient = new OAuth2Client({
-  clientId: process.env.GOOGLE_CLIENT_ID,
-});
+const googleClient = new OAuth2Client();
+
+// Accepts a comma-separated list so the web browser client ID and the
+// Capacitor native (Android/iOS) server client ID can both be verified.
+const googleAudiences = (process.env.GOOGLE_CLIENT_ID || '')
+  .split(',')
+  .map(id => id.trim())
+  .filter(Boolean);
 
 const AUTH_RATE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const AUTH_RATE_MAX = 200; // max attempts per window per IP
@@ -96,7 +101,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       // Verify the ID token with Google
       const ticket = await googleClient.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: googleAudiences.length ? googleAudiences : undefined,
       });
 
       const payload = ticket.getPayload();

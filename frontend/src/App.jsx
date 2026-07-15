@@ -8,6 +8,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { SocketProvider } from '@/lib/SocketContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AffiliateTracker from './components/shared/AffiliateTracker';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
@@ -18,6 +20,13 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 if (!googleClientId) {
   console.warn("VITE_GOOGLE_CLIENT_ID is not defined in environment variables. Google Login will not function.");
+}
+
+// The web GoogleOAuthProvider below only drives the browser flow; native
+// Android/iOS use GoogleAuth's own sign-in UI instead (see GoogleSignInButton),
+// configured via capacitor.config.ts's plugins.GoogleAuth block.
+if (Capacitor.isNativePlatform()) {
+  GoogleAuth.initialize();
 }
 
 const { Pages, Layout, mainPage } = pagesConfig;

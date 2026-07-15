@@ -183,7 +183,7 @@ function TypingIndicator() {
   );
 }
 
-export default function AIAssistant() {
+export default function AIAssistant({ embedded = false }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState(() => loadChatHistory(t));
   const [input, setInput] = useState("");
@@ -345,7 +345,11 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px-5rem)] lg:h-screen">
+    <div className={
+      embedded
+        ? "flex flex-col h-[70vh] min-h-[420px] rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
+        : "max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px-5rem)] lg:h-screen"
+    }>
       {/* Header */}
       <div className="px-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">

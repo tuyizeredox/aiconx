@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from './AuthContext';
 import { showLocalNotification } from './pushNotifications';
 import { notificationsAPI } from '@/api/apiClient';
@@ -14,7 +15,19 @@ export const useSocket = () => {
   return context;
 };
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+function resolveSocketUrl() {
+  const configured = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+
+  // Same localhost -> 10.0.2.2 redirect as apiClient.js: on the Android
+  // emulator, "localhost" points at the device, not the dev machine.
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    return configured.replace(/^(https?:\/\/)localhost/, '$110.0.2.2');
+  }
+
+  return configured;
+}
+
+const SOCKET_URL = resolveSocketUrl();
 
 // Singleton socket instance to prevent multiple connections
 let socketInstance = null;

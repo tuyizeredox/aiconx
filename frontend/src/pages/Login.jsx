@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { getRedirectPath } from '@/lib/utils';
 import { Mail, Lock, Loader2, ShieldCheck, ArrowRight, ArrowLeft, Eye, EyeOff, Fingerprint, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleLogin } from '@react-oauth/google';
+import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -109,7 +109,17 @@ const Login = () => {
 
   const handleGoogleError = (err) => {
     console.error('Google OAuth error:', err);
-    const msg = 'Google login failed. Make sure pop-ups are not blocked and try again.';
+
+    const isNative = typeof window !== 'undefined' && window?.Capacitor?.isNativePlatform?.()
+      ? true
+      : false;
+
+    // In Capacitor native builds, the web oauth flow can produce misleading
+    // “pop-ups blocked” messages. Show a native-appropriate message.
+    const msg = isNative
+      ? (err?.message || 'Google sign-in failed on this device. Please try again.')
+      : 'Google login failed. Make sure pop-ups are not blocked and try again.';
+
     setError(msg);
     toast({ title: "Google sign-in failed", description: msg, variant: "destructive" });
   };
@@ -377,14 +387,9 @@ const Login = () => {
                     <div className="flex flex-col items-center gap-2">
                       <div className="relative">
                         <div className={`hover:scale-110 transition-transform duration-300 ${isGoogleLoading ? 'pointer-events-none' : ''}`}>
-                          <GoogleLogin
+                          <GoogleSignInButton
                             onSuccess={handleGoogleSuccess}
                             onError={handleGoogleError}
-                            type="icon"
-                            text="signin_with"
-                            theme="filled_blue"
-                            shape="circle"
-                            size="large"
                           />
                         </div>
                         <AnimatePresence>

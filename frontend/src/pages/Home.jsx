@@ -8,10 +8,11 @@ import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkelet
 import EmptyState from "@/components/shared/EmptyState";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2, Link2 } from "lucide-react";
+import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2, Link2, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RecommendedSection from "@/components/home/RecommendedSection";
 import SuggestedUsers from "@/components/home/SuggestedUsers";
+import AIAssistant from "@/pages/AIAssistant";
 import { postsAPI, productsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,6 +54,7 @@ export default function Home() {
       return undefined;
     },
     initialPageParam: 1,
+    enabled: activeTab !== "ai",
   });
 
   const posts = postsData?.pages.flatMap(page => page.data) || [];
@@ -84,6 +86,7 @@ export default function Home() {
     { id: "for_you", label: t("home.forYou"), icon: Sparkles },
     { id: "trending", label: t("home.trending"), icon: Flame },
     { id: "following", label: t("home.following"), icon: TrendingUp },
+    { id: "ai", label: t("support.channels.aiAssistant.title"), icon: Bot },
   ];
 
   return (
@@ -124,6 +127,10 @@ export default function Home() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
+          {activeTab === "ai" ? (
+            <AIAssistant embedded />
+          ) : (
+          <>
           {/* Affiliate Marketing Promo */}
           {activeTab === "for_you" && currentUser && (
             <Link
@@ -244,6 +251,8 @@ export default function Home() {
               </>
             )}
           </div>
+          </>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { Store, IStore } from '../models/Store';
 import { Product } from '../models/Product';
 import { z } from 'zod';
-import { checkCustomDomainLimit, checkShippingZoneLimit } from '../middleware/subscription';
+import { checkCustomDomainLimit, checkShippingZoneLimit, checkStoreLimit } from '../middleware/subscription';
 
 const createStoreSchema = z.object({
   name: z.string().min(1),
@@ -167,17 +167,11 @@ export async function storeRoutes(fastify: FastifyInstance) {
 
   // Create store
   fastify.post('/', {
-    preHandler: [fastify.authenticate],
+    preHandler: [fastify.authenticate, checkStoreLimit],
   }, async (request, reply) => {
     try {
       const user = request.user as any;
       const body = createStoreSchema.parse(request.body);
-
-      // Check if user already has a store
-      const existingStore = await Store.findOne({ owner_username: user.username });
-      if (existingStore) {
-        return reply.code(400).send({ error: 'User already has a store' });
-      }
 
       const store = new Store({
         ...body,
@@ -189,9 +183,12 @@ export async function storeRoutes(fastify: FastifyInstance) {
 
       await store.save();
       return store;
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      if (error?.code === 11000 && error?.keyPattern?.owner_username) {
+        return reply.code(400).send({ error: 'User already has a store' });
       }
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Internal server error' });

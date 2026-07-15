@@ -63,6 +63,7 @@ const aiAssistantSchema = z.object({
     content: z.string()
   })).optional(),
   init: z.boolean().optional(),
+  language: z.string().optional(),
 });
 
 // Shared AI handler to avoid fastify.inject and duplication
@@ -171,7 +172,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       }
 
       // 5. Format System Prompt
-      const systemPrompt = formatSystemPrompt(userContext, discoveryContext, searchContext, platformContext, storeContext);
+      const systemPrompt = formatSystemPrompt(userContext, discoveryContext, searchContext, platformContext, storeContext, body.language);
 
       // 5. Call AI
       const userPrompt = body.message || (body.init ? "Hello! Introduce yourself as my Aicon X personal shopping assistant and show me some daily picks based on my interests or what's trending." : "");

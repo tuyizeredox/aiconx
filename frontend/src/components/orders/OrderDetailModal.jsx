@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
+import { useAuth } from "@/lib/AuthContext";
+import { initializeITECPayPayment } from "@/lib/itecpay";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Package,
   Truck,
@@ -20,6 +25,8 @@ import {
   Store,
   XCircle,
   AlertCircle,
+  AlertTriangle,
+  RefreshCw,
   ShoppingBag,
   User,
   Navigation,
@@ -52,6 +59,42 @@ export default function OrderDetailModal({
   onUpdateStatus,
   userRole = "buyer" 
 }) {
+  const { user: currentUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [showPhoneInput, setShowPhoneInput] = useState(false);
+  const [retryPhone, setRetryPhone] = useState(currentUser?.phone_number || "");
+
+  const isMobileMoneyMethod = ['mtn', 'airtel', 'spenn'].includes(order?.payment_method);
+
+  const retryPaymentMutation = useMutation({
+    mutationFn: (phone) => initializeITECPayPayment({
+      amount: order.total,
+      email: currentUser?.email,
+      phone: phone || undefined,
+      order_id: `ORD-${order._id || order.id}`,
+      payment_method: order.payment_method,
+    }),
+    onSuccess: () => {
+      // Card payments redirect via window.location.href inside initializeITECPayPayment.
+      if (order.payment_method !== 'card') {
+        toast.success("Payment request sent — check your phone to confirm.");
+        setShowPhoneInput(false);
+        queryClient.invalidateQueries({ queryKey: ["myOrders"] });
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to start payment. Please try again.");
+    },
+  });
+
+  const handlePayAgain = () => {
+    if (isMobileMoneyMethod) {
+      setShowPhoneInput(true);
+    } else {
+      retryPaymentMutation.mutate(null);
+    }
+  };
+
   if (!order) return null;
 
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
@@ -60,38 +103,83 @@ export default function OrderDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 gap-0">
-        <DialogHeader className="p-6 pb-4 bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10 backdrop-blur-md border-b dark:border-slate-700">
-          <div className="flex items-center justify-between mb-2">
-            <Badge className={`${status.color} border-0 flex items-center gap-1.5`}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-0 gap-0 grid-cols-1">
+        <DialogHeader className="min-w-0 p-6 pr-10 pb-4 bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10 backdrop-blur-md border-b dark:border-slate-700">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <Badge className={`${status.color} border-0 flex items-center gap-1.5 shrink-0`}>
               <StatusIcon className="w-3.5 h-3.5" />
               {status.label}
             </Badge>
-            <p className="text-xs text-slate-400 font-mono">#{order._id?.slice(-12)}</p>
+            <p className="text-xs text-slate-400 font-mono truncate min-w-0">#{order._id?.slice(-12)}</p>
           </div>
           <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Order Details</DialogTitle>
-          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-1 font-medium">
+          <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1 font-medium shrink-0">
               <Calendar className="w-3.5 h-3.5" />
               {new Date(order.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
-            <div className="flex items-center gap-1 font-medium">
+            <div className="flex items-center gap-1 font-medium min-w-0">
               {isVendor ? (
                 <>
-                  <User className="w-3.5 h-3.5" />
-                  Buyer: {order.buyer_name || `@${order.buyer_username}`}
+                  <User className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Buyer: {order.buyer_name || `@${order.buyer_username}`}</span>
                 </>
               ) : (
                 <>
-                  <Store className="w-3.5 h-3.5" />
-                  {order.store_name}
+                  <Store className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{order.store_name}</span>
                 </>
               )}
             </div>
           </div>
         </DialogHeader>
 
-        <div className="p-6 space-y-8">
+        <div className="min-w-0 p-6 space-y-8">
+          {/* Payment Failed */}
+          {!isVendor && order.payment_status === 'failed' && (
+            <section className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-red-900 dark:text-red-300 mb-1">Payment Failed</h3>
+                  <p className="text-xs text-red-700 dark:text-red-400 leading-relaxed">
+                    Your payment for this order didn't go through, so it's on hold until payment is completed.
+                  </p>
+
+                  {showPhoneInput ? (
+                    <div className="mt-3 flex items-center gap-2">
+                      <Input
+                        type="tel"
+                        value={retryPhone}
+                        onChange={(e) => setRetryPhone(e.target.value)}
+                        placeholder="e.g. 078xxxxxxx"
+                        className="flex-1 min-w-0 h-10 rounded-xl border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => retryPaymentMutation.mutate(retryPhone)}
+                        disabled={!retryPhone.trim() || retryPaymentMutation.isPending}
+                        className="bg-red-600 hover:bg-red-700 text-white rounded-xl h-10 shrink-0"
+                      >
+                        {retryPaymentMutation.isPending ? "Sending..." : "Send"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={handlePayAgain}
+                      disabled={retryPaymentMutation.isPending}
+                      className="mt-3 bg-red-600 hover:bg-red-700 text-white rounded-xl gap-2 h-9"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      {retryPaymentMutation.isPending ? "Starting..." : "Pay Again"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Vendor Status Management */}
           {isVendor && (
             <section className="bg-orange-50/30 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-2xl p-4">
@@ -201,33 +289,35 @@ export default function OrderDetailModal({
           <Separator className="bg-slate-100 dark:bg-slate-700" />
 
           {/* Summary and Payment */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-w-0">
+            <section className="min-w-0">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-orange-600" />
                 Payment Info
               </h3>
-              <div className="space-y-3 bg-slate-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-600">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">Method</span>
-                  <span className="font-medium text-slate-900 dark:text-white capitalize">{order.payment_method?.replace('_', ' ') || 'Card'}</span>
+              <div className="space-y-3 bg-slate-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-600 min-w-0">
+                <div className="flex items-center justify-between gap-2 text-xs min-w-0">
+                  <span className="text-slate-500 dark:text-slate-400 shrink-0">Method</span>
+                  <span className="font-medium text-slate-900 dark:text-white capitalize truncate min-w-0 text-right">{order.payment_method?.replace('_', ' ') || 'Card'}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">Status</span>
-                  <Badge variant="outline" className={`text-[10px] h-5 capitalize px-1.5 ${
-                    order.payment_status === 'paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                <div className="flex items-center justify-between gap-2 text-xs min-w-0">
+                  <span className="text-slate-500 dark:text-slate-400 shrink-0">Status</span>
+                  <Badge variant="outline" className={`text-[10px] h-5 capitalize px-1.5 shrink-0 ${
+                    order.payment_status === 'paid' ? 'bg-green-50 text-green-700 border-green-100' :
+                    order.payment_status === 'failed' ? 'bg-red-50 text-red-700 border-red-100' :
+                    'bg-amber-50 text-amber-700 border-amber-100'
                   }`}>
                     {order.payment_status}
                   </Badge>
                 </div>
-                <div className="pt-2 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white border-t border-slate-200/60 dark:border-slate-600">
-                  <span>Total Amount</span>
-                  <span>{formatCurrency(order.total)}</span>
+                <div className="pt-2 flex items-center justify-between gap-2 text-xs font-bold text-slate-900 dark:text-white border-t border-slate-200/60 dark:border-slate-600 min-w-0">
+                  <span className="shrink-0">Total Amount</span>
+                  <span className="truncate min-w-0 text-right">{formatCurrency(order.total)}</span>
                 </div>
               </div>
             </section>
 
-            <section>
+            <section className="min-w-0">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 {order.delivery_method === "pickup" ? (
                   <Package className="w-4 h-4 text-orange-600" />

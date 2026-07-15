@@ -178,7 +178,7 @@ export default function Layout({ children, currentPageName }) {
             : `z-30 ${isDesktopExpanded ? "w-64" : "w-[72px]"}`
           }`}
       >
-        <div className="p-4 flex flex-col gap-4">
+        <div className="pt-[max(1rem,env(safe-area-inset-top))] px-4 pb-4 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <Link 
               to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"} 
@@ -289,7 +289,7 @@ export default function Layout({ children, currentPageName }) {
           })()}
         </nav>
 
-        <div className={`p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
+        <div className={`p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
           {currentUser?.role !== 'super_admin' && (
             <button
               onClick={() => {
@@ -306,13 +306,14 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Mobile Top Bar */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between px-4 z-50">
-        <div className="flex items-center gap-3">
+      <header className="lg:hidden fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 z-50">
+        <div className="h-12 flex items-center justify-between px-4">
+          <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 -ml-2 text-slate-600 dark:text-slate-400"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </button>
           <Link to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"} className="flex items-center gap-2.5">
             <Logo size="sm" showText={true} />
@@ -337,17 +338,18 @@ export default function Layout({ children, currentPageName }) {
             </Link>
           )}
         </div>
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className={`pt-14 lg:pt-0 ${currentPageName === "Chat" ? "pb-0" : "pb-20"} lg:pb-0 min-h-screen dark:text-slate-100 transition-all duration-300 ${isDesktop && (sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]")}`}>
+      <main className={`pt-[calc(env(safe-area-inset-top)+3.5rem)] lg:pt-0 ${currentPageName === "Chat" ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"} lg:pb-0 min-h-screen dark:text-slate-100 transition-all duration-300 ${isDesktop && (sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]")}`}>
         <AnnouncementBanner />
         {children}
       </main>
 
       {/* Mobile Bottom Nav */}
       {currentPageName !== "Chat" && (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 z-50">
         <div className="flex items-center justify-around h-16 px-2">
           {(currentUser?.role === 'super_admin' ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
             const isActive = currentPageName === item.page;

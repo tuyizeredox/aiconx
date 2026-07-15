@@ -8,6 +8,13 @@ import { Announcement } from '../models/Announcement';
 import { Store } from '../models/Store';
 
 /**
+ * Escape regex special characters so raw user input can be safely used in a RegExp
+ */
+function escapeRegex(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Service to fetch and format user context for the AI prompt
  */
 export async function getUserContext(userId: string) {
@@ -133,6 +140,7 @@ export async function getDiscoveryContext() {
     title: p.title,
     price: p.price,
     category: p.category,
+    images: p.images,
     rating: p.rating_avg,
     sales: p.sales_count,
     store: p.store_name,
@@ -147,7 +155,7 @@ export async function searchProducts(query: string) {
   if (!query) return [];
 
   // Simple regex-based search for titles, descriptions, categories, and tags
-  const searchRegex = new RegExp(query, 'i');
+  const searchRegex = new RegExp(escapeRegex(query), 'i');
   const products = await Product.find({
     status: 'active',
     $or: [
@@ -167,7 +175,7 @@ export async function searchProducts(query: string) {
     price: p.price,
     category: p.category,
     description: p.description?.substring(0, 100),
-    image: p.images?.[0],
+    images: p.images,
     store: p.store_name,
     vendor: p.vendor_username
   }));
@@ -179,7 +187,7 @@ export async function searchProducts(query: string) {
 export async function searchStores(query: string) {
   if (!query) return [];
 
-  const searchRegex = new RegExp(query, 'i');
+  const searchRegex = new RegExp(escapeRegex(query), 'i');
   const stores = await Store.find({
     status: 'active',
     $or: [
@@ -208,18 +216,23 @@ export async function searchStores(query: string) {
  * Construct the master system prompt for the AI
  */
 export function formatSystemPrompt(
-  userContext: any, 
-  discoveryContext: any[], 
+  userContext: any,
+  discoveryContext: any[],
   searchContext: any[] = [],
   platformContext: any = null,
-  storeContext: any[] = []
+  storeContext: any[] = [],
+  language?: string
 ) {
   const userName = userContext?.user?.display_name || 'there';
-  
-  let prompt = `You are Aicon AI, ${userName}'s personal shopping concierge and order assistant. 
+
+  let prompt = `You are Aicon AI, ${userName}'s personal shopping concierge and order assistant.
 Your goal is to provide a premium, helpful, and personalized shopping experience.
 
 `;
+
+  if (language && language !== 'en') {
+    prompt += `LANGUAGE: Reply in the language with code "${language}", regardless of what language the rest of this prompt is written in.\n\n`;
+  }
 
   if (userContext) {
     prompt += `USER CONTEXT:

@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import webpush from 'web-push';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import { User } from '../models/User';
 import { INotification } from '../models/Notification';
 
@@ -15,6 +17,22 @@ if (webPushEnabled) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY as string, VAPID_PRIVATE_KEY as string);
 } else {
   console.warn('⚠️  VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set — web push notifications are disabled.');
+}
+
+// Native push (Android/iOS apps via Capacitor) delivered through Firebase Cloud Messaging.
+let fcmEnabled = false;
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    if (!getApps().length) {
+      initializeApp({ credential: cert(serviceAccount) });
+    }
+    fcmEnabled = true;
+  } catch (error) {
+    console.error('⚠️  Failed to initialize firebase-admin from FIREBASE_SERVICE_ACCOUNT_JSON — native push disabled.', error);
+  }
+} else {
+  console.warn('⚠️  FIREBASE_SERVICE_ACCOUNT_JSON not set — native (FCM) push notifications are disabled.');
 }
 
 function typeToPreference(type: string): NotificationPreference | null {
@@ -83,6 +101,53 @@ function buildPushPayload(notification: Partial<INotification>) {
   });
 }
 
+const INVALID_FCM_TOKEN_CODES = new Set([
+  'messaging/invalid-registration-token',
+  'messaging/registration-token-not-registered',
+]);
+
+/**
+ * Deliver a native push via FCM to every token on file for a user, pruning
+ * any tokens Firebase reports as invalid/unregistered.
+ */
+async function deliverFcmPush(
+  username: string,
+  tokens: string[],
+  notification: Partial<INotification>,
+  fastify: FastifyInstance
+) {
+  if (!fcmEnabled || tokens.length === 0) return;
+
+  const dataPayload: Record<string, string> = {
+    link: notification.link || '/',
+    type: notification.type || '',
+    ...Object.fromEntries(
+      Object.entries(notification.metadata || {}).map(([key, value]) => [key, String(value)])
+    ),
+  };
+
+  try {
+    const response = await getMessaging().sendEachForMulticast({
+      tokens,
+      notification: {
+        title: notification.title,
+        body: notification.body || '',
+      },
+      data: dataPayload,
+    });
+
+    const staleTokens = response.responses
+      .map((res, idx: number) => (!res.success && INVALID_FCM_TOKEN_CODES.has(res.error?.code || '') ? tokens[idx] : null))
+      .filter((token): token is string => Boolean(token));
+
+    if (staleTokens.length > 0) {
+      await User.updateOne({ username }, { $pull: { push_tokens: { $in: staleTokens } } });
+    }
+  } catch (error) {
+    fastify.log.error(error, 'Error delivering FCM push notification');
+  }
+}
+
 export class NotificationService {
   /**
    * Send a push notification to all of a user's registered devices
@@ -90,27 +155,38 @@ export class NotificationService {
    */
   static async sendPushNotification(recipientUsername: string, notification: INotification, fastify: FastifyInstance) {
     try {
-      if (!webPushEnabled) return;
+      if (!webPushEnabled && !fcmEnabled) return;
       if (!(await shouldSendNotification(recipientUsername, notification.type))) {
         return;
       }
 
-      const user = await User.findOne({ username: recipientUsername.toLowerCase() }).select('push_subscriptions');
+      const user = await User.findOne({ username: recipientUsername.toLowerCase() }).select('push_subscriptions push_tokens');
 
-      if (!user || !user.push_subscriptions || user.push_subscriptions.length === 0) {
-        return;
-      }
+      if (!user) return;
+
+      const hasWebPush = webPushEnabled && user.push_subscriptions && user.push_subscriptions.length > 0;
+      const hasNativePush = fcmEnabled && user.push_tokens && user.push_tokens.length > 0;
+
+      if (!hasWebPush && !hasNativePush) return;
 
       const payload = buildPushPayload(notification);
 
-      await Promise.all(
-        user.push_subscriptions.map((subscription) =>
-          deliverWebPush(user.username, subscription as any, payload, fastify)
-        )
-      );
+      await Promise.all([
+        ...(hasWebPush
+          ? user.push_subscriptions!.map((subscription) =>
+              deliverWebPush(user.username, subscription as any, payload, fastify)
+            )
+          : []),
+        ...(hasNativePush ? [deliverFcmPush(user.username, user.push_tokens!, notification, fastify)] : []),
+      ]);
 
       fastify.log.info(
-        { recipient: recipientUsername, devices: user.push_subscriptions.length, type: notification.type },
+        {
+          recipient: recipientUsername,
+          webDevices: user.push_subscriptions?.length || 0,
+          nativeDevices: user.push_tokens?.length || 0,
+          type: notification.type,
+        },
         'Push notification delivered'
       );
     } catch (error) {
@@ -123,7 +199,7 @@ export class NotificationService {
    */
   static async sendBulkPushNotifications(recipientUsernames: string[], notificationData: Partial<INotification>, fastify: FastifyInstance) {
     try {
-      if (!webPushEnabled) return;
+      if (!webPushEnabled && !fcmEnabled) return;
 
       const eligibleUsernames = (
         await Promise.all(
@@ -135,20 +211,28 @@ export class NotificationService {
 
       const users = await User.find({
         username: { $in: eligibleUsernames.map(u => u.toLowerCase()) },
-        push_subscriptions: { $exists: true, $not: { $size: 0 } }
-      }).select('username push_subscriptions');
+        $or: [
+          { push_subscriptions: { $exists: true, $not: { $size: 0 } } },
+          { push_tokens: { $exists: true, $not: { $size: 0 } } },
+        ],
+      }).select('username push_subscriptions push_tokens');
 
       if (users.length === 0) return;
 
       const payload = buildPushPayload(notificationData);
 
-      await Promise.all(
-        users.flatMap((user) =>
+      await Promise.all([
+        ...users.flatMap((user) =>
           (user.push_subscriptions || []).map((subscription) =>
             deliverWebPush(user.username, subscription as any, payload, fastify)
           )
-        )
-      );
+        ),
+        ...(fcmEnabled
+          ? users
+              .filter((user) => user.push_tokens && user.push_tokens.length > 0)
+              .map((user) => deliverFcmPush(user.username, user.push_tokens!, notificationData, fastify))
+          : []),
+      ]);
 
       fastify.log.info({ users_count: users.length, type: notificationData.type }, 'Bulk push notifications delivered');
     } catch (error) {

@@ -1,13 +1,15 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { VendorSubscription } from '../models/VendorSubscription';
 import { Product } from '../models/Product';
+import { Store } from '../models/Store';
 import { Notification } from '../models/Notification';
 import { NotificationService } from '../services/notificationService';
 import { Settings } from '../models/Settings';
 
 export const PLAN_LIMITS = {
-  free: { 
-    products: 10, 
+  free: {
+    stores: 1,
+    products: 10,
     images_per_product: 5,
     videos_per_product: 0,
     media_per_product: 5,
@@ -20,8 +22,9 @@ export const PLAN_LIMITS = {
     coupons: false,
     advanced_analytics: false
   },
-  pro: { 
-    products: 200, 
+  pro: {
+    stores: 1,
+    products: 200,
     images_per_product: 20,
     videos_per_product: 20,
     media_per_product: 20,
@@ -34,8 +37,9 @@ export const PLAN_LIMITS = {
     coupons: true,
     advanced_analytics: true
   },
-  elite: { 
-    products: Infinity, 
+  elite: {
+    stores: 1,
+    products: Infinity,
     images_per_product: Infinity,
     videos_per_product: Infinity,
     media_per_product: Infinity,
@@ -149,6 +153,39 @@ async function sendLimitNotification(username: string, message: string, request:
     }
   } catch (err) {
     request.log.error(err, 'Failed to create subscription limit notification:');
+  }
+}
+
+/**
+ * Middleware to check if a vendor can create another store
+ */
+export async function checkStoreLimit(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const user = request.user as any;
+    if (!user?.username) {
+      return reply.code(401).send({ error: 'Unauthorized' });
+    }
+
+    const { plan, limits, normalizedUsername } = await getVendorPlan(user.username, request);
+
+    const storeCount = await Store.countDocuments({ owner_username: normalizedUsername });
+
+    if (storeCount >= limits.stores) {
+      const limitDisplay = limits.stores === Infinity ? 'unlimited' : limits.stores;
+      const message = `Your ${plan} plan allows up to ${limitDisplay} store${limits.stores === 1 ? '' : 's'}. Please upgrade to add more.`;
+
+      await sendLimitNotification(user.username, message, request);
+
+      return reply.code(403).send({
+        error: 'Subscription limit reached',
+        message,
+        limit: limits.stores,
+        current: storeCount
+      });
+    }
+  } catch (err: any) {
+    reply.log.error(err);
+    return reply.code(500).send({ error: 'Internal server error during limit check' });
   }
 }
 

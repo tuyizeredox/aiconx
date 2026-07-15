@@ -1,11 +1,26 @@
 /// <reference types="vite/client" />
 
+import { Capacitor } from '@capacitor/core';
+
 /**
  * API Client for Aicon X Backend
  * Replaces Base44 SDK with direct API calls
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+function resolveApiBaseUrl() {
+  const configured = import.meta.env.VITE_API_URL || '/api';
+
+  // On a native Android build, "localhost" refers to the device itself, not
+  // the machine running the dev backend. The Android emulator maps 10.0.2.2
+  // to the host machine's localhost, so redirect there when running native.
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    return configured.replace(/^(https?:\/\/)localhost/, '$110.0.2.2');
+  }
+
+  return configured;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 class APIClient {
   constructor() {

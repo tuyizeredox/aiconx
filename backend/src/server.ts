@@ -91,6 +91,9 @@ fastify.register(cors, {
       'http://localhost:3000',
       'http://127.0.0.1:5173',
       'http://localhost:4000',
+      // Capacitor Android/iOS WebView origin (no port)
+      'http://localhost',
+      'capacitor://localhost',
       ...extraOrigins,
     ].filter(Boolean);
 

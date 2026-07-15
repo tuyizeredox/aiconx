@@ -2,6 +2,9 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { usersAPI } from '@/api/apiClient';
 
+// Cached so removePushNotifications() can unregister the same token on logout.
+let currentNativeToken = null;
+
 export const setupPushNotifications = async () => {
   // Try web notifications if not on native platform
   if (!Capacitor.isNativePlatform()) {
@@ -31,6 +34,7 @@ export const setupPushNotifications = async () => {
     // On success, we should be able to receive notifications
     PushNotifications.addListener('registration', async (token) => {
       console.log('Push registration success, token: ' + token.value);
+      currentNativeToken = token.value;
       try {
         await usersAPI.registerPushToken(token.value);
       } catch (err) {
@@ -78,6 +82,10 @@ export const removePushNotifications = async () => {
   }
 
   try {
+    if (currentNativeToken) {
+      await usersAPI.unregisterPushToken(currentNativeToken);
+      currentNativeToken = null;
+    }
     await PushNotifications.removeAllListeners();
   } catch (error) {
     console.error('Error removing push notification listeners:', error);
