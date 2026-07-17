@@ -5,8 +5,15 @@ const config: CapacitorConfig = {
   appName: 'AiconX',
   webDir: 'dist',
   server: {
-    // Default https scheme blocks calls to plain-http backends as mixed content.
-    androidScheme: 'http'
+    // Load the live production origin instead of the bundled local assets so the
+    // WebView runs under a real https://aiconx.onrender.com origin. This is required
+    // for WebAuthn/biometric login to work at all inside the app: Android's WebView
+    // only exposes navigator.credentials/PublicKeyCredential for an origin once it's
+    // been verified via Digital Asset Links (see public/.well-known/assetlinks.json),
+    // and that verification is only possible against a real, resolvable HTTPS domain —
+    // never against the bundled "http://localhost" origin used previously.
+    url: 'https://aiconx.onrender.com',
+    androidScheme: 'https'
   },
   plugins: {
     GoogleAuth: {

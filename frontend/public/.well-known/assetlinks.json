@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.aiconx.app",
+      "sha256_cert_fingerprints": [
+        "75:09:64:F9:93:BE:8A:6A:7D:31:F7:DB:AE:1C:5E:66:CD:F4:DE:76:95:8C:BF:31:D8:05:A2:D3:F4:74:B5:1D",
+        "93:80:04:FA:B8:DF:0C:46:F7:68:54:DB:85:5D:85:26:E7:14:EE:F3:43:AC:46:35:E3:4A:79:DF:87:3E:57:AE"
+      ]
+    }
+  }
+]
