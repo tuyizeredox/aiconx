@@ -232,9 +232,57 @@ export async function storeRoutes(fastify: FastifyInstance) {
       return store;
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error', 
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Submit (or resubmit) identity verification for the caller's store
+  fastify.post('/verification', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const user = request.user as any;
+      const body = z.object({
+        document_type: z.enum(['national_id', 'passport']),
+        document_number: z.string().min(1),
+        document_image_url: z.string().min(1),
+      }).parse(request.body);
+
+      const store = await Store.findOne({ owner_username: user.username.toLowerCase() });
+      if (!store) {
+        return reply.code(404).send({ error: 'You need to create a store before submitting verification.' });
+      }
+
+      if (store.verification_status === 'pending' || store.verification_status === 'approved') {
+        return reply.code(409).send({
+          error: 'Verification already in progress',
+          message: store.verification_status === 'approved'
+            ? 'Your store is already verified.'
+            : 'Your verification request is already under review.',
+        });
+      }
+
+      store.verification_status = 'pending';
+      store.identity_document_type = body.document_type;
+      store.identity_document_number = body.document_number;
+      store.identity_document_image_url = body.document_image_url;
+      store.identity_submitted_at = new Date();
+      store.identity_rejection_reason = undefined;
+      store.updated_at = new Date();
+      await store.save();
+
+      return store;
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

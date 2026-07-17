@@ -58,7 +58,8 @@ import {
   Archive,
   Ban,
   Plus,
-  Crown
+  Crown,
+  DollarSign
 } from 'lucide-react';
 import { 
   Dialog,
@@ -315,6 +316,15 @@ const AdminDashboard = () => {
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [withdrawalAction, setWithdrawalAction] = useState('completed');
 
+  // Verifications State
+  const [verifications, setVerifications] = useState([]);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationFilter, setVerificationFilter] = useState('pending');
+  const [selectedVerification, setSelectedVerification] = useState(null);
+  const [verificationReason, setVerificationReason] = useState('');
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [verificationAction, setVerificationAction] = useState('approve');
+
   // Reports State
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -541,6 +551,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchVerifications = async (filter = verificationFilter) => {
+    try {
+      setVerificationLoading(true);
+      const data = await adminAPI.getVerifications({ status: filter });
+      setVerifications(data.stores || []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('admin.verifications.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
   const fetchReports = async (filter = reportFilter) => {
     try {
       setReportsLoading(true);
@@ -647,6 +673,7 @@ const AdminDashboard = () => {
     if (activeTab === 'products') fetchProducts();
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'withdrawals') fetchWithdrawals();
+    if (activeTab === 'verifications') fetchVerifications();
     if (activeTab === 'moderation') fetchReports();
     if (activeTab === 'logs') fetchActivityLogs();
     if (activeTab === 'subscriptions') fetchSubscriptions();
@@ -826,6 +853,25 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleVerificationAction = async (storeId, action, reason = '') => {
+    try {
+      await adminAPI.updateVerification(storeId, action, reason);
+      toast({
+        title: t('common.success'),
+        description: action === 'approve' ? t('admin.verifications.approved') : t('admin.verifications.rejected'),
+      });
+      fetchVerifications();
+      setIsVerificationModalOpen(false);
+      setVerificationReason('');
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error.message || t('admin.verifications.failedUpdate'),
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleResolveReport = async (id, status, notes = '') => {
     try {
       await adminAPI.resolveReport(id, status, notes);
@@ -947,6 +993,19 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResolveDispute = async (orderId, resolution) => {
+    try {
+      await adminAPI.resolveOrderDispute(orderId, resolution);
+      toast({
+        title: t('common.success'),
+        description: resolution === 'release' ? t('admin.orders.disputeReleased') : t('admin.orders.disputeRefunded'),
+      });
+      fetchOrders();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.orders.failedResolveDispute'), variant: 'destructive' });
+    }
+  };
+
   const PaginationControls = ({ pagination, page, setPage, onFetch }) => {
     if (!pagination || pagination.pages <= 1) return null;
     return (
@@ -1006,7 +1065,7 @@ const AdminDashboard = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
@@ -1059,12 +1118,32 @@ const AdminDashboard = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('admin.disputedOrders')}</CardTitle>
+            <AlertCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.counts?.disputed_orders || 0}</div>
+            <p className="text-xs text-muted-foreground">{t('admin.awaitingResolution')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
             <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('admin.platformEarnings')}</CardTitle>
+            <DollarSign className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.platform_earnings ?? 0)}</div>
+            <p className="text-xs text-muted-foreground">{t('admin.platformEarningsSub', { fee: stats?.counts?.platform_fee_percent ?? 5 })}</p>
           </CardContent>
         </Card>
         <Card>
@@ -1091,6 +1170,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="moderation" className="whitespace-nowrap">{t('admin.tabs.moderation')}</TabsTrigger>
           <TabsTrigger value="orders" className="whitespace-nowrap">{t('admin.tabs.orders')}</TabsTrigger>
           <TabsTrigger value="withdrawals" className="whitespace-nowrap">{t('admin.tabs.withdrawals')}</TabsTrigger>
+          <TabsTrigger value="verifications" className="whitespace-nowrap">{t('admin.tabs.verifications')}</TabsTrigger>
           <TabsTrigger value="logs" className="whitespace-nowrap">{t('admin.tabs.logs')}</TabsTrigger>
           <TabsTrigger value="settings" className="whitespace-nowrap">{t('admin.tabs.settings')}</TabsTrigger>
         </TabsList>
@@ -1795,6 +1875,9 @@ const AdminDashboard = () => {
                           }>
                             {o.status}
                           </Badge>
+                          {o.buyer_confirmation_status === 'disputed' && (
+                            <Badge variant="destructive" className="ml-1">{t('admin.orders.disputed')}</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={o.payment_status === 'paid' ? 'success' : o.payment_status === 'failed' ? 'destructive' : 'warning'} className="capitalize">
@@ -1824,6 +1907,18 @@ const AdminDashboard = () => {
                                   {s}
                                 </DropdownMenuItem>
                               ))}
+                              {o.buyer_confirmation_status === 'disputed' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuLabel>{t('admin.orders.disputeLabel')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => handleResolveDispute(o._id, 'release')} className="text-success">
+                                    {t('admin.orders.releaseFunds')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleResolveDispute(o._id, 'refund')} className="text-destructive">
+                                    {t('admin.orders.refundBuyer')}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -1894,7 +1989,12 @@ const AdminDashboard = () => {
                       <TableRow key={w._id}>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-sm">@{w.vendor_username}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-sm">@{w.vendor_username}</span>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
+                                {w.payee_type === 'affiliate' ? t('admin.withdrawals.affiliate') : t('admin.withdrawals.vendor')}
+                              </Badge>
+                            </div>
                             {w.notes && (
                               <span className="text-xs text-muted-foreground italic truncate max-w-[200px]" title={w.notes}>
                                 {t('admin.withdrawals.noteLabel', { note: w.notes })}
@@ -1989,6 +2089,165 @@ const AdminDashboard = () => {
                   onClick={() => handleWithdrawalStatus(selectedWithdrawal?._id, withdrawalAction, withdrawalNotes)}
                 >
                   {withdrawalAction === 'completed' ? t('admin.withdrawals.confirmApproval') : t('admin.withdrawals.confirmRejection')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        <TabsContent value="verifications" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle>{t('admin.verifications.title')}</CardTitle>
+                <CardDescription>{t('admin.verifications.desc')}</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={verificationFilter} onValueChange={(v) => { setVerificationFilter(v); fetchVerifications(v); }}>
+                  <SelectTrigger className="w-[140px] h-9">
+                    <SelectValue placeholder={t('admin.verifications.allStatus')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('admin.verifications.allStatus')}</SelectItem>
+                    <SelectItem value="pending">{t('admin.verifications.pending')}</SelectItem>
+                    <SelectItem value="approved">{t('admin.verifications.approved')}</SelectItem>
+                    <SelectItem value="rejected">{t('admin.verifications.rejected')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => fetchVerifications(verificationFilter)} disabled={verificationLoading} variant="ghost" size="sm">
+                  <RefreshCw className={`h-4 w-4 mr-2 ${verificationLoading ? 'animate-spin' : ''}`} />
+                  {t('common.refresh')}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.verifications.colStore')}</TableHead>
+                    <TableHead>{t('admin.verifications.colDocument')}</TableHead>
+                    <TableHead>{t('admin.verifications.colImage')}</TableHead>
+                    <TableHead>{t('admin.verifications.colStatus')}</TableHead>
+                    <TableHead>{t('admin.verifications.colDate')}</TableHead>
+                    <TableHead className="text-right">{t('admin.verifications.colActions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {verifications.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {t('admin.verifications.empty')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    verifications.map((v) => (
+                      <TableRow key={v._id}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">{v.name}</span>
+                            <span className="text-xs text-muted-foreground">@{v.owner_username}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="capitalize text-sm">
+                          {v.identity_document_type?.replace('_', ' ') || '—'}
+                          <div className="text-xs text-muted-foreground">{v.identity_document_number}</div>
+                        </TableCell>
+                        <TableCell>
+                          {v.identity_document_image_url ? (
+                            <a href={v.identity_document_image_url} target="_blank" rel="noreferrer">
+                              <img src={v.identity_document_image_url} alt="" className="w-12 h-12 object-cover rounded-lg border" />
+                            </a>
+                          ) : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            v.verification_status === 'approved' ? 'success' :
+                            v.verification_status === 'pending' ? 'warning' :
+                            v.verification_status === 'rejected' ? 'destructive' : 'default'
+                          }>
+                            {v.verification_status}
+                          </Badge>
+                          {v.verification_status === 'rejected' && v.identity_rejection_reason && (
+                            <div className="text-xs text-muted-foreground italic mt-1 max-w-[160px] truncate" title={v.identity_rejection_reason}>
+                              {v.identity_rejection_reason}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {v.identity_submitted_at ? new Date(v.identity_submitted_at).toLocaleDateString() : '—'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {v.verification_status === 'pending' && (
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-success border-success/20 hover:bg-success/10 h-8"
+                                onClick={() => {
+                                  setSelectedVerification(v);
+                                  setVerificationAction('approve');
+                                  setVerificationReason('');
+                                  setIsVerificationModalOpen(true);
+                                }}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.approve')}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8"
+                                onClick={() => {
+                                  setSelectedVerification(v);
+                                  setVerificationAction('reject');
+                                  setVerificationReason('');
+                                  setIsVerificationModalOpen(true);
+                                }}
+                              >
+                                <AlertCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.reject')}
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Dialog open={isVerificationModalOpen} onOpenChange={setIsVerificationModalOpen}>
+            <DialogContent className="max-w-[95vw] sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{verificationAction === 'approve' ? t('admin.verifications.approveTitle') : t('admin.verifications.rejectTitle')}</DialogTitle>
+                <DialogDescription>
+                  {t('admin.verifications.reviewDesc', { store: selectedVerification?.name, owner: selectedVerification?.owner_username })}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="verification-reason">
+                    {verificationAction === 'approve' ? t('admin.verifications.adminNotes') : t('admin.verifications.rejectionReason')}
+                  </Label>
+                  <Textarea
+                    id="verification-reason"
+                    placeholder={verificationAction === 'approve' ? t('admin.verifications.approvedPlaceholder') : t('admin.verifications.rejectedPlaceholder')}
+                    value={verificationReason}
+                    onChange={(e) => setVerificationReason(e.target.value)}
+                    className="h-24"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsVerificationModalOpen(false)}>{t('common.cancel')}</Button>
+                <Button
+                  variant={verificationAction === 'approve' ? 'success' : 'destructive'}
+                  disabled={verificationAction === 'reject' && !verificationReason.trim()}
+                  onClick={() => handleVerificationAction(selectedVerification?._id, verificationAction, verificationReason)}
+                >
+                  {verificationAction === 'approve' ? t('admin.verifications.confirmApproval') : t('admin.verifications.confirmRejection')}
                 </Button>
               </DialogFooter>
             </DialogContent>

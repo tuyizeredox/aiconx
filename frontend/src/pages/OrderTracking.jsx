@@ -1,19 +1,21 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package, Search, Truck, CheckCircle2, Clock, MapPin,
-  ChevronDown, ChevronUp, ShoppingBag, AlertCircle, XCircle
+  ChevronDown, ChevronUp, ShoppingBag, AlertCircle, XCircle, Flag, Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from "@/components/shared/EmptyState";
 import { ordersAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 const TRACKING_STEPS = [
   { key: "pending",    icon: Clock },
@@ -104,6 +106,103 @@ function TrackingTimeline({ status }) {
   );
 }
 
+function DeliveryConfirmation({ order }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [reporting, setReporting] = useState(false);
+  const [reason, setReason] = useState("");
+
+  const confirmMutation = useMutation({
+    mutationFn: () => ordersAPI.confirmDelivery(order.id || order._id),
+    onSuccess: () => {
+      toast.success(t("orderTracking.confirmSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["myOrders"] });
+    },
+    onError: (err) => toast.error(err.message || t("common.error")),
+  });
+
+  const disputeMutation = useMutation({
+    mutationFn: () => ordersAPI.disputeDelivery(order.id || order._id, reason.trim()),
+    onSuccess: () => {
+      toast.success(t("orderTracking.disputeSuccess"));
+      setReporting(false);
+      queryClient.invalidateQueries({ queryKey: ["myOrders"] });
+    },
+    onError: (err) => toast.error(err.message || t("common.error")),
+  });
+
+  if (order.status !== "delivered") return null;
+
+  if (order.buyer_confirmation_status === "confirmed") {
+    return (
+      <div className="mt-4 p-3 bg-green-50 dark:bg-green-950 rounded-xl flex items-center gap-2">
+        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+        <p className="text-xs text-green-700 dark:text-green-400">{t("orderTracking.confirmedBanner")}</p>
+      </div>
+    );
+  }
+  if (order.buyer_confirmation_status === "disputed") {
+    return (
+      <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 rounded-xl flex items-center gap-2">
+        <Flag className="w-4 h-4 text-amber-600 shrink-0" />
+        <p className="text-xs text-amber-700 dark:text-amber-400">{t("orderTracking.disputedBanner")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl">
+      <p className="text-xs font-medium text-orange-900 dark:text-orange-300 mb-2">{t("orderTracking.confirmPrompt")}</p>
+      {!reporting ? (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={() => confirmMutation.mutate()}
+            disabled={confirmMutation.isPending}
+            className="bg-orange-600 hover:bg-orange-700 rounded-lg text-xs h-8 flex-1"
+          >
+            {confirmMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t("orderTracking.confirmReceipt")}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setReporting(true)}
+            className="rounded-lg text-xs h-8 flex-1"
+          >
+            {t("orderTracking.reportProblem")}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t("orderTracking.disputeReasonPlaceholder")}
+            className="text-xs h-20"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => {
+                if (!reason.trim()) { toast.error(t("orderTracking.reasonRequired")); return; }
+                disputeMutation.mutate();
+              }}
+              disabled={disputeMutation.isPending}
+              className="rounded-lg text-xs h-8 flex-1"
+            >
+              {disputeMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t("orderTracking.submitReport")}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setReporting(false)} className="rounded-lg text-xs h-8">
+              {t("orderTracking.cancel")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OrderTrackCard({ order, defaultExpanded = false }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -160,6 +259,7 @@ function OrderTrackCard({ order, defaultExpanded = false }) {
             <div className="px-5 pb-5 border-t border-slate-50 dark:border-slate-700">
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-4 mb-4">{t("orderTracking.shippingProgress")}</p>
               <TrackingTimeline status={order.status} />
+              <DeliveryConfirmation order={order} />
 
               {order.tracking_number && (
                 <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl">
@@ -208,7 +308,7 @@ export default function OrderTracking() {
   const { data: myOrdersData, isLoading } = useQuery({
     queryKey: ["myOrders", currentUser?.username],
     queryFn: async () => {
-      const res = await ordersAPI.list({ buyer_username: currentUser?.username, sort: "-created_date", limit: 20 });
+      const res = await ordersAPI.list({ buyer_username: currentUser?.username, sort: "-created_at", limit: 20 });
       return res;
     },
     enabled: !!currentUser?.username,

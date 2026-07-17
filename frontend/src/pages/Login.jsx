@@ -167,7 +167,7 @@ const Login = () => {
   const anyLoading = isLoading || isGoogleLoading;
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-4 lg:pt-0">
+    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-[max(1rem,env(safe-area-inset-top))] lg:pt-0">
       <MemoizedBackground />
 
       <div className="flex lg:hidden items-center justify-between w-full max-w-md mx-auto px-4 sm:px-6 mb-4 relative z-20">

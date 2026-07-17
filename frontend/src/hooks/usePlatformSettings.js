@@ -10,9 +10,14 @@ export function usePlatformSettings() {
   });
 
   const subscriptionMode = data?.subscription_mode ?? false;
+  const platformFeePercent = data?.platform_fee_percent ?? 5;
+  const minWithdrawalAmount = data?.min_withdrawal_amount ?? 20;
 
   return {
     subscriptionMode,
     isSubscriptionEnforced: subscriptionMode,
+    platformFeePercent,
+    payoutRate: 1 - platformFeePercent / 100,
+    minWithdrawalAmount,
   };
 }

@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { SentimentSummary, ISentimentSummary } from '../models/SentimentSummary';
+import { isAdmin } from '../middleware/auth';
 
 export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
   // Get sentiment summary for a product
@@ -147,8 +148,10 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
   });
 
   // Update sentiment summary
+  // AI-generated product metadata with no owner field — admin-only, not vendor
+  // self-service (unused by the frontend today).
   fastify.put('/:id', {
-    preHandler: fastify.authenticate
+    preHandler: [fastify.authenticate, isAdmin]
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
@@ -189,7 +192,7 @@ export async function sentimentSummaryRoutes(fastify: FastifyInstance) {
 
   // Delete sentiment summary
   fastify.delete('/:id', {
-    preHandler: fastify.authenticate
+    preHandler: [fastify.authenticate, isAdmin]
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };

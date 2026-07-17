@@ -3,6 +3,7 @@ import { Message, IMessage } from '../models/Message';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
 import { NotificationService } from '../services/notificationService';
+import { checkPaymentSolicitation } from '../utils/chatSafety';
 import { z } from 'zod';
 
 const sendMessageSchema = z.object({
@@ -198,7 +199,15 @@ export async function messageRoutes(fastify: FastifyInstance) {
     try {
       const user = request.user as any;
       const body = sendMessageSchema.parse(request.body);
-      
+
+      const safetyCheck = checkPaymentSolicitation(body.content);
+      if (safetyCheck.blocked) {
+        return reply.code(400).send({
+          error: 'Message blocked',
+          message: "For your safety, payment details and off-platform payment requests can't be sent in chat. All purchases go through checkout.",
+        });
+      }
+
       // If no conversation_id, create one from both usernames
       const usernames = [user.username, body.recipient_username].sort();
       const conversationId = body.conversation_id || `chat_${usernames[0]}_${usernames[1]}`;

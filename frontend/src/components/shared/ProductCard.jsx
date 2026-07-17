@@ -21,7 +21,7 @@ export default function ProductCard({ product, compact = false, currentUser }) {
   const { data: wishlistItems = [] } = useQuery({
     queryKey: ["wishlist", currentUser?.username],
     queryFn: async () => {
-      const res = await wishlistAPI.list({ sort: "-created_date", limit: 200 });
+      const res = await wishlistAPI.list({ sort: "-created_at", limit: 200 });
       return res.items || res.data || (Array.isArray(res) ? res : []);
     },
     staleTime: 60000,

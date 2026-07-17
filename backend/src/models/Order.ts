@@ -36,6 +36,12 @@ export interface IOrder extends Document {
   pickup_instructions?: string;
   tracking_number?: string;
   order_note?: string;
+  delivered_at?: Date;
+  buyer_confirmation_status: 'pending' | 'confirmed' | 'disputed';
+  buyer_confirmed_at?: Date;
+  dispute_reason?: string;
+  dispute_resolved_at?: Date;
+  dispute_resolution?: 'released' | 'refunded';
    affiliate_username?: string;
    affiliate_commission: number;
    affiliate_link_id?: string;
@@ -185,6 +191,28 @@ const OrderSchema = new Schema<IOrder>({
     type: String,
     trim: true,
   },
+  delivered_at: {
+    type: Date,
+  },
+  buyer_confirmation_status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'disputed'],
+    default: 'pending',
+  },
+  buyer_confirmed_at: {
+    type: Date,
+  },
+  dispute_reason: {
+    type: String,
+    trim: true,
+  },
+  dispute_resolved_at: {
+    type: Date,
+  },
+  dispute_resolution: {
+    type: String,
+    enum: ['released', 'refunded'],
+  },
   affiliate_username: {
     type: String,
     lowercase: true,
@@ -238,6 +266,7 @@ OrderSchema.index({ vendor_username: 1, created_at: -1 });
 OrderSchema.index({ store_id: 1, created_at: -1 });
 OrderSchema.index({ status: 1, created_at: -1 });
 OrderSchema.index({ payment_status: 1 });
+OrderSchema.index({ buyer_confirmation_status: 1 });
 OrderSchema.index({ affiliate_username: 1 });
 
 export const Order = mongoose.model<IOrder>('Order', OrderSchema);

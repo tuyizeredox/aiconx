@@ -8,7 +8,11 @@ import { Capacitor } from '@capacitor/core';
  */
 
 function resolveApiBaseUrl() {
-  const configured = import.meta.env.VITE_API_URL || '/api';
+  // Prefer explicit API url from env; fallback to production backend.
+  const configured =
+    import.meta.env.VITE_API_URL ||
+    'https://aiconxbackend.onrender.com/api';
+
 
   // On a native Android build, "localhost" refers to the device itself, not
   // the machine running the dev backend. The Android emulator maps 10.0.2.2
@@ -349,7 +353,9 @@ export const ordersAPI = {
   get: (id) => apiClient.get(`/orders/${id}`),
   create: (data) => apiClient.post('/orders', data),
   updateStatus: (id, status) => apiClient.patch(`/orders/${id}/status`, { status }),
-  cancelOrder: (id) => apiClient.patch(`/orders/${id}/status`, { status: 'cancelled' })
+  cancelOrder: (id) => apiClient.patch(`/orders/${id}/status`, { status: 'cancelled' }),
+  confirmDelivery: (id) => apiClient.patch(`/orders/${id}/confirm-delivery`, { action: 'confirm' }),
+  disputeDelivery: (id, reason) => apiClient.patch(`/orders/${id}/confirm-delivery`, { action: 'dispute', reason }),
 };
 
 export const cartAPI = {
@@ -544,12 +550,19 @@ export const adminAPI = {
     return apiClient.get(`/admin/orders?${query}`);
   },
   updateOrderStatus: (id, status) => apiClient.patch(`/admin/orders/${id}/status`, { status }),
+  resolveOrderDispute: (id, resolution, notes) => apiClient.patch(`/admin/orders/${id}/resolve-dispute`, { resolution, notes }),
   // Withdrawals
   getWithdrawals: (params) => {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/admin/withdrawals?${query}`);
   },
   updateWithdrawalStatus: (id, status, notes) => apiClient.patch(`/admin/withdrawals/${id}/status`, { status, notes }),
+  // Seller identity verification (KYC)
+  getVerifications: (params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/verifications?${query}`);
+  },
+  updateVerification: (storeId, action, reason) => apiClient.patch(`/admin/verifications/${storeId}`, { action, reason }),
   // Settings
   updateSettings: (data) => apiClient.patch('/admin/settings', data),
   // Reports
@@ -598,7 +611,8 @@ export const storesAPI = {
   create: (data) => apiClient.post('/stores', data),
   update: (id, data) => apiClient.patch(`/stores/${id}`, data),
   getByOwner: (username) => apiClient.get(`/stores/owner/${username}`),
-  getByOwnerUsername: (username) => apiClient.get(`/stores/owner/username/${username}`)
+  getByOwnerUsername: (username) => apiClient.get(`/stores/owner/username/${username}`),
+  submitVerification: (data) => apiClient.post('/stores/verification', data),
 };
 
 export const usersAPI = {

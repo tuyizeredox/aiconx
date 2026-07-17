@@ -75,7 +75,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white dark:bg-slate-950 overflow-x-hidden">
 
       {/* Sticky Navbar */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <Logo size="sm" showText />
 

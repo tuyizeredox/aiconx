@@ -11,7 +11,7 @@ export async function couponRoutes(fastify: FastifyInstance) {
       const {
         vendor_username,
         store_id,
-        is_active = true,
+        is_active,
         sort = '-created_at',
         limit = 20,
         skip = 0

@@ -13,12 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { affiliateLinksAPI, productsAPI, vendorSubscriptionsAPI } from "@/api/apiClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { affiliateLinksAPI, productsAPI, vendorSubscriptionsAPI, ordersAPI, withdrawalsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useSocket } from "@/lib/SocketContext";
 import { useTranslation } from "react-i18next";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { isOrderWithdrawable } from "@/lib/orderConfirmation";
 
 const RANK_MEDAL = {
   1: { bg: "bg-yellow-100 dark:bg-yellow-900", text: "text-yellow-700 dark:text-yellow-400", border: "border-yellow-200 dark:border-yellow-700", icon: Crown },
@@ -404,6 +407,65 @@ export default function Affiliate() {
     total_paid: 0
   };
 
+  // Real, withdrawable balance — mirrors the backend gate in withdrawals.ts exactly
+  // (a converted order only counts once the buyer confirms receipt, or after the
+  // auto-release window, and never while disputed), so this never promises a payout
+  // amount that a withdrawal request would then reject.
+  const { data: referralOrdersResponse = {} } = useQuery({
+    queryKey: ["affiliateReferralOrders", currentUser?.username],
+    queryFn: () => ordersAPI.list({ affiliate_username: currentUser?.username, sort: "-created_at", limit: 200 }),
+    enabled: !!currentUser?.username,
+  });
+  const referralOrders = Array.isArray(referralOrdersResponse?.data) ? referralOrdersResponse.data : [];
+  const creditedOrders = referralOrders.filter(o => o.payment_status === "paid" && o.affiliate_commission_credited);
+  const withdrawableCommission = creditedOrders
+    .filter(o => o.buyer_confirmation_status !== "disputed" && isOrderWithdrawable(o))
+    .reduce((s, o) => s + (o.affiliate_commission || 0), 0);
+  const heldCommission = creditedOrders
+    .filter(o => o.buyer_confirmation_status !== "disputed" && !isOrderWithdrawable(o))
+    .reduce((s, o) => s + (o.affiliate_commission || 0), 0);
+
+  const { data: myWithdrawalsResponse = {} } = useQuery({
+    queryKey: ["affiliateWithdrawals", currentUser?.username],
+    queryFn: () => withdrawalsAPI.listByUsername(currentUser?.username, { sort: "-created_at", limit: 50 }),
+    enabled: !!currentUser?.username,
+  });
+  const myWithdrawals = (Array.isArray(myWithdrawalsResponse?.data) ? myWithdrawalsResponse.data : [])
+    .filter(w => w.payee_type === "affiliate");
+  const totalWithdrawn = myWithdrawals.filter(w => w.status === "completed").reduce((s, w) => s + (w.amount || 0), 0);
+  const pendingWithdrawalAmount = myWithdrawals.filter(w => w.status === "pending" || w.status === "processing").reduce((s, w) => s + (w.amount || 0), 0);
+  const availablePayoutBalance = Math.max(0, withdrawableCommission - totalWithdrawn - pendingWithdrawalAmount);
+
+  const { minWithdrawalAmount } = usePlatformSettings();
+  const [showPayoutRequest, setShowPayoutRequest] = useState(false);
+  const [payoutForm, setPayoutForm] = useState({
+    amount: "",
+    payment_method: "bank_transfer",
+    bank_name: "", bank_account_name: "", bank_account_number: "", routing_number: "",
+    paypal_email: "", mobile_money_number: "",
+  });
+
+  const requestPayoutMutation = useMutation({
+    mutationFn: () => withdrawalsAPI.create({
+      payee_type: "affiliate",
+      amount: parseFloat(payoutForm.amount),
+      payment_method: payoutForm.payment_method,
+      bank_account_name: payoutForm.bank_account_name,
+      bank_account_number: payoutForm.bank_account_number,
+      bank_name: payoutForm.bank_name,
+      routing_number: payoutForm.routing_number,
+      paypal_email: payoutForm.paypal_email,
+      mobile_money_number: payoutForm.mobile_money_number,
+    }),
+    onSuccess: () => {
+      toast.success(t("affiliate.payoutRequested"));
+      setShowPayoutRequest(false);
+      setPayoutForm({ amount: "", payment_method: "bank_transfer", bank_name: "", bank_account_name: "", bank_account_number: "", routing_number: "", paypal_email: "", mobile_money_number: "" });
+      queryClient.invalidateQueries({ queryKey: ["affiliateWithdrawals"] });
+    },
+    onError: (err) => toast.error(err.message || t("affiliate.payoutRequestFailed")),
+  });
+
   const { data: products = [], isPending: productsLoading } = useQuery({
     queryKey: ["affiliateProducts", search, subscriptionMode],
     queryFn: async () => {
@@ -476,7 +538,6 @@ export default function Affiliate() {
   const totalClicks = stats.total_clicks || 0;
   const totalConversions = stats.total_conversions || 0;
   const totalEarned = stats.total_earned || 0;
-  const pendingPayout = (stats.total_earned || 0) - (stats.total_paid || 0);
 
   const alreadyLinked = (productId) => myLinks.some(l => l.product_id === productId);
 
@@ -499,11 +560,91 @@ export default function Affiliate() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-4 sm:mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-3">
         <StatCard icon={Link2} label={t("affiliate.activeLinks")} value={myLinks.filter(l => l.status === "active").length} color="bg-orange-50 text-orange-600" />
         <StatCard icon={MousePointerClick} label={t("affiliate.totalClicks")} value={totalClicks.toLocaleString()} color="bg-orange-50 text-orange-600" />
         <StatCard icon={ShoppingCart} label={t("affiliate.conversions")} value={totalConversions} sub={totalClicks ? `${((totalConversions/totalClicks)*100).toFixed(1)}% ${t("affiliate.rateSuffix")}` : ""} color="bg-green-50 text-green-600" />
-        <StatCard icon={DollarSign} label={t("affiliate.pendingPayout")} value={formatCurrency(pendingPayout)} sub={t("affiliate.totalEarnedSub", { amount: formatCurrency(totalEarned) })} color="bg-amber-50 text-amber-600" />
+        <StatCard icon={DollarSign} label={t("affiliate.availableBalance")} value={formatCurrency(availablePayoutBalance)} sub={t("affiliate.totalEarnedSub", { amount: formatCurrency(totalEarned) })} color="bg-amber-50 text-amber-600" />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+        {heldCommission > 0 ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" /> {t("affiliate.heldCommission", { amount: formatCurrency(heldCommission) })}
+          </p>
+        ) : <div />}
+        <Dialog open={showPayoutRequest} onOpenChange={setShowPayoutRequest}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5 shrink-0">
+              <DollarSign className="w-3.5 h-3.5" /> {t("affiliate.requestPayout")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>{t("affiliate.requestPayout")}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("affiliate.availableBalance")}</p>
+                <p className="text-2xl font-bold text-orange-700">${availablePayoutBalance.toFixed(2)}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">{t("finance.withdrawalAmount")} *</label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={payoutForm.amount}
+                  onChange={e => setPayoutForm(p => ({ ...p, amount: e.target.value }))}
+                  max={availablePayoutBalance}
+                />
+                {parseFloat(payoutForm.amount) > 0 && parseFloat(payoutForm.amount) < minWithdrawalAmount && (
+                  <p className="text-xs text-amber-600 mt-1">{t("finance.minimumWithdrawal", { min: minWithdrawalAmount })}</p>
+                )}
+                {parseFloat(payoutForm.amount) > availablePayoutBalance && (
+                  <p className="text-xs text-red-500 mt-1">{t("finance.exceedsBalance")}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">{t("finance.payoutMethod")}</label>
+                <Select value={payoutForm.payment_method} onValueChange={(v) => setPayoutForm(p => ({ ...p, payment_method: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank_transfer">Bank</SelectItem>
+                    <SelectItem value="paypal">PayPal</SelectItem>
+                    <SelectItem value="mobile_money">M-Money</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {payoutForm.payment_method === "bank_transfer" && (
+                <div className="space-y-2">
+                  <Input placeholder="Bank name" value={payoutForm.bank_name} onChange={e => setPayoutForm(p => ({ ...p, bank_name: e.target.value }))} />
+                  <Input placeholder="Account holder name" value={payoutForm.bank_account_name} onChange={e => setPayoutForm(p => ({ ...p, bank_account_name: e.target.value }))} />
+                  <Input placeholder="Account #" value={payoutForm.bank_account_number} onChange={e => setPayoutForm(p => ({ ...p, bank_account_number: e.target.value }))} />
+                </div>
+              )}
+              {payoutForm.payment_method === "paypal" && (
+                <Input placeholder="PayPal email" value={payoutForm.paypal_email} onChange={e => setPayoutForm(p => ({ ...p, paypal_email: e.target.value }))} />
+              )}
+              {payoutForm.payment_method === "mobile_money" && (
+                <Input placeholder="Mobile money number" value={payoutForm.mobile_money_number} onChange={e => setPayoutForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
+              )}
+              <Button
+                onClick={() => requestPayoutMutation.mutate()}
+                disabled={
+                  requestPayoutMutation.isPending ||
+                  !payoutForm.amount ||
+                  parseFloat(payoutForm.amount) < minWithdrawalAmount ||
+                  parseFloat(payoutForm.amount) > availablePayoutBalance ||
+                  (payoutForm.payment_method === "bank_transfer" && (!payoutForm.bank_name || !payoutForm.bank_account_name || !payoutForm.bank_account_number)) ||
+                  (payoutForm.payment_method === "paypal" && !payoutForm.paypal_email) ||
+                  (payoutForm.payment_method === "mobile_money" && !payoutForm.mobile_money_number)
+                }
+                className="w-full bg-orange-600 hover:bg-orange-700 h-11"
+              >
+                {requestPayoutMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {t("finance.submitWithdrawal")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Live Activity */}

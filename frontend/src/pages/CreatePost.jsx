@@ -62,7 +62,9 @@ export default function CreatePost() {
 
   const { data: searchedProductsResponse } = useQuery({
     queryKey: ["productSearch", productQuery],
-    queryFn: () => productsAPI.list({ sort: "-sales_count", limit: 20 }),
+    queryFn: () => productQuery
+      ? productsAPI.list({ search: productQuery, limit: 20 })
+      : productsAPI.list({ sort: "-sales_count", limit: 20 }),
     enabled: showProductSearch,
     staleTime: 60000,
   });
@@ -153,13 +155,13 @@ export default function CreatePost() {
   // Extract products array from response (handle both array and object responses)
   const searchedProducts = Array.isArray(searchedProductsResponse)
     ? searchedProductsResponse
-    : searchedProductsResponse?.products || [];
+    : searchedProductsResponse?.data || [];
 
   const filteredProducts = productQuery
     ? searchedProducts.filter(p => p.title?.toLowerCase().includes(productQuery.toLowerCase()))
     : searchedProducts.slice(0, 6);
 
-  const myAffiliateLinks = myAffiliateLinksResponse?.links || [];
+  const myAffiliateLinks = (myAffiliateLinksResponse?.links || []).map(l => ({ ...l, id: l.id || l._id }));
 
   const submitMutation = useMutation({
     mutationFn: async () => {

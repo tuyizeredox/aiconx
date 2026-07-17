@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, Send, Volume2, VolumeX, BarChart3, Trash2 } from "lucide-react";
+import { X, Heart, Send, Volume2, VolumeX, BarChart3, Trash2, Video } from "lucide-react";
 import { storiesAPI } from "@/api/apiClient";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +16,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const inputRef = useRef(null);
   const videoRef = useRef(null);
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   useEffect(() => {
     setProgress(0);
     setLiked(false);
+    setVideoLoaded(false);
   }, [current, story?._id, story?.id]);
 
   // Handle auto-progress timer
@@ -199,14 +201,21 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
             >
               {(story.media_type === "image" || story.media_type === "video") && story.media_url ? (
                 story.media_type === "video" ? (
-                  <video
+                  <>
+                    {!videoLoaded && (
+                      <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${gradClass}`}>
+                        <Video className="w-12 h-12 text-white/70" />
+                      </div>
+                    )}
+                    <video
                     ref={videoRef}
                     src={story.media_url}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover transition-opacity duration-200 ${videoLoaded ? "opacity-100" : "opacity-0"}`}
                     autoPlay
                     playsInline
                     muted={isMuted}
                     controls={false}
+                    onLoadedData={() => setVideoLoaded(true)}
                     onPlay={() => setIsPaused(false)}
                     onEnded={() => {
                       setProgress(100);
@@ -218,7 +227,8 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
                         else onClose();
                       }
                     }}
-                  />
+                    />
+                  </>
                 ) : (
                   <img src={story.media_url} alt="" className="w-full h-full object-cover" />
                 )

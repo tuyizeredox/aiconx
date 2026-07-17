@@ -1,12 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { 
-  uploadFile, 
-  deleteFile, 
-  generatePresignedUploadUrl, 
+import {
+  uploadFile,
+  deleteFile,
+  generatePresignedUploadUrl,
   getStorageStatus,
-  isS3Configured 
+  isS3Configured
 } from '../services/storageService';
+import { isAdmin } from '../middleware/auth';
 
 export async function fileRoutes(fastify: FastifyInstance) {
   // Get storage status
@@ -89,9 +90,11 @@ export async function fileRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete file
+  // Delete file. Admin-only: there's no ownership metadata tracking who uploaded a given
+  // key, so a self-service delete-by-key endpoint can't be safely scoped to "your own"
+  // files. Nothing in the frontend currently calls this directly.
   fastify.delete('/:keyOrPublicId', {
-    preHandler: [fastify.authenticate],
+    preHandler: [fastify.authenticate, isAdmin],
   }, async (request, reply) => {
     try {
       const { keyOrPublicId } = request.params as { keyOrPublicId: string };

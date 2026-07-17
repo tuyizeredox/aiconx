@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { storiesAPI } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import StoryViewer from "./StoryViewer";
 import CreateStoryModal from "./CreateStoryModal";
@@ -9,12 +9,27 @@ import CreateStoryModal from "./CreateStoryModal";
 export default function StoriesRow({ currentUser }) {
   const [viewingGroup, setViewingGroup] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [uploadingStory, setUploadingStory] = useState(false);
 
   // Listen for custom event to open create story modal
   useEffect(() => {
     const handleOpenCreate = () => setShowCreate(true);
     window.addEventListener('open-create-story', handleOpenCreate);
     return () => window.removeEventListener('open-create-story', handleOpenCreate);
+  }, []);
+
+  // Story publishing happens in the background after the modal closes, so
+  // reflect that as a subtle uploading state on "Your Story" instead of
+  // blocking the whole app while the upload completes.
+  useEffect(() => {
+    const handleStart = () => setUploadingStory(true);
+    const handleEnd = () => setUploadingStory(false);
+    window.addEventListener('story-upload-start', handleStart);
+    window.addEventListener('story-upload-end', handleEnd);
+    return () => {
+      window.removeEventListener('story-upload-start', handleStart);
+      window.removeEventListener('story-upload-end', handleEnd);
+    };
   }, []);
 
   const { data: response } = useQuery({
@@ -78,7 +93,7 @@ export default function StoriesRow({ currentUser }) {
             }}
             className="shrink-0 flex flex-col items-center gap-1.5"
           >
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center relative overflow-hidden ${myStory ? 'p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm' : 'bg-orange-50 border-2 border-dashed border-orange-200'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center relative overflow-hidden ${uploadingStory ? 'p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm animate-pulse' : myStory ? 'p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm' : 'bg-orange-50 border-2 border-dashed border-orange-200'}`}>
               <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center relative overflow-hidden">
                 {myStory ? (
                   // Show preview of the latest story
@@ -127,13 +142,19 @@ export default function StoriesRow({ currentUser }) {
                 </div>
               )}
 
-              {!myStory && (
+              {!myStory && !uploadingStory && (
                 <div className="absolute bottom-0 right-0 w-5 h-5 bg-orange-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm">
                   <Plus className="w-3 h-3 text-white" />
                 </div>
               )}
+
+              {uploadingStory && (
+                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                </div>
+              )}
             </div>
-            <span className="text-[10px] text-slate-500 font-medium">Your Story</span>
+            <span className="text-[10px] text-slate-500 font-medium">{uploadingStory ? "Uploading..." : "Your Story"}</span>
           </button>
 
           {/* Other stories */}

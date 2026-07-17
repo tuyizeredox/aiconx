@@ -1,4 +1,5 @@
 import { PushNotifications } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { usersAPI } from '@/api/apiClient';
 
@@ -15,6 +16,7 @@ export const setupPushNotifications = async () => {
   try {
     // Clear any existing listeners first to avoid duplicates
     await PushNotifications.removeAllListeners();
+    await LocalNotifications.removeAllListeners();
 
     // Request permission to use push notifications
     let permStatus = await PushNotifications.checkPermissions();
@@ -30,6 +32,18 @@ export const setupPushNotifications = async () => {
 
     // Register with Apple / Google to receive push via APNS/FCM
     await PushNotifications.register();
+
+    // Android only auto-displays a push's system-tray banner while the app is
+    // backgrounded/killed; in the foreground it's handed to the listener below
+    // instead, so we need LocalNotifications to show it ourselves.
+    try {
+      const localPerm = await LocalNotifications.checkPermissions();
+      if (localPerm.display === 'prompt') {
+        await LocalNotifications.requestPermissions();
+      }
+    } catch (err) {
+      console.error('Failed to request local notification permission', err);
+    }
 
     // On success, we should be able to receive notifications
     PushNotifications.addListener('registration', async (token) => {
@@ -47,16 +61,36 @@ export const setupPushNotifications = async () => {
       console.error('Error on registration: ' + JSON.stringify(error));
     });
 
-    // Show us the notification payload if the app is open on our device
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    // Foreground pushes reach here instead of the system tray, so display
+    // them ourselves via a local notification.
+    PushNotifications.addListener('pushNotificationReceived', async (notification) => {
       console.log('Push received: ' + JSON.stringify(notification));
-      // In-app alert or notification list update could happen here
+      try {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: Date.now() % 2147483647,
+            title: notification.title || 'AiconX',
+            body: notification.body || '',
+            extra: notification.data || {},
+          }],
+        });
+      } catch (err) {
+        console.error('Failed to show local notification for foreground push', err);
+      }
     });
 
-    // Method called when tapping on a notification
+    // Method called when tapping on a notification delivered while backgrounded/killed
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
       console.log('Push action performed: ' + JSON.stringify(notification));
       const data = notification.notification.data;
+      if (data && data.link) {
+        window.location.href = data.link;
+      }
+    });
+
+    // Method called when tapping a notification we displayed ourselves (foreground case)
+    LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+      const data = action.notification.extra;
       if (data && data.link) {
         window.location.href = data.link;
       }

@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IWithdrawal extends Document {
-   vendor_username: string;
+   vendor_username: string; // holds either the vendor's or the affiliate's username, per payee_type
+   payee_type: 'vendor' | 'affiliate';
    store_id?: string;
    store_name?: string;
    amount: number;
@@ -25,6 +26,11 @@ const WithdrawalSchema = new Schema<IWithdrawal>({
     required: true,
     index: true
   },
+  payee_type: {
+    type: String,
+    enum: ['vendor', 'affiliate'],
+    default: 'vendor',
+  },
   store_id: {
     type: String,
     index: true
@@ -35,7 +41,7 @@ const WithdrawalSchema = new Schema<IWithdrawal>({
   amount: {
     type: Number,
     required: true,
-    min: 20
+    min: 1, // real floor lives in Settings.min_withdrawal_amount, enforced in the route
   },
    payment_method: {
      type: String,

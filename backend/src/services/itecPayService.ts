@@ -179,6 +179,9 @@ export const itecPayService = {
         if (bodyStatus === 500 || bodyMsg.includes('Initiate failed')) {
           throw new Error('Card payment service is temporarily unavailable. Please try again later or use mobile money payment.');
         }
+        if (/balance/i.test(bodyMsg)) {
+          throw new Error('Payment declined: the selected card or mobile money account does not have enough funds to cover this order. Please top up or try a different payment method.');
+        }
         throw new Error(bodyMsg || `Card payment gateway error (status: ${bodyStatus})`);
       }
 
@@ -408,6 +411,9 @@ export const itecPayService = {
           statusVal === 'success' || statusVal === 'ok' || statusVal === '200';
         if (!ok) {
           const errMsg = res.data?.message || res.message || `Payment request failed (status: ${res.status})`;
+          if (/balance/i.test(errMsg)) {
+            throw new Error('Payment declined: the selected mobile money account does not have enough funds to cover this order. Please top up or try a different payment method.');
+          }
           throw new Error(errMsg);
         }
 

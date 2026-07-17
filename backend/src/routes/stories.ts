@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import { Follow } from '../models/Follow';
 import { Message } from '../models/Message';
 import { likeTarget, unlikeTarget, getLikesForTargets } from '../services/likeService';
+import { isAdmin } from '../middleware/auth';
 
 export async function storyRoutes(fastify: FastifyInstance) {
   // Get active stories feed (from users you follow + your own)
@@ -458,14 +459,9 @@ export async function storyRoutes(fastify: FastifyInstance) {
 
   // Clean up expired stories (admin endpoint)
   fastify.post('/cleanup', {
-    preHandler: fastify.authenticate
+    preHandler: [fastify.authenticate, isAdmin]
   }, async (request, reply) => {
     try {
-      const user = request.user as any;
-
-      // TODO: Add admin check
-      // For now, allow any authenticated user
-
       const result = await Story.updateMany(
         {
           expires_at: { $lt: new Date() },

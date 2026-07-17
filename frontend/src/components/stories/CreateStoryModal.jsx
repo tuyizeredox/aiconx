@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { X, Image, Type, Loader2 } from "lucide-react";
+import { X, Image, Type } from "lucide-react";
 import { storiesAPI } from "@/api/apiClient";
 import { uploadStoryMedia } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ export default function CreateStoryModal({ currentUser, onClose }) {
   const [bgColor, setBgColor] = useState("#6366f1");
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
   const queryClient = useQueryClient();
 
@@ -44,70 +43,69 @@ export default function CreateStoryModal({ currentUser, onClose }) {
     e.target.value = ""; // Allow re-selecting the same file
   };
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
     if (type === "text" && !caption.trim()) {
       toast.error("Add some text to your story");
       return;
     }
-    
+
     if (type !== "text" && !mediaFile) {
       toast.error("Please select a media file");
       return;
     }
 
-    setUploading(true);
-    try {
-      let media_url = null;
-      if (mediaFile) {
-        console.log(`Uploading story media: ${mediaFile.name}`);
-        const res = await uploadStoryMedia(mediaFile);
-        console.log('Upload response:', res);
-        media_url = res.url;
-        if (!media_url) {
-          throw new Error("Failed to get media URL from upload");
+    // Close immediately and continue the upload in the background (like Instagram),
+    // so the user isn't blocked waiting on the network request.
+    window.dispatchEvent(new CustomEvent('story-upload-start'));
+    onClose();
+
+    (async () => {
+      try {
+        let media_url = null;
+        if (mediaFile) {
+          const res = await uploadStoryMedia(mediaFile);
+          media_url = res.url;
+          if (!media_url) {
+            throw new Error("Failed to get media URL from upload");
+          }
         }
+
+        if (type !== "text" && !media_url) {
+          throw new Error("Media URL is missing for image/video story");
+        }
+
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        const storyData = {
+          author_username: currentUser?.username,
+          author_email: currentUser?.email,
+          author_name: currentUser?.display_name || currentUser?.full_name || `@${currentUser?.username}`,
+          author_avatar: currentUser?.avatar_url,
+          media_url: media_url || "", // Always provide a string
+          media_type: type,
+          caption: caption?.trim() || "",
+          bg_color: bgColor,
+          expires_at: expires,
+          is_active: true,
+          views_count: 0,
+          likes_count: 0,
+        };
+
+        await storiesAPI.create(storyData);
+
+        await queryClient.invalidateQueries({ queryKey: ["stories"] });
+        toast.success("Story published! 🎉");
+      } catch (e) {
+        console.error('Story publish failed:', e);
+        if (e.status === 413 || e.message?.includes('too large')) {
+          toast.error('The file you are trying to upload is too large. Please try a smaller file.');
+        } else {
+          const detailMsg = e.details ? `: ${JSON.stringify(e.details)}` : '';
+          toast.error(`Failed to publish story${detailMsg}`);
+        }
+      } finally {
+        window.dispatchEvent(new CustomEvent('story-upload-end'));
       }
-
-      if (type !== "text" && !media_url) {
-        throw new Error("Media URL is missing for image/video story");
-      }
-
-      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      const storyData = {
-        author_username: currentUser?.username,
-        author_email: currentUser?.email,
-        author_name: currentUser?.display_name || currentUser?.full_name || `@${currentUser?.username}`,
-        author_avatar: currentUser?.avatar_url,
-        media_url: media_url || "", // Always provide a string
-        media_type: type,
-        caption: caption?.trim() || "",
-        bg_color: bgColor,
-        expires_at: expires,
-        is_active: true,
-        views_count: 0,
-        likes_count: 0,
-      };
-
-      console.log('Publishing story with final data:', JSON.stringify(storyData, null, 2));
-      await storiesAPI.create(storyData);
-
-      // Invalidate and refetch stories immediately
-      await queryClient.invalidateQueries({ queryKey: ["stories"] });
-      await queryClient.refetchQueries({ queryKey: ["stories"] });
-
-      toast.success("Story published! 🎉");
-      onClose();
-    } catch (e) {
-      console.error('Story publish failed:', e);
-      if (e.status === 413 || e.message?.includes('too large')) {
-        toast.error('The file you are trying to upload is too large. Please try a smaller file.');
-      } else {
-        const detailMsg = e.details ? `: ${JSON.stringify(e.details)}` : '';
-        toast.error(`Failed to publish story${detailMsg}`);
-      }
-    } finally {
-      setUploading(false);
-    }
+    })();
   };
 
   return (
@@ -119,7 +117,7 @@ export default function CreateStoryModal({ currentUser, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
-        initial={{ y: 60, opacity: 0 }}conrse preload="mtadata"
+        initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm overflow-hidden"
       >
@@ -189,10 +187,9 @@ export default function CreateStoryModal({ currentUser, onClose }) {
 
           <Button
             onClick={handlePublish}
-            disabled={uploading}
             className="w-full bg-orange-600 hover:bg-orange-700 rounded-xl h-10 font-semibold"
           >
-            {uploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Publishing...</> : "Share Story"}
+            Share Story
           </Button>
         </div>
       </motion.div>

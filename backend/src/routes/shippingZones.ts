@@ -302,7 +302,7 @@ export async function shippingZoneRoutes(fastify: FastifyInstance) {
         is_free: shipping_cost === 0,
         estimated_days_min: zone.estimated_days_min,
         estimated_days_max: zone.estimated_days_max,
-        currency: 'USD'
+        currency: 'RWF'
       });
     } catch (error) {
       fastify.log.error(error);

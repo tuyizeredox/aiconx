@@ -46,7 +46,7 @@ function ProductSharePicker({ onShare, onClose, currentUser }) {
   const { data: myProducts = [] } = useQuery({
     queryKey: ["myQuickProducts", currentUser?.username],
     queryFn: async () => {
-      const res = await productsAPI.list({ vendor_username: currentUser.username, status: "active", sort: "-created_date", limit: 30 });
+      const res = await productsAPI.list({ vendor_username: currentUser.username, status: "active", sort: "-created_at", limit: 30 });
       return res.data || [];
     },
     enabled: !!currentUser?.username,
@@ -373,7 +373,7 @@ export default function Chat() {
       }
       setNewMessage((prev) => prev || msgData.content || "");
       if (msgData.image_url) setPendingImageUrl(msgData.image_url);
-      toast.error(t("chat.failedToSend"));
+      toast.error(err?.message || t("chat.failedToSend"));
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["conversationMessages", conversationId], (old = []) => {

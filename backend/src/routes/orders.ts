@@ -50,7 +50,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const user = request.user as any;
-      const { role = 'buyer', status, limit = 20, skip = 0 } = request.query as any;
+      const { role = 'buyer', vendor_username, buyer_username, affiliate_username, status, limit = 20, skip = 0 } = request.query as any;
 
       const allowedStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
       if (status && !allowedStatuses.includes(status)) {
@@ -59,9 +59,29 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
       const parsedLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
       const parsedSkip = Math.max(parseInt(skip) || 0, 0);
+      const isAdminCaller = user.role === 'super_admin';
 
+      // Explicit vendor_username/buyer_username params are honored (several frontend
+      // pages send these instead of `role`), but only for the caller's own username
+      // unless they're a super_admin — never let one user page through another user's
+      // private order history (buyer PII: address, phone, email).
       const filter: any = {};
-      if (role === 'buyer') {
+      if (vendor_username) {
+        if (!isAdminCaller && vendor_username.toLowerCase() !== user.username.toLowerCase()) {
+          return reply.code(403).send({ error: 'You can only view your own orders' });
+        }
+        filter.vendor_username = vendor_username.toLowerCase();
+      } else if (buyer_username) {
+        if (!isAdminCaller && buyer_username.toLowerCase() !== user.username.toLowerCase()) {
+          return reply.code(403).send({ error: 'You can only view your own orders' });
+        }
+        filter.buyer_username = buyer_username.toLowerCase();
+      } else if (affiliate_username) {
+        if (!isAdminCaller && affiliate_username.toLowerCase() !== user.username.toLowerCase()) {
+          return reply.code(403).send({ error: 'You can only view your own referrals' });
+        }
+        filter.affiliate_username = affiliate_username.toLowerCase();
+      } else if (role === 'buyer') {
         filter.buyer_username = user.username;
       } else {
         filter.vendor_username = user.username;
@@ -466,6 +486,11 @@ export async function orderRoutes(fastify: FastifyInstance) {
       order.status = status as any;
       order.updated_at = new Date();
 
+      if (status === 'delivered') {
+        order.delivered_at = new Date();
+        order.buyer_confirmation_status = 'pending';
+      }
+
       // Restore inventory when an order is cancelled or refunded, so stock counts
       // stay accurate instead of being permanently lost. Guarded by stock_restored
       // to avoid double-crediting if status flips back and forth.
@@ -505,6 +530,76 @@ export async function orderRoutes(fastify: FastifyInstance) {
           status: order.status,
         });
       }
+
+      return order;
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Buyer confirms receipt, or disputes a delivered order. Funds only become withdrawable
+  // once this happens (or automatically after the auto-release window — see
+  // utils/platformFinance.ts) — delivery status alone no longer unlocks payout.
+  fastify.patch('/:id/confirm-delivery', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { action, reason } = z.object({
+        action: z.enum(['confirm', 'dispute']),
+        reason: z.string().optional(),
+      }).parse(request.body);
+      const user = request.user as any;
+
+      if (!mongoose.isValidObjectId(id)) {
+        return reply.code(400).send({ error: 'Invalid order ID' });
+      }
+      if (action === 'dispute' && !reason) {
+        return reply.code(400).send({ error: 'A reason is required to report a problem with an order.' });
+      }
+
+      const order = await Order.findById(id);
+      if (!order) {
+        return reply.code(404).send({ error: 'Order not found' });
+      }
+      if (order.buyer_username !== user.username) {
+        return reply.code(403).send({ error: 'Unauthorized' });
+      }
+      if (order.status !== 'delivered') {
+        return reply.code(400).send({ error: 'This order has not been marked as delivered yet.' });
+      }
+      if (order.buyer_confirmation_status !== 'pending') {
+        return reply.code(409).send({ error: 'This order has already been confirmed or reported.' });
+      }
+
+      if (action === 'confirm') {
+        order.buyer_confirmation_status = 'confirmed';
+        order.buyer_confirmed_at = new Date();
+      } else {
+        order.buyer_confirmation_status = 'disputed';
+        order.dispute_reason = reason;
+      }
+      order.updated_at = new Date();
+      await order.save();
+
+      await new Notification({
+        recipient_username: order.vendor_username,
+        type: 'order_update',
+        title: action === 'confirm'
+          ? `Order confirmed — ${order.items?.[0]?.product_title || 'your order'}`
+          : `Order disputed — ${order.items?.[0]?.product_title || 'your order'}`,
+        body: action === 'dispute' ? reason : undefined,
+        link: '/MyStore',
+        sender_username: user.username,
+        metadata: { order_id: order._id },
+      }).save();
 
       return order;
     } catch (error: any) {

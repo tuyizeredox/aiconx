@@ -81,21 +81,23 @@ export default function StoreDetail() {
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ["storeProducts", storeId],
     queryFn: async () => {
-      if (!isValidId) return [];
-      const res = await productsAPI.list({ store_id: storeId, status: "active", sort: "-created_date", limit: 50 });
-      return res.data || res || [];
+      if (!isValidId) return { list: [], total: 0 };
+      const res = await productsAPI.list({ store_id: storeId, status: "active", sort: "-created_at", limit: 50 });
+      const list = res.data || (Array.isArray(res) ? res : []);
+      return { list, total: typeof res.total === "number" ? res.total : list.length };
     },
     enabled: isValidId,
     retry: false,
   });
 
-  const products = Array.isArray(productsData) ? productsData : (productsData?.data || []);
+  const products = productsData?.list || [];
+  const totalProductsCount = productsData?.total ?? products.length;
 
   const { data: storeReviewsData } = useQuery({
     queryKey: ["storeReviews", storeId],
     queryFn: async () => {
       if (!isValidId) return [];
-      const res = await reviewsAPI.list({ store_id: storeId, sort: "-created_date", limit: 100 });
+      const res = await reviewsAPI.list({ store_id: storeId, sort: "-created_at", limit: 100 });
       return res.data || res || [];
     },
     enabled: isValidId,
@@ -177,7 +179,7 @@ export default function StoreDetail() {
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{store.description}</p>
             <div className="flex items-center flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1"><Package className="w-4 h-4" /> {t("storeDetail.productsCount", { count: products.length })}</span>
+              <span className="flex items-center gap-1"><Package className="w-4 h-4" /> {t("storeDetail.productsCount", { count: totalProductsCount })}</span>
               <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {t("storeDetail.followersCount", { count: store.follower_count || 0 })}</span>
               {avgRating > 0 && (
                 <span className="flex items-center gap-1.5">

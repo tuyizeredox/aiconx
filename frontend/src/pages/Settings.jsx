@@ -294,7 +294,7 @@ export default function Settings() {
       }
     } catch (err) {
       console.error(err);
-      toast.error(err.message || t("settings.biometricsRegisteredSuccess"));
+      toast.error(err.message || t("settings.biometricsRegisteredError"));
     } finally {
       setIsRegisteringBiometrics(false);
     }

@@ -140,7 +140,7 @@ export default function Profile() {
   const { data: userProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ["userProducts", targetUsername],
     queryFn: async () => {
-      const res = await productsAPI.list({ vendor_username: targetUsername, status: "active", sort: "-created_date", limit: 30 });
+      const res = await productsAPI.list({ vendor_username: targetUsername, status: "active", sort: "-created_at", limit: 30 });
       return res.data || [];
     },
     enabled: !!targetUsername,
@@ -149,7 +149,7 @@ export default function Profile() {
   const { data: buyerOrders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["profileOrders", targetUsername],
     queryFn: async () => {
-      const res = await ordersAPI.list({ buyer_username: targetUsername, sort: "-created_date", limit: 30 });
+      const res = await ordersAPI.list({ buyer_username: targetUsername, sort: "-created_at", limit: 30 });
       return res.data || [];
     },
     enabled: !!targetUsername && isOwnProfile,
@@ -158,7 +158,7 @@ export default function Profile() {
   const { data: reviews = [] } = useQuery({
     queryKey: ["userReviews", targetUsername],
     queryFn: async () => {
-      const res = await reviewsAPI.list({ reviewer_username: targetUsername, sort: "-created_date", limit: 5 });
+      const res = await reviewsAPI.list({ reviewer_username: targetUsername, sort: "-created_at", limit: 5 });
       return res.data || [];
     },
     enabled: !!targetUsername,
@@ -244,7 +244,7 @@ export default function Profile() {
   const { data: vendorStoreReviews = [] } = useQuery({
     queryKey: ["vendorStoreReviews", store?.id],
     queryFn: async () => {
-      const res = await reviewsAPI.list({ store_id: store.id, sort: "-created_date", limit: 100 });
+      const res = await reviewsAPI.list({ store_id: store.id, sort: "-created_at", limit: 100 });
       return res.data || [];
     },
     enabled: !!store?.id,

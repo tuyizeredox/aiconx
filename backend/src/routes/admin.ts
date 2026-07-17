@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { User } from '../models/User';
 import { Store } from '../models/Store';
@@ -11,8 +12,10 @@ import { Report } from '../models/Report';
 import { ActivityLog } from '../models/ActivityLog';
 import { Post } from '../models/Post';
 import { VendorSubscription } from '../models/VendorSubscription';
+import { Notification } from '../models/Notification';
 import { authenticate, isAdmin, logActivity, invalidateMaintenanceCache } from '../middleware/auth';
 import { escapeRegex } from '../utils/sanitize';
+import { DEFAULT_PLATFORM_FEE_PERCENT } from '../utils/platformFinance';
 
 export async function adminRoutes(fastify: FastifyInstance) {
   // Add authentication and admin check to all routes in this plugin
@@ -569,6 +572,96 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // --- Seller Identity Verification (KYC) ---
+
+  // List stores by verification status (defaults to pending — the review queue)
+  fastify.get('/verifications', async (request, reply) => {
+    try {
+      const { page = 1, limit = 10, status = 'pending' } = request.query as any;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const query: any = {};
+      if (status !== 'all') query.verification_status = status;
+
+      const stores = await Store.find(query)
+        .select('name owner_username verification_status identity_document_type identity_document_number identity_document_image_url identity_submitted_at identity_reviewed_at identity_reviewed_by identity_rejection_reason')
+        .sort({ identity_submitted_at: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await Store.countDocuments(query);
+
+      return {
+        stores,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Approve or reject a store's identity verification
+  fastify.patch('/verifications/:storeId', async (request, reply) => {
+    try {
+      const { storeId } = request.params as { storeId: string };
+      const { action, reason } = z.object({
+        action: z.enum(['approve', 'reject']),
+        reason: z.string().optional(),
+      }).parse(request.body);
+
+      if (action === 'reject' && !reason) {
+        return reply.code(400).send({ error: 'A reason is required when rejecting a verification request.' });
+      }
+
+      const store = await Store.findById(storeId);
+      if (!store) {
+        return reply.code(404).send({ error: 'Store not found' });
+      }
+
+      if (store.verification_status !== 'pending') {
+        return reply.code(409).send({ error: 'This store has no pending verification request.' });
+      }
+
+      const admin = request.user as any;
+      store.verification_status = action === 'approve' ? 'approved' : 'rejected';
+      store.is_verified = action === 'approve';
+      store.identity_reviewed_at = new Date();
+      store.identity_reviewed_by = admin.username;
+      store.identity_rejection_reason = action === 'reject' ? reason : undefined;
+      store.updated_at = new Date();
+      await store.save();
+
+      await new Notification({
+        recipient_username: store.owner_username,
+        type: 'verification',
+        title: action === 'approve'
+          ? 'Your store has been verified'
+          : 'Your store verification was rejected',
+        body: action === 'approve'
+          ? 'You can now add products to your store.'
+          : reason,
+        link: '/MyStore',
+        sender_username: admin.username,
+      }).save();
+
+      await logActivity(request, 'update_store_verification', store._id, 'store', { action, reason });
+
+      return store;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // --- Moderation (Reports) ---
 
   // Get all reports
@@ -672,11 +765,12 @@ export async function adminRoutes(fastify: FastifyInstance) {
   // Get all orders
   fastify.get('/orders', async (request, reply) => {
     try {
-      const { page = 1, limit = 10, status, search = '' } = request.query as any;
+      const { page = 1, limit = 10, status, buyer_confirmation_status, search = '' } = request.query as any;
       const skip = (parseInt(page) - 1) * parseInt(limit);
 
       const query: any = {};
       if (status) query.status = status;
+      if (buyer_confirmation_status) query.buyer_confirmation_status = buyer_confirmation_status;
       if (search) {
         const escaped = escapeRegex(search);
         query.$or = [
@@ -722,6 +816,78 @@ export async function adminRoutes(fastify: FastifyInstance) {
       }
 
       await logActivity(request, 'update_order_status', order._id, 'order', { status });
+
+      return order;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Resolve a buyer-disputed order: release funds to the seller, or refund the buyer.
+  fastify.patch('/orders/:id/resolve-dispute', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { resolution, notes } = z.object({
+        resolution: z.enum(['release', 'refund']),
+        notes: z.string().optional(),
+      }).parse(request.body);
+
+      const order = await Order.findById(id);
+      if (!order) {
+        return reply.code(404).send({ error: 'Order not found' });
+      }
+      if (order.buyer_confirmation_status !== 'disputed') {
+        return reply.code(409).send({ error: 'This order has no open dispute.' });
+      }
+
+      if (resolution === 'release') {
+        order.buyer_confirmation_status = 'confirmed';
+      } else {
+        // Reuses the same stock-restore behavior as a normal refund, so inventory and
+        // sales_count stay accurate.
+        if (!order.stock_restored) {
+          const session = await mongoose.startSession();
+          try {
+            await session.withTransaction(async () => {
+              for (const item of order.items) {
+                if (item.inventory_deducted) {
+                  await Product.findByIdAndUpdate(
+                    item.product_id,
+                    { $inc: { inventory_count: item.quantity, sales_count: -item.quantity } },
+                    { session }
+                  );
+                }
+              }
+              order.stock_restored = true;
+            });
+          } finally {
+            await session.endSession();
+          }
+        }
+        order.status = 'refunded';
+      }
+      order.dispute_resolved_at = new Date();
+      order.dispute_resolution = resolution === 'release' ? 'released' : 'refunded';
+      order.updated_at = new Date();
+      await order.save();
+
+      const admin = request.user as any;
+      await new Notification({
+        recipient_username: order.vendor_username,
+        type: 'order_update',
+        title: resolution === 'release'
+          ? `Dispute resolved — funds released for ${order.items?.[0]?.product_title || 'an order'}`
+          : `Dispute resolved — ${order.items?.[0]?.product_title || 'an order'} refunded to the buyer`,
+        body: notes,
+        link: '/MyStore',
+        sender_username: admin.username,
+      }).save();
+
+      await logActivity(request, 'resolve_order_dispute', order._id, 'order', { resolution, notes });
 
       return order;
     } catch (error) {
@@ -925,6 +1091,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
         pendingWithdrawals,
         totalReports,
         pendingReports,
+        disputedOrders,
         settings,
         activeSubscriptions,
         subscriptionRevenue
@@ -939,6 +1106,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
         Withdrawal.countDocuments({ status: 'pending' }),
         Report.countDocuments(),
         Report.countDocuments({ status: 'pending' }),
+        Order.countDocuments({ buyer_confirmation_status: 'disputed' }),
         Settings.findOne(),
         VendorSubscription.countDocuments({ status: 'active' }),
         VendorSubscription.find({ plan: { $ne: 'free' }, status: 'active' }).select('plan billing_cycle amount')
@@ -950,6 +1118,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]);
       const totalSales = salesResult.length > 0 ? salesResult[0].total : 0;
+      const platformFeePercent = (settings as any)?.platform_fee_percent ?? DEFAULT_PLATFORM_FEE_PERCENT;
+      const platformEarnings = totalSales * (platformFeePercent / 100);
 
       // Calculate subscription revenue using current plan prices from Settings
       const planPrices = (settings as any)?.plan_prices;
@@ -1005,6 +1175,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
           },
           products: totalProducts,
           orders: totalOrders,
+          disputed_orders: disputedOrders,
           withdrawals: {
             total: totalWithdrawals,
             pending: pendingWithdrawals
@@ -1014,6 +1185,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
             pending: pendingReports
           },
           total_sales: totalSales,
+          platform_earnings: platformEarnings,
+          platform_fee_percent: platformFeePercent,
           subscriptions: {
             active: activeSubscriptions,
             total_revenue: totalSubscriptionRevenue

@@ -12,6 +12,7 @@ import {
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
 import { User } from '../models/User';
+import { Settings } from '../models/Settings';
 import { sendVerificationCode, sendWhatsAppVerification } from '../services/mailService';
 
 const googleClient = new OAuth2Client();
@@ -115,6 +116,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       let user = await User.findOne({ email: email.toLowerCase() }).select('username email display_name avatar_url banner_url role is_blocked is_verified google_id');
 
       if (!user) {
+        const settings = await Settings.findOne().select('allow_registration').lean();
+        if (settings?.allow_registration === false) {
+          return reply.code(403).send({ error: 'New registrations are currently disabled. Please check back later.' });
+        }
+
         // Create new user with optimized username generation
         const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
         
@@ -452,13 +458,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         expectedRPID: rpID,
       });
 
-      if (verification.verified && (verification as any).registrationInfo) {
-        const { credentialID, credentialPublicKey, counter, credentialDeviceType, credentialBackedUp } = (verification as any).registrationInfo;
+      if (verification.verified && verification.registrationInfo) {
+        const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
 
         user.authenticators.push({
-          credentialID: Buffer.from(credentialID).toString('base64url'),
-          credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64url'),
-          counter,
+          credentialID: credential.id,
+          credentialPublicKey: Buffer.from(credential.publicKey).toString('base64url'),
+          counter: credential.counter,
           credentialDeviceType,
           credentialBackedUp,
           transports: body.response.transports,
@@ -610,8 +616,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.code(429).send({ error: 'Too many registration attempts. Please try again later.' });
     }
     try {
+      const settings = await Settings.findOne().select('allow_registration').lean();
+      if (settings?.allow_registration === false) {
+        return reply.code(403).send({ error: 'New registrations are currently disabled. Please check back later.' });
+      }
+
       const body = request.body;
-      
+
       const { email, username, password, display_name } = registerSchema.parse(body);
 
       // Check if user already exists

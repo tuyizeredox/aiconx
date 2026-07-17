@@ -55,7 +55,7 @@ const ProductSchema = new Schema<IProduct>({
   },
   currency: {
     type: String,
-    default: 'USD',
+    default: 'RWF',
     uppercase: true,
   },
   images: [{

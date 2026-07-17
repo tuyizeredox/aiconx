@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { authAPI } from "@/api/apiClient";
 import { uploadAvatar, uploadImage } from "@/lib/storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
   const [uploading, setUploading] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const queryClient = useQueryClient();
+  const { checkUserAuth } = useAuth();
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -56,7 +58,8 @@ export default function ProfileEditModal({ open, onClose, user }) {
       avatar_url: avatarUrl,
       banner_url: bannerUrl 
     }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await checkUserAuth();
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       queryClient.invalidateQueries({ queryKey: ["profileUser"] });
       toast.success("Profile updated!");

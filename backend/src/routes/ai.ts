@@ -188,7 +188,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       const actions: any[] = [];
       const actionRegex = /\[ACTION:\s*([^,\]]+)(?:,\s*id:\s*([^\]]+))?\]/g;
       let match;
-      
+
       while ((match = actionRegex.exec(result.response)) !== null) {
         actions.push({
           type: match[1].trim(),
@@ -196,8 +196,16 @@ export async function aiRoutes(fastify: FastifyInstance) {
         });
       }
 
+      // Strip internal action tags and any leaked internal IDs before showing
+      // the reply to the user — these are for system use only.
+      const cleanReply = result.response
+        .replace(actionRegex, '')
+        .replace(/\[ID:\s*[^\]]+\]/gi, '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+
       return {
-        reply: result.response,
+        reply: cleanReply,
         actions,
         products: searchContext.length > 0 ? searchContext : discoveryContext.slice(0, 5)
       };

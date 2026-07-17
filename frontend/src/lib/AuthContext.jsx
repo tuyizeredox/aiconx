@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
   const registerBiometrics = async () => {
     try {
       const options = await authAPI.getWebAuthnRegisterOptions();
-      const attResp = await startRegistration(options);
+      const attResp = await startRegistration({ optionsJSON: options });
       const verification = await authAPI.verifyWebAuthnRegister(attResp);
       
       if (verification.verified) {
@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }) => {
   const loginBiometrics = async (email) => {
     try {
       const options = await authAPI.getWebAuthnLoginOptions(email);
-      const asseResp = await startAuthentication(options);
+      const asseResp = await startAuthentication({ optionsJSON: options });
       const data = await authAPI.verifyWebAuthnLogin(email, asseResp);
       setUser(data.user);
       setIsAuthenticated(true);

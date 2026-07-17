@@ -67,7 +67,7 @@ export default function ProductDetail() {
   const { data: reviews = [] } = useQuery({
     queryKey: ["productReviews", productId],
     queryFn: async () => {
-      const res = await reviewsAPI.list({ product_id: productId, sort: "-created_date", limit: 50 });
+      const res = await reviewsAPI.list({ product_id: productId, sort: "-created_at", limit: 50 });
       return res.data || [];
     },
     enabled: !!productId,
@@ -192,7 +192,7 @@ export default function ProductDetail() {
   const { data: wishlistItems = [] } = useQuery({
     queryKey: ["wishlist", currentUser?.username],
     queryFn: async () => {
-      const res = await wishlistAPI.list({ user_username: currentUser?.username, sort: "-created_date", limit: 200 });
+      const res = await wishlistAPI.list({ user_username: currentUser?.username, sort: "-created_at", limit: 200 });
       return res.items || res.data || (Array.isArray(res) ? res : []);
     },
     enabled: !!currentUser?.username,

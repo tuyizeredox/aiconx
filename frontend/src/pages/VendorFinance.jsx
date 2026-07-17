@@ -16,6 +16,8 @@ import { storesAPI, ordersAPI, withdrawalsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { formatCurrency } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { isOrderWithdrawable } from "@/lib/orderConfirmation";
 
 function StatCard({ icon: Icon, label, value, sub, color }) {
   // Icon is a component, rendered as <Icon />
@@ -31,10 +33,9 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
   );
 }
 
-const PAYOUT_RATE = 0.9; // 90% after platform fee
-
 export default function VendorFinance() {
   const { t } = useTranslation();
+  const { payoutRate, platformFeePercent, minWithdrawalAmount } = usePlatformSettings();
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawForm, setWithdrawForm] = useState({
     amount: "", 
@@ -116,20 +117,27 @@ export default function VendorFinance() {
     },
   });
 
-  // Financial calculations
-  const paidOrders = orders.filter(o => o.payment_status === "paid" || o.status === "delivered" || o.status === "shipped");
-  const pendingOrders = orders.filter(o => o.status === "pending" || o.status === "confirmed" || o.status === "processing");
-  const totalGross = paidOrders.reduce((s, o) => s + (o.total || 0), 0);
-  const totalEarned = totalGross * PAYOUT_RATE;
+  // Financial calculations. A paid order only counts toward earned/withdrawable balance
+  // once the buyer confirms receipt (or the auto-release window passes) — mirrors the
+  // backend gate in withdrawals.ts exactly, so this display never promises more than a
+  // withdrawal request will actually be allowed to take.
+  const paidOrders = orders.filter(o => o.payment_status === "paid");
+  const disputedOrders = paidOrders.filter(o => o.buyer_confirmation_status === "disputed");
+  const withdrawableOrders = paidOrders.filter(o => o.buyer_confirmation_status !== "disputed" && isOrderWithdrawable(o));
+  const inHoldOrders = paidOrders.filter(o => o.buyer_confirmation_status !== "disputed" && !isOrderWithdrawable(o));
+  const totalGross = withdrawableOrders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalEarned = totalGross * payoutRate;
   const totalWithdrawn = withdrawals.filter(w => w.status === "completed").reduce((s, w) => s + (w.amount || 0), 0);
   const pendingWithdrawals = withdrawals.filter(w => w.status === "pending" || w.status === "processing").reduce((s, w) => s + (w.amount || 0), 0);
   const availableBalance = Math.max(0, totalEarned - totalWithdrawn - pendingWithdrawals);
-  const pendingEarnings = pendingOrders.reduce((s, o) => s + (o.total || 0), 0) * PAYOUT_RATE;
+  // "Pending" now means paid-but-still-in-the-confirmation-hold, not "unpaid" — unpaid
+  // orders contribute nothing here since they're excluded by the payment_status filter.
+  const pendingEarnings = inHoldOrders.reduce((s, o) => s + (o.total || 0), 0) * payoutRate;
 
   // Group orders by month for chart
-  const monthlyData = orders.reduce((acc, o) => {
+  const monthlyData = withdrawableOrders.reduce((acc, o) => {
     const month = new Date(o.created_at || o.created_date).toLocaleString("default", { month: "short", year: "2-digit" });
-    acc[month] = (acc[month] || 0) + (o.total || 0) * PAYOUT_RATE;
+    acc[month] = (acc[month] || 0) + (o.total || 0) * payoutRate;
     return acc;
   }, {});
   const chartData = Object.entries(monthlyData).slice(-6);
@@ -151,7 +159,7 @@ export default function VendorFinance() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text(`Aicon X Marketplace`, 150, 12);
-    doc.text(`Platform Fee: 10%`, 150, 18);
+    doc.text(`Platform Fee: ${platformFeePercent}%`, 150, 18);
 
     // Invoice meta
     doc.setTextColor(50, 50, 50);
@@ -216,7 +224,7 @@ export default function VendorFinance() {
       ["Subtotal", `RWF ${Math.round(order.subtotal || order.total || 0)}`],
       ["Shipping", `RWF ${Math.round(order.shipping_fee || 0)}`],
       ["Gross Total", `RWF ${Math.round(order.total || 0)}`],
-      ["Platform Fee (10%)", `-RWF ${Math.round((order.total || 0) * 0.1)}`],
+      [`Platform Fee (${platformFeePercent}%)`, `-RWF ${Math.round((order.total || 0) * (1 - payoutRate))}`],
     ];
     rows.forEach(([label, val]) => {
       doc.setFont("helvetica", "normal");
@@ -231,7 +239,7 @@ export default function VendorFinance() {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.text("Net Payout", 134, y + 5);
-    doc.text(`RWF ${Math.round((order.total || 0) * 0.9)}`, 185, y + 5, { align: "right" });
+    doc.text(`RWF ${Math.round((order.total || 0) * payoutRate)}`, 185, y + 5, { align: "right" });
 
     // Footer
     doc.setTextColor(148, 163, 184);
@@ -265,7 +273,7 @@ export default function VendorFinance() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("finance.title")}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("finance.subtitle")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("finance.subtitle", { fee: platformFeePercent, rate: Math.round(payoutRate * 100) })}</p>
         </div>
         <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
           <DialogTrigger asChild>
@@ -311,8 +319,8 @@ export default function VendorFinance() {
                 {parseFloat(withdrawForm.amount) > availableBalance && (
                   <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.exceedsBalance")}</p>
                 )}
-                {parseFloat(withdrawForm.amount) > 0 && parseFloat(withdrawForm.amount) < 20 && (
-                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.minimumWithdrawal")}</p>
+                {parseFloat(withdrawForm.amount) > 0 && parseFloat(withdrawForm.amount) < minWithdrawalAmount && (
+                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.minimumWithdrawal", { min: minWithdrawalAmount })}</p>
                 )}
               </div>
               
@@ -401,7 +409,7 @@ export default function VendorFinance() {
                    ((withdrawForm.payment_method === "bank_transfer" || withdrawForm.payment_method === "itecpay") && (!withdrawForm.bank_name || !withdrawForm.bank_account_name || !withdrawForm.bank_account_number)) ||
                   (withdrawForm.payment_method === "paypal" && !withdrawForm.paypal_email) ||
                   (withdrawForm.payment_method === "mobile_money" && !withdrawForm.mobile_money_number) ||
-                  parseFloat(withdrawForm.amount) < 20 ||
+                  parseFloat(withdrawForm.amount) < minWithdrawalAmount ||
                   parseFloat(withdrawForm.amount) > availableBalance
                 }
                 className="w-full bg-orange-600 hover:bg-orange-700 mt-2"
@@ -421,6 +429,13 @@ export default function VendorFinance() {
         <StatCard icon={Clock} label={t("finance.pendingEarnings")} value={formatCurrency(pendingEarnings)} sub={t("finance.fromActiveOrders")} color="bg-amber-50 text-amber-600" />
         <StatCard icon={CheckCircle2} label={t("finance.totalWithdrawn")} value={formatCurrency(totalWithdrawn)} color="bg-purple-50 text-purple-600" />
       </div>
+
+      {disputedOrders.length > 0 && (
+        <div className="mb-6 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-xl flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <p className="text-xs text-rose-700 dark:text-rose-300">{t("finance.disputedOrders", { count: disputedOrders.length })}</p>
+        </div>
+      )}
 
       {/* Monthly Chart */}
       {chartData.length > 0 && (
@@ -472,7 +487,7 @@ export default function VendorFinance() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-green-600">+{formatCurrency(order.total * 0.9)}</p>
+                      <p className="text-sm font-bold text-green-600">+{formatCurrency(order.total * payoutRate)}</p>
                       <p className="text-[10px] text-slate-400 line-through">{formatCurrency(order.total)}</p>
                     </div>
                     {expandedOrder === order.id ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
@@ -492,12 +507,12 @@ export default function VendorFinance() {
                             <span className="font-medium">{formatCurrency(order.total)}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-500 dark:text-slate-400">{t("finance.platformFee")}</span>
-                            <span className="text-red-500">-{formatCurrency(order.total * 0.1)}</span>
+                            <span className="text-slate-500 dark:text-slate-400">{t("finance.platformFee", { fee: platformFeePercent })}</span>
+                            <span className="text-red-500">-{formatCurrency(order.total * (1 - payoutRate))}</span>
                           </div>
                           <div className="flex justify-between text-xs font-semibold border-t border-slate-200 dark:border-slate-600 pt-1.5">
                             <span>{t("finance.netPayout")}</span>
-                            <span className="text-green-600">{formatCurrency(order.total * 0.9)}</span>
+                            <span className="text-green-600">{formatCurrency(order.total * payoutRate)}</span>
                           </div>
                           <div className="flex justify-between text-[10px] text-slate-400 pt-1 capitalize">
                             <span>{t("checkout.paymentMethod")}</span>

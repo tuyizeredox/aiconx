@@ -4,7 +4,8 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import {
   Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, BarChart3, Eye,
-  X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2
+  X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
+  ShieldAlert, ShieldCheck, Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,9 @@ export default function MyStore() {
   const [uploadingAssets, setUploadingAssets] = useState({ logo: false, banner: false });
   const [editingStockId, setEditingStockId] = useState(null);
   const [stockValue, setStockValue] = useState("");
+  const [showVerifyStore, setShowVerifyStore] = useState(false);
+  const [verificationForm, setVerificationForm] = useState({ document_type: "national_id", document_number: "", document_image_url: "" });
+  const [uploadingVerificationDoc, setUploadingVerificationDoc] = useState(false);
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
@@ -177,6 +181,28 @@ export default function MyStore() {
       toast.error(t("store.assetUploadFailed", { type: t(`store.${type}`) }));
     } finally {
       setUploadingAssets(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const handleVerificationDocUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("store.imageFileOnly"));
+      return;
+    }
+
+    setUploadingVerificationDoc(true);
+    try {
+      const res = await uploadImage(file, { folder: "verification" });
+      if (res.url) {
+        setVerificationForm(prev => ({ ...prev, document_image_url: res.url }));
+        toast.success(t("store.verificationDocUploaded"));
+      }
+    } catch (err) {
+      toast.error(t("store.verificationDocUploadFailed"));
+    } finally {
+      setUploadingVerificationDoc(false);
     }
   };
 
@@ -257,6 +283,18 @@ export default function MyStore() {
     },
   });
 
+  const submitVerificationMutation = useMutation({
+    mutationFn: () => storesAPI.submitVerification(verificationForm),
+    onSuccess: () => {
+      toast.success(t("store.verificationSubmitted"));
+      setShowVerifyStore(false);
+      queryClient.invalidateQueries({ queryKey: ["myStore"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.verificationDocUploadFailed"));
+    },
+  });
+
   const addProductMutation = useMutation({
     mutationFn: async () => {
       setUploading(true);
@@ -309,7 +347,11 @@ export default function MyStore() {
       queryClient.invalidateQueries({ queryKey: ["myProducts"] });
     },
     onError: (err) => {
-      if (err.status === 403 || err.message?.toLowerCase().includes("limit")) {
+      if (err.message?.toLowerCase().includes("not verified")) {
+        setShowAddProduct(false);
+        setShowVerifyStore(true);
+        toast.error(t("store.verificationRequiredToast"));
+      } else if (err.status === 403 || err.message?.toLowerCase().includes("limit")) {
         setShowAddProduct(false);
         setActiveTab("subscription");
         toast.error(`Subscription limit reached! Your ${currentPlan} plan allows up to ${limits.products === Infinity ? 'unlimited' : limits.products} products.`);
@@ -645,6 +687,8 @@ export default function MyStore() {
       </div>
     );
   }
+
+  const isStoreVerified = store.verification_status === "approved";
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -1035,6 +1079,92 @@ export default function MyStore() {
           </div>
         </div>
 
+        {/* Verification Banner */}
+        {store.verification_status === "unverified" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <ShieldAlert className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-300">{t("store.verifyStoreDesc")}</p>
+            </div>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-xl shrink-0" onClick={() => setShowVerifyStore(true)}>
+              {t("store.verifyNow")}
+            </Button>
+          </div>
+        )}
+        {store.verification_status === "pending" && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-100 dark:border-amber-900 flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-300">{t("store.verificationPendingBanner")}</p>
+          </div>
+        )}
+        {store.verification_status === "rejected" && (
+          <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/30 rounded-2xl border border-rose-100 dark:border-rose-900 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
+              <p className="text-sm font-medium text-rose-900 dark:text-rose-300">
+                {t("store.verificationRejectedBanner", { reason: store.identity_rejection_reason || "" })}
+              </p>
+            </div>
+            <Button size="sm" className="bg-rose-600 hover:bg-rose-700 rounded-xl shrink-0" onClick={() => setShowVerifyStore(true)}>
+              {t("store.resubmitVerification")}
+            </Button>
+          </div>
+        )}
+
+        <Dialog open={showVerifyStore} onOpenChange={setShowVerifyStore}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>{t("store.verifyStoreTitle")}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("store.documentType")}</Label>
+                <Select value={verificationForm.document_type} onValueChange={(v) => setVerificationForm(p => ({ ...p, document_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="national_id">{t("store.nationalId")}</SelectItem>
+                    <SelectItem value="passport">{t("store.passport")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("store.documentNumber")}</Label>
+                <Input
+                  placeholder={t("store.documentNumberPlaceholder")}
+                  value={verificationForm.document_number}
+                  onChange={(e) => setVerificationForm(p => ({ ...p, document_number: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("store.documentImage")}</Label>
+                {verificationForm.document_image_url ? (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
+                    <img src={verificationForm.document_image_url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setVerificationForm(p => ({ ...p, document_image_url: "" }))}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 cursor-pointer text-slate-400 hover:border-blue-300 transition-colors">
+                    {uploadingVerificationDoc ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleVerificationDocUpload} disabled={uploadingVerificationDoc} />
+                  </label>
+                )}
+              </div>
+              <Button
+                onClick={() => submitVerificationMutation.mutate()}
+                disabled={!verificationForm.document_number.trim() || !verificationForm.document_image_url || submitVerificationMutation.isPending}
+                className="w-full bg-blue-600 hover:bg-blue-700 h-11"
+              >
+                {submitVerificationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                {submitVerificationMutation.isPending ? t("store.submittingVerification") : t("store.submitVerification")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Onboarding Checklist */}
         {(!store.logo_url || !store.description || products.length === 0 || !store.payment_method) && (
           <div className="mb-6 p-4 bg-orange-50/50 dark:bg-orange-950/30 rounded-2xl border border-orange-100/50 dark:border-orange-900/50">
@@ -1108,8 +1238,18 @@ export default function MyStore() {
 
         {activeTab === "products" && (
           <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
-            {products.length >= limits.products ? (
-              <Button 
+            {!isStoreVerified ? (
+              <Button
+                onClick={() => {
+                  setShowVerifyStore(true);
+                  toast.error(t("store.verificationRequiredToast"));
+                }}
+                className="bg-orange-600 hover:bg-orange-700 rounded-xl"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> {t("store.addProduct")}
+              </Button>
+            ) : products.length >= limits.products ? (
+              <Button
                 onClick={() => {
                   setActiveTab("subscription");
                   toast.error(t("store.subscriptionLimitReached", { plan: currentPlan, limit: limits.products === Infinity ? t("store.unlimited") : limits.products }));

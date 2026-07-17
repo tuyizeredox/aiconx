@@ -6,6 +6,8 @@ import { Notification } from '../models/Notification';
 import { Store } from '../models/Store';
 import { NotificationService } from '../services/notificationService';
 import { checkProductCountLimit, checkProductMediaLimit, checkAdvancedAnalyticsLimit, checkAffiliateLimit } from '../middleware/subscription';
+import { checkStoreVerified } from '../middleware/verification';
+import { escapeRegex } from '../utils/sanitize';
 
 export async function productRoutes(fastify: FastifyInstance) {
   // Get recommended products for the current user
@@ -68,16 +70,21 @@ export async function productRoutes(fastify: FastifyInstance) {
       // affiliate_enabled defaults to true on the schema, so treat missing field as enabled
       if (affiliate_enabled === 'true') filter.affiliate_enabled = { $ne: false };
 
-      // Text search using index
+      // Character-based incremental search: match products whose title (or
+      // tags/category) contains the query as a substring, so results appear
+      // as the user types rather than requiring a full word match.
       if (search) {
-        filter.$text = { $search: search };
+        const searchRegex = new RegExp(escapeRegex(search), 'i');
+        filter.$or = [
+          { title: searchRegex },
+          { tags: searchRegex },
+          { category: searchRegex },
+          { store_name: searchRegex },
+        ];
       }
 
       // Build sort object
       const sortObj: any = { plan_priority: -1 };
-      if (search && sortObj.$text) {
-        sortObj.score = { $meta: 'textScore' };
-      }
       if (sort.startsWith('-')) {
         sortObj[sort.substring(1)] = -1;
       } else {
@@ -85,7 +92,7 @@ export async function productRoutes(fastify: FastifyInstance) {
       }
 
       const products = await Product
-        .find(filter, search ? { score: { $meta: 'textScore' } } : {})
+        .find(filter)
         .sort(sortObj)
         .limit(parseInt(limit))
         .skip(parseInt(skip))
@@ -134,7 +141,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 
   // Create product
   fastify.post('/', {
-    preHandler: [fastify.authenticate, checkProductCountLimit, checkProductMediaLimit, checkAffiliateLimit],
+    preHandler: [fastify.authenticate, checkStoreVerified, checkProductCountLimit, checkProductMediaLimit, checkAffiliateLimit],
   }, async (request, reply) => {
     try {
       const productData = request.body as Partial<IProduct>;
@@ -152,6 +159,10 @@ export async function productRoutes(fastify: FastifyInstance) {
       });
 
       const savedProduct = await product.save();
+
+      if (savedProduct.store_id) {
+        await Store.findByIdAndUpdate(savedProduct.store_id, { $inc: { product_count: 1 } });
+      }
 
       // Emit real-time event — target only store/vendor rooms, not all sockets
       const storeRoom = savedProduct.store_id ? `store:${savedProduct.store_id}` : `vendor:${user.username}`;
@@ -312,6 +323,10 @@ export async function productRoutes(fastify: FastifyInstance) {
 
       if (!product) {
         return reply.code(404).send({ error: 'Product not found or access denied' });
+      }
+
+      if (product.store_id) {
+        await Store.findByIdAndUpdate(product.store_id, { $inc: { product_count: -1 } });
       }
 
       // Emit real-time event — target store/vendor room only

@@ -11,6 +11,14 @@ export interface IStore extends Document {
   category: string;
   status: 'active' | 'pending' | 'suspended';
   is_verified: boolean;
+  verification_status: 'unverified' | 'pending' | 'approved' | 'rejected';
+  identity_document_type?: 'national_id' | 'passport';
+  identity_document_number?: string;
+  identity_document_image_url?: string;
+  identity_submitted_at?: Date;
+  identity_reviewed_at?: Date;
+  identity_reviewed_by?: string;
+  identity_rejection_reason?: string;
   follower_count: number;
   product_count: number;
   total_sales: number;
@@ -92,6 +100,36 @@ const StoreSchema = new Schema<IStore>({
     type: Boolean,
     default: false,
   },
+  verification_status: {
+    type: String,
+    enum: ['unverified', 'pending', 'approved', 'rejected'],
+    default: 'unverified',
+  },
+  identity_document_type: {
+    type: String,
+    enum: ['national_id', 'passport'],
+  },
+  identity_document_number: {
+    type: String,
+    trim: true,
+  },
+  identity_document_image_url: {
+    type: String,
+  },
+  identity_submitted_at: {
+    type: Date,
+  },
+  identity_reviewed_at: {
+    type: Date,
+  },
+  identity_reviewed_by: {
+    type: String,
+    trim: true,
+  },
+  identity_rejection_reason: {
+    type: String,
+    trim: true,
+  },
   follower_count: {
     type: Number,
     default: 0,
@@ -163,6 +201,7 @@ const StoreSchema = new Schema<IStore>({
 // middleware/subscription.ts); drop this constraint if multi-store plans are introduced.
 StoreSchema.index({ owner_username: 1 }, { unique: true });
 StoreSchema.index({ status: 1 });
+StoreSchema.index({ verification_status: 1 });
 StoreSchema.index({ category: 1, status: 1 });
 StoreSchema.index({ follower_count: -1 });
 StoreSchema.index({ rating_avg: -1 });

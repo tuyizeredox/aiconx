@@ -147,7 +147,7 @@ export default function Checkout() {
   const [step, setStep] = useState(1);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [newAddress, setNewAddress] = useState({ street: "", city: "", state: "", zip: "", phone: "", country: "NG", label: "Home" });
+  const [newAddress, setNewAddress] = useState({ street: "", city: "", state: "", zip: "", phone: "", country: "RW", label: "Home" });
   const [paymentMethod, setPaymentMethod] = useState("mtn");
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState("");
   const [orderNote, setOrderNote] = useState("");
@@ -177,7 +177,7 @@ export default function Checkout() {
     }
   }, [isLoadingAuth, isAuthenticated, navigate]);
 
-  const { data: cartResponse = {}, isLoading: cartLoading } = useQuery({
+  const { data: cartResponse = {}, isLoading: cartLoading, isFetching: cartFetching } = useQuery({
     queryKey: ["cart", currentUser?.username],
     queryFn: () => cartAPI.get(),
     enabled: !!currentUser?.username,
@@ -297,7 +297,7 @@ export default function Checkout() {
   const calculations = useMemo(() => {
     let subtotal = 0;
     let shipping = 0;
-    const country = selectedAddress?.country || "NG";
+    const country = selectedAddress?.country || "RW";
 
     const storeBreakdown = storeGroups.map(group => {
         const groupSubtotal = group.items.reduce((sum, item) => sum + (item.product_price || 0) * (item.quantity || 1), 0);
@@ -343,10 +343,13 @@ export default function Checkout() {
         }
     }
 
+    const itemCount = storeGroups.reduce((sum, group) => sum + group.items.reduce((s, item) => s + (item.quantity || 1), 0), 0);
+
     return {
         subtotal,
         shipping,
         discount,
+        itemCount,
         total: subtotal + shipping - discount,
         storeBreakdown
     };
@@ -574,6 +577,8 @@ export default function Checkout() {
           errorMsg = t("checkout.outOfStock");
         } else if (err.message?.includes("cancelled") || err.message?.includes("rejected") || err.message?.includes("timeout")) {
           errorMsg = "Payment was cancelled or timed out. Please try again.";
+        } else if (/balance/i.test(err.message || "") && !/does not have enough funds/i.test(err.message || "")) {
+          errorMsg = "Payment declined: the selected payment method does not have enough funds to cover this order. Please top up or try a different payment method.";
         }
         console.log('[Checkout] Error message to show:', errorMsg);
         toast({
@@ -760,15 +765,19 @@ export default function Checkout() {
   }, [pendingPayment, queryClient, navigate]);
 
   useEffect(() => {
-    if (!cartLoading && cartItems.length === 0 && !checkoutMutation.isSuccess) {
-      toast({ 
-        title: "Error", 
+    // Guard against the moment right after "Buy Now" adds an item and navigates here:
+    // isLoading is only true on the very first fetch, so a background refetch triggered
+    // by the just-completed cartAPI.add() + invalidateQueries wouldn't be caught by it
+    // alone, and this would fire on stale (empty) cached data.
+    if (!cartLoading && !cartFetching && cartItems.length === 0 && !checkoutMutation.isSuccess) {
+      toast({
+        title: "Error",
         description: t("checkout.cartEmpty"),
         variant: "destructive"
       });
       navigate(createPageUrl("cart"));
     }
-  }, [cartItems, cartLoading, navigate, checkoutMutation.isSuccess]);
+  }, [cartItems, cartLoading, cartFetching, navigate, checkoutMutation.isSuccess]);
 
   const handleContinueFromStep1 = () => {
     console.log('[Checkout] Continue to Payment clicked');
@@ -1020,11 +1029,11 @@ export default function Checkout() {
                         </div>
                         <div>
                           <label htmlFor="addr-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.city")}</label>
-                          <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Lagos" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Kigali" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div>
                           <label htmlFor="addr-state" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.state")}</label>
-                          <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Lagos" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Kigali City" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                         <div>
                           <label htmlFor="addr-zip" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.zipCode")}</label>
@@ -1032,7 +1041,7 @@ export default function Checkout() {
                         </div>
                         <div>
                           <label htmlFor="addr-phone" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.phone")}</label>
-                          <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+234..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+250..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                         </div>
                       </div>
                       <Button 
@@ -1270,6 +1279,23 @@ export default function Checkout() {
               </h3>
 
               <div className="space-y-4 relative z-10">
+                {/* Itemized product list */}
+                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                  {calculations.storeBreakdown.flatMap(store => store.items).map(item => (
+                    <div key={item._id} className="flex justify-between gap-2 text-xs">
+                      <span className="text-slate-600 dark:text-slate-300 truncate min-w-0">
+                        {item.product_title} <span className="text-slate-400 dark:text-slate-500">&times;{item.quantity}</span>
+                      </span>
+                      <span className="text-slate-900 dark:text-white font-medium shrink-0">{formatCurrency(item.product_price * item.quantity)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="h-px bg-slate-200 dark:bg-slate-700" />
+
+                <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
+                  <span>{t("checkout.itemsCount", { count: calculations.itemCount })}</span>
+                </div>
                 <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
                   <span>{t("cart.subtotal")}</span>
                   <span className="text-slate-900 dark:text-white font-semibold">{formatCurrency(calculations.subtotal)}</span>

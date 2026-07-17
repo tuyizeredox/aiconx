@@ -33,7 +33,7 @@ export default function Notifications() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications", currentUser?.username],
     queryFn: async () => {
-      const res = await notificationsAPI.list({ sort: "-created_date", limit: 50 });
+      const res = await notificationsAPI.list({ sort: "-created_at", limit: 50 });
       return res.data || [];
     },
     enabled: !!currentUser?.username,

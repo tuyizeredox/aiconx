@@ -217,7 +217,7 @@ const UserSchema = new Schema<IUser>({
     city: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },
     zip: { type: String, required: true, trim: true },
-    country: { type: String, required: true, trim: true, default: 'NG' },
+    country: { type: String, required: true, trim: true, default: 'RW' },
     phone: { type: String, trim: true },
     is_default: { type: Boolean, default: false },
   }],

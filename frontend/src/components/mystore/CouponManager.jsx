@@ -25,7 +25,7 @@ export default function CouponManager({ store, vendorUsername }) {
   const { data: couponsResponse = {}, isLoading } = useQuery({
     queryKey: ["coupons", store?.id],
     queryFn: async () => {
-      const res = await couponsAPI.list({ vendor_username: vendorUsername, sort: "-created_date", limit: 50 });
+      const res = await couponsAPI.list({ vendor_username: vendorUsername, sort: "-created_at", limit: 50 });
       return res;
     },
     enabled: !!vendorUsername,

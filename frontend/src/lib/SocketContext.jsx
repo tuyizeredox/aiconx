@@ -16,7 +16,9 @@ export const useSocket = () => {
 };
 
 function resolveSocketUrl() {
-  const configured = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+  const configured =
+    import.meta.env.VITE_API_URL?.replace('/api', '') ||
+    (Capacitor.isNativePlatform() ? 'https://aiconxbackend.onrender.com' : window.location.origin);
 
   // Same localhost -> 10.0.2.2 redirect as apiClient.js: on the Android
   // emulator, "localhost" points at the device, not the dev machine.

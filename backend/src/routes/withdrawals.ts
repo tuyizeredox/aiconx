@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Withdrawal, IWithdrawal } from '../models/Withdrawal';
 import { Order } from '../models/Order';
+import { getPlatformMoneySettings, withDeliveryConfirmationGate } from '../utils/platformFinance';
 
 export async function withdrawalRoutes(fastify: FastifyInstance) {
   // Get withdrawals for a vendor by username
@@ -233,16 +234,19 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
     preHandler: fastify.authenticate
   }, async (request, reply) => {
     try {
-      const body = request.body as Partial<IWithdrawal>;
+      const body = request.body as Partial<IWithdrawal> & { payee_type?: 'vendor' | 'affiliate' };
       const user = request.user as any;
+      const payeeType: 'vendor' | 'affiliate' = body.payee_type === 'affiliate' ? 'affiliate' : 'vendor';
+
+      const { minWithdrawalAmount, payoutRate } = await getPlatformMoneySettings();
 
       // Validate required fields
       if (!body.amount) {
         return reply.code(400).send({ error: 'Missing required field: amount' });
       }
 
-      if (body.amount < 20) {
-        return reply.code(400).send({ error: 'Minimum withdrawal amount is $20' });
+      if (body.amount < minWithdrawalAmount) {
+        return reply.code(400).send({ error: `Minimum withdrawal amount is $${minWithdrawalAmount}` });
       }
 
       if (!body.payment_method) {
@@ -275,38 +279,49 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
           }
         }
 
-      // Set vendor_username from authenticated user
+      // Set vendor_username (holds either a vendor's or an affiliate's username,
+      // depending on payee_type) from the authenticated user — never client-supplied.
       body.vendor_username = user.username;
+      body.payee_type = payeeType;
       body.status = 'pending';
 
-      // Validate balance
-      const PAYOUT_RATE = 0.9;
-      
-      const paidOrders = await Order.find({ 
-        vendor_username: user.username, 
-        payment_status: 'paid' 
+      let totalEarned: number;
+      if (payeeType === 'affiliate') {
+        // Affiliate commission is paid in full — the platform fee was already taken out
+        // of the vendor's side of the same sale, so there's no second deduction here.
+        const paidOrders = await Order.find(withDeliveryConfirmationGate({
+          affiliate_username: user.username,
+          payment_status: 'paid',
+          affiliate_commission_credited: true,
+        }));
+        totalEarned = (paidOrders as any[]).reduce((s, o) => s + (o.affiliate_commission || 0), 0);
+      } else {
+        const paidOrders = await Order.find(withDeliveryConfirmationGate({
+          vendor_username: user.username,
+          payment_status: 'paid',
+        }));
+        totalEarned = (paidOrders as any[]).reduce((s, o) => s + (o.total || 0), 0) * payoutRate;
+      }
+
+      const previousWithdrawals = await Withdrawal.find({
+        vendor_username: user.username,
+        payee_type: payeeType,
       });
-      
-      const totalEarned = (paidOrders as any[]).reduce((s, o) => s + (o.total || 0), 0) * PAYOUT_RATE;
-      
-      const previousWithdrawals = await Withdrawal.find({ 
-        vendor_username: user.username 
-      });
-      
+
       const totalWithdrawn = previousWithdrawals
         .filter(w => w.status === 'completed')
         .reduce((s, w) => s + (w.amount || 0), 0);
-        
+
       const pendingWithdrawals = previousWithdrawals
         .filter(w => (w.status as string) === 'pending' || (w.status as string) === 'processing')
         .reduce((s, w) => s + (w.amount || 0), 0);
-        
+
       const availableBalance = Math.max(0, totalEarned - totalWithdrawn - pendingWithdrawals);
-      
+
       if (body.amount > availableBalance) {
-        return reply.code(400).send({ 
-          error: 'Insufficient balance', 
-          details: { available: availableBalance, requested: body.amount } 
+        return reply.code(400).send({
+          error: 'Insufficient balance',
+          details: { available: availableBalance, requested: body.amount }
         });
       }
 
@@ -341,20 +356,21 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Withdrawal not found' });
       }
 
-      // Check if user owns the withdrawal (vendors can only cancel their own pending withdrawals)
-      if (withdrawal.vendor_username === user.username) {
-        if (status !== 'rejected' || withdrawal.status !== 'pending') {
-          return reply.code(403).send({ error: 'Vendors can only cancel their own pending withdrawals' });
-        }
+      // This endpoint is vendor/affiliate self-service only (cancelling your own pending
+      // withdrawal). Admin approval/rejection goes through PATCH /admin/withdrawals/:id/status
+      // instead, which is gated by the isAdmin hook on the whole admin router.
+      if (withdrawal.vendor_username !== user.username) {
+        return reply.code(403).send({ error: 'You can only manage your own withdrawals' });
       }
-      // TODO: Add admin check for other status changes
+      if (status !== 'rejected' || withdrawal.status !== 'pending') {
+        return reply.code(403).send({ error: 'You can only cancel your own pending withdrawals' });
+      }
 
-      withdrawal.status = status as any;
+      // This branch only ever cancels a withdrawal (status is narrowed to 'rejected' by
+      // the guard above), so it always stamps processed_at.
+      withdrawal.status = status;
       if (notes) withdrawal.notes = notes;
-
-      if (status === 'completed' || status === 'rejected') {
-        withdrawal.processed_at = new Date();
-      }
+      withdrawal.processed_at = new Date();
 
       await withdrawal.save();
 
@@ -410,8 +426,11 @@ export async function withdrawalRoutes(fastify: FastifyInstance) {
       });
 
       // Validate amount if being updated
-      if (body.amount !== undefined && body.amount < 20) {
-        return reply.code(400).send({ error: 'Minimum withdrawal amount is $20' });
+      if (body.amount !== undefined) {
+        const { minWithdrawalAmount } = await getPlatformMoneySettings();
+        if (body.amount < minWithdrawalAmount) {
+          return reply.code(400).send({ error: `Minimum withdrawal amount is $${minWithdrawalAmount}` });
+        }
       }
 
       await withdrawal.save();

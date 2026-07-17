@@ -164,7 +164,7 @@ const Register = () => {
   const labelClass = "text-xs font-semibold dark:text-slate-400 text-slate-600 ml-0.5";
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-4 pb-8 sm:px-6 lg:py-8">
+    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8 sm:px-6 lg:py-8">
       <MemoizedBackground />
 
       <div className="flex lg:hidden items-center justify-between w-full max-w-md mx-auto mb-4 relative z-20">

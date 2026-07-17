@@ -6,6 +6,7 @@ import { User } from '../models/User';
 import { checkCustomDomainLimit, PLAN_PRIORITY } from '../middleware/subscription';
 import { itecPayService } from '../services/itecPayService';
 import { getPlanPrice, DEFAULT_PLAN_PRICES } from '../utils/planPricing';
+import { DEFAULT_PLATFORM_FEE_PERCENT, DEFAULT_MIN_WITHDRAWAL_AMOUNT } from '../utils/platformFinance';
 
 export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
   // Get subscription for a vendor
@@ -570,9 +571,11 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
   // Get subscription plans and pricing (public endpoint)
   fastify.get('/public/plans', async (request, reply) => {
     try {
-      const settings = await Settings.findOne().select('subscription_mode plan_prices').lean();
+      const settings = await Settings.findOne().select('subscription_mode plan_prices platform_fee_percent min_withdrawal_amount').lean();
       const subscription_mode = settings?.subscription_mode ?? false;
       const prices = settings?.plan_prices ?? DEFAULT_PLAN_PRICES;
+      const platform_fee_percent = settings?.platform_fee_percent ?? DEFAULT_PLATFORM_FEE_PERCENT;
+      const min_withdrawal_amount = settings?.min_withdrawal_amount ?? DEFAULT_MIN_WITHDRAWAL_AMOUNT;
 
       const plans = {
         free: {
@@ -624,7 +627,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       };
 
-      return reply.send({ plans, subscription_mode });
+      return reply.send({ plans, subscription_mode, platform_fee_percent, min_withdrawal_amount });
     } catch (error) {
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Internal server error' });
