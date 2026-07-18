@@ -659,7 +659,7 @@ export default function Chat() {
   const unreadTotal = conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0);
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex bg-white dark:bg-slate-900">
+    <div className="h-[calc(100vh-3.5rem-env(safe-area-inset-bottom))] lg:h-screen flex bg-white dark:bg-slate-900">
       {/* Sidebar */}
       <div className={`w-full lg:w-80 border-r border-slate-100 dark:border-slate-700 flex flex-col ${selectedConvo ? "hidden lg:flex" : "flex"}`}>
         <div className="p-4 border-b border-slate-100 dark:border-slate-700">
@@ -937,7 +937,7 @@ export default function Chat() {
                 )}
               </AnimatePresence>
 
-              <div className="p-3 relative">
+              <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] relative">
                 <AnimatePresence>
                   {showProductPicker && <ProductSharePicker onShare={sendProduct} onClose={() => setShowProductPicker(false)} currentUser={currentUser} />}
                   {showOfferModal && <OfferModal onSend={sendOffer} onClose={() => setShowOfferModal(false)} />}
