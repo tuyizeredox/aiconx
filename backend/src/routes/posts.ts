@@ -10,6 +10,7 @@ import { escapeRegex } from '../utils/sanitize';
 const createPostSchema = z.object({
   content: z.string().default(''),
   media_urls: z.array(z.string()).default([]),
+  thumbnail_urls: z.array(z.string()).default([]),
   media_type: z.enum(['image', 'video', 'text', 'product_review']).default('text'),
   tagged_products: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string')).default([]),
   affiliate_links: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string')).default([]),

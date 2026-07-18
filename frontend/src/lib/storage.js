@@ -203,9 +203,19 @@ export const uploadProductImage = async (file) => {
  * @param {File} file - Post media (image or video)
  * @returns {Promise<Object>}
  */
-export const uploadPostMedia = async (file) => {
+export const uploadPostMedia = async (file, options = {}) => {
   const folder = file.type.startsWith('video/') ? 'posts/videos' : 'posts/images';
-  return uploadFile(file, { folder });
+  return uploadFile(file, { ...options, folder });
+};
+
+/**
+ * Upload an auto-generated video poster/thumbnail image
+ * @param {File} file - Thumbnail image (JPEG)
+ * @param {Object} options - Upload options
+ * @returns {Promise<Object>}
+ */
+export const uploadPostThumbnail = async (file, options = {}) => {
+  return uploadFile(file, { ...options, folder: 'posts/thumbnails' });
 };
 
 /**

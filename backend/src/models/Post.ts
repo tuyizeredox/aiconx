@@ -8,6 +8,7 @@ export interface IPost extends Document {
   author_avatar?: string;
   content: string;
   media_urls: string[];
+  thumbnail_urls: string[];
   media_type: 'image' | 'video' | 'text' | 'product_review';
   tagged_products: string[];
   affiliate_links: string[];
@@ -47,6 +48,9 @@ const PostSchema = new Schema<IPost>({
     default: '',
   },
   media_urls: [{
+    type: String,
+  }],
+  thumbnail_urls: [{
     type: String,
   }],
   media_type: {

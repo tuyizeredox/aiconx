@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { authAPI, productsAPI, postsAPI, affiliateLinksAPI, communitiesAPI } from "@/api/apiClient";
-import { uploadPostMedia } from "@/lib/storage";
+import { uploadPostMedia, uploadPostThumbnail } from "@/lib/storage";
+import { generateVideoThumbnail } from "@/lib/videoThumbnail";
 import { useTranslation } from "react-i18next";
 
 const QUICK_EMOJIS = ["😍", "🔥", "💯", "🎉", "❤️", "✨", "🛍️", "👏"];
@@ -34,6 +35,8 @@ export default function CreatePost() {
   const [content, setContent] = useState("");
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState([]);
+  // Index-aligned with mediaFiles: { file, previewUrl } for auto-generated video posters, or null
+  const [mediaThumbnails, setMediaThumbnails] = useState([]);
   const [visibility, setVisibility] = useState(communityId ? "community" : "public");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -134,6 +137,7 @@ export default function CreatePost() {
       setVisibility("public");
       setMediaPreviewUrls([]);
       setMediaFiles([]);
+      setMediaThumbnails([]);
       setTaggedProducts([]);
       setSelectedAffiliateLinks([]);
       setIsFormPopulated(false);
@@ -146,6 +150,7 @@ export default function CreatePost() {
       setVisibility(editPost.visibility || "public");
       setMediaPreviewUrls((editPost.media_urls || []).map(url => ({ url, type: detectMediaType(url) })));
       setMediaFiles(new Array((editPost.media_urls || []).length).fill(null));
+      setMediaThumbnails(new Array((editPost.media_urls || []).length).fill(null));
       setTaggedProducts((editTaggedProducts || []).map(p => ({ ...p, id: p.id || p._id })));
       setSelectedAffiliateLinks((editAffiliateLinks || []).map(l => ({ ...l, id: l.id || l._id })));
       setIsFormPopulated(true);
@@ -205,12 +210,36 @@ export default function CreatePost() {
         return uploaded ? uploaded.url : preview.url;
       });
 
+      // Upload auto-generated video poster thumbnails alongside the media
+      const thumbnailTasks = mediaThumbnails
+        .map((thumb, index) => ({ thumb, index }))
+        .filter(({ thumb }) => thumb?.file != null);
+
+      const thumbnailUploadResults = await Promise.all(
+        thumbnailTasks.map(({ thumb, index }) =>
+          uploadPostThumbnail(thumb.file)
+            .then(res => ({ url: res.url, index }))
+            .catch(err => {
+              console.warn(`Failed to upload thumbnail for media ${index + 1}:`, err);
+              return { url: null, index };
+            })
+        )
+      );
+
+      // Preserve existing thumbnail for unchanged media during edit; empty string when none available
+      const finalThumbnailUrls = mediaPreviewUrls.map((preview, index) => {
+        const uploaded = thumbnailUploadResults.find(r => r.index === index && r.url);
+        if (uploaded) return uploaded.url;
+        return editPost?.thumbnail_urls?.[index] || "";
+      });
+
       const hasVideo = mediaPreviewUrls.some(m => m.type?.startsWith("video"));
       const mediaType = mediaPreviewUrls.length === 0 ? "text" : hasVideo ? "video" : "image";
 
       const postData = {
         content: content?.trim() || "",
         media_urls: finalMediaUrls || [],
+        thumbnail_urls: finalThumbnailUrls || [],
         media_type: mediaType || "text",
         tagged_products: (taggedProducts || [])
           .map(p => {
@@ -258,6 +287,8 @@ export default function CreatePost() {
       setContent("");
       setMediaFiles([]);
       setMediaPreviewUrls([]);
+      mediaThumbnails.forEach(thumb => thumb?.previewUrl && URL.revokeObjectURL(thumb.previewUrl));
+      setMediaThumbnails([]);
       setTaggedProducts([]);
       setSelectedAffiliateLinks([]);
       setFileUploadProgress({});
@@ -307,11 +338,32 @@ export default function CreatePost() {
       return;
     }
 
+    const startIndex = mediaFiles.length;
     setMediaFiles(prev => [...prev, ...valid]);
-    valid.forEach(file => {
+    setMediaThumbnails(prev => {
+      const next = [...prev];
+      valid.forEach((_, j) => { next[startIndex + j] = null; });
+      return next;
+    });
+
+    valid.forEach((file, j) => {
+      const targetIndex = startIndex + j;
       const reader = new FileReader();
       reader.onload = (ev) => setMediaPreviewUrls(prev => [...prev, { url: ev.target.result, type: file.type }]);
       reader.readAsDataURL(file);
+
+      if (file.type.startsWith("video/")) {
+        generateVideoThumbnail(file)
+          .then(thumbFile => {
+            const previewUrl = URL.createObjectURL(thumbFile);
+            setMediaThumbnails(prev => {
+              const next = [...prev];
+              next[targetIndex] = { file: thumbFile, previewUrl };
+              return next;
+            });
+          })
+          .catch(err => console.warn("Thumbnail generation failed:", err));
+      }
     });
     e.target.value = "";
   };
@@ -319,6 +371,11 @@ export default function CreatePost() {
   const removeMedia = (index) => {
     setMediaFiles(prev => prev.filter((_, i) => i !== index));
     setMediaPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setMediaThumbnails(prev => {
+      const removed = prev[index];
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const addEmoji = (emoji) => {
@@ -431,9 +488,10 @@ export default function CreatePost() {
             {mediaPreviewUrls.map((media, i) => (
               <div key={i} className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 group">
                 {media.type?.startsWith("video") ? (
-                  <video 
-                    src={media.url} 
-                    className="w-full h-auto max-h-96 object-contain" 
+                  <video
+                    src={media.url}
+                    poster={mediaThumbnails[i]?.previewUrl}
+                    className="w-full h-auto max-h-96 object-contain"
                     controls
                     playsInline
                     preload="metadata"

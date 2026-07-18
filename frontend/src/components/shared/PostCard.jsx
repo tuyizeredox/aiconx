@@ -1,8 +1,8 @@
 // Remove unused imports
-import React, { useState, useEffect, memo, useRef } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { postsAPI, bookmarksAPI, followsAPI, affiliateLinksAPI } from "@/api/apiClient";
-import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, Link2, UserPlus, UserMinus, Flag, Copy, Video } from "lucide-react";
+import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, Link2, UserPlus, UserMinus, Flag, Copy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import ShareModal from "./ShareModal";
 import ReportModal from "./ReportModal";
 import PostDetailModal from "./PostDetailModal";
+import FeedVideoPlayer from "./FeedVideoPlayer";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { formatDistanceToNow } from "date-fns";
 import useEmblaCarousel from 'embla-carousel-react';
@@ -34,8 +35,6 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
-  const videoRefs = useRef({});
-  const [loadedVideos, setLoadedVideos] = useState({});
 
   const postId = (post?.id || post?._id)?.toString();
   const authorUsername = post?.author_username;
@@ -83,31 +82,6 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
     emblaApi.on("reInit", onSelect);
     onSelect();
   }, [emblaApi]);
-
-  // Autoplay video logic - only observe videos that exist
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: 0.6 }
-    );
-
-    const videos = Object.values(videoRefs.current).filter(Boolean);
-    videos.forEach(video => observer.observe(video));
-
-    return () => {
-      videos.forEach(video => observer.unobserve(video));
-      observer.disconnect();
-    };
-  }, [post?.media_urls]);
 
   // Follow state - lazy loaded only when needed (profile page optimization)
   const [showFollowButton, setShowFollowButton] = useState(false);
@@ -242,6 +216,14 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
     if (!url) return false;
     const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".m4v", ".avi", ".mkv", ".flv", ".wmv", ".3gp"];
     return videoExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes("video/upload");
+  };
+
+  const triggerLike = () => {
+    if (currentUser && !optimisticLiked && !likeMutation.isPending) {
+      likeMutation.mutate(optimisticLiked);
+      setShowHeartAnimation(true);
+      setTimeout(() => setShowHeartAnimation(false), 1000);
+    }
   };
 
   return (
@@ -394,13 +376,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
             className="overflow-hidden cursor-pointer" 
             ref={emblaRef}
             onClick={() => !fullView && setIsDetailModalOpen(true)}
-            onDoubleClick={() => {
-              if (currentUser && !optimisticLiked && !likeMutation.isPending) {
-                likeMutation.mutate(optimisticLiked);
-                setShowHeartAnimation(true);
-                setTimeout(() => setShowHeartAnimation(false), 1000);
-              }
-            }}
+            onDoubleClick={triggerLike}
           >
             <div className="flex">
               {post.media_urls.map((url, i) => {
@@ -408,22 +384,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
                 return (
                   <div key={`${url}-${i}`} className="flex-[0_0_100%] min-w-0 relative">
                     {isVid ? (
-                      <>
-                        {!loadedVideos[i] && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900">
-                            <Video className="w-10 h-10 text-slate-400 dark:text-slate-600" />
-                          </div>
-                        )}
-                        <video
-                          ref={el => videoRefs.current[i] = el}
-                          src={url}
-                          className={`w-full h-auto max-h-[600px] object-contain transition-opacity duration-200 ${loadedVideos[i] ? "opacity-100" : "opacity-0"}`}
-                          controls
-                          playsInline
-                          preload="metadata"
-                          onLoadedData={() => setLoadedVideos(v => ({ ...v, [i]: true }))}
-                        />
-                      </>
+                      <FeedVideoPlayer
+                        src={url}
+                        poster={post.thumbnail_urls?.[i]}
+                        onDoubleTap={triggerLike}
+                      />
                     ) : (
                       <img 
                         src={url} 
