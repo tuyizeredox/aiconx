@@ -11,6 +11,7 @@ import ColorSelector from "@/components/product/ColorSelector";
 import SizeSelector from "@/components/product/SizeSelector";
 import OptionSelector from "@/components/product/OptionSelector";
 import ShareModal from "@/components/shared/ShareModal";
+import ReportModal from "@/components/shared/ReportModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI } from "@/api/apiClient";
 import { addToGuestCart, getGuestCart } from "@/lib/guestCart";
@@ -18,7 +19,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
 import {
   Star, Heart, ShoppingCart, Share2, Truck, Shield, ArrowLeft,
-  Minus, Plus, Store, Check, PenLine, Images, Zap, Loader2
+  Minus, Plus, Store, Check, PenLine, Images, Zap, Loader2, Flag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,7 @@ export default function ProductDetail() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -280,11 +282,17 @@ export default function ProductDetail() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
-      <ShareModal 
-        isOpen={isShareModalOpen} 
-        onOpenChange={setIsShareModalOpen} 
-        product={product} 
-        currentUser={currentUser} 
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onOpenChange={setIsShareModalOpen}
+        product={product}
+        currentUser={currentUser}
+      />
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onOpenChange={setIsReportModalOpen}
+        targetId={productId}
+        targetType="product"
       />
       <Link to={createPageUrl("Marketplace")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
         <ArrowLeft className="w-4 h-4" /> {t("product.backToMarketplace")}
@@ -403,6 +411,16 @@ export default function ProductDetail() {
             >
               <Share2 className="w-5 h-5" />
             </Button>
+            {currentUser && currentUser.username !== product.vendor_username && (
+              <Button
+                onClick={() => setIsReportModalOpen(true)}
+                variant="outline"
+                size="icon"
+                className="h-11 w-11 rounded-xl"
+              >
+                <Flag className="w-5 h-5" />
+              </Button>
+            )}
           </div>
 
           {/* Trust Badges */}

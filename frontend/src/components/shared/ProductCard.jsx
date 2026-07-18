@@ -2,20 +2,23 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
-import { Star, Heart, Share2 } from "lucide-react";
+import { Star, Heart, Share2, Flag } from "lucide-react";
 import { motion } from "framer-motion";
 import { wishlistAPI } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import ReportModal from "./ReportModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 
 export default function ProductCard({ product, compact = false, currentUser }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
   const nativeShare = useNativeShare({ product, onFallback: () => setIsShareModalOpen(true) });
   const productId = product?.id || product?._id;
+  const isOwner = currentUser?.username && currentUser.username === product?.vendor_username;
 
   // Only fetch wishlist for authenticated users with username
   const { data: wishlistItems = [] } = useQuery({
@@ -117,6 +120,19 @@ export default function ProductCard({ product, compact = false, currentUser }) {
               >
                 <Share2 className="w-4 h-4 text-slate-600 dark:text-slate-300" />
               </motion.button>
+              {currentUser && !isOwner && (
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsReportModalOpen(true);
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
+                >
+                  <Flag className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </motion.button>
+              )}
             </div>
           </div>
           <div className={compact ? "p-2" : "p-3"}>
@@ -143,6 +159,12 @@ export default function ProductCard({ product, compact = false, currentUser }) {
         onOpenChange={setIsShareModalOpen}
         product={product}
         currentUser={currentUser}
+      />
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onOpenChange={setIsReportModalOpen}
+        targetId={productId}
+        targetType="product"
       />
     </>
   );

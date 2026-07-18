@@ -333,6 +333,7 @@ const AdminDashboard = () => {
   const [reportNotes, setReportNotes] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportAction, setReportAction] = useState('resolved');
+  const [contentAction, setContentAction] = useState('none');
 
   // Activity Logs State
   const [activityLogs, setActivityLogs] = useState([]);
@@ -872,9 +873,9 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleResolveReport = async (id, status, notes = '') => {
+  const handleResolveReport = async (id, status, notes = '', action = 'none') => {
     try {
-      await adminAPI.resolveReport(id, status, notes);
+      await adminAPI.resolveReport(id, status, notes, action);
       toast({
         title: t('common.success'),
         description: t('admin.moderation.reportStatusUpdated', { status }),
@@ -882,6 +883,7 @@ const AdminDashboard = () => {
       fetchReports();
       setIsReportModalOpen(false);
       setReportNotes('');
+      setContentAction('none');
     } catch (error) {
       toast({
         title: t('common.error'),
@@ -2440,6 +2442,7 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead>{t('admin.moderation.colType')}</TableHead>
                     <TableHead>{t('admin.moderation.colReason')}</TableHead>
+                    <TableHead>{t('admin.moderation.colContent')}</TableHead>
                     <TableHead>{t('admin.moderation.colReporter')}</TableHead>
                     <TableHead>{t('admin.moderation.colStatus')}</TableHead>
                     <TableHead>{t('admin.moderation.colDate')}</TableHead>
@@ -2449,7 +2452,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {reports.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         {t('admin.moderation.empty')}
                       </TableCell>
                     </TableRow>
@@ -2470,6 +2473,28 @@ const AdminDashboard = () => {
                               </span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {r.target_summary ? (
+                            <div className="flex flex-col gap-0.5 max-w-[180px]">
+                              <a
+                                href={r.target_type === 'post' ? `/postdetail?id=${r.target_id}` : `/productdetail?id=${r.target_id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="truncate hover:underline"
+                                title={r.target_summary.title}
+                              >
+                                {r.target_summary.title}
+                              </a>
+                              {!r.target_summary.active && (
+                                <Badge variant="secondary" className="w-fit text-[10px]">
+                                  {t('admin.moderation.contentInactive')}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm">
                           {r.reporter_id?.display_name || t('admin.moderation.system')}
@@ -2499,6 +2524,7 @@ const AdminDashboard = () => {
                                   setSelectedReport(r);
                                   setReportAction('resolved');
                                   setReportNotes('');
+                                  setContentAction('none');
                                   setIsReportModalOpen(true);
                                 }}>
                                   <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.moderation.resolve')}
@@ -2507,6 +2533,7 @@ const AdminDashboard = () => {
                                   setSelectedReport(r);
                                   setReportAction('dismissed');
                                   setReportNotes('');
+                                  setContentAction('none');
                                   setIsReportModalOpen(true);
                                 }}>
                                   <AlertCircle className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.moderation.dismiss')}
@@ -2538,7 +2565,27 @@ const AdminDashboard = () => {
                 <div className="p-3 bg-muted rounded-md text-sm">
                   <div className="font-semibold">{selectedReport?.reason}</div>
                   <div className="mt-1 text-muted-foreground">{selectedReport?.description}</div>
+                  {selectedReport?.target_summary && (
+                    <div className="mt-2 pt-2 border-t text-muted-foreground truncate">
+                      {t('admin.moderation.reportedContentLabel')}: {selectedReport.target_summary.title}
+                    </div>
+                  )}
                 </div>
+                {reportAction === 'resolved' && ['post', 'product'].includes(selectedReport?.target_type) && (
+                  <div className="space-y-2">
+                    <Label htmlFor="content-action">{t('admin.moderation.contentAction')}</Label>
+                    <Select value={contentAction} onValueChange={setContentAction}>
+                      <SelectTrigger id="content-action">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{t('admin.moderation.contentActionNone')}</SelectItem>
+                        <SelectItem value="deactivate">{t('admin.moderation.contentActionDeactivate')}</SelectItem>
+                        <SelectItem value="remove">{t('admin.moderation.contentActionRemove')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="report-notes">{t('admin.moderation.adminNotes')}</Label>
                   <Textarea
@@ -2554,7 +2601,7 @@ const AdminDashboard = () => {
                 <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.cancel')}</Button>
                 <Button 
                   variant={reportAction === 'resolved' ? 'success' : 'secondary'}
-                  onClick={() => handleResolveReport(selectedReport?._id, reportAction, reportNotes)}
+                  onClick={() => handleResolveReport(selectedReport?._id, reportAction, reportNotes, contentAction)}
                 >
                   {reportAction === 'resolved' ? t('admin.moderation.confirmResolution') : t('admin.moderation.confirmDismissal')}
                 </Button>

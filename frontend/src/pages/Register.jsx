@@ -484,9 +484,13 @@ const Register = () => {
             <Link to="/terms" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">
               {t("common.terms")}
             </Link>
-            {' '}{t("common.and")}{' '}
+            {', '}
             <Link to="/privacy" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">
               {t("common.privacy")}
+            </Link>
+            {' '}{t("common.and")}{' '}
+            <Link to="/community-guidelines" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">
+              {t("common.communityGuidelines")}
             </Link>
             .
           </motion.p>

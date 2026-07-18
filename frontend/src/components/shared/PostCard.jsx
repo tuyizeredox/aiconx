@@ -9,6 +9,7 @@ import { createPageUrl } from "@/lib/utils";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import ReportModal from "./ReportModal";
 import PostDetailModal from "./PostDetailModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +25,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const nativeShare = useNativeShare({ post, onFallback: () => setIsShareModalOpen(true) });
   const [showFullContent, setShowFullContent] = useState(fullView);
@@ -348,11 +350,9 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
               <Copy className="w-4 h-4" />
               <span>Copy link</span>
             </DropdownMenuItem>
-            {!isOwner && (
+            {!isOwner && currentUser && (
               <DropdownMenuItem
-                onClick={() => {
-                  toast.info("Report feature coming soon");
-                }}
+                onClick={() => setIsReportModalOpen(true)}
                 className="flex items-center gap-2 cursor-pointer text-red-600"
               >
                 <Flag className="w-4 h-4" />
@@ -362,6 +362,13 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onOpenChange={setIsReportModalOpen}
+        targetId={postId}
+        targetType="post"
+      />
 
       {/* Content */}
       {post.content && (

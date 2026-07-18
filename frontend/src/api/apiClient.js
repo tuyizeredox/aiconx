@@ -570,7 +570,7 @@ export const adminAPI = {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/admin/reports?${query}`);
   },
-  resolveReport: (id, status, admin_notes) => apiClient.patch(`/admin/reports/${id}/resolve`, { status, admin_notes }),
+  resolveReport: (id, status, admin_notes, content_action) => apiClient.patch(`/admin/reports/${id}/resolve`, { status, admin_notes, content_action }),
   // Activity Logs
   getActivityLogs: (params) => {
     const query = apiClient.buildQueryString(params);

@@ -17,6 +17,7 @@ export interface IPost extends Document {
   community_id?: string;
   is_sponsored: boolean;
   visibility: 'public' | 'followers' | 'community';
+  is_active: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -86,6 +87,10 @@ const PostSchema = new Schema<IPost>({
     enum: ['public', 'followers', 'community'],
     default: 'public',
   },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
 }, {
   timestamps: {
     createdAt: 'created_at',
@@ -104,6 +109,7 @@ PostSchema.virtual('id').get(function() {
 PostSchema.index({ author_username: 1, created_at: -1 });
 PostSchema.index({ community_id: 1, created_at: -1 });
 PostSchema.index({ visibility: 1, created_at: -1 });
+PostSchema.index({ is_active: 1, created_at: -1 });
 PostSchema.index({ is_sponsored: 1, created_at: -1 });
 PostSchema.index({ tagged_products: 1 });
 PostSchema.index({ likes_count: -1 });

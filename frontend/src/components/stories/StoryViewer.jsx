@@ -312,7 +312,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
         )}
 
         {/* Bottom actions */}
-        <div className="absolute bottom-6 left-0 right-0 px-4 flex items-center gap-3 z-30">
+        <div className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 right-0 px-4 flex items-center gap-3 z-30">
           {(guestMode || (!isOwner && !isLoadingUser)) ? (
             <form onSubmit={handleReply} className="flex-1 flex items-center gap-2">
               <input

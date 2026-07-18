@@ -14,6 +14,7 @@ import { Post } from '../models/Post';
 import { VendorSubscription } from '../models/VendorSubscription';
 import { Notification } from '../models/Notification';
 import { authenticate, isAdmin, logActivity, invalidateMaintenanceCache } from '../middleware/auth';
+import { NotificationService } from '../services/notificationService';
 import { escapeRegex } from '../utils/sanitize';
 import { DEFAULT_PLATFORM_FEE_PERCENT } from '../utils/platformFinance';
 
@@ -681,8 +682,35 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
       const total = await Report.countDocuments(query);
 
+      // Attach a lightweight content preview for post/product reports so admins
+      // can see what was actually reported without leaving the moderation table.
+      const reportsWithSummary = await Promise.all(reports.map(async (r) => {
+        const report: any = r.toObject();
+        if (r.target_type === 'post') {
+          const post = await Post.findById(r.target_id).select('content author_username is_active').lean();
+          if (post) {
+            report.target_summary = {
+              title: post.content?.slice(0, 80) || '(no text)',
+              owner_username: post.author_username,
+              active: post.is_active !== false,
+            };
+          }
+        } else if (r.target_type === 'product') {
+          const product = await Product.findById(r.target_id).select('title vendor_username status images').lean();
+          if (product) {
+            report.target_summary = {
+              title: product.title,
+              owner_username: product.vendor_username,
+              active: product.status !== 'archived',
+              image: product.images?.[0],
+            };
+          }
+        }
+        return report;
+      }));
+
       return {
-        reports,
+        reports: reportsWithSummary,
         pagination: {
           total,
           page: parseInt(page),
@@ -700,24 +728,84 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.patch('/reports/:id/resolve', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const { status, admin_notes } = z.object({
+      const { status, admin_notes, content_action } = z.object({
         status: z.enum(['resolved', 'dismissed']),
-        admin_notes: z.string().optional()
+        admin_notes: z.string().optional(),
+        content_action: z.enum(['none', 'deactivate', 'remove']).optional().default('none'),
       }).parse(request.body);
 
-      const user = request.user as any;
+      const admin = request.user as any;
       const report = await Report.findByIdAndUpdate(id, {
         status,
         admin_notes,
         resolved_at: new Date(),
-        resolved_by: user.userId || user._id,
+        resolved_by: admin.userId || admin._id,
       }, { new: true });
 
       if (!report) {
         return reply.code(404).send({ error: 'Report not found' });
       }
 
-      await logActivity(request, 'resolve_report', report._id, 'report', { status });
+      // Act on the reported content itself (if requested) and let its owner know.
+      if (status === 'resolved' && content_action !== 'none' && ['post', 'product'].includes(report.target_type)) {
+        let ownerUsername: string | undefined;
+        let contentLabel: string | undefined;
+
+        if (report.target_type === 'post') {
+          const post = content_action === 'remove'
+            ? await Post.findByIdAndDelete(report.target_id)
+            : await Post.findByIdAndUpdate(report.target_id, { is_active: false });
+          if (post) {
+            ownerUsername = post.author_username;
+            contentLabel = 'post';
+          }
+        } else if (report.target_type === 'product') {
+          const product = content_action === 'remove'
+            ? await Product.findByIdAndDelete(report.target_id)
+            : await Product.findByIdAndUpdate(report.target_id, { status: 'archived' });
+          if (product) {
+            ownerUsername = product.vendor_username;
+            contentLabel = 'product';
+          }
+        }
+
+        if (ownerUsername) {
+          const ownerNotification = new Notification({
+            recipient_username: ownerUsername,
+            type: 'moderation',
+            title: content_action === 'remove'
+              ? `Your ${contentLabel} was removed`
+              : `Your ${contentLabel} was deactivated`,
+            body: admin_notes || 'This content did not follow our Community Guidelines.',
+            link: '/community-guidelines',
+            sender_username: admin.username,
+            metadata: { report_id: report._id, target_type: report.target_type, target_id: report.target_id, action: content_action },
+          });
+          await ownerNotification.save();
+          fastify.io?.to(`user:${ownerUsername}`).emit('notification:new', ownerNotification);
+          NotificationService.sendPushNotification(ownerUsername, ownerNotification, fastify);
+        }
+      }
+
+      // Close the loop with the reporter so they know their report was reviewed.
+      const reporter = await User.findById(report.reporter_id).select('username').lean();
+      if (reporter?.username) {
+        const reporterNotification = new Notification({
+          recipient_username: reporter.username,
+          type: 'moderation',
+          title: status === 'resolved' ? 'Your report was reviewed — action taken' : 'Your report was reviewed',
+          body: status === 'resolved'
+            ? 'Thanks for helping keep AiconX safe. We took action on the content you reported.'
+            : "We reviewed your report and didn't find a violation of our Community Guidelines.",
+          sender_username: admin.username,
+          metadata: { report_id: report._id, status },
+        });
+        await reporterNotification.save();
+        fastify.io?.to(`user:${reporter.username}`).emit('notification:new', reporterNotification);
+        NotificationService.sendPushNotification(reporter.username, reporterNotification, fastify);
+      }
+
+      await logActivity(request, 'resolve_report', report._id, 'report', { status, content_action });
 
       return report;
     } catch (error) {

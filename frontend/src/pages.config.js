@@ -80,6 +80,7 @@ import Support from './pages/Support';
 import LandingPage from './pages/LandingPage';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Guidelines from './pages/Guidelines';
 import __Layout from './Layout.jsx';
 
 
@@ -117,6 +118,7 @@ export const PAGES = {
     "LandingPage": LandingPage,
     "Terms": Terms,
     "Privacy": Privacy,
+    "Guidelines": Guidelines,
 }
 
 export const pagesConfig = {

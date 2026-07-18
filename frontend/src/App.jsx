@@ -83,6 +83,7 @@ const AppRoutes = () => {
       <Route path="/Register" element={<Navigate to="/register" replace />} />
       <Route path="/terms" element={<Pages.Terms />} />
       <Route path="/privacy" element={<Pages.Privacy />} />
+      <Route path="/community-guidelines" element={<Pages.Guidelines />} />
       <Route path="/forgot-password" element={<Pages.ForgotPassword />} />
       <Route path="/ForgotPassword" element={<Navigate to="/forgot-password" replace />} />
       <Route path="/reset-password" element={<Pages.ResetPassword />} />
@@ -132,7 +133,7 @@ const AppRoutes = () => {
       {Object.entries(Pages).map(([path, Page]) => {
         const lowerPath = path.toLowerCase();
         // Skip Login and Register as they are handled above; ProductDetail, Cart and Checkout are handled above too
-        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'LandingPage', 'Terms', 'Privacy', 'ProductDetail', 'Cart', 'Checkout'].includes(path)) return null;
+        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'LandingPage', 'Terms', 'Privacy', 'Guidelines', 'ProductDetail', 'Cart', 'Checkout'].includes(path)) return null;
         
         return (
           <Route

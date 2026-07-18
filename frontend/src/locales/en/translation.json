@@ -87,6 +87,7 @@
     "about": "About",
     "privacy": "Privacy",
     "terms": "Terms",
+    "communityGuidelines": "Community Guidelines",
     "language": "Language",
     "theme": "Theme",
     "darkMode": "Dark Mode",
@@ -1478,6 +1479,29 @@
       "submitError": "Failed to submit report"
     }
   },
+  "report": {
+    "title": "Report content",
+    "description": "Tell us what's wrong. Our team will review this against our Community Guidelines.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasons": {
+      "spam": "Spam",
+      "nudity": "Nudity or sexual content",
+      "hate_speech": "Hate speech or harassment",
+      "violence": "Violence or dangerous content",
+      "false_information": "False information",
+      "intellectual_property": "Intellectual property violation",
+      "scam": "Scam or fraud",
+      "other": "Something else"
+    },
+    "detailsLabel": "Additional details (optional)",
+    "detailsPlaceholder": "Add any extra context...",
+    "submit": "Submit report",
+    "submitting": "Submitting...",
+    "selectReasonError": "Please select a reason",
+    "submitSuccess": "Report submitted. Thanks for helping keep AiconX safe.",
+    "submitError": "Failed to submit report"
+  },
   "admin": {
     "accessDenied": "Access Denied",
     "noPermission": "You do not have permission to view this page.",
@@ -1803,6 +1827,7 @@
       "dismissed": "Dismissed",
       "colType": "Type",
       "colReason": "Reason",
+      "colContent": "Content",
       "colReporter": "Reporter",
       "colStatus": "Status",
       "colDate": "Date",
@@ -1823,7 +1848,13 @@
       "confirmDismissal": "Confirm Dismissal",
       "reportStatusUpdated": "Report {{status}}",
       "failedResolve": "Failed to resolve report",
-      "failedFetch": "Failed to fetch reports"
+      "failedFetch": "Failed to fetch reports",
+      "contentInactive": "Removed / Deactivated",
+      "reportedContentLabel": "Reported content",
+      "contentAction": "Content Action",
+      "contentActionNone": "None — report only",
+      "contentActionDeactivate": "Deactivate content",
+      "contentActionRemove": "Remove content permanently"
     },
     "posts": {
       "title": "Post Management",
@@ -1986,6 +2017,14 @@
     "privacySecurity": "Data Security",
     "privacyRights": "Your Rights",
     "privacyChanges": "Changes to This Policy",
-    "privacyContact": "Contact Us"
+    "privacyContact": "Contact Us",
+    "guidelinesTitle": "Community Guidelines",
+    "guidelinesIntro": "Our Community",
+    "guidelinesRespect": "Respectful Behavior",
+    "guidelinesProhibited": "Prohibited Content",
+    "guidelinesVendors": "Vendor & Listing Integrity",
+    "guidelinesIP": "Intellectual Property",
+    "guidelinesReporting": "Reporting & Enforcement",
+    "guidelinesConsequences": "Consequences of Violations"
   }
 }

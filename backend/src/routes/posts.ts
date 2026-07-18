@@ -52,6 +52,7 @@ export async function postRoutes(fastify: FastifyInstance) {
       if (author_username) filter.author_username = author_username;
       if (community_id) filter.community_id = community_id;
       if (visibility) filter.visibility = visibility;
+      filter.is_active = { $ne: false };
 
       // Handle following_only filter
       if (following_only === 'true' && (user_email || user_username)) {
@@ -142,8 +143,13 @@ export async function postRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Post not found' });
       }
 
-      // Add is_liked field
       const user = request.user as any;
+
+      if (post.is_active === false && user?.username !== post.author_username && user?.role !== 'super_admin') {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+
+      // Add is_liked field
       const query = request.query as any;
       const effectiveUsername = user?.username || query?.user_username;
       

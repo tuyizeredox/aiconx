@@ -87,6 +87,7 @@
     "about": "Ibyerekeye",
     "privacy": "Ibanga",
     "terms": "Amategeko",
+    "communityGuidelines": "Amabwiriza y'Umuryango",
     "language": "Ururimi",
     "theme": "Isura",
     "darkMode": "Uburyo bw'umukara",
@@ -1879,6 +1880,14 @@
     "privacySecurity": "Umutekano w'Amakuru",
     "privacyRights": "Uburenganzira Bwawe",
     "privacyChanges": "Impinduka kuri iyi Politiki",
-    "privacyContact": "Twandikire"
+    "privacyContact": "Twandikire",
+    "guidelinesTitle": "Amabwiriza y'Umuryango",
+    "guidelinesIntro": "Umuryango Wacu",
+    "guidelinesRespect": "Kwubahana",
+    "guidelinesProhibited": "Ibintu Bibujijwe",
+    "guidelinesVendors": "Ukuri mu Bucuruzi",
+    "guidelinesIP": "Uburenganzira bw'Umuhanga",
+    "guidelinesReporting": "Kumenyekanisha n'Ibihano",
+    "guidelinesConsequences": "Ingaruka z'Ihohoterwa"
   }
 }
