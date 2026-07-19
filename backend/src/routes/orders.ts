@@ -589,7 +589,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
       order.updated_at = new Date();
       await order.save();
 
-      await new Notification({
+      const confirmationNotification = await new Notification({
         recipient_username: order.vendor_username,
         type: 'order_update',
         title: action === 'confirm'
@@ -600,6 +600,8 @@ export async function orderRoutes(fastify: FastifyInstance) {
         sender_username: user.username,
         metadata: { order_id: order._id },
       }).save();
+      fastify.io?.to(`user:${order.vendor_username}`).emit('notification:new', confirmationNotification);
+      NotificationService.sendPushNotification(order.vendor_username, confirmationNotification, fastify);
 
       return order;
     } catch (error: any) {

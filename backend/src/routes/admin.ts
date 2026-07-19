@@ -675,7 +675,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
       store.updated_at = new Date();
       await store.save();
 
-      await new Notification({
+      const verificationNotification = await new Notification({
         recipient_username: store.owner_username,
         type: 'verification',
         title: action === 'approve'
@@ -687,6 +687,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         link: '/MyStore',
         sender_username: admin.username,
       }).save();
+      fastify.io?.to(`user:${store.owner_username}`).emit('notification:new', verificationNotification);
+      NotificationService.sendPushNotification(store.owner_username, verificationNotification, fastify);
 
       await logActivity(request, 'update_store_verification', store._id, 'store', { action, reason });
 
@@ -1001,7 +1003,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
       await order.save();
 
       const admin = request.user as any;
-      await new Notification({
+      const disputeNotification = await new Notification({
         recipient_username: order.vendor_username,
         type: 'order_update',
         title: resolution === 'release'
@@ -1011,6 +1013,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         link: '/MyStore',
         sender_username: admin.username,
       }).save();
+      fastify.io?.to(`user:${order.vendor_username}`).emit('notification:new', disputeNotification);
+      NotificationService.sendPushNotification(order.vendor_username, disputeNotification, fastify);
 
       await logActivity(request, 'resolve_order_dispute', order._id, 'order', { resolution, notes });
 
