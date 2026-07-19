@@ -15,6 +15,8 @@ import AffiliateTracker from './components/shared/AffiliateTracker';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import { LanguageProvider } from '@/components/providers/LanguageContext';
 import { ThemeProvider } from "next-themes";
+import { PostUploadProvider } from '@/lib/PostUploadContext';
+import PostUploadIndicator from '@/components/shared/PostUploadIndicator';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -185,12 +187,15 @@ function App() {
           <SocketProvider>
             <QueryClientProvider client={queryClientInstance}>
               <LanguageProvider>
-                <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-                  <AffiliateTracker />
-                  <AppRoutes />
-                </Router>
-                <Toaster />
-                <SonnerToaster position="top-center" richColors closeButton />
+                <PostUploadProvider>
+                  <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+                    <AffiliateTracker />
+                    <AppRoutes />
+                    <PostUploadIndicator />
+                  </Router>
+                  <Toaster />
+                  <SonnerToaster position="top-center" richColors closeButton />
+                </PostUploadProvider>
               </LanguageProvider>
             </QueryClientProvider>
           </SocketProvider>

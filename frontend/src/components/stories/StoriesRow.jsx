@@ -107,7 +107,7 @@ export default function StoriesRow({ currentUser }) {
                       return isVideo ? (
                         <video src={latest.media_url} className="w-full h-full object-cover rounded-full" muted playsInline />
                       ) : (
-                        <img src={latest.media_url} alt="" className="w-full h-full object-cover rounded-full" />
+                        <img src={latest.media_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover rounded-full" />
                       );
                     }
                     if (isText) {
@@ -128,7 +128,7 @@ export default function StoriesRow({ currentUser }) {
                 ) : (
                   // Empty state / Add button
                   currentUser?.avatar_url ? (
-                    <img src={currentUser.avatar_url} alt="" className="w-full h-full object-cover rounded-full opacity-50" />
+                    <img src={currentUser.avatar_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover rounded-full opacity-50" />
                   ) : (
                     <Plus className="w-5 h-5 text-orange-400" />
                   )
@@ -138,7 +138,7 @@ export default function StoriesRow({ currentUser }) {
               {/* User Avatar Badge (Small overlay) */}
               {myStory && currentUser?.avatar_url && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
-                  <img src={currentUser.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <img src={currentUser.avatar_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               )}
 
@@ -184,7 +184,7 @@ export default function StoriesRow({ currentUser }) {
                           playsInline
                         />
                       ) : (
-                        <img src={latestStory.media_url} alt="" className="w-full h-full object-cover rounded-full" />
+                        <img src={latestStory.media_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover rounded-full" />
                       )
                     ) : isText ? (
                       <div className="w-full h-full rounded-full flex items-center justify-center p-2" style={{ backgroundColor: latestStory.bg_color || "#6366f1" }}>
@@ -201,7 +201,7 @@ export default function StoriesRow({ currentUser }) {
                   {/* Small Avatar Overlay for other users */}
                   {(hasMedia || isText) && (group.avatar || latestStory.author_avatar) && (
                     <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
-                      <img src={group.avatar || latestStory.author_avatar} alt="" className="w-full h-full object-cover" />
+                      <img src={group.avatar || latestStory.author_avatar} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import {
@@ -11,17 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { authAPI, productsAPI, postsAPI, affiliateLinksAPI, communitiesAPI, usersAPI } from "@/api/apiClient";
-import { uploadPostMedia, uploadPostThumbnail } from "@/lib/storage";
+import { authAPI, productsAPI, affiliateLinksAPI, communitiesAPI, usersAPI, postsAPI } from "@/api/apiClient";
 import { generateVideoThumbnail } from "@/lib/videoThumbnail";
+import { usePostUpload } from "@/lib/PostUploadContext";
 import { useTranslation } from "react-i18next";
 
 const QUICK_EMOJIS = ["😍", "🔥", "💯", "🎉", "❤️", "✨", "🛍️", "👏"];
+const MAX_TAGGED_ITEMS = 3;
 
 export default function CreatePost() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const { startUpload } = usePostUpload();
   const [searchParams] = useSearchParams();
   const editPostId = searchParams.get('edit');
   const isEditMode = !!editPostId;
@@ -38,9 +39,7 @@ export default function CreatePost() {
   // Index-aligned with mediaFiles: { file, previewUrl } for auto-generated video posters, or null
   const [mediaThumbnails, setMediaThumbnails] = useState([]);
   const [visibility, setVisibility] = useState(communityId ? "community" : "public");
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [fileUploadProgress, setFileUploadProgress] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [taggedProducts, setTaggedProducts] = useState([]);
   const [showProductSearch, setShowProductSearch] = useState(false);
@@ -181,145 +180,37 @@ export default function CreatePost() {
 
   const myAffiliateLinks = (myAffiliateLinksResponse?.links || []).map(l => ({ ...l, id: l.id || l._id }));
 
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      setUploading(true);
-      setUploadProgress(0);
-      setFileUploadProgress({});
+  // Hands the actual upload + post creation off to PostUploadProvider (mounted
+  // once at the app root) and leaves immediately — the request keeps running
+  // in the background regardless of what page the user navigates to next,
+  // with progress surfaced globally via PostUploadIndicator and a toast on
+  // completion instead of blocking this screen until the network finishes.
+  const handleSubmit = () => {
+    if (!canPost) return;
+    setIsSubmitting(true);
 
-      // Only upload newly added files (existing media is represented by null in mediaFiles)
-      const uploadTasks = mediaFiles
-        .map((file, index) => ({ file, index }))
-        .filter(({ file }) => file != null);
+    startUpload({
+      content,
+      mediaFiles,
+      mediaPreviewUrls,
+      mediaThumbnails,
+      taggedProducts,
+      selectedAffiliateLinks,
+      visibility,
+      isEditMode,
+      editPostId,
+      editPost,
+      communityId,
+    });
 
-      const uploadPromises = uploadTasks.map(({ file, index }) =>
-        uploadPostMedia(file, {
-          onProgress: (progress) => {
-            setFileUploadProgress(prev => ({
-              ...prev,
-              [index]: progress
-            }));
-            // Calculate overall progress based on actual upload tasks
-            const totalProgress = Object.values({ ...fileUploadProgress, [index]: progress })
-              .reduce((sum, p) => sum + p, 0);
-            const overallProgress = uploadTasks.length > 0 ? Math.round(totalProgress / uploadTasks.length) : 0;
-            setUploadProgress(overallProgress);
-          }
-        }).then(res => {
-          const file_url = res.url;
-          if (!file_url) throw new Error("No URL returned from upload");
-          return { url: file_url, index };
-        }).catch(error => {
-          console.error(`Failed to upload file ${index + 1}:`, error);
-          throw new Error(`Failed to upload ${file.name}: ${error.message}`);
-        })
-      );
-
-      const uploadResults = await Promise.all(uploadPromises);
-
-      // Preserve existing media URLs and insert newly uploaded URLs at their original indices
-      const finalMediaUrls = mediaPreviewUrls.map((preview, index) => {
-        const uploaded = uploadResults.find(r => r.index === index);
-        return uploaded ? uploaded.url : preview.url;
-      });
-
-      // Upload auto-generated video poster thumbnails alongside the media
-      const thumbnailTasks = mediaThumbnails
-        .map((thumb, index) => ({ thumb, index }))
-        .filter(({ thumb }) => thumb?.file != null);
-
-      const thumbnailUploadResults = await Promise.all(
-        thumbnailTasks.map(({ thumb, index }) =>
-          uploadPostThumbnail(thumb.file)
-            .then(res => ({ url: res.url, index }))
-            .catch(err => {
-              console.warn(`Failed to upload thumbnail for media ${index + 1}:`, err);
-              return { url: null, index };
-            })
-        )
-      );
-
-      // Preserve existing thumbnail for unchanged media during edit; empty string when none available
-      const finalThumbnailUrls = mediaPreviewUrls.map((preview, index) => {
-        const uploaded = thumbnailUploadResults.find(r => r.index === index && r.url);
-        if (uploaded) return uploaded.url;
-        return editPost?.thumbnail_urls?.[index] || "";
-      });
-
-      const hasVideo = mediaPreviewUrls.some(m => m.type?.startsWith("video"));
-      const mediaType = mediaPreviewUrls.length === 0 ? "text" : hasVideo ? "video" : "image";
-
-      const postData = {
-        content: content?.trim() || "",
-        media_urls: finalMediaUrls || [],
-        thumbnail_urls: finalThumbnailUrls || [],
-        media_type: mediaType || "text",
-        tagged_products: (taggedProducts || [])
-          .map(p => {
-            const rawId = p.id || p._id || (typeof p === 'string' ? p : null);
-            if (!rawId || rawId === "undefined" || rawId === "null" || typeof rawId === 'object') return null;
-            return String(rawId);
-          })
-          .filter(id => !!id && id !== "[object Object]"),
-        affiliate_links: (selectedAffiliateLinks || [])
-          .map(link => {
-            const rawId = link.id || link._id || (typeof link === 'string' ? link : null);
-            if (!rawId || rawId === "undefined" || rawId === "null" || typeof rawId === 'object') return null;
-            return String(rawId);
-          })
-          .filter(id => !!id && id !== "[object Object]"),
-        visibility: visibility || "public",
-        ...(communityId && !isEditMode ? { community_id: communityId } : {}),
-      };
-
-      console.log(`${isEditMode ? 'Updating' : 'Creating'} post with final data:`, JSON.stringify(postData, null, 2));
-
-      try {
-        const response = isEditMode
-          ? await postsAPI.update(editPostId, postData)
-          : await postsAPI.create(postData);
-        return response;
-      } catch (err) {
-        console.error(`API Error during post ${isEditMode ? 'update' : 'creation'}:`, err);
-        if (err.details) {
-          const detailMsg = Array.isArray(err.details)
-            ? err.details.map(d => `${d.path.join('.')}: ${d.message}`).join(', ')
-            : JSON.stringify(err.details);
-          throw new Error(`Validation failed: ${detailMsg}`);
-        }
-        throw err;
-      }
-    },
-    onSuccess: (data) => {
-      toast.success(isEditMode ? (t("create.postUpdated") || "Post updated") : t("create.postCreated"));
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["postDetail", editPostId] });
-      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
-      if (communityId) queryClient.invalidateQueries({ queryKey: ["communityPosts", communityId] });
-      // Clear local state
-      setContent("");
-      setMediaFiles([]);
-      setMediaPreviewUrls([]);
-      mediaThumbnails.forEach(thumb => thumb?.previewUrl && URL.revokeObjectURL(thumb.previewUrl));
-      setMediaThumbnails([]);
-      setTaggedProducts([]);
-      setSelectedAffiliateLinks([]);
-      setFileUploadProgress({});
-
-      navigate(
-        isEditMode
-          ? createPageUrl("PostDetail") + `?id=${editPostId}`
-          : communityId
-          ? createPageUrl("CommunityDetail") + `?id=${communityId}`
-          : createPageUrl("Home")
-      );
-    },
-    onError: (error) => {
-      console.error(`Post ${isEditMode ? 'update' : 'creation'} failed:`, error);
-      toast.error(error.message || (isEditMode ? (t("create.failedToUpdatePost") || "Failed to update post") : t("create.failedToCreatePost")));
-    },
-    onSettled: () => { setUploading(false); setUploadProgress(0); setFileUploadProgress({}); },
-  });
+    navigate(
+      isEditMode
+        ? createPageUrl("PostDetail") + `?id=${editPostId}`
+        : communityId
+        ? createPageUrl("CommunityDetail") + `?id=${communityId}`
+        : createPageUrl("Home")
+    );
+  };
 
   const handleMediaSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -424,22 +315,28 @@ export default function CreatePost() {
   };
 
   const toggleProduct = (product) => {
-    setTaggedProducts(prev =>
-      prev.find(p => p.id === product.id)
-        ? prev.filter(p => p.id !== product.id)
-        : [...prev, product]
-    );
+    setTaggedProducts(prev => {
+      if (prev.find(p => p.id === product.id)) return prev.filter(p => p.id !== product.id);
+      if (prev.length >= MAX_TAGGED_ITEMS) {
+        toast.error(t("create.maxTaggedProducts", { max: MAX_TAGGED_ITEMS }) || `You can tag up to ${MAX_TAGGED_ITEMS} products`);
+        return prev;
+      }
+      return [...prev, product];
+    });
   };
 
   const toggleAffiliateLink = (link) => {
-    setSelectedAffiliateLinks(prev =>
-      prev.find(l => l.id === link.id)
-        ? prev.filter(l => l.id !== link.id)
-        : [...prev, link]
-    );
+    setSelectedAffiliateLinks(prev => {
+      if (prev.find(l => l.id === link.id)) return prev.filter(l => l.id !== link.id);
+      if (prev.length >= MAX_TAGGED_ITEMS) {
+        toast.error(t("create.maxAffiliateLinks", { max: MAX_TAGGED_ITEMS }) || `You can add up to ${MAX_TAGGED_ITEMS} affiliate links`);
+        return prev;
+      }
+      return [...prev, link];
+    });
   };
 
-  const canPost = (content.trim() || mediaPreviewUrls.length > 0) && !uploading;
+  const canPost = (content.trim() || mediaPreviewUrls.length > 0) && !isSubmitting;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -525,7 +422,7 @@ export default function CreatePost() {
         {/* Tagged products */}
         {taggedProducts.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl border border-orange-100 dark:border-orange-900">
-            <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 w-full mb-1">{t("create.taggedProducts")}</p>
+            <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 w-full mb-1">{t("create.taggedProducts")} ({taggedProducts.length}/{MAX_TAGGED_ITEMS})</p>
             {taggedProducts.map(p => (
               <div key={p.id} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1 border border-orange-100 dark:border-orange-900 text-xs">
                 <span className="text-slate-700 dark:text-slate-300 font-medium">{p.title}</span>
@@ -540,7 +437,7 @@ export default function CreatePost() {
         {/* Selected affiliate links */}
         {selectedAffiliateLinks.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-xl border border-purple-100 dark:border-purple-900">
-            <p className="text-xs font-semibold text-purple-700 dark:text-purple-400 w-full mb-1">Affiliate Links</p>
+            <p className="text-xs font-semibold text-purple-700 dark:text-purple-400 w-full mb-1">Affiliate Links ({selectedAffiliateLinks.length}/{MAX_TAGGED_ITEMS})</p>
             {selectedAffiliateLinks.map(link => (
               <div key={link.id} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1 border border-purple-100 dark:border-purple-900 text-xs">
                 <span className="text-slate-700 dark:text-slate-300 font-medium">{link.product_title}</span>
@@ -582,41 +479,8 @@ export default function CreatePost() {
                 {media.type?.startsWith("video") && (
                   <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full z-20 pointer-events-none">VIDEO</div>
                 )}
-                {/* Individual file upload progress */}
-                {uploading && fileUploadProgress[i] !== undefined && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-                    <div className="text-center">
-                      <Loader2 className="w-8 h-8 text-white animate-spin mx-auto mb-2" />
-                      <p className="text-white text-xs font-semibold">{fileUploadProgress[i]}%</p>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${fileUploadProgress[i]}%` }}
-                        className="h-full bg-white dark:bg-slate-800"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Upload progress */}
-        {uploading && uploadProgress > 0 && (
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>{t("create.uploadingMedia")}</span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${uploadProgress}%` }}
-                className="h-full bg-orange-500 rounded-full"
-              />
-            </div>
           </div>
         )}
 
@@ -746,11 +610,11 @@ export default function CreatePost() {
           </div>
 
           <Button
-            onClick={() => submitMutation.mutate()}
+            onClick={handleSubmit}
             disabled={!canPost}
             className="bg-orange-600 hover:bg-orange-700 rounded-xl px-5 gap-2"
           >
-            {uploading ? (
+            {isSubmitting ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> {t("create.posting")}</>
             ) : (
               <><Send className="w-4 h-4" /> {isEditMode ? (t("create.update") || "Update") : t("create.post")}</>

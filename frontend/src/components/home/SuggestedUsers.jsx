@@ -192,7 +192,7 @@ export default function SuggestedUsers({ currentUser }) {
                 <Link to={linkTo} className="flex items-center gap-3">
                   <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm group-hover:scale-105 transition-transform">
                     {item.avatar_url ? (
-                      <img src={item.avatar_url} alt="" className="w-full h-full object-cover" />
+                      <img src={item.avatar_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     ) : item.type === 'store' ? (
                       <Store className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                     ) : (

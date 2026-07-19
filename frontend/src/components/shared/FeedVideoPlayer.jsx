@@ -9,7 +9,7 @@ const DEFAULT_RATIO = 4 / 5;
 // Instagram-feed-style video player: autoplays muted while in view, loops,
 // single tap toggles sound, double tap likes (delegated to the caller).
 const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
-  { src, poster, onDoubleTap, onExpand, className = "", videoClassName = "" },
+  { src, poster, onDoubleTap, onExpand, suspended = false, className = "", videoClassName = "" },
   ref
 ) {
   const internalRef = useRef(null);
@@ -20,6 +20,11 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
   const [isLoaded, setIsLoaded] = useState(false);
   const [showMuteHint, setShowMuteHint] = useState(false);
   const [ratio, setRatio] = useState(DEFAULT_RATIO);
+  // Lazy-load gate: the <video> gets no src (and issues no network request)
+  // until its container is about to scroll into view, so a feed with many
+  // video posts doesn't fire off a metadata request for every one of them
+  // the moment the page mounts.
+  const [shouldLoad, setShouldLoad] = useState(false);
   const lastTapRef = useRef(0);
   const tapTimerRef = useRef(null);
   const muteHintTimerRef = useRef(null);
@@ -31,16 +36,35 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
     }
   }, [videoRef]);
 
+  // Start loading once the player is within ~1 screen of the viewport
+  useEffect(() => {
+    if (shouldLoad) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "800px 0px", threshold: 0 }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [shouldLoad]);
+
   // Autoplay while sufficiently in view, pause otherwise
   useEffect(() => {
     const video = videoRef.current;
     const container = containerRef.current;
-    if (!video || !container) return;
+    if (!video || !container || !shouldLoad) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && !suspended) {
             video.play().catch(() => {});
           } else {
             video.pause();
@@ -51,7 +75,18 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
     );
     observer.observe(container);
     return () => observer.disconnect();
-  }, [videoRef, src]);
+  }, [videoRef, src, shouldLoad, suspended]);
+
+  // The fullscreen reel viewer plays its own (unmuted) copy of a video on top
+  // of the feed — without this, this player keeps autoplaying underneath it
+  // and, if the user had unmuted it, both would speak over each other.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !suspended) return;
+    video.pause();
+    video.muted = true;
+    setIsMuted(true);
+  }, [suspended, videoRef]);
 
   useEffect(() => {
     return () => {
@@ -105,18 +140,20 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
       style={{ aspectRatio: ratio }}
       onClick={handleTap}
     >
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster || undefined}
-        className={`w-full h-full object-contain transition-opacity duration-200 ${isLoaded ? "opacity-100" : "opacity-0"} ${videoClassName}`}
-        playsInline
-        muted
-        loop
-        preload="metadata"
-        onLoadedMetadata={handleLoadedMetadata}
-        onLoadedData={() => setIsLoaded(true)}
-      />
+      {shouldLoad && (
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster || undefined}
+          className={`w-full h-full object-contain transition-opacity duration-200 ${isLoaded ? "opacity-100" : "opacity-0"} ${videoClassName}`}
+          playsInline
+          muted
+          loop
+          preload="metadata"
+          onLoadedMetadata={handleLoadedMetadata}
+          onLoadedData={() => setIsLoaded(true)}
+        />
+      )}
 
       {/* Poster / loading placeholder shown until the first frame is ready */}
       {!isLoaded && (
@@ -124,6 +161,8 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
           <img
             src={poster}
             alt=""
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
           />
         ) : (

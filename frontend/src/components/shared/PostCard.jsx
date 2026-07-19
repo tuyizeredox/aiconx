@@ -359,7 +359,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         <Link to={createPageUrl("Profile") + `?username=${authorUsername}`} className="flex items-center gap-3 min-w-0 flex-1">
           <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm shrink-0">
             {displayPost.author_avatar ? (
-              <img src={displayPost.author_avatar} alt={displayPost.author_name} className="w-full h-full object-cover" loading="lazy" />
+              <img src={displayPost.author_avatar} alt={displayPost.author_name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
                 {displayPost.author_name?.[0]?.toUpperCase() || "U"}
@@ -500,17 +500,19 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
                         src={url}
                         poster={displayPost.thumbnail_urls?.[i]}
                         onDoubleTap={triggerLike}
+                        suspended={reelsIndex !== null}
                         onExpand={!fullView ? () => {
                           const queueIndex = videoQueue.findIndex(p => ((p.id || p._id)?.toString()) === postId);
                           setReelsIndex({ queueIndex: queueIndex >= 0 ? queueIndex : 0, mediaIndex: i });
                         } : undefined}
                       />
                     ) : (
-                      <img 
-                        src={url} 
-                        alt="" 
-                        className="w-full h-auto max-h-[600px] object-contain" 
+                      <img
+                        src={url}
+                        alt=""
+                        className="w-full h-auto max-h-[600px] object-contain"
                         loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           e.target.src = "https://placehold.co/600x600/f8fafc/64748b?text=Image+Not+Found";
                         }}
@@ -593,7 +595,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
               >
                 <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 overflow-hidden shrink-0 flex items-center justify-center">
                   {p.images?.[0] ? (
-                    <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                    <img src={p.images[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   ) : (
                     <ShoppingBag className="w-4 h-4" />
                   )}

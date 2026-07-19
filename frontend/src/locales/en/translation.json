@@ -2029,7 +2029,9 @@
     "failedToCreatePost": "Failed to create post",
     "taggedLabel": "Tagged",
     "someFilesRejected": "Some files were rejected due to format or size",
-    "you": "You"
+    "you": "You",
+    "maxTaggedProducts": "You can tag up to {{max}} products",
+    "maxAffiliateLinks": "You can add up to {{max}} affiliate links"
   },
   "legal": {
     "termsTitle": "Terms of Service",

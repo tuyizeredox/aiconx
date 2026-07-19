@@ -14,8 +14,10 @@ const createPostSchema = z.object({
   media_urls: z.array(z.string()).default([]),
   thumbnail_urls: z.array(z.string()).default([]),
   media_type: z.enum(['image', 'video', 'text', 'product_review']).default('text'),
-  tagged_products: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string')).default([]),
-  affiliate_links: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string')).default([]),
+  // Capped at 3 to match the composer UI — sliced rather than rejected so
+  // resaving an older post that predates this limit doesn't hard-fail.
+  tagged_products: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string').slice(0, 3)).default([]),
+  affiliate_links: z.array(z.string().nullable()).transform(arr => (arr || []).filter(item => typeof item === 'string').slice(0, 3)).default([]),
   community_id: z.string().optional().nullable(),
   visibility: z.enum(['public', 'followers', 'community']).default('public'),
   // Optional fields that can be provided but are not required
@@ -381,6 +383,10 @@ export async function postRoutes(fastify: FastifyInstance) {
 
       // Filter counters and sensitive/derived fields from body
       const { likes_count, comments_count, shares_count, reposts_count, repost_of, tagged_users, author_username, author_email, ...safeBody } = body;
+
+      // Capped at 3 to match the composer UI (see createPostSchema).
+      if (Array.isArray(safeBody.tagged_products)) safeBody.tagged_products = safeBody.tagged_products.slice(0, 3);
+      if (Array.isArray(safeBody.affiliate_links)) safeBody.affiliate_links = safeBody.affiliate_links.slice(0, 3);
 
       if (typeof safeBody.content === 'string') {
         try {
