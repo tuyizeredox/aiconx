@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authAPI } from "@/api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 export default function StoryViewer({ stories = [], startIndex = 0, onClose, onNext, onPrev, guestMode = false }) {
   const [current, setCurrent] = useState(startIndex >= stories.length ? 0 : startIndex);
@@ -165,13 +166,15 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
         {/* Header */}
         <div className="absolute top-8 left-0 right-0 px-4 flex items-center gap-3 z-30">
           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center relative overflow-hidden ring-2 ring-white/50 shadow-lg">
-            {story.author_avatar ? (
-              <img src={story.author_avatar} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold">
-                {story.author_name?.[0]?.toUpperCase() || story.author_username?.[0]?.toUpperCase() || "U"}
-              </div>
-            )}
+            <AvatarImg
+              src={story.author_avatar}
+              className="w-full h-full object-cover"
+              fallback={
+                <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold">
+                  {story.author_name?.[0]?.toUpperCase() || story.author_username?.[0]?.toUpperCase() || "U"}
+                </div>
+              }
+            />
           </div>
           <div>
             <p className="text-white text-sm font-bold drop-shadow-md">{story.author_name || `@${story.author_username}`}</p>

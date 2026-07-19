@@ -7,6 +7,7 @@ import {
   DialogContent 
 } from "@/components/ui/dialog";
 import PostCard from "@/components/shared/PostCard";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -90,11 +91,11 @@ function ReplyItem({ reply, currentUser }) {
     >
       <Link to={replyAuthorProfile} className="shrink-0">
         <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold shrink-0 overflow-hidden border border-white dark:border-slate-800 shadow-sm hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
-          {reply.author_avatar ? (
-            <img src={reply.author_avatar} alt="" className="w-full h-full object-cover" />
-          ) : (
-            reply.author_name?.[0]?.toUpperCase() || "U"
-          )}
+          <AvatarImg
+            src={reply.author_avatar}
+            className="w-full h-full object-cover"
+            fallback={reply.author_name?.[0]?.toUpperCase() || "U"}
+          />
         </div>
       </Link>
       <div className="flex-1">
@@ -229,11 +230,11 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
     >
       <Link to={commentAuthorProfile} className="shrink-0">
         <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold shrink-0 border border-white dark:border-slate-800 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
-          {comment.author_avatar ? (
-            <img src={comment.author_avatar} alt="" className="w-full h-full rounded-full object-cover" />
-          ) : (
-            comment.author_name?.[0]?.toUpperCase() || "U"
-          )}
+          <AvatarImg
+            src={comment.author_avatar}
+            className="w-full h-full rounded-full object-cover"
+            fallback={comment.author_name?.[0]?.toUpperCase() || "U"}
+          />
         </div>
       </Link>
       <div className="flex-1 min-w-0">
@@ -407,13 +408,16 @@ export default function PostDetailModal({ isOpen, onOpenChange, post, currentUse
             <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 pt-[max(1rem,env(safe-area-inset-top))] px-4 pb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm">
-                  {post.author_avatar ? (
-                    <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
-                      {post.author_name?.[0]?.toUpperCase() || "U"}
-                    </div>
-                  )}
+                  <AvatarImg
+                    src={post.author_avatar}
+                    alt={post.author_name}
+                    className="w-full h-full object-cover"
+                    fallback={
+                      <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
+                        {post.author_name?.[0]?.toUpperCase() || "U"}
+                      </div>
+                    }
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{post.author_name || "User"}</p>

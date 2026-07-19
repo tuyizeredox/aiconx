@@ -14,6 +14,7 @@ import PostDetailModal from "./PostDetailModal";
 import PostContent from "./PostContent";
 import FeedVideoPlayer from "./FeedVideoPlayer";
 import ReelsPlayer from "./ReelsPlayer";
+import AvatarImg from "./AvatarImg";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { formatDistanceToNow } from "date-fns";
 import useEmblaCarousel from 'embla-carousel-react';
@@ -358,13 +359,16 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       <div className="flex items-center justify-between gap-2 p-4">
         <Link to={createPageUrl("Profile") + `?username=${authorUsername}`} className="flex items-center gap-3 min-w-0 flex-1">
           <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm shrink-0">
-            {displayPost.author_avatar ? (
-              <img src={displayPost.author_avatar} alt={displayPost.author_name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
-                {displayPost.author_name?.[0]?.toUpperCase() || "U"}
-              </div>
-            )}
+            <AvatarImg
+              src={displayPost.author_avatar}
+              alt={displayPost.author_name}
+              className="w-full h-full object-cover"
+              fallback={
+                <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
+                  {displayPost.author_name?.[0]?.toUpperCase() || "U"}
+                </div>
+              }
+            />
           </div>
           <div className="flex flex-col min-w-0">
             <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors truncate">{displayPost.author_name || "User"}</p>

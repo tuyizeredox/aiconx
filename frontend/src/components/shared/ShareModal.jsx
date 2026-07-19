@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { usersAPI, storesAPI, messagesAPI, postsAPI } from "@/api/apiClient";
 import { toast } from "sonner";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { useTranslation } from "react-i18next";
 
 const ExternalPlatforms = ({ url, title }) => {
@@ -280,13 +281,15 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                       }`}
                     >
                       <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                        {recipient.avatar_url || recipient.logo_url ? (
-                          <img src={recipient.avatar_url || recipient.logo_url} alt="" className="w-full h-full object-cover" />
-                        ) : recipient.type === 'vendor' ? (
-                          <Store className="w-4 h-4 text-orange-500" />
-                        ) : (
-                          <User className="w-4 h-4 text-slate-400" />
-                        )}
+                        <AvatarImg
+                          src={recipient.avatar_url || recipient.logo_url}
+                          className="w-full h-full object-cover"
+                          fallback={recipient.type === 'vendor' ? (
+                            <Store className="w-4 h-4 text-orange-500" />
+                          ) : (
+                            <User className="w-4 h-4 text-slate-400" />
+                          )}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">

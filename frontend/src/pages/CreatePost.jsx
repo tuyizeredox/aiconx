@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { authAPI, productsAPI, affiliateLinksAPI, communitiesAPI, usersAPI, postsAPI } from "@/api/apiClient";
 import { generateVideoThumbnail } from "@/lib/videoThumbnail";
 import { usePostUpload } from "@/lib/PostUploadContext";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { useTranslation } from "react-i18next";
 
 const QUICK_EMOJIS = ["😍", "🔥", "💯", "🎉", "❤️", "✨", "🛍️", "👏"];
@@ -27,6 +28,7 @@ export default function CreatePost() {
   const editPostId = searchParams.get('edit');
   const isEditMode = !!editPostId;
   const communityId = searchParams.get('community_id');
+  const tagProductId = searchParams.get('tag_product');
 
   const VISIBILITY_OPTIONS = [
     { value: "public", icon: Globe, label: t("create.visibilityPublic") },
@@ -47,6 +49,7 @@ export default function CreatePost() {
   const [selectedAffiliateLinks, setSelectedAffiliateLinks] = useState([]);
   const [showAffiliateSearch, setShowAffiliateSearch] = useState(false);
   const [isFormPopulated, setIsFormPopulated] = useState(false);
+  const [hasAppliedPrefillProduct, setHasAppliedPrefillProduct] = useState(false);
   const textareaRef = useRef(null);
   // Text right after an "@" the caret is currently inside, or null when not mid-mention
   const [mentionQuery, setMentionQuery] = useState(null);
@@ -117,6 +120,18 @@ export default function CreatePost() {
     enabled: !!editPost?.tagged_products?.length,
   });
 
+  // Seller shortcut: MyStore links to `?tag_product=<id>` so the composer opens with
+  // that product already tagged, instead of the seller having to search for it.
+  const { data: prefillProduct } = useQuery({
+    queryKey: ["prefillTagProduct", tagProductId],
+    queryFn: async () => {
+      const res = await productsAPI.get(tagProductId);
+      return res?.data || res;
+    },
+    enabled: !!tagProductId && !isEditMode,
+    staleTime: 60000,
+  });
+
   const { data: editAffiliateLinks } = useQuery({
     queryKey: ["editAffiliateLinks", editPost?.affiliate_links],
     queryFn: async () => {
@@ -168,6 +183,16 @@ export default function CreatePost() {
       setIsFormPopulated(true);
     }
   }, [editPost, editTaggedProducts, editAffiliateLinks, isFormPopulated]);
+
+  useEffect(() => {
+    if (prefillProduct && !hasAppliedPrefillProduct) {
+      const productId = prefillProduct.id || prefillProduct._id;
+      setTaggedProducts(prev => prev.some(p => (p.id || p._id) === productId)
+        ? prev
+        : [...prev, { ...prefillProduct, id: productId }].slice(0, MAX_TAGGED_ITEMS));
+      setHasAppliedPrefillProduct(true);
+    }
+  }, [prefillProduct, hasAppliedPrefillProduct]);
 
   // Extract products array from response (handle both array and object responses)
   const searchedProducts = Array.isArray(searchedProductsResponse)
@@ -404,11 +429,11 @@ export default function CreatePost() {
                 className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
               >
                 <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  {u.avatar_url ? (
-                    <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    (u.display_name || u.username)?.[0]?.toUpperCase()
-                  )}
+                  <AvatarImg
+                    src={u.avatar_url}
+                    className="w-full h-full object-cover"
+                    fallback={(u.display_name || u.username)?.[0]?.toUpperCase()}
+                  />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{u.display_name || u.username}</p>

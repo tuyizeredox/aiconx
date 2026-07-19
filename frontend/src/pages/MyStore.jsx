@@ -5,7 +5,7 @@ import { createPageUrl, formatCurrency } from "@/lib/utils";
 import {
   Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, Eye,
   X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
-  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle
+  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle, Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1546,6 +1546,13 @@ export default function MyStore() {
                       )}
                     </div>
                   </div>
+                  <button
+                    onClick={() => navigate(createPageUrl("CreatePost") + `?tag_product=${productId}`)}
+                    title={t("store.postAboutThis")}
+                    className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors"
+                  >
+                    <Megaphone className="w-4 h-4" />
+                  </button>
                   <button onClick={() => openEditProduct(product)} className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>

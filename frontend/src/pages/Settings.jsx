@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { authAPI } from "@/api/apiClient";
 import { uploadAvatar } from "@/lib/storage";
+import { createPageUrl } from "@/lib/utils";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { useAuth } from "@/lib/AuthContext";
-import { 
-  User, Lock, Bell, Camera, Loader2, 
+import {
+  User, Lock, Bell, Camera, Loader2,
   ChevronRight, LogOut, Shield, Smartphone,
-  Globe, Moon, Mail, CreditCard
+  Globe, Moon, Mail, CreditCard, LayoutGrid,
+  DollarSign, Link2, Heart, Bookmark, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -365,13 +368,15 @@ export default function Settings() {
             <div className="flex flex-col items-center -mt-12 relative z-10">
               <div className="relative group">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 shadow-lg">
-                  {profileData.avatar_url ? (
-                    <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30 text-orange-500 font-bold text-2xl">
-                      {profileData.display_name?.[0]?.toUpperCase() || "U"}
-                    </div>
-                  )}
+                  <AvatarImg
+                    src={profileData.avatar_url}
+                    className="w-full h-full object-cover"
+                    fallback={
+                      <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30 text-orange-500 font-bold text-2xl">
+                        {profileData.display_name?.[0]?.toUpperCase() || "U"}
+                      </div>
+                    }
+                  />
                   {uploading.avatar && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <Loader2 className="w-6 h-6 text-white animate-spin" />
@@ -635,78 +640,121 @@ export default function Settings() {
         </div>
       </SettingSection>
 
-      {/* Preferences */}
-      <SettingSection 
-        icon={Globe} 
+      {/* Quick Links */}
+      {currentUser?.role !== 'super_admin' && (
+        <SettingSection
+          icon={LayoutGrid}
+          title={t("settings.quickLinks")}
+          description={t("settings.quickLinksDesc")}
+          active={activeSection === "quickLinks"}
+          onClick={() => setActiveSection(activeSection === "quickLinks" ? "" : "quickLinks")}
+        >
+          <div className="space-y-2">
+            {[
+              { label: t("nav.finance"), icon: DollarSign, page: "VendorFinance" },
+              { label: t("nav.affiliate"), icon: Link2, page: "Affiliate" },
+              { label: t("nav.wishlist"), icon: Heart, page: "Wishlist" },
+              { label: t("nav.bookmarks"), icon: Bookmark, page: "Bookmarks" },
+              { label: t("nav.trackOrder"), icon: MapPin, page: "OrderTracking" },
+            ].map((item) => (
+              <Link
+                key={item.page}
+                to={createPageUrl(item.page)}
+                className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                    <item.icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </Link>
+            ))}
+          </div>
+        </SettingSection>
+      )}
+
+      {/* Appearance */}
+      <SettingSection
+        icon={Moon}
+        title={t("settings.appearance")}
+        description={t("settings.appearanceDesc")}
+        active={activeSection === "appearance"}
+        onClick={() => setActiveSection(activeSection === "appearance" ? "" : "appearance")}
+      >
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-3 mb-3">
+            <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.theme")}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: "light", label: t("common.lightMode") },
+              { value: "dark", label: t("common.darkMode") },
+              { value: "system", label: t("common.systemMode") },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  setTheme(opt.value);
+                  if (currentUser) {
+                    updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: opt.value } });
+                  }
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                  theme === opt.value
+                    ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
+                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </SettingSection>
+
+      {/* Language */}
+      <SettingSection
+        icon={Globe}
         title={t("settings.language")}
         description={t("settings.languageDesc")}
         active={activeSection === "preferences"}
         onClick={() => setActiveSection(activeSection === "preferences" ? "" : "preferences")}
       >
-        <div className="space-y-3">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.language")}</span>
-              </div>
-              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                {currentLangInfo?.flag} {currentLangInfo?.label}
-              </span>
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.language")}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {SUPPORTED_LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => handleLanguageChange(l.code)}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
-                    selectedLang === l.code 
-                      ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100" 
-                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
-                  }`}
-                >
-                  {l.flag} {l.label}
-                </button>
-              ))}
-            </div>
-            <Button 
-              onClick={handleSaveLanguage}
-              disabled={selectedLang === currentLang || langSaving}
-              className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
-            >
-              {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
-            </Button>
+            <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+              {currentLangInfo?.flag} {currentLangInfo?.label}
+            </span>
           </div>
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-3">
-              <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.theme")}</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { value: "light", label: t("common.lightMode") },
-                { value: "dark", label: t("common.darkMode") },
-                { value: "system", label: t("common.systemMode") },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    setTheme(opt.value);
-                    if (currentUser) {
-                      updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: opt.value } });
-                    }
-                  }}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
-                    theme === opt.value
-                      ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
-                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {SUPPORTED_LANGS.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => handleLanguageChange(l.code)}
+                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                  selectedLang === l.code
+                    ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
+                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                }`}
+              >
+                {l.flag} {l.label}
+              </button>
+            ))}
           </div>
+          <Button
+            onClick={handleSaveLanguage}
+            disabled={selectedLang === currentLang || langSaving}
+            className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
+          >
+            {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
+          </Button>
         </div>
       </SettingSection>
 

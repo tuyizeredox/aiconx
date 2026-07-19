@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
 import { Search, TrendingUp, Sparkles, X, User, Store, Users } from "lucide-react";
@@ -268,11 +269,11 @@ export default function Explore() {
                   <div key={user.username} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
                     <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-6 h-6 text-slate-400" />
-                        )}
+                        <AvatarImg
+                          src={user.avatar_url}
+                          className="w-full h-full object-cover"
+                          fallback={<User className="w-6 h-6 text-slate-400" />}
+                        />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.display_name || user.username}</p>
@@ -359,11 +360,11 @@ export default function Explore() {
                 className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[100px] hover:shadow-md transition-shadow"
               >
                 <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-600">
-                  {u.avatar_url ? (
-                    <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-orange-600 dark:text-orange-400 font-bold text-lg">{(u.username || u.display_name)?.[0]?.toUpperCase()}</span>
-                  )}
+                  <AvatarImg
+                    src={u.avatar_url}
+                    className="w-full h-full object-cover"
+                    fallback={<span className="text-orange-600 dark:text-orange-400 font-bold text-lg">{(u.username || u.display_name)?.[0]?.toUpperCase()}</span>}
+                  />
                 </div>
                 <span className="text-xs font-semibold text-slate-900 dark:text-white truncate w-full text-center">{u.display_name || u.username}</span>
                 <span className="text-[10px] text-slate-400 truncate w-full text-center">@{u.username}</span>

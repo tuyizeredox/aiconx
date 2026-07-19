@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -7,6 +7,7 @@ import PostCard from "@/components/shared/PostCard";
 import ProductCard from "@/components/shared/ProductCard";
 import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
+import AvatarImg from "@/components/shared/AvatarImg";
 import {
   usersAPI, postsAPI, productsAPI, ordersAPI, reviewsAPI,
   followsAPI, likesAPI, storesAPI, vendorSubscriptionsAPI
@@ -75,11 +76,11 @@ function UserListModal({ open, onClose, title, users = [] }) {
                   className="flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-700">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-orange-600 dark:text-orange-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>
-                    )}
+                    <AvatarImg
+                      src={avatarUrl}
+                      className="w-full h-full object-cover"
+                      fallback={<span className="text-orange-600 dark:text-orange-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{name}</p>
@@ -111,6 +112,7 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [userList, setUserList] = useState({ open: false, title: "", users: [] });
   const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const queryClient = useQueryClient();
   const { user: currentUser, logout } = useAuth();
 
@@ -271,6 +273,7 @@ export default function Profile() {
 
   const displayName = profileUser?.display_name || profileUser?.full_name || "User";
   const avatarUrl = profileUser?.avatar_url;
+  useEffect(() => { setAvatarLoadFailed(false); }, [avatarUrl]);
   const bannerUrl = profileUser?.banner_url;
   const bio = profileUser?.bio;
   const completedOrders = buyerOrders.filter(o => o.status === "delivered").length;
@@ -297,12 +300,18 @@ export default function Profile() {
           <div className="flex flex-wrap items-end justify-between gap-2 -mt-12 mb-4">
             {/* Avatar */}
             <div className="relative">
-              {avatarUrl ? (
+              {avatarUrl && !avatarLoadFailed ? (
                 <button
                   onClick={() => setImageModalOpen(true)}
                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300 cursor-pointer p-0"
                 >
-                  <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                  <AvatarImg
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    onLoadError={() => setAvatarLoadFailed(true)}
+                    fallback={<span className="text-white font-bold text-3xl">{displayName[0]?.toUpperCase()}</span>}
+                  />
                 </button>
               ) : (
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">

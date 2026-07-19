@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
 import PostCard from "@/components/shared/PostCard";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { ArrowLeft, Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -87,11 +88,11 @@ function ReplyItem({ reply, currentUser }) {
     >
       <Link to={replyAuthorProfile} className="shrink-0">
         <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold shrink-0 overflow-hidden border border-white dark:border-slate-800 shadow-sm hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
-          {reply.author_avatar ? (
-            <img src={reply.author_avatar} alt="" className="w-full h-full object-cover" />
-          ) : (
-            reply.author_name?.[0]?.toUpperCase() || "U"
-          )}
+          <AvatarImg
+            src={reply.author_avatar}
+            className="w-full h-full object-cover"
+            fallback={reply.author_name?.[0]?.toUpperCase() || "U"}
+          />
         </div>
       </Link>
       <div className="flex-1 min-w-0">
@@ -226,11 +227,11 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
     >
       <Link to={commentAuthorProfile} className="shrink-0">
         <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold shrink-0 border border-white dark:border-slate-800 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
-          {comment.author_avatar ? (
-            <img src={comment.author_avatar} alt="" className="w-full h-full rounded-full object-cover" />
-          ) : (
-            comment.author_name?.[0]?.toUpperCase() || "U"
-          )}
+          <AvatarImg
+            src={comment.author_avatar}
+            className="w-full h-full rounded-full object-cover"
+            fallback={comment.author_name?.[0]?.toUpperCase() || "U"}
+          />
         </div>
       </Link>
       <div className="flex-1 min-w-0">

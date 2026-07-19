@@ -30,6 +30,12 @@ export function ProductSkeleton() {
   );
 }
 
+export function PostThumbSkeleton() {
+  return (
+    <div className="aspect-square rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+  );
+}
+
 export function ChatSkeleton() {
   return (
     <div className="flex gap-3 mb-4 animate-pulse">

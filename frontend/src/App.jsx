@@ -12,6 +12,7 @@ import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AffiliateTracker from './components/shared/AffiliateTracker';
+import ScrollToTop from './components/shared/ScrollToTop';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import { LanguageProvider } from '@/components/providers/LanguageContext';
 import { ThemeProvider } from "next-themes";
@@ -189,6 +190,7 @@ function App() {
               <LanguageProvider>
                 <PostUploadProvider>
                   <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+                    <ScrollToTop />
                     <AffiliateTracker />
                     <AppRoutes />
                     <PostUploadIndicator />

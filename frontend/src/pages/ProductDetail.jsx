@@ -5,6 +5,7 @@ import { createPageUrl, formatCurrency } from "@/lib/utils";
 import ReviewGallery from "@/components/reviews/ReviewGallery";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import SimilarProducts from "@/components/product/SimilarProducts";
+import RelatedPosts from "@/components/product/RelatedPosts";
 import SentimentSummary from "@/components/product/SentimentSummary";
 import ImageZoomGallery from "@/components/product/ImageZoomGallery";
 import ColorSelector from "@/components/product/ColorSelector";
@@ -548,6 +549,9 @@ export default function ProductDetail() {
             </div>
           </>
         )}
+
+        {/* Posts featuring this product */}
+        <RelatedPosts productId={productId} />
 
         {/* Similar Products */}
         <SimilarProducts product={product} />

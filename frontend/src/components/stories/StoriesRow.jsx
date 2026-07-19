@@ -5,6 +5,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import StoryViewer from "./StoryViewer";
 import CreateStoryModal from "./CreateStoryModal";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 export default function StoriesRow({ currentUser }) {
   const [viewingGroup, setViewingGroup] = useState(null);
@@ -127,18 +128,18 @@ export default function StoriesRow({ currentUser }) {
                   })()
                 ) : (
                   // Empty state / Add button
-                  currentUser?.avatar_url ? (
-                    <img src={currentUser.avatar_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover rounded-full opacity-50" />
-                  ) : (
-                    <Plus className="w-5 h-5 text-orange-400" />
-                  )
+                  <AvatarImg
+                    src={currentUser?.avatar_url}
+                    className="w-full h-full object-cover rounded-full opacity-50"
+                    fallback={<Plus className="w-5 h-5 text-orange-400" />}
+                  />
                 )}
               </div>
-              
+
               {/* User Avatar Badge (Small overlay) */}
               {myStory && currentUser?.avatar_url && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
-                  <img src={currentUser.avatar_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <AvatarImg src={currentUser.avatar_url} className="w-full h-full object-cover" />
                 </div>
               )}
 
@@ -201,7 +202,7 @@ export default function StoriesRow({ currentUser }) {
                   {/* Small Avatar Overlay for other users */}
                   {(hasMedia || isText) && (group.avatar || latestStory.author_avatar) && (
                     <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
-                      <img src={group.avatar || latestStory.author_avatar} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                      <AvatarImg src={group.avatar || latestStory.author_avatar} className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>

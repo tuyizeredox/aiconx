@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 export default function StoryAvatar({ user, size = "md" }) {
   const sizes = {
@@ -22,11 +23,11 @@ export default function StoryAvatar({ user, size = "md" }) {
       <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 p-[2px]`}>
         <div className={`${innerSizes[size]} rounded-full bg-white dark:bg-slate-900 p-[2px]`}>
           <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-            {user.avatar ? (
-              <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-            ) : (
-              user.name?.[0]?.toUpperCase() || "U"
-            )}
+            <AvatarImg
+              src={user.avatar}
+              className="w-full h-full object-cover"
+              fallback={user.name?.[0]?.toUpperCase() || "U"}
+            />
           </div>
         </div>
       </div>

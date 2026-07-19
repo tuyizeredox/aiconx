@@ -6,6 +6,7 @@ import { createPageUrl } from "@/lib/utils";
 import { Search, Package, Store, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { debounce } from "lodash";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 const CATEGORIES = ["all", "products", "stores", "users"];
 
@@ -202,7 +203,7 @@ export default function GlobalSearch() {
                       className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 overflow-hidden flex items-center justify-center shrink-0">
-                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-white font-bold text-sm">{u.full_name?.[0]?.toUpperCase() || "U"}</span>}
+                        <AvatarImg src={u.avatar_url} className="w-full h-full object-cover" fallback={<span className="text-white font-bold text-sm">{u.full_name?.[0]?.toUpperCase() || "U"}</span>} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{u.display_name || u.full_name || "User"}</p>

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { affiliateLinksAPI, productsAPI, vendorSubscriptionsAPI, ordersAPI, withdrawalsAPI } from "@/api/apiClient";
@@ -169,11 +170,7 @@ function LeaderboardItem({ rank, name, avatar_url, total_earned, total_sales, is
         {rank}
       </div>
       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
-        {avatar_url ? (
-          <img src={avatar_url} alt="" className="w-full h-full object-cover" />
-        ) : (
-          initials
-        )}
+        <AvatarImg src={avatar_url} className="w-full h-full object-cover" fallback={initials} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">

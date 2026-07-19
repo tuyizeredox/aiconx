@@ -130,6 +130,7 @@ export async function postRoutes(fastify: FastifyInstance) {
         user_email,
         user_username,
         search,
+        product_id,
         limit = 20,
         skip,
         page = 1,
@@ -145,6 +146,7 @@ export async function postRoutes(fastify: FastifyInstance) {
       if (author_username) filter.author_username = author_username;
       if (community_id) filter.community_id = community_id;
       if (visibility) filter.visibility = visibility;
+      if (product_id) filter.tagged_products = product_id;
       filter.is_active = { $ne: false };
 
       // Handle following_only filter

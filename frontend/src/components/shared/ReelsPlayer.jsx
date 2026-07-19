@@ -11,6 +11,7 @@ import { postsAPI, bookmarksAPI, productsAPI, affiliateLinksAPI } from "@/api/ap
 import { useNativeShare } from "@/hooks/useNativeShare";
 import ShareModal from "./ShareModal";
 import PostDetailModal from "./PostDetailModal";
+import AvatarImg from "./AvatarImg";
 
 function postKey(post) {
   return (post?.id || post?._id)?.toString();
@@ -578,11 +579,11 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
             className="flex items-center gap-2 mb-2 pointer-events-auto w-fit"
           >
             <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white/70 bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {activePost.author_avatar ? (
-                <img src={activePost.author_avatar} alt="" className="w-full h-full object-cover" />
-              ) : (
-                activePost.author_name?.[0]?.toUpperCase() || "U"
-              )}
+              <AvatarImg
+                src={activePost.author_avatar}
+                className="w-full h-full object-cover"
+                fallback={activePost.author_name?.[0]?.toUpperCase() || "U"}
+              />
             </div>
             <span className="text-white text-sm font-bold [text-shadow:0_1px_3px_rgb(0_0_0_/_0.8)]">@{activePost.author_username}</span>
           </Link>

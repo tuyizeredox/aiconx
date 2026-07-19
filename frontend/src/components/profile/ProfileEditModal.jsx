@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 export default function ProfileEditModal({ open, onClose, user }) {
   const [displayName, setDisplayName] = useState(user?.display_name || user?.full_name || "");
@@ -91,11 +92,11 @@ export default function ProfileEditModal({ open, onClose, user }) {
         <div className="flex justify-center -mt-10 relative z-10 mb-2">
           <label className="relative cursor-pointer group">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center ring-4 ring-white dark:ring-slate-800 shadow-lg">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-bold text-2xl">{displayName?.[0]?.toUpperCase() || "U"}</span>
-              )}
+              <AvatarImg
+                src={avatarUrl}
+                className="w-full h-full object-cover"
+                fallback={<span className="text-white font-bold text-2xl">{displayName?.[0]?.toUpperCase() || "U"}</span>}
+              />
             </div>
             <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
               {uploading ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
