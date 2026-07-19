@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { authAPI, productsAPI, postsAPI, affiliateLinksAPI, communitiesAPI } from "@/api/apiClient";
+import { authAPI, productsAPI, postsAPI, affiliateLinksAPI, communitiesAPI, usersAPI } from "@/api/apiClient";
 import { uploadPostMedia, uploadPostThumbnail } from "@/lib/storage";
 import { generateVideoThumbnail } from "@/lib/videoThumbnail";
 import { useTranslation } from "react-i18next";
@@ -48,6 +48,9 @@ export default function CreatePost() {
   const [selectedAffiliateLinks, setSelectedAffiliateLinks] = useState([]);
   const [showAffiliateSearch, setShowAffiliateSearch] = useState(false);
   const [isFormPopulated, setIsFormPopulated] = useState(false);
+  const textareaRef = useRef(null);
+  // Text right after an "@" the caret is currently inside, or null when not mid-mention
+  const [mentionQuery, setMentionQuery] = useState(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -78,6 +81,16 @@ export default function CreatePost() {
     enabled: showAffiliateSearch,
     staleTime: 60000,
   });
+
+  const { data: mentionResults } = useQuery({
+    queryKey: ["mentionSearch", mentionQuery],
+    queryFn: () => usersAPI.search(mentionQuery),
+    enabled: !!mentionQuery,
+    staleTime: 30000,
+  });
+  const mentionUsers = (Array.isArray(mentionResults) ? mentionResults : mentionResults?.data || [])
+    .filter(u => u.username !== currentUser?.username)
+    .slice(0, 6);
 
   const { data: editPost, isLoading: editPostLoading } = useQuery({
     queryKey: ["postDetail", editPostId],
@@ -383,6 +396,33 @@ export default function CreatePost() {
     setShowEmoji(false);
   };
 
+  const MENTION_TOKEN_REGEX = /(?:^|\s)@([a-zA-Z0-9_]{0,30})$/;
+
+  // Reads the caret position out of the textarea to tell whether it's
+  // sitting right after an in-progress "@username" token.
+  const syncMentionQuery = (el) => {
+    if (!el) return;
+    const uptoCursor = el.value.slice(0, el.selectionStart);
+    const match = uptoCursor.match(MENTION_TOKEN_REGEX);
+    setMentionQuery(match ? match[1] : null);
+  };
+
+  const insertMention = (username) => {
+    const el = textareaRef.current;
+    const cursor = el ? el.selectionStart : content.length;
+    const uptoCursor = content.slice(0, cursor);
+    const afterCursor = content.slice(cursor);
+    const replaced = uptoCursor.replace(MENTION_TOKEN_REGEX, (m) => `${m.slice(0, m.length - mentionQuery.length - 1)}@${username} `);
+    const newContent = replaced + afterCursor;
+    setContent(newContent);
+    setMentionQuery(null);
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(replaced.length, replaced.length);
+    });
+  };
+
   const toggleProduct = (product) => {
     setTaggedProducts(prev =>
       prev.find(p => p.id === product.id)
@@ -445,11 +485,42 @@ export default function CreatePost() {
 
         {/* Text area */}
         <Textarea
+          ref={textareaRef}
           value={content}
-          onChange={e => setContent(e.target.value)}
+          onChange={e => { setContent(e.target.value); syncMentionQuery(e.target); }}
+          onClick={e => syncMentionQuery(e.target)}
+          onKeyUp={e => { if (e.key !== "Escape") syncMentionQuery(e.target); }}
+          onKeyDown={e => { if (e.key === "Escape" && mentionQuery !== null) setMentionQuery(null); }}
           placeholder={t("create.postPlaceholder")}
           className="border-none shadow-none resize-none text-base placeholder:text-slate-300 dark:placeholder:text-slate-600 focus-visible:ring-0 min-h-[120px] p-0 text-slate-800 dark:text-slate-200"
         />
+
+        {/* @mention autocomplete */}
+        {mentionQuery !== null && mentionQuery.length > 0 && (
+          <div className="mt-2 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+            {mentionUsers.length === 0 ? (
+              <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-3">{t("create.noUsersFound") || "No users found"}</p>
+            ) : mentionUsers.map(u => (
+              <button
+                key={u.username}
+                onClick={() => insertMention(u.username)}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+              >
+                <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                  {u.avatar_url ? (
+                    <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (u.display_name || u.username)?.[0]?.toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{u.display_name || u.username}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">@{u.username}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Tagged products */}
         {taggedProducts.length > 0 && (

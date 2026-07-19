@@ -603,10 +603,11 @@ export default function Profile() {
           {postsLoading
             ? Array(3).fill(0).map((_, i) => <PostSkeleton key={`post-skeleton-${i}`} />)
             : posts.map((post, idx) => (
-                <PostCard 
-                  key={post.id || post._id || `profile-post-${idx}`} 
-                  post={post} 
-                  currentUser={currentUser} 
+                <PostCard
+                  key={post.id || post._id || `profile-post-${idx}`}
+                  post={post}
+                  currentUser={currentUser}
+                  feedPosts={posts}
                 />
               ))}
           {!postsLoading && posts.length === 0 && (
@@ -696,10 +697,11 @@ export default function Profile() {
           {likedPostsLoading
             ? Array(3).fill(0).map((_, i) => <PostSkeleton key={`liked-skeleton-${i}`} />)
             : likedPosts.map((post, idx) => (
-                <PostCard 
-                  key={post.id || post._id || `liked-post-${idx}`} 
-                  post={post} 
-                  currentUser={currentUser} 
+                <PostCard
+                  key={post.id || post._id || `liked-post-${idx}`}
+                  post={post}
+                  currentUser={currentUser}
+                  feedPosts={likedPosts}
                 />
               ))}
           {!likedPostsLoading && likedPosts.length === 0 && (

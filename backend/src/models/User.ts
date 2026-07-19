@@ -17,7 +17,7 @@ export interface IUser extends Document {
     notif_live: boolean;
   };
   preferences?: {
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'system';
     language: string;
   };
   is_2fa_enabled: boolean;
@@ -125,7 +125,7 @@ const UserSchema = new Schema<IUser>({
     notif_live: { type: Boolean, default: false },
   },
   preferences: {
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' },
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     language: { type: String, enum: ['en', 'rw'], default: 'en' },
   },
   is_2fa_enabled: {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ProductCard from "@/components/shared/ProductCard";
@@ -28,10 +28,16 @@ const CATEGORIES = [
 
 export default function Explore() {
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [category, setCategory] = useState("all");
   const tab = searchParams.get("tab");
+
+  // Deep link support for #hashtag / @mention links landing here from posts
+  useEffect(() => {
+    const urlSearch = searchParams.get("search");
+    if (urlSearch) setSearch(urlSearch);
+  }, [searchParams]);
   const debouncedSearch = useDebounce(search, 500);
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();

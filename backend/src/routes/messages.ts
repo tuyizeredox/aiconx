@@ -20,6 +20,8 @@ const sendMessageSchema = z.object({
   }).optional(),
   offer_amount: z.number().optional(),
   order_id: z.string().optional(),
+  reply_to_content: z.string().optional(),
+  reply_to_name: z.string().optional(),
 });
 
 export async function messageRoutes(fastify: FastifyInstance) {

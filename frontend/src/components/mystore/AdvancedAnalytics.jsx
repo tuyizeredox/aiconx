@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { formatCurrency } from "@/lib/utils";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444"];
 
@@ -163,10 +164,10 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={DollarSign} label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} color="bg-orange-50 dark:bg-orange-950 text-orange-600" />
+        <KpiCard icon={DollarSign} label={t("store.totalRevenue")} value={formatCurrency(totalRevenue)} color="bg-orange-50 dark:bg-orange-950 text-orange-600" />
         <KpiCard icon={ShoppingCart} label={t("store.totalOrders")} value={orders.length} sub={t("store.paidCount", { count: paidOrders })} color="bg-purple-50 dark:bg-purple-950 text-purple-600" />
         <KpiCard icon={Users} label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} color="bg-pink-50 dark:bg-pink-950 text-pink-600" />
-        <KpiCard icon={Package} label={t("store.avgOrderValue")} value={`$${avgOrderValue.toFixed(2)}`} sub={t("store.completionRateSub", { rate: completionRate })} color="bg-green-50 dark:bg-green-950 text-green-600" />
+        <KpiCard icon={Package} label={t("store.avgOrderValue")} value={formatCurrency(avgOrderValue)} sub={t("store.completionRateSub", { rate: completionRate })} color="bg-green-50 dark:bg-green-950 text-green-600" />
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
@@ -192,7 +193,7 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={38} />
               <Tooltip content={<CustomTooltip />} />
               <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
-              <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="#6366f1" strokeWidth={2} fill="url(#revG)" dot={false} />
+              <Area type="monotone" dataKey="revenue" name={t("store.revenue")} stroke="#6366f1" strokeWidth={2} fill="url(#revG)" dot={false} />
               <Area type="monotone" dataKey="orders" name="Orders" stroke="#8b5cf6" strokeWidth={2} fill="url(#ordG)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
@@ -225,7 +226,7 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                   >
                     <td className="py-2.5 pr-3 font-semibold text-slate-800 dark:text-slate-200">{p.name}</td>
                     <td className="py-2.5 pr-3 text-slate-600 dark:text-slate-300">{p.purchases.toLocaleString()}</td>
-                    <td className="py-2.5 font-bold text-orange-600">${p.revenue.toLocaleString()}</td>
+                    <td className="py-2.5 font-bold text-orange-600">{formatCurrency(p.revenue)}</td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -246,7 +247,7 @@ export default function AdvancedAnalytics({ orders, products, plan = 'free', onU
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                 <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={70} />
-                <Tooltip content={<CustomTooltip prefix="$" />} />
+                <Tooltip content={<CustomTooltip prefix="RWF " />} />
                 <Bar dataKey="revenue" radius={[0, 6, 6, 0]}>
                   {categoryRevenue.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>

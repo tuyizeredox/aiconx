@@ -90,7 +90,8 @@
     "language": "Lugha",
     "theme": "Mandhari",
     "darkMode": "Hali ya giza",
-    "lightMode": "Hali ya mwanga"
+    "lightMode": "Hali ya mwanga",
+    "systemMode": "Mfumo"
   },
   "nav": {
     "home": "Nyumbani",
@@ -934,6 +935,12 @@
     "reviewsCount": "(maoni {{count}})",
     "allProducts": "Bidhaa Zote",
     "noProductsYet": "Bado hakuna bidhaa katika duka hili",
+    "salesCount": "{{count}} zimeuzwa",
+    "searchPlaceholder": "Tafuta katika duka hili...",
+    "noResultsFilter": "Hakuna bidhaa zinazolingana na vichujio vyako",
+    "clearFilters": "Futa vichujio",
+    "shareStore": "Shiriki duka",
+    "linkCopied": "Kiungo cha duka kimenakiliwa",
     "chatWithVendor": "Zungumza na Muuzaji",
     "followStore": "Fuata Duka",
     "unfollowedStore": "Umesimama Kufuata",
@@ -1039,7 +1046,10 @@
     "chip_lastOrder": "Iko wapi agizo langu la mwisho?",
     "chip_wishlist": "Vitu kama vile kwenye orodha yangu ya matamanio",
     "chip_dailyPicks": "Machaguo ya kila siku kwangu",
-    "chip_trending": "Mitindo inayoongoza"
+    "chip_trending": "Mitindo inayoongoza",
+    "voiceUnsupported": "Uwekaji wa sauti hauungwi mkono kwenye kifaa hiki",
+    "startListening": "Anzisha uwekaji wa sauti",
+    "stopListening": "Simamisha uwekaji wa sauti"
   },
   "orderTracking": {
     "title": "Fuatilia agizo",
@@ -1608,6 +1618,9 @@
       "menuLabel": "Suluhisha Ripoti",
       "resolve": "Suluhisha",
       "dismiss": "Acha",
+      "viewTitle": "Maelezo ya Ripoti",
+      "viewDesc": "Maelezo kamili ya ripoti hii ya {{type}}.",
+      "reporterLabel": "Iliripotiwa na",
       "resolveTitle": "Suluhisha Ripoti",
       "dismissTitle": "Acha Ripoti",
       "resolveDesc": "Toa maelezo ya utatuzi kwa ripoti hii ya {{type}}.",

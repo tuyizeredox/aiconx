@@ -90,7 +90,8 @@
     "language": "Sprache",
     "theme": "Design",
     "darkMode": "Dunkelmodus",
-    "lightMode": "Hellmodus"
+    "lightMode": "Hellmodus",
+    "systemMode": "System"
   },
   "nav": {
     "home": "Startseite",
@@ -934,6 +935,12 @@
     "reviewsCount": "({{count}} Bewertungen)",
     "allProducts": "Alle Produkte",
     "noProductsYet": "Noch keine Produkte in diesem Shop",
+    "salesCount": "{{count}} verkauft",
+    "searchPlaceholder": "In diesem Shop suchen...",
+    "noResultsFilter": "Keine Produkte entsprechen deinen Filtern",
+    "clearFilters": "Filter zurücksetzen",
+    "shareStore": "Shop teilen",
+    "linkCopied": "Shop-Link kopiert",
     "chatWithVendor": "Mit Verkäufer chatten",
     "followStore": "Shop folgen",
     "unfollowedStore": "Nicht mehr gefolgt",
@@ -1039,7 +1046,10 @@
     "chip_lastOrder": "Wo ist meine letzte Bestellung?",
     "chip_wishlist": "Artikel wie meine Wunschliste",
     "chip_dailyPicks": "Tagesauswahl für mich",
-    "chip_trending": "Trend-Mode"
+    "chip_trending": "Trend-Mode",
+    "voiceUnsupported": "Spracheingabe wird auf diesem Gerät nicht unterstützt",
+    "startListening": "Spracheingabe starten",
+    "stopListening": "Spracheingabe stoppen"
   },
   "orderTracking": {
     "title": "Bestellung verfolgen",
@@ -1608,6 +1618,9 @@
       "menuLabel": "Bericht lösen",
       "resolve": "Lösen",
       "dismiss": "Abweisen",
+      "viewTitle": "Berichtdetails",
+      "viewDesc": "Vollständige Details zu dieser {{type}}-Meldung.",
+      "reporterLabel": "Gemeldet von",
       "resolveTitle": "Bericht lösen",
       "dismissTitle": "Bericht abweisen",
       "resolveDesc": "Lösungsnotizen für diesen {{type}}-Bericht angeben.",

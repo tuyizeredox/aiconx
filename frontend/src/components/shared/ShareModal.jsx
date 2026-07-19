@@ -89,7 +89,7 @@ const ExternalPlatforms = ({ url, title }) => {
   );
 };
 
-export default function ShareModal({ isOpen, onOpenChange, post, product, currentUser }) {
+export default function ShareModal({ isOpen, onOpenChange, post, product, currentUser, contentClassName = "" }) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState(null);
@@ -168,7 +168,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-md sm:max-w-lg rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl">
+      <DialogContent className={`w-[calc(100vw-2rem)] max-w-md sm:max-w-lg rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl ${contentClassName}`}>
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">

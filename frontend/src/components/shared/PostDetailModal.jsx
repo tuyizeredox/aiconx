@@ -355,7 +355,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
   );
 }
 
-export default function PostDetailModal({ isOpen, onOpenChange, post, currentUser }) {
+export default function PostDetailModal({ isOpen, onOpenChange, post, currentUser, contentClassName = "" }) {
   const { t } = useTranslation();
   const postId = (post?.id || post?._id)?.toString();
   const [commentText, setCommentText] = useState("");
@@ -400,7 +400,7 @@ export default function PostDetailModal({ isOpen, onOpenChange, post, currentUse
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full h-full max-w-4xl sm:max-w-5xl md:max-w-6xl lg:max-w-7xl p-0 gap-0 overflow-hidden border-0 rounded-none sm:rounded-2xl bg-slate-50 dark:bg-[#0a0a0c]">
+      <DialogContent showCloseButton={false} className={`w-full h-full max-w-4xl sm:max-w-5xl md:max-w-6xl lg:max-w-7xl p-0 gap-0 overflow-hidden border-0 rounded-none sm:rounded-2xl bg-slate-50 dark:bg-[#0a0a0c] ${contentClassName}`}>
         <div className="flex flex-col lg:flex-row h-full max-h-[100vh] overflow-y-auto lg:overflow-hidden custom-scrollbar">
           {/* Left side - Post */}
           <div className="flex-1 lg:overflow-y-auto custom-scrollbar lg:min-h-0">

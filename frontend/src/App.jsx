@@ -180,7 +180,7 @@ function App() {
       onScriptLoadError={() => console.warn('Google OAuth script failed to load.')}
       onScriptLoadSuccess={() => console.info('Google OAuth ready.')}
     >
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
           <SocketProvider>
             <QueryClientProvider client={queryClientInstance}>

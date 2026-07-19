@@ -91,7 +91,8 @@
     "language": "Ururimi",
     "theme": "Isura",
     "darkMode": "Uburyo bw'umukara",
-    "lightMode": "Uburyo bw'urumuri"
+    "lightMode": "Uburyo bw'urumuri",
+    "systemMode": "Sisitemu"
   },
   "nav": {
     "home": "Ahabanza",
@@ -997,6 +998,12 @@
     "reviewsCount": "(Ibitekerezo {{count}})",
     "allProducts": "Ibicuruzwa byose",
     "noProductsYet": "Nta bicuruzwa birabaho muri iri duka",
+    "salesCount": "{{count}} byagurishijwe",
+    "searchPlaceholder": "Shakisha muri iri duka...",
+    "noResultsFilter": "Nta bicuruzwa bihuye n'ibyo washakaga",
+    "clearFilters": "Siba muyunguruzi",
+    "shareStore": "Sangiza iduka",
+    "linkCopied": "Ihuza ry'iduka ryakoporowe",
     "chatWithVendor": "Vugana n'umucuruzi",
     "followStore": "Kurikira Iduka",
     "unfollowedStore": "Wahagaritse gukurikira",
@@ -1110,7 +1117,10 @@
     "chip_lastOrder": "Iri he itumiza ryanjye rya nyuma?",
     "chip_wishlist": "Ibintu bisa n'ibyo ndifuza",
     "chip_dailyPicks": "Ibihitamo bya buri munsi",
-    "chip_trending": "Imyambaro iratanzwe"
+    "chip_trending": "Imyambaro iratanzwe",
+    "voiceUnsupported": "Kuvuga ntibishoboka kuri iyi terefone",
+    "startListening": "Tangira kuvuga",
+    "stopListening": "Hagarika kuvuga"
   },
   "orderTracking": {
     "title": "Kurikira itumiza",
@@ -1722,6 +1732,9 @@
       "menuLabel": "Kemura Raporo",
       "resolve": "Kemura",
       "dismiss": "Retsa",
+      "viewTitle": "Ibisobanuro bya Raporo",
+      "viewDesc": "Ibisobanuro byuzuye kuri iyi raporo ya {{type}}.",
+      "reporterLabel": "Uwatanze raporo",
       "resolveTitle": "Kemura Raporo",
       "dismissTitle": "Retsa Raporo",
       "resolveDesc": "Tanga ibisobanuro byo gukemura raporo y'{{type}} iyi.",

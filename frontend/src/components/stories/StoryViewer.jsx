@@ -275,11 +275,11 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Views</span>
-                  <span className="text-2xl font-bold text-orange-600">{story.view_count || 0}</span>
+                  <span className="text-2xl font-bold text-orange-600">{story.views_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Likes</span>
-                  <span className="text-2xl font-bold text-red-500">{story.like_count || 0}</span>
+                  <span className="text-2xl font-bold text-red-500">{story.likes_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Replies</span>

@@ -13,6 +13,7 @@
     "sync": "npx cap sync"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/haptics": "^7.0.5",
     "@capacitor/local-notifications": "^7.0.7",
     "@capacitor/push-notifications": "^7.0.5",

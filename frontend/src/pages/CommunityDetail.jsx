@@ -195,7 +195,7 @@ const COMMUNITY_CATEGORIES = [
                    )} 
                  </div> 
                ) 
-               : regularPosts.map(p => <PostCard key={p._id} post={p} currentUser={currentUser} />)} 
+               : regularPosts.map(p => <PostCard key={p._id} post={p} currentUser={currentUser} feedPosts={regularPosts} />)}
            </div> 
          </div> 
        )} 

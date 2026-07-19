@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { DollarSign, ShoppingCart, Users, Package, Star, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { formatCurrency } from "@/lib/utils";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6"];
 
@@ -128,9 +129,9 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={t("store.totalRevenue")} value={`$${totalRevenue.toFixed(2)}`} icon={DollarSign} color="bg-orange-50 text-orange-600" />
+        <StatCard label={t("store.totalRevenue")} value={formatCurrency(totalRevenue)} icon={DollarSign} color="bg-orange-50 text-orange-600" />
         <StatCard label={t("store.totalOrders")} value={orders.length} sub={t("store.paidCount", { count: paidOrders })} icon={ShoppingCart} color="bg-purple-50 text-purple-600" />
-        <StatCard label={t("store.avgOrderValue")} value={`$${avgOrderValue.toFixed(2)}`} icon={Package} color="bg-pink-50 text-pink-600" />
+        <StatCard label={t("store.avgOrderValue")} value={formatCurrency(avgOrderValue)} icon={Package} color="bg-pink-50 text-pink-600" />
         <StatCard label={t("store.uniqueCustomers")} value={uniqueBuyers || orders.length} icon={Users} color="bg-amber-50 text-amber-600" />
       </div>
 
@@ -151,7 +152,7 @@ export default function StoreAnalytics({ orders, products, plan = 'free', onUpgr
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={40} />
-              <Tooltip content={<CustomTooltip prefix="$" />} />
+              <Tooltip content={<CustomTooltip prefix="RWF " />} />
               <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revGrad)" dot={false} activeDot={{ r: 4, fill: "#6366f1" }} />
             </AreaChart>
           </ResponsiveContainer>

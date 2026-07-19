@@ -426,6 +426,8 @@ export const postsAPI = {
   like: (id) => likesAPI.like('post', id),
   unlike: (id) => likesAPI.unlike('post', id),
   share: (id) => apiClient.patch(`/posts/${id}`, { $inc: { shares_count: 1 } }), // Direct increment for simplicity
+  repost: (id, data = {}) => apiClient.post(`/posts/${id}/repost`, data),
+  unrepost: (id) => apiClient.delete(`/posts/${id}/repost`),
 };
 
 export const bookmarksAPI = {

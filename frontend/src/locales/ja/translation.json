@@ -90,7 +90,8 @@
     "language": "言語",
     "theme": "テーマ",
     "darkMode": "ダークモード",
-    "lightMode": "ライトモード"
+    "lightMode": "ライトモード",
+    "systemMode": "システム"
   },
   "nav": {
     "home": "ホーム",
@@ -935,6 +936,12 @@
     "reviewsCount": "({{count}} レビュー)",
     "allProducts": "すべての商品",
     "noProductsYet": "このショップにはまだ商品がありません",
+    "salesCount": "{{count}} 件販売済み",
+    "searchPlaceholder": "このショップ内を検索...",
+    "noResultsFilter": "フィルターに一致する商品がありません",
+    "clearFilters": "フィルターをクリア",
+    "shareStore": "ショップを共有",
+    "linkCopied": "ショップのリンクをコピーしました",
     "chatWithVendor": "販売者とチャット",
     "followStore": "ショップをフォロー",
     "unfollowedStore": "フォロー解除しました",
@@ -1040,7 +1047,10 @@
     "chip_lastOrder": "最後の注文はどこですか？",
     "chip_wishlist": "ウィッシュリストに似たアイテム",
     "chip_dailyPicks": "今日のおすすめ",
-    "chip_trending": "トレンドファッション"
+    "chip_trending": "トレンドファッション",
+    "voiceUnsupported": "このデバイスでは音声入力はサポートされていません",
+    "startListening": "音声入力を開始",
+    "stopListening": "音声入力を停止"
   },
   "orderTracking": {
     "title": "注文追跡",
@@ -1609,6 +1619,9 @@
       "menuLabel": "報告を解決",
       "resolve": "解決",
       "dismiss": "却下",
+      "viewTitle": "報告の詳細",
+      "viewDesc": "この{{type}}の報告の詳細です。",
+      "reporterLabel": "報告者",
       "resolveTitle": "報告を解決",
       "dismissTitle": "報告を却下",
       "resolveDesc": "この{{type}}報告の解決メモを入力してください。",

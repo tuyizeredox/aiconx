@@ -2,10 +2,14 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Fallback aspect ratio used only until the real video metadata loads, so the
+// container isn't 0-height (and doesn't collapse the poster) in the meantime.
+const DEFAULT_RATIO = 4 / 5;
+
 // Instagram-feed-style video player: autoplays muted while in view, loops,
 // single tap toggles sound, double tap likes (delegated to the caller).
 const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
-  { src, poster, onDoubleTap, className = "", videoClassName = "" },
+  { src, poster, onDoubleTap, onExpand, className = "", videoClassName = "" },
   ref
 ) {
   const internalRef = useRef(null);
@@ -15,9 +19,17 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
   const [isMuted, setIsMuted] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showMuteHint, setShowMuteHint] = useState(false);
+  const [ratio, setRatio] = useState(DEFAULT_RATIO);
   const lastTapRef = useRef(0);
   const tapTimerRef = useRef(null);
   const muteHintTimerRef = useRef(null);
+
+  const handleLoadedMetadata = useCallback(() => {
+    const video = videoRef.current;
+    if (video?.videoWidth && video?.videoHeight) {
+      setRatio(video.videoWidth / video.videoHeight);
+    }
+  }, [videoRef]);
 
   // Autoplay while sufficiently in view, pause otherwise
   useEffect(() => {
@@ -60,6 +72,9 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
 
   // Manual tap/double-tap detection so a single toggle-mute tap never fires twice
   // mid-double-tap, and so we can reliably stop the parent's own click handlers.
+  // When onExpand is provided (feed context), a single tap opens the fullscreen
+  // reels-style player instead of just toggling mute — the dedicated mute button
+  // still handles muting without leaving the feed.
   const handleTap = useCallback(
     (e) => {
       e.stopPropagation();
@@ -72,28 +87,34 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
       } else {
         lastTapRef.current = now;
         tapTimerRef.current = setTimeout(() => {
-          toggleMute();
+          if (onExpand) {
+            onExpand();
+          } else {
+            toggleMute();
+          }
         }, 300);
       }
     },
-    [onDoubleTap, toggleMute]
+    [onDoubleTap, onExpand, toggleMute]
   );
 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full bg-black overflow-hidden select-none ${className}`}
+      className={`relative w-full bg-black overflow-hidden select-none max-h-[85vh] ${className}`}
+      style={{ aspectRatio: ratio }}
       onClick={handleTap}
     >
       <video
         ref={videoRef}
         src={src}
         poster={poster || undefined}
-        className={`w-full h-auto max-h-[600px] object-contain transition-opacity duration-200 ${isLoaded ? "opacity-100" : "opacity-0"} ${videoClassName}`}
+        className={`w-full h-full object-contain transition-opacity duration-200 ${isLoaded ? "opacity-100" : "opacity-0"} ${videoClassName}`}
         playsInline
         muted
         loop
         preload="metadata"
+        onLoadedMetadata={handleLoadedMetadata}
         onLoadedData={() => setIsLoaded(true)}
       />
 

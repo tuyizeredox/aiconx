@@ -90,7 +90,8 @@
     "language": "Langue",
     "theme": "Thème",
     "darkMode": "Mode sombre",
-    "lightMode": "Mode clair"
+    "lightMode": "Mode clair",
+    "systemMode": "Système"
   },
   "nav": {
     "home": "Accueil",
@@ -934,6 +935,12 @@
     "reviewsCount": "({{count}} avis)",
     "allProducts": "Tous les produits",
     "noProductsYet": "Aucun produit dans cette boutique pour l'instant",
+    "salesCount": "{{count}} vendus",
+    "searchPlaceholder": "Rechercher dans cette boutique...",
+    "noResultsFilter": "Aucun produit ne correspond à vos filtres",
+    "clearFilters": "Effacer les filtres",
+    "shareStore": "Partager la boutique",
+    "linkCopied": "Lien de la boutique copié",
     "chatWithVendor": "Discuter avec le vendeur",
     "followStore": "Suivre la boutique",
     "unfollowedStore": "Abonnement annulé",
@@ -1039,7 +1046,10 @@
     "chip_lastOrder": "Où est ma dernière commande ?",
     "chip_wishlist": "Articles similaires à ma liste de souhaits",
     "chip_dailyPicks": "Sélections du jour pour moi",
-    "chip_trending": "Mode tendance"
+    "chip_trending": "Mode tendance",
+    "voiceUnsupported": "La saisie vocale n'est pas prise en charge sur cet appareil",
+    "startListening": "Démarrer la saisie vocale",
+    "stopListening": "Arrêter la saisie vocale"
   },
   "orderTracking": {
     "title": "Suivre la commande",
@@ -1608,6 +1618,9 @@
       "menuLabel": "Résoudre le signalement",
       "resolve": "Résoudre",
       "dismiss": "Rejeter",
+      "viewTitle": "Détails du signalement",
+      "viewDesc": "Détails complets de ce signalement de type {{type}}.",
+      "reporterLabel": "Signalé par",
       "resolveTitle": "Résoudre le signalement",
       "dismissTitle": "Rejeter le signalement",
       "resolveDesc": "Fournir des notes de résolution pour ce signalement de type {{type}}.",

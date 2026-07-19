@@ -224,6 +224,7 @@ export default function Home() {
                     <PostCard
                       post={post}
                       currentUser={currentUser}
+                      feedPosts={posts}
                     />
                     {/* Show suggested users after every 3 posts */}
                     {(idx + 1) % 3 === 0 && idx < posts.length - 1 && (

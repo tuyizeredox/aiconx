@@ -191,7 +191,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           phone_number: finalUser.phone_number || '',
           is_phone_verified: finalUser.is_phone_verified || false,
           notifications: finalUser.notifications || { notif_sales: true, notif_msg: true, notif_follow: true, notif_live: false },
-          preferences: finalUser.preferences || { theme: 'light', language: 'en' },
+          preferences: finalUser.preferences || { theme: 'system', language: 'en' },
           unread_messages_count: finalUser.unread_messages_count || 0,
         },
         token,
@@ -887,7 +887,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         notif_live: z.boolean().optional(),
       }).optional(),
       preferences: z.object({
-        theme: z.enum(['light', 'dark']).optional(),
+        theme: z.enum(['light', 'dark', 'system']).optional(),
         language: z.string().optional(),
       }).optional(),
     });

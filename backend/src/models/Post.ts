@@ -11,10 +11,13 @@ export interface IPost extends Document {
   thumbnail_urls: string[];
   media_type: 'image' | 'video' | 'text' | 'product_review';
   tagged_products: string[];
+  tagged_users: string[];
   affiliate_links: string[];
   likes_count: number;
   comments_count: number;
   shares_count: number;
+  reposts_count: number;
+  repost_of?: string;
   community_id?: string;
   is_sponsored: boolean;
   visibility: 'public' | 'followers' | 'community';
@@ -61,6 +64,10 @@ const PostSchema = new Schema<IPost>({
   tagged_products: [{
     type: String,
   }],
+  tagged_users: [{
+    type: String,
+    lowercase: true,
+  }],
   affiliate_links: [{
     type: String,
   }],
@@ -78,6 +85,15 @@ const PostSchema = new Schema<IPost>({
     type: Number,
     default: 0,
     min: 0,
+  },
+  reposts_count: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  repost_of: {
+    type: String,
+    default: null,
   },
   community_id: {
     type: String,
@@ -116,6 +132,8 @@ PostSchema.index({ visibility: 1, created_at: -1 });
 PostSchema.index({ is_active: 1, created_at: -1 });
 PostSchema.index({ is_sponsored: 1, created_at: -1 });
 PostSchema.index({ tagged_products: 1 });
+PostSchema.index({ tagged_users: 1 });
+PostSchema.index({ repost_of: 1 });
 PostSchema.index({ likes_count: -1 });
 PostSchema.index({ created_at: -1 });
 PostSchema.index({ content: 'text' }); // For text search

@@ -293,7 +293,7 @@ export default function VendorFinance() {
             <div className="space-y-4 mt-2">
               <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                 <p className="text-xs text-slate-500 dark:text-slate-400">{t("finance.availableBalance")}</p>
-                <p className="text-2xl font-bold text-orange-700">${availableBalance.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-orange-700">{formatCurrency(availableBalance)}</p>
               </div>
 
               {!store?.payment_method && (
@@ -320,7 +320,7 @@ export default function VendorFinance() {
                   <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.exceedsBalance")}</p>
                 )}
                 {parseFloat(withdrawForm.amount) > 0 && parseFloat(withdrawForm.amount) < minWithdrawalAmount && (
-                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.minimumWithdrawal", { min: minWithdrawalAmount })}</p>
+                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.minimumWithdrawal", { min: formatCurrency(minWithdrawalAmount) })}</p>
                 )}
               </div>
               
@@ -447,7 +447,7 @@ export default function VendorFinance() {
           <div className="flex items-end gap-2 h-28">
             {chartData.map(([month, val]) => (
               <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">${val.toFixed(0)}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">{formatCurrency(val)}</span>
                 <div
                   className="w-full bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg transition-all"
                   style={{ height: `${Math.max(8, (val / maxVal) * 80)}px` }}
@@ -542,7 +542,7 @@ export default function VendorFinance() {
           {pendingWithdrawals > 0 && (
             <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl mb-3">
               <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-              <p className="text-xs text-amber-700">{t("finance.pendingProcessing", { amount: pendingWithdrawals.toFixed(2) })}</p>
+              <p className="text-xs text-amber-700">{t("finance.pendingProcessing", { amount: formatCurrency(pendingWithdrawals) })}</p>
             </div>
           )}
           <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -550,7 +550,7 @@ export default function VendorFinance() {
               <div className="text-center py-8">
                 <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm text-slate-400">{t("finance.noWithdrawals")}</p>
-                <p className="text-xs text-slate-300 mt-0.5">{t("finance.yourAvailableBalance", { balance: availableBalance.toFixed(2) })}</p>
+                <p className="text-xs text-slate-300 mt-0.5">{t("finance.yourAvailableBalance", { balance: formatCurrency(availableBalance) })}</p>
               </div>
             ) : (
               withdrawals.map(w => (

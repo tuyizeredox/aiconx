@@ -180,7 +180,8 @@ export async function aiRoutes(fastify: FastifyInstance) {
       const result = await handleAiRequest({
         prompt: userPrompt,
         messages: body.history,
-        system_prompt: systemPrompt
+        system_prompt: systemPrompt,
+        max_tokens: 300
       });
 
       // 6. Parse Actions from AI response

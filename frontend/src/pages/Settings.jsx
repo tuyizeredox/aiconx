@@ -677,22 +677,34 @@ export default function Settings() {
               {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
             </Button>
           </div>
-          <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-3">
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-3 mb-3">
               <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.darkMode")}</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.theme")}</span>
             </div>
-            <div 
-              onClick={() => {
-                const newTheme = theme === "dark" ? "light" : "dark";
-                setTheme(newTheme);
-                if (currentUser) {
-                  updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: newTheme } });
-                }
-              }}
-              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${theme === "dark" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
-            >
-              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${theme === "dark" ? "right-0.5" : "left-0.5"}`} />
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "light", label: t("common.lightMode") },
+                { value: "dark", label: t("common.darkMode") },
+                { value: "system", label: t("common.systemMode") },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    setTheme(opt.value);
+                    if (currentUser) {
+                      updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: opt.value } });
+                    }
+                  }}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                    theme === opt.value
+                      ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
+                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

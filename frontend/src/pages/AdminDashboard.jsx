@@ -334,6 +334,7 @@ const AdminDashboard = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportAction, setReportAction] = useState('resolved');
   const [contentAction, setContentAction] = useState('none');
+  const [isReportViewOnly, setIsReportViewOnly] = useState(false);
 
   // Activity Logs State
   const [activityLogs, setActivityLogs] = useState([]);
@@ -1161,20 +1162,20 @@ const AdminDashboard = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4" onValueChange={setActiveTab}>
-        <TabsList className="w-full overflow-x-auto auto-rows-[auto] lg:grid lg:grid-cols-12 lg:w-auto whitespace-nowrap scrollbar-hide">
-          <TabsTrigger value="overview" className="whitespace-nowrap">{t('admin.tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="users" className="whitespace-nowrap">{t('admin.tabs.users')}</TabsTrigger>
-          <TabsTrigger value="stores" className="whitespace-nowrap">{t('admin.tabs.stores')}</TabsTrigger>
-          <TabsTrigger value="products" className="whitespace-nowrap">{t('admin.tabs.products')}</TabsTrigger>
-          <TabsTrigger value="posts" className="whitespace-nowrap">{t('admin.tabs.posts')}</TabsTrigger>
-          <TabsTrigger value="announcements" className="whitespace-nowrap">{t('admin.tabs.announcements')}</TabsTrigger>
-          <TabsTrigger value="subscriptions" className="whitespace-nowrap">{t('admin.tabs.subscriptions')}</TabsTrigger>
-          <TabsTrigger value="moderation" className="whitespace-nowrap">{t('admin.tabs.moderation')}</TabsTrigger>
-          <TabsTrigger value="orders" className="whitespace-nowrap">{t('admin.tabs.orders')}</TabsTrigger>
-          <TabsTrigger value="withdrawals" className="whitespace-nowrap">{t('admin.tabs.withdrawals')}</TabsTrigger>
-          <TabsTrigger value="verifications" className="whitespace-nowrap">{t('admin.tabs.verifications')}</TabsTrigger>
-          <TabsTrigger value="logs" className="whitespace-nowrap">{t('admin.tabs.logs')}</TabsTrigger>
-          <TabsTrigger value="settings" className="whitespace-nowrap">{t('admin.tabs.settings')}</TabsTrigger>
+        <TabsList className="w-full h-auto flex-nowrap justify-start overflow-x-auto overscroll-x-contain snap-x snap-mandatory whitespace-nowrap scrollbar-hide">
+          <TabsTrigger value="overview" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="users" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.users')}</TabsTrigger>
+          <TabsTrigger value="stores" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.stores')}</TabsTrigger>
+          <TabsTrigger value="products" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.products')}</TabsTrigger>
+          <TabsTrigger value="posts" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.posts')}</TabsTrigger>
+          <TabsTrigger value="announcements" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.announcements')}</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.subscriptions')}</TabsTrigger>
+          <TabsTrigger value="moderation" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.moderation')}</TabsTrigger>
+          <TabsTrigger value="orders" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.orders')}</TabsTrigger>
+          <TabsTrigger value="withdrawals" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.withdrawals')}</TabsTrigger>
+          <TabsTrigger value="verifications" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.verifications')}</TabsTrigger>
+          <TabsTrigger value="logs" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.logs')}</TabsTrigger>
+          <TabsTrigger value="settings" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.settings')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -2464,9 +2465,14 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium truncate max-w-[200px]" title={r.description}>
+                            <span className="font-medium truncate max-w-[200px]">
                               {r.reason}
                             </span>
+                            {r.description && (
+                              <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={r.description}>
+                                {r.description}
+                              </span>
+                            )}
                             {r.admin_notes && (
                               <span className="text-xs text-muted-foreground italic truncate max-w-[200px]">
                                 {t('admin.moderation.adminNoteLabel', { notes: r.admin_notes })}
@@ -2511,36 +2517,52 @@ const AdminDashboard = () => {
                           {new Date(r.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          {r.status === 'pending' && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>{t('admin.moderation.menuLabel')}</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedReport(r);
-                                  setReportAction('resolved');
-                                  setReportNotes('');
-                                  setContentAction('none');
-                                  setIsReportModalOpen(true);
-                                }}>
-                                  <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.moderation.resolve')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedReport(r);
-                                  setReportAction('dismissed');
-                                  setReportNotes('');
-                                  setContentAction('none');
-                                  setIsReportModalOpen(true);
-                                }}>
-                                  <AlertCircle className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.moderation.dismiss')}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setIsReportViewOnly(true);
+                                setIsReportModalOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {r.status === 'pending' && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>{t('admin.moderation.menuLabel')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedReport(r);
+                                    setReportAction('resolved');
+                                    setReportNotes('');
+                                    setContentAction('none');
+                                    setIsReportViewOnly(false);
+                                    setIsReportModalOpen(true);
+                                  }}>
+                                    <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.moderation.resolve')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedReport(r);
+                                    setReportAction('dismissed');
+                                    setReportNotes('');
+                                    setContentAction('none');
+                                    setIsReportViewOnly(false);
+                                    setIsReportModalOpen(true);
+                                  }}>
+                                    <AlertCircle className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.moderation.dismiss')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -2551,60 +2573,122 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+          <Dialog
+            open={isReportModalOpen}
+            onOpenChange={(open) => {
+              setIsReportModalOpen(open);
+              if (!open) setIsReportViewOnly(false);
+            }}
+          >
             <DialogContent className="max-w-[95vw] sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{reportAction === 'resolved' ? t('admin.moderation.resolveTitle') : t('admin.moderation.dismissTitle')}</DialogTitle>
+                <DialogTitle>
+                  {isReportViewOnly
+                    ? t('admin.moderation.viewTitle')
+                    : reportAction === 'resolved' ? t('admin.moderation.resolveTitle') : t('admin.moderation.dismissTitle')}
+                </DialogTitle>
                 <DialogDescription>
-                  {reportAction === 'resolved'
-                    ? t('admin.moderation.resolveDesc', { type: selectedReport?.target_type })
-                    : t('admin.moderation.dismissDesc', { type: selectedReport?.target_type })}
+                  {isReportViewOnly
+                    ? t('admin.moderation.viewDesc', { type: selectedReport?.target_type })
+                    : reportAction === 'resolved'
+                      ? t('admin.moderation.resolveDesc', { type: selectedReport?.target_type })
+                      : t('admin.moderation.dismissDesc', { type: selectedReport?.target_type })}
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div className="p-3 bg-muted rounded-md text-sm">
-                  <div className="font-semibold">{selectedReport?.reason}</div>
-                  <div className="mt-1 text-muted-foreground">{selectedReport?.description}</div>
+              <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
+                <div className="p-3 bg-muted rounded-md text-sm space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline" className="capitalize">{selectedReport?.target_type}</Badge>
+                    <Badge variant={
+                      selectedReport?.status === 'resolved' ? 'success' :
+                      selectedReport?.status === 'dismissed' ? 'secondary' : 'warning'
+                    }>
+                      {selectedReport?.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <div className="font-semibold">{selectedReport?.reason}</div>
+                    {selectedReport?.description && (
+                      <div className="mt-1 text-muted-foreground whitespace-pre-wrap break-words">
+                        {selectedReport.description}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground pt-1 border-t">
+                    {t('admin.moderation.reporterLabel')}: {selectedReport?.reporter_id?.display_name || t('admin.moderation.system')}
+                    {selectedReport?.reporter_id?.email && ` (${selectedReport.reporter_id.email})`}
+                  </div>
                   {selectedReport?.target_summary && (
-                    <div className="mt-2 pt-2 border-t text-muted-foreground truncate">
-                      {t('admin.moderation.reportedContentLabel')}: {selectedReport.target_summary.title}
+                    <div className="pt-2 border-t">
+                      <div className="text-xs text-muted-foreground mb-1">{t('admin.moderation.reportedContentLabel')}</div>
+                      <a
+                        href={selectedReport.target_type === 'post' ? `/postdetail?id=${selectedReport.target_id}` : `/productdetail?id=${selectedReport.target_id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2 hover:underline"
+                      >
+                        {selectedReport.target_summary.image && (
+                          <img src={selectedReport.target_summary.image} alt="" className="w-10 h-10 object-cover rounded shrink-0" />
+                        )}
+                        <span className="truncate">{selectedReport.target_summary.title}</span>
+                      </a>
+                      {!selectedReport.target_summary.active && (
+                        <Badge variant="secondary" className="mt-1 w-fit text-[10px]">
+                          {t('admin.moderation.contentInactive')}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  {selectedReport?.admin_notes && (
+                    <div className="pt-2 border-t text-xs text-muted-foreground">
+                      {t('admin.moderation.adminNoteLabel', { notes: selectedReport.admin_notes })}
                     </div>
                   )}
                 </div>
-                {reportAction === 'resolved' && ['post', 'product'].includes(selectedReport?.target_type) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="content-action">{t('admin.moderation.contentAction')}</Label>
-                    <Select value={contentAction} onValueChange={setContentAction}>
-                      <SelectTrigger id="content-action">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">{t('admin.moderation.contentActionNone')}</SelectItem>
-                        <SelectItem value="deactivate">{t('admin.moderation.contentActionDeactivate')}</SelectItem>
-                        <SelectItem value="remove">{t('admin.moderation.contentActionRemove')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {!isReportViewOnly && (
+                  <>
+                    {reportAction === 'resolved' && ['post', 'product'].includes(selectedReport?.target_type) && (
+                      <div className="space-y-2">
+                        <Label htmlFor="content-action">{t('admin.moderation.contentAction')}</Label>
+                        <Select value={contentAction} onValueChange={setContentAction}>
+                          <SelectTrigger id="content-action">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t('admin.moderation.contentActionNone')}</SelectItem>
+                            <SelectItem value="deactivate">{t('admin.moderation.contentActionDeactivate')}</SelectItem>
+                            <SelectItem value="remove">{t('admin.moderation.contentActionRemove')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="report-notes">{t('admin.moderation.adminNotes')}</Label>
+                      <Textarea
+                        id="report-notes"
+                        placeholder={t('admin.moderation.notesPlaceholder')}
+                        value={reportNotes}
+                        onChange={(e) => setReportNotes(e.target.value)}
+                        className="h-24"
+                      />
+                    </div>
+                  </>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="report-notes">{t('admin.moderation.adminNotes')}</Label>
-                  <Textarea
-                    id="report-notes"
-                    placeholder={t('admin.moderation.notesPlaceholder')}
-                    value={reportNotes}
-                    onChange={(e) => setReportNotes(e.target.value)}
-                    className="h-24"
-                  />
-                </div>
               </div>
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.cancel')}</Button>
-                <Button 
-                  variant={reportAction === 'resolved' ? 'success' : 'secondary'}
-                  onClick={() => handleResolveReport(selectedReport?._id, reportAction, reportNotes, contentAction)}
-                >
-                  {reportAction === 'resolved' ? t('admin.moderation.confirmResolution') : t('admin.moderation.confirmDismissal')}
-                </Button>
+                {isReportViewOnly ? (
+                  <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.close')}</Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.cancel')}</Button>
+                    <Button
+                      variant={reportAction === 'resolved' ? 'success' : 'secondary'}
+                      onClick={() => handleResolveReport(selectedReport?._id, reportAction, reportNotes, contentAction)}
+                    >
+                      {reportAction === 'resolved' ? t('admin.moderation.confirmResolution') : t('admin.moderation.confirmDismissal')}
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -3009,10 +3093,10 @@ const AdminDashboard = () => {
             <CardContent className="space-y-8">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">{t('admin.settings.securityTitle')}</h3>
-                <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50">
-                  <div className="flex flex-col space-y-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50">
+                  <div className="flex flex-col space-y-1 min-w-0">
                     <Label htmlFor="maintenance-mode" className="text-base flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-orange-500" />
+                      <ShieldAlert className="w-4 h-4 text-orange-500 shrink-0" />
                       {t('admin.settings.maintenanceLabel')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -3024,6 +3108,7 @@ const AdminDashboard = () => {
                     checked={settings.maintenance_mode}
                     onCheckedChange={(checked) => handleUpdateSettings({ maintenance_mode: checked })}
                     disabled={settingsLoading}
+                    className="shrink-0"
                   />
                 </div>
 
@@ -3048,10 +3133,10 @@ const AdminDashboard = () => {
 
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-semibold">{t('admin.settings.subscriptionTitle')}</h3>
-                <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
-                  <div className="flex flex-col space-y-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
+                  <div className="flex flex-col space-y-1 min-w-0">
                     <Label htmlFor="subscription-mode" className="text-base flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-yellow-500" />
+                      <Crown className="w-4 h-4 text-yellow-500 shrink-0" />
                       {t('admin.settings.subscriptionModeLabel')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -3065,6 +3150,7 @@ const AdminDashboard = () => {
                     checked={settings.subscription_mode ?? false}
                     onCheckedChange={(checked) => handleUpdateSettings({ subscription_mode: checked })}
                     disabled={settingsLoading}
+                    className="shrink-0"
                   />
                 </div>
                 {!settings.subscription_mode && (
@@ -3077,8 +3163,8 @@ const AdminDashboard = () => {
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-semibold">{t('admin.settings.policiesTitle')}</h3>
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50">
-                    <div className="flex flex-col space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50">
+                    <div className="flex flex-col space-y-1 min-w-0">
                       <Label htmlFor="allow-reg" className="text-base">{t('admin.settings.registrationLabel')}</Label>
                       <p className="text-xs text-muted-foreground">{t('admin.settings.registrationDesc')}</p>
                     </div>
@@ -3087,6 +3173,7 @@ const AdminDashboard = () => {
                       checked={settings.allow_registration}
                       onCheckedChange={(checked) => handleUpdateSettings({ allow_registration: checked })}
                       disabled={settingsLoading}
+                      className="shrink-0"
                     />
                   </div>
 

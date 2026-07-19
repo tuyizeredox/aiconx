@@ -17,15 +17,9 @@ import {
   Users,
   Package,
   Sparkles,
-  Heart,
-  Bookmark,
   Settings as SettingsIcon,
-  MapPin,
-  DollarSign,
-  Link2,
   Bell,
   Shield,
-  CreditCard,
   Menu,
   ChevronLeft,
   ChevronRight,
@@ -55,7 +49,7 @@ const ADMIN_NAV_ITEMS = [
   { name: "Profile", tKey: "nav.profile", icon: User, page: "Profile" },
 ];
 
-const ALLOWED_ADMIN_SIDEBAR_NAMES = ["Admin", "Profile", "Messages", "Notifications", "Settings"];
+const ALLOWED_ADMIN_SIDEBAR_NAMES = ["Admin", "Profile", "Messages", "Notifications"];
 
 const SIDEBAR_ITEMS = [
   { name: "Feed", tKey: "nav.home", icon: Home, page: "Home" },
@@ -66,16 +60,9 @@ const SIDEBAR_ITEMS = [
   { name: "Communities", tKey: "nav.communities", icon: Users, page: "Communities" },
   { name: "Messages", tKey: "nav.messages", icon: MessageCircle, page: "Chat" },
   { name: "AI Assistant", tKey: "nav.aiAssistant", icon: Sparkles, page: "AIAssistant" },
-  { name: "Wishlist", tKey: "nav.wishlist", icon: Heart, page: "Wishlist" },
-  { name: "Bookmarks", tKey: "nav.bookmarks", icon: Bookmark, page: "Bookmarks" },
   { name: "Orders", tKey: "nav.orders", icon: Package, page: "Orders" },
-  { name: "Track Order", tKey: "nav.trackOrder", icon: MapPin, page: "OrderTracking" },
   { name: "My Store", tKey: "nav.myStore", icon: Store, page: "MyStore" },
-  { name: "Finance", tKey: "nav.finance", icon: DollarSign, page: "VendorFinance" },
-  { name: "Account Plans", tKey: "nav.accountPlans", icon: CreditCard, page: "Settings", params: "?section=subscription" },
-  { name: "Affiliate", tKey: "nav.affiliate", icon: Link2, page: "Affiliate" },
   { name: "Notifications", tKey: "nav.notifications", icon: Bell, page: "Notifications" },
-  { name: "Settings", tKey: "nav.settings", icon: SettingsIcon, page: "Settings" },
   { name: "Admin", icon: Shield, page: "AdminDashboard", href: "/admin-dashboard", adminOnly: true },
 ];
 
@@ -93,6 +80,8 @@ export default function Layout({ children, currentPageName }) {
   const { user: currentUser } = useAuth();
   const hoverTimerRef = useRef(null);
   const [guestCartCount, setGuestCartCount] = useState(() => getGuestCartCount());
+  const [topBarHidden, setTopBarHidden] = useState(false);
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
     if (window.innerWidth >= 1024) {
@@ -107,6 +96,35 @@ export default function Layout({ children, currentPageName }) {
     window.addEventListener('guestcart:updated', refresh);
     return () => window.removeEventListener('guestcart:updated', refresh);
   }, [currentUser]);
+
+  // Auto-hide the mobile top bar on scroll-down and reveal it on scroll-up,
+  // matching the feel of modern feed apps (YouTube, Instagram, etc).
+  useEffect(() => {
+    if (isMobileRaw === false) return; // desktop doesn't use the mobile top bar
+    lastScrollYRef.current = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollYRef.current;
+        if (currentY < 60) {
+          setTopBarHidden(false);
+        } else if (delta > 8) {
+          setTopBarHidden(true);
+        } else if (delta < -8) {
+          setTopBarHidden(false);
+        }
+        lastScrollYRef.current = currentY;
+        ticking = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobileRaw]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -192,7 +210,6 @@ export default function Layout({ children, currentPageName }) {
               />
             </Link>
             <div className="flex items-center gap-1">
-              {(!isDesktop || isDesktopExpanded) && <LanguagePicker />}
               {(!isDesktop || isDesktopExpanded) && (
                 <button
                   onClick={toggleSidebar}
@@ -203,11 +220,6 @@ export default function Layout({ children, currentPageName }) {
               )}
             </div>
           </div>
-          {isDesktop && !isDesktopExpanded && (
-            <div className="flex justify-center">
-              <LanguagePicker compact />
-            </div>
-          )}
           {(isDesktopExpanded || !isDesktop) && currentUser?.role !== 'super_admin' && <GlobalSearch />}
         </div>
 
@@ -290,6 +302,7 @@ export default function Layout({ children, currentPageName }) {
         </nav>
 
         <div className={`p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
+          <LanguagePicker compact={!isDesktopExpanded && isDesktop} openUp />
           {currentUser?.role !== 'super_admin' && (
             <button
               onClick={() => {
@@ -306,7 +319,11 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Mobile Top Bar */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 z-50">
+      <header
+        className={`lg:hidden fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 z-50 transition-transform duration-300 ease-out ${
+          topBarHidden ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
         <div className="h-12 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
           <button

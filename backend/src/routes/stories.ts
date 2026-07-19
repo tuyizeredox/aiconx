@@ -6,6 +6,15 @@ import { Message } from '../models/Message';
 import { likeTarget, unlikeTarget, getLikesForTargets } from '../services/likeService';
 import { isAdmin } from '../middleware/auth';
 
+// Short preview of a story shown as the quoted "reply to" context in chat —
+// mirrors how a plain reply-to-message preview is built on the frontend.
+function buildStoryReplyPreview(story: IStory): string {
+  const caption = story.caption?.trim();
+  if (story.media_type === 'text') return caption || 'Story';
+  const label = story.media_type === 'video' ? '🎥 Video' : '📷 Photo';
+  return caption ? `${label} · ${caption}` : label;
+}
+
 export async function storyRoutes(fastify: FastifyInstance) {
   // Get active stories feed (from users you follow + your own)
   fastify.get('/feed', {
@@ -108,7 +117,7 @@ export async function storyRoutes(fastify: FastifyInstance) {
         .sort(sortObj)
         .limit(Math.min(parseInt(limit), 10)) // Limit to max 10 to prevent response size issues
         .skip(parseInt(skip))
-        .select('author_username author_name author_avatar media_url media_type caption bg_color created_at expires_at is_active')
+        .select('author_username author_name author_avatar media_url media_type caption bg_color views_count likes_count reply_count created_at expires_at is_active')
         .lean();
 
       fastify.log.info({ storyCount: stories.length, stories: stories.map(s => ({ id: s._id, author: s.author_username, is_active: s.is_active, expires_at: s.expires_at })) }, 'Stories found');
@@ -381,20 +390,23 @@ export async function storyRoutes(fastify: FastifyInstance) {
         sender_username: user.username,
         sender_name: userData.display_name || user.username,
         receiver_username: story.author_username,
-        content: `Replied to your story: "${trimmedText}"`,
+        content: trimmedText,
         message_type: 'text',
+        reply_to_content: buildStoryReplyPreview(story),
+        reply_to_name: 'Story',
         created_at: new Date(),
         updated_at: new Date()
       });
 
       await message.save();
-      
+      await Story.updateOne({ _id: story._id }, { $inc: { reply_count: 1 } });
+
       // Emit real-time event via Socket.IO if available
       // Use toObject() for clean serialization
       if (story.author_username) {
         fastify.io?.to(`user:${story.author_username}`).emit('new-message', message.toObject());
       }
-      
+
       return reply.send({ message: 'Reply sent successfully', data: message });
     } catch (error: any) {
       fastify.log.error(error);

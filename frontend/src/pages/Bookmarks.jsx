@@ -110,7 +110,7 @@ export default function Bookmarks() {
                   className="relative group"
                 >
 {activeTab === "posts" ? (
-                     <PostCard post={item} currentUser={currentUser} />
+                     <PostCard post={item} currentUser={currentUser} feedPosts={items} />
                    ) : (
                      <ProductCard product={item} currentUser={currentUser} />
                    )}

@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { productsAPI, storesAPI, storiesAPI } from "@/api/apiClient";
+import { productsAPI, storesAPI } from "@/api/apiClient";
 import { formatCurrency } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Logo from "@/components/layout/Logo";
 import LanguagePicker from "@/components/layout/LanguagePicker";
 import { ProductSkeleton, StoreSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -14,7 +14,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import StoryViewer from "@/components/stories/StoryViewer";
 
 export default function LandingPage() {
   const { t } = useTranslation();
@@ -22,7 +21,6 @@ export default function LandingPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("-created_date");
-  const [viewerIndex, setViewerIndex] = useState(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["landingProducts", category, sort],
@@ -42,29 +40,6 @@ export default function LandingPage() {
     },
   });
 
-  const { data: storiesRaw = [] } = useQuery({
-    queryKey: ["landingStories"],
-    queryFn: async () => {
-      const res = await storiesAPI.list({ is_active: true, limit: 20 });
-      return res.data || [];
-    },
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const now = Date.now();
-  const activeStories = storiesRaw.filter((story) => {
-    if (story.expires_at) return new Date(story.expires_at).getTime() > now;
-    const created = story.created_at || story.created_date;
-    if (created) return now - new Date(created).getTime() < 24 * 60 * 60 * 1000;
-    return false;
-  });
-
-  const uniqueStories = activeStories.reduce((acc, story) => {
-    if (!acc.find(s => s.author_username === story.author_username)) acc.push(story);
-    return acc;
-  }, []);
-
   const stores = Array.isArray(storesResponse?.data) ? storesResponse.data : [];
 
   const filtered = search
@@ -79,39 +54,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <Logo size="sm" showText />
 
-          {uniqueStories.length > 0 && (
-            <div className="flex-1 overflow-x-auto hide-scrollbar">
-              <div className="flex items-center gap-3 w-max px-2">
-                {uniqueStories.map((story, idx) => (
-                  <button
-                    key={story.id || story._id || story.author_username}
-                    onClick={() => setViewerIndex(idx)}
-                    className="flex flex-col items-center gap-1 shrink-0 focus:outline-none"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 p-[2px]">
-                      <div className="w-full h-full rounded-full bg-white dark:bg-slate-950 p-[2px]">
-                        <div
-                          className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-xs overflow-hidden"
-                          style={{ background: story.author_avatar ? undefined : (story.bg_color || "#6366f1") }}
-                        >
-                          {story.author_avatar ? (
-                            <img src={story.author_avatar} alt="" className="w-full h-full object-cover rounded-full" />
-                          ) : (
-                            story.author_name?.[0]?.toUpperCase() || story.author_username?.[0]?.toUpperCase() || "U"
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[36px]">
-                      {story.author_name?.split(" ")[0] || story.author_username}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
             <LanguagePicker compact />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-slate-700 dark:text-slate-300 font-semibold hover:text-slate-900 dark:hover:text-white">
@@ -282,24 +225,6 @@ export default function LandingPage() {
         </div>
 
       </div>
-
-      <AnimatePresence>
-        {viewerIndex !== null && (
-          <StoryViewer
-            stories={uniqueStories}
-            startIndex={viewerIndex}
-            guestMode={true}
-            onClose={() => setViewerIndex(null)}
-            onNext={() => {
-              if (viewerIndex < uniqueStories.length - 1) setViewerIndex(i => i + 1);
-              else setViewerIndex(null);
-            }}
-            onPrev={() => {
-              if (viewerIndex > 0) setViewerIndex(i => i - 1);
-            }}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

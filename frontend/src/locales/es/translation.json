@@ -90,7 +90,8 @@
     "language": "Idioma",
     "theme": "Tema",
     "darkMode": "Modo oscuro",
-    "lightMode": "Modo claro"
+    "lightMode": "Modo claro",
+    "systemMode": "Sistema"
   },
   "nav": {
     "home": "Inicio",
@@ -934,6 +935,12 @@
     "reviewsCount": "({{count}} reseñas)",
     "allProducts": "Todos los productos",
     "noProductsYet": "Aún no hay productos en esta tienda",
+    "salesCount": "{{count}} vendidos",
+    "searchPlaceholder": "Buscar en esta tienda...",
+    "noResultsFilter": "Ningún producto coincide con tus filtros",
+    "clearFilters": "Borrar filtros",
+    "shareStore": "Compartir tienda",
+    "linkCopied": "Enlace de la tienda copiado",
     "chatWithVendor": "Chatear con el vendedor",
     "followStore": "Seguir tienda",
     "unfollowedStore": "Dejaste de seguir",
@@ -1039,7 +1046,10 @@
     "chip_lastOrder": "¿Dónde está mi último pedido?",
     "chip_wishlist": "Artículos parecidos a mi lista de deseos",
     "chip_dailyPicks": "Selecciones del día para mí",
-    "chip_trending": "Moda en tendencia"
+    "chip_trending": "Moda en tendencia",
+    "voiceUnsupported": "La entrada de voz no es compatible con este dispositivo",
+    "startListening": "Iniciar entrada de voz",
+    "stopListening": "Detener entrada de voz"
   },
   "orderTracking": {
     "title": "Rastrear pedido",
@@ -1608,6 +1618,9 @@
       "menuLabel": "Resolver reporte",
       "resolve": "Resolver",
       "dismiss": "Descartar",
+      "viewTitle": "Detalles del reporte",
+      "viewDesc": "Detalles completos de este reporte de {{type}}.",
+      "reporterLabel": "Reportado por",
       "resolveTitle": "Resolver reporte",
       "dismissTitle": "Descartar reporte",
       "resolveDesc": "Proporcionar notas de resolución para este reporte de {{type}}.",

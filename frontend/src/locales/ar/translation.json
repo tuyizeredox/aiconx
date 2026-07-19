@@ -90,7 +90,8 @@
     "language": "اللغة",
     "theme": "المظهر",
     "darkMode": "الوضع الداكن",
-    "lightMode": "الوضع الفاتح"
+    "lightMode": "الوضع الفاتح",
+    "systemMode": "النظام"
   },
   "nav": {
     "home": "الرئيسية",
@@ -935,6 +936,12 @@
     "reviewsCount": "({{count}} تقييمات)",
     "allProducts": "جميع المنتجات",
     "noProductsYet": "لا توجد منتجات في هذا المتجر بعد",
+    "salesCount": "{{count}} تم بيعها",
+    "searchPlaceholder": "ابحث في هذا المتجر...",
+    "noResultsFilter": "لا توجد منتجات مطابقة لعوامل التصفية",
+    "clearFilters": "مسح عوامل التصفية",
+    "shareStore": "مشاركة المتجر",
+    "linkCopied": "تم نسخ رابط المتجر",
     "chatWithVendor": "المحادثة مع البائع",
     "followStore": "متابعة المتجر",
     "unfollowedStore": "تم إلغاء المتابعة",
@@ -1040,7 +1047,10 @@
     "chip_lastOrder": "أين طلبي الأخير؟",
     "chip_wishlist": "منتجات مشابهة لقائمة رغباتي",
     "chip_dailyPicks": "اختياراتي اليومية",
-    "chip_trending": "الموضة الرائجة"
+    "chip_trending": "الموضة الرائجة",
+    "voiceUnsupported": "إدخال الصوت غير مدعوم على هذا الجهاز",
+    "startListening": "بدء الإدخال الصوتي",
+    "stopListening": "إيقاف الإدخال الصوتي"
   },
   "orderTracking": {
     "title": "تتبع الطلب",
@@ -1609,6 +1619,9 @@
       "menuLabel": "حل البلاغ",
       "resolve": "حل",
       "dismiss": "صرف",
+      "viewTitle": "تفاصيل البلاغ",
+      "viewDesc": "التفاصيل الكاملة لهذا البلاغ عن {{type}}.",
+      "reporterLabel": "أبلغ عنه",
       "resolveTitle": "حل البلاغ",
       "dismissTitle": "صرف البلاغ",
       "resolveDesc": "تقديم ملاحظات الحل لبلاغ {{type}} هذا.",

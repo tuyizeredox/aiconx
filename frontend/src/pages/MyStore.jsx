@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import {
-  Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, BarChart3, Eye,
+  Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, Eye,
   X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
-  ShieldAlert, ShieldCheck, Clock
+  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -443,8 +443,13 @@ export default function MyStore() {
     }
   });
 
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-  const pendingOrders = orders.filter(o => o.status === "pending" || o.status === "confirmed").length;
+  const activeProductsCount = products.filter(p => p.status === "active").length;
+  const paidOrders = orders.filter(o => o.payment_status === "paid");
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const avgOrderValue = paidOrders.length ? totalRevenue / paidOrders.length : 0;
+  const actionNeededOrders = orders.filter(o => ["pending", "confirmed", "processing"].includes(o.status)).length;
+  const outOfStockCount = products.filter(p => (p.inventory_count ?? 0) === 0).length;
+  const lowStockCount = products.filter(p => (p.inventory_count ?? 0) > 0 && (p.inventory_count ?? 0) <= 5).length;
 
   if (storeLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>;
@@ -693,28 +698,58 @@ export default function MyStore() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Store Header */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
+        {/* Banner */}
+        <div className="h-20 sm:h-32 lg:h-40 relative bg-gradient-to-r from-orange-500 via-orange-600 to-purple-600">
+          {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+          <div className="absolute top-3 right-3">
+            <Badge className={`border-0 text-[10px] font-semibold px-2.5 py-1 backdrop-blur-md capitalize ${
+              store.status === "active" ? "bg-green-500/90 text-white" :
+              store.status === "pending" ? "bg-amber-500/90 text-white" :
+              "bg-red-500/90 text-white"
+            }`}>
+              {store.status || "active"}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-10 sm:-mt-12 mb-5">
+          <div className="flex items-end gap-4 min-w-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
               {store.logo_url ? (
                 <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
               ) : (
-                store.name?.[0]?.toUpperCase()
+                <span className="bg-gradient-to-br from-orange-400 to-purple-500 w-full h-full flex items-center justify-center text-2xl">
+                  {store.name?.[0]?.toUpperCase()}
+                </span>
               )}
             </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate">{store.name}</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{store.description || t("store.noDescription")}</p>
+            <div className="min-w-0 pb-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{store.name}</h1>
+                {isStoreVerified && (
+                  <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border-0 gap-1 shrink-0">
+                    <ShieldCheck className="w-3 h-3" /> {t("common.verified")}
+                  </Badge>
+                )}
+                {store.category && (
+                  <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize shrink-0">
+                    {store.category}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-md mt-0.5">{store.description || t("store.noDescription")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
             <Dialog open={showEditStore} onOpenChange={setShowEditStore}>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="rounded-xl"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl flex-1 sm:flex-none"
                   onClick={() => setStoreForm({
                     name: store.name,
                     description: store.description,
@@ -1071,8 +1106,8 @@ export default function MyStore() {
                 </Tabs>
               </DialogContent>
             </Dialog>
-            <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`}>
-              <Button variant="outline" size="sm" className="rounded-xl">
+            <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} className="flex-1 sm:flex-none">
+              <Button variant="outline" size="sm" className="rounded-xl w-full">
                 <Eye className="w-4 h-4 mr-1.5" /> {t("store.viewStore")}
               </Button>
             </Link>
@@ -1198,28 +1233,87 @@ export default function MyStore() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: t("store.products"), value: products.length, icon: Package, color: "text-orange-500 bg-orange-50 dark:bg-orange-950" },
-            { label: t("store.orders"), value: orders.length, icon: ShoppingCart, color: "text-purple-500 bg-purple-50 dark:bg-purple-950" },
-            { label: t("store.revenue"), value: formatCurrency(totalRevenue), icon: DollarSign, color: "text-green-500 bg-green-50 dark:bg-green-950" },
-            { label: t("store.pending"), value: pendingOrders, icon: BarChart3, color: "text-amber-500 bg-amber-50 dark:bg-amber-950" },
+            {
+              label: t("store.products"),
+              value: `${activeProductsCount}/${products.length}`,
+              sub: t("store.activeCount", { count: activeProductsCount }),
+              icon: Package,
+              color: "text-orange-500 bg-orange-50 dark:bg-orange-950",
+            },
+            {
+              label: t("store.orders"),
+              value: orders.length,
+              sub: actionNeededOrders > 0 ? t("store.pendingActionSub", { count: actionNeededOrders }) : undefined,
+              icon: ShoppingCart,
+              color: "text-purple-500 bg-purple-50 dark:bg-purple-950",
+            },
+            {
+              label: t("store.revenue"),
+              value: formatCurrency(totalRevenue),
+              sub: t("store.fromPaidOrders"),
+              icon: DollarSign,
+              color: "text-green-500 bg-green-50 dark:bg-green-950",
+            },
+            {
+              label: t("store.avgOrderValue"),
+              value: formatCurrency(avgOrderValue),
+              icon: TrendingUp,
+              color: "text-blue-500 bg-blue-50 dark:bg-blue-950",
+            },
+            {
+              label: t("store.needsAction"),
+              value: actionNeededOrders,
+              sub: t("store.needsActionSub"),
+              icon: Clock,
+              color: actionNeededOrders > 0 ? "text-amber-600 bg-amber-100 dark:bg-amber-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+              onClick: () => setActiveTab("orders"),
+            },
+            {
+              label: t("store.lowStockShort"),
+              value: lowStockCount + outOfStockCount,
+              sub: outOfStockCount > 0 ? t("store.outOfStockCount", { count: outOfStockCount }) : undefined,
+              icon: AlertTriangle,
+              color: (lowStockCount + outOfStockCount) > 0 ? "text-rose-600 bg-rose-100 dark:bg-rose-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+              onClick: () => setActiveTab("products"),
+            },
+            {
+              label: t("store.followers"),
+              value: store.follower_count || 0,
+              icon: Users,
+              color: "text-pink-500 bg-pink-50 dark:bg-pink-950",
+            },
+            {
+              label: t("store.rating"),
+              value: store.rating_avg ? store.rating_avg.toFixed(1) : "—",
+              sub: !store.rating_avg ? t("store.notRatedYet") : undefined,
+              icon: Star,
+              color: "text-amber-500 bg-amber-50 dark:bg-amber-950",
+            },
           ].map((stat) => (
-            <div key={stat.label} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+            <div
+              key={stat.label}
+              onClick={stat.onClick}
+              role={stat.onClick ? "button" : undefined}
+              className={`bg-slate-50 dark:bg-slate-800 rounded-xl p-3 ${stat.onClick ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" : ""}`}
+            >
               <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
                 <stat.icon className="w-4 h-4" />
               </div>
               <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
+              {stat.sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{stat.sub}</p>}
             </div>
           ))}
+        </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 w-full sm:w-auto">
-          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full sm:w-auto overflow-x-auto scrollbar-hide justify-start">
+          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full sm:w-auto h-auto flex-wrap justify-start gap-1.5 p-1.5">
             <TabsTrigger value="products">{t("store.products")}</TabsTrigger>
             <TabsTrigger value="orders">{t("store.orders")}</TabsTrigger>
             <TabsTrigger value="coupons">{t("store.coupons")}</TabsTrigger>

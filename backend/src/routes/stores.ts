@@ -75,7 +75,7 @@ export async function storeRoutes(fastify: FastifyInstance) {
         .sort(filter.$text ? { score: { $meta: 'textScore' }, follower_count: -1 } : sort)
         .limit(parseInt(limit))
         .skip(parseInt(skip))
-        .select('name logo_url category follower_count owner_username status is_verified')
+        .select('name logo_url category follower_count owner_username status is_verified product_count')
         .lean();
 
       const total = await Store.countDocuments(filter);
