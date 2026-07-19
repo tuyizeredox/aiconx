@@ -589,6 +589,7 @@ export const adminAPI = {
     return apiClient.get(`/admin/posts?${query}`);
   },
   updatePostVisibility: (id, visibility) => apiClient.patch(`/admin/posts/${id}/visibility`, { visibility }),
+  updatePostStatus: (id, status, reason) => apiClient.patch(`/admin/posts/${id}/status`, { status, reason }),
   deletePost: (id) => apiClient.delete(`/admin/posts/${id}`),
   // Subscriptions
   getSubscriptions: (params) => {

@@ -18,6 +18,7 @@ import OrderDetailModal from "@/components/orders/OrderDetailModal";
 import { ordersAPI, cartAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
+import BackLink from "@/components/shared/BackLink";
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: "bg-amber-100 text-amber-700", label: "Pending" },
@@ -91,6 +92,7 @@ export default function Orders() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("orders.title")}</h1>
         <Button 

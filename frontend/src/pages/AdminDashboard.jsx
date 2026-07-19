@@ -59,7 +59,12 @@ import {
   Ban,
   Plus,
   Crown,
-  DollarSign
+  DollarSign,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  FileText
 } from 'lucide-react';
 import { 
   Dialog,
@@ -262,6 +267,288 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
   );
 };
 
+const VerificationDetailsModal = ({ verification, isOpen, onOpenChange, onApprove, onReject }) => {
+  const { t } = useTranslation();
+  if (!verification) return null;
+
+  const applicant = verification.applicant;
+  const address = verification.address;
+  const social = verification.social_links || {};
+  const hasPayoutInfo = verification.payment_method || verification.bank_name || verification.bank_account_number
+    || verification.paypal_email || verification.mobile_money_number;
+  const hasSocialLinks = social.facebook || social.instagram || social.twitter || social.tiktok;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            {verification.name}
+            {verification.is_verified && <ShieldCheckIcon className="w-5 h-5 text-orange-500" />}
+          </DialogTitle>
+          <DialogDescription>
+            {t('admin.verifications.detailStoreId', { id: verification._id })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-2">
+          {/* Applicant */}
+          <div>
+            <h4 className="font-semibold mb-3">{t('admin.verifications.applicantSection')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted p-4 rounded-lg">
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantName')}</Label>
+                <div className="mt-1 font-medium">{applicant?.display_name || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantUsername')}</Label>
+                <div className="mt-1 font-medium">@{verification.owner_username}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> {t('admin.verifications.applicantEmail')}</Label>
+                <div className="mt-1">{applicant?.email || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {t('admin.verifications.applicantPhone')}</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  {applicant?.phone_number || '—'}
+                  {applicant?.phone_number && (
+                    <Badge variant={applicant.is_phone_verified ? 'success' : 'outline'} className="text-[10px]">
+                      {applicant.is_phone_verified ? t('admin.verifications.phoneVerified') : t('admin.verifications.phoneUnverified')}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantRole')}</Label>
+                <div className="mt-1 capitalize">{applicant?.role || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantJoined')}</Label>
+                <div className="mt-1">{applicant?.created_at ? new Date(applicant.created_at).toLocaleDateString() : '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* KYC Document */}
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4" /> {t('admin.verifications.documentSection')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.docType')}</Label>
+                  <div className="mt-1 capitalize">{verification.identity_document_type?.replace('_', ' ') || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.docNumber')}</Label>
+                  <div className="mt-1">{verification.identity_document_number || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.colStatus')}</Label>
+                  <div className="mt-1">
+                    <Badge variant={
+                      verification.verification_status === 'approved' ? 'success' :
+                      verification.verification_status === 'pending' ? 'warning' :
+                      verification.verification_status === 'rejected' ? 'destructive' : 'default'
+                    }>
+                      {verification.verification_status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.submittedAt')}</Label>
+                  <div className="mt-1">{verification.identity_submitted_at ? new Date(verification.identity_submitted_at).toLocaleString() : '—'}</div>
+                </div>
+                {verification.identity_reviewed_at && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.reviewedAt')}</Label>
+                    <div className="mt-1">
+                      {new Date(verification.identity_reviewed_at).toLocaleString()}
+                      {verification.identity_reviewed_by && <span className="text-muted-foreground"> · @{verification.identity_reviewed_by}</span>}
+                    </div>
+                  </div>
+                )}
+                {verification.identity_rejection_reason && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.rejectionReason')}</Label>
+                    <div className="mt-1 text-sm italic">{verification.identity_rejection_reason}</div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.colImage')}</Label>
+                {verification.identity_document_image_url ? (
+                  <a href={verification.identity_document_image_url} target="_blank" rel="noreferrer">
+                    <img
+                      src={verification.identity_document_image_url}
+                      alt=""
+                      className="mt-2 w-full max-w-xs max-h-64 object-contain rounded-md border"
+                    />
+                  </a>
+                ) : (
+                  <div className="mt-1 text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Store */}
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2"><Store className="w-4 h-4" /> {t('admin.verifications.storeSection')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.storeModal.status')}</Label>
+                  <div className="mt-1">
+                    <Badge variant={verification.status === 'active' ? 'success' : verification.status === 'pending' ? 'warning' : 'destructive'}>
+                      {verification.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.category')}</Label>
+                  <div className="mt-1">{verification.category || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.storeModal.joinedAt')}</Label>
+                  <div className="mt-1">{verification.created_at ? new Date(verification.created_at).toLocaleDateString() : '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.storeModal.description')}</Label>
+                  <div className="mt-1 text-sm">{verification.description || t('admin.storeModal.noDescription')}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {t('admin.verifications.storePhone')}</Label>
+                  <div className="mt-1">{verification.phone_number || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {t('admin.verifications.storeAddress')}</Label>
+                  <div className="mt-1">{address || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1"><Globe className="w-3 h-3" /> {t('admin.verifications.storeWebsite')}</Label>
+                  <div className="mt-1 break-all">{verification.website_url || '—'}</div>
+                </div>
+                {hasSocialLinks && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.socialLinks')}</Label>
+                    <div className="mt-1 text-sm space-y-0.5 break-all">
+                      {social.facebook && <div>Facebook: {social.facebook}</div>}
+                      {social.instagram && <div>Instagram: {social.instagram}</div>}
+                      {social.twitter && <div>Twitter: {social.twitter}</div>}
+                      {social.tiktok && <div>TikTok: {social.tiktok}</div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                {verification.logo_url && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.storeModal.logo')}</Label>
+                    <img src={verification.logo_url} alt={verification.name} className="mt-2 w-24 h-24 object-cover rounded-md border" />
+                  </div>
+                )}
+                <div className="bg-muted p-4 rounded-lg">
+                  <h5 className="font-semibold mb-2 text-sm">{t('admin.storeModal.metrics')}</h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.orders')}</div>
+                      <div className="text-xl font-bold">{verification.orders_count || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.products')}</div>
+                      <div className="text-xl font-bold">{verification.products_count || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.revenue')}</div>
+                      <div className="text-xl font-bold text-success">{formatCurrency(verification.total_revenue || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.rating')}</div>
+                      <div className="text-xl font-bold">{verification.rating_avg || 'N/A'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payout Info */}
+          {hasPayoutInfo && (
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2"><Wallet className="w-4 h-4" /> {t('admin.verifications.payoutSection')}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted p-4 rounded-lg text-sm">
+                {verification.payment_method && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.paymentMethod')}</Label>
+                    <div className="mt-1 capitalize">{verification.payment_method}</div>
+                  </div>
+                )}
+                {verification.bank_name && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.bankName')}</Label>
+                    <div className="mt-1">{verification.bank_name}</div>
+                  </div>
+                )}
+                {verification.bank_account_name && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.bankAccountName')}</Label>
+                    <div className="mt-1">{verification.bank_account_name}</div>
+                  </div>
+                )}
+                {verification.bank_account_number && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.bankAccountNumber')}</Label>
+                    <div className="mt-1">{verification.bank_account_number}</div>
+                  </div>
+                )}
+                {verification.routing_number && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.routingNumber')}</Label>
+                    <div className="mt-1">{verification.routing_number}</div>
+                  </div>
+                )}
+                {verification.paypal_email && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.paypalEmail')}</Label>
+                    <div className="mt-1">{verification.paypal_email}</div>
+                  </div>
+                )}
+                {verification.mobile_money_number && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.mobileMoneyNumber')}</Label>
+                    <div className="mt-1">{verification.mobile_money_number}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 border-t pt-4 mt-4">
+          {verification.verification_status === 'pending' && (
+            <div className="flex-1 flex gap-2">
+              <Button
+                className="bg-success hover:bg-success/90"
+                onClick={() => onApprove(verification)}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" /> {t('admin.verifications.approve')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => onReject(verification)}
+              >
+                <AlertCircle className="w-4 h-4 mr-2" /> {t('admin.verifications.reject')}
+              </Button>
+            </div>
+          )}
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -324,6 +611,7 @@ const AdminDashboard = () => {
   const [verificationReason, setVerificationReason] = useState('');
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [verificationAction, setVerificationAction] = useState('approve');
+  const [isVerificationDetailsOpen, setIsVerificationDetailsOpen] = useState(false);
 
   // Reports State
   const [reports, setReports] = useState([]);
@@ -396,6 +684,7 @@ const AdminDashboard = () => {
   const [posts, setPosts] = useState([]);
   const [postSearch, setPostSearch] = useState('');
   const [postFilter, setPostFilter] = useState('all');
+  const [postStatusFilter, setPostStatusFilter] = useState('all');
   const [postLoading, setPostLoading] = useState(false);
   const [postPage, setPostPage] = useState(1);
   const [postPagination, setPostPagination] = useState(null);
@@ -656,6 +945,7 @@ const AdminDashboard = () => {
       const data = await adminAPI.getPosts({
         search: postSearch,
         visibility: postFilter === 'all' ? undefined : postFilter,
+        status: postStatusFilter === 'all' ? undefined : postStatusFilter,
         page,
         limit: 10,
       });
@@ -833,6 +1123,22 @@ const AdminDashboard = () => {
       fetchPosts();
     } catch (error) {
       toast({ title: t('common.error'), description: t('admin.posts.failedUpdateVisibility'), variant: 'destructive' });
+    }
+  };
+
+  const handleUpdatePostStatus = async (postId, status) => {
+    const confirmMessages = {
+      disabled: t('admin.posts.confirmDisable'),
+      archived: t('admin.posts.confirmArchive'),
+      active: t('admin.posts.confirmRestore'),
+    };
+    if (!window.confirm(confirmMessages[status])) return;
+    try {
+      await adminAPI.updatePostStatus(postId, status);
+      toast({ title: t('common.success'), description: t('admin.posts.statusUpdated', { status: t(`admin.posts.status_${status}`) }) });
+      fetchPosts();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.posts.failedUpdateStatus'), variant: 'destructive' });
     }
   };
 
@@ -2147,10 +2453,14 @@ const AdminDashboard = () => {
                     verifications.map((v) => (
                       <TableRow key={v._id}>
                         <TableCell>
-                          <div className="flex flex-col">
+                          <button
+                            type="button"
+                            className="flex flex-col text-left hover:underline"
+                            onClick={() => { setSelectedVerification(v); setIsVerificationDetailsOpen(true); }}
+                          >
                             <span className="font-medium text-sm">{v.name}</span>
                             <span className="text-xs text-muted-foreground">@{v.owner_username}</span>
-                          </div>
+                          </button>
                         </TableCell>
                         <TableCell className="capitalize text-sm">
                           {v.identity_document_type?.replace('_', ' ') || '—'}
@@ -2181,36 +2491,46 @@ const AdminDashboard = () => {
                           {v.identity_submitted_at ? new Date(v.identity_submitted_at).toLocaleDateString() : '—'}
                         </TableCell>
                         <TableCell className="text-right">
-                          {v.verification_status === 'pending' && (
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-success border-success/20 hover:bg-success/10 h-8"
-                                onClick={() => {
-                                  setSelectedVerification(v);
-                                  setVerificationAction('approve');
-                                  setVerificationReason('');
-                                  setIsVerificationModalOpen(true);
-                                }}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.approve')}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8"
-                                onClick={() => {
-                                  setSelectedVerification(v);
-                                  setVerificationAction('reject');
-                                  setVerificationReason('');
-                                  setIsVerificationModalOpen(true);
-                                }}
-                              >
-                                <AlertCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.reject')}
-                              </Button>
-                            </div>
-                          )}
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8"
+                              onClick={() => { setSelectedVerification(v); setIsVerificationDetailsOpen(true); }}
+                            >
+                              <Eye className="w-4 h-4 mr-1" /> {t('admin.verifications.viewDetails')}
+                            </Button>
+                            {v.verification_status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-success border-success/20 hover:bg-success/10 h-8"
+                                  onClick={() => {
+                                    setSelectedVerification(v);
+                                    setVerificationAction('approve');
+                                    setVerificationReason('');
+                                    setIsVerificationModalOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.approve')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8"
+                                  onClick={() => {
+                                    setSelectedVerification(v);
+                                    setVerificationAction('reject');
+                                    setVerificationReason('');
+                                    setIsVerificationModalOpen(true);
+                                  }}
+                                >
+                                  <AlertCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.reject')}
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -2255,6 +2575,26 @@ const AdminDashboard = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <VerificationDetailsModal
+            verification={selectedVerification}
+            isOpen={isVerificationDetailsOpen}
+            onOpenChange={setIsVerificationDetailsOpen}
+            onApprove={(v) => {
+              setSelectedVerification(v);
+              setVerificationAction('approve');
+              setVerificationReason('');
+              setIsVerificationDetailsOpen(false);
+              setIsVerificationModalOpen(true);
+            }}
+            onReject={(v) => {
+              setSelectedVerification(v);
+              setVerificationAction('reject');
+              setVerificationReason('');
+              setIsVerificationDetailsOpen(false);
+              setIsVerificationModalOpen(true);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="subscriptions" className="space-y-4">
@@ -2726,6 +3066,17 @@ const AdminDashboard = () => {
                     <SelectItem value="community">{t('admin.posts.community')}</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={postStatusFilter} onValueChange={(v) => { setPostStatusFilter(v); setPostPage(1); }}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder={t('admin.posts.allStatuses')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('admin.posts.allStatuses')}</SelectItem>
+                    <SelectItem value="active">{t('admin.posts.status_active')}</SelectItem>
+                    <SelectItem value="disabled">{t('admin.posts.status_disabled')}</SelectItem>
+                    <SelectItem value="archived">{t('admin.posts.status_archived')}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button variant="outline" onClick={() => { setPostPage(1); fetchPosts(1); }} disabled={postLoading}>
                   <Search className="w-4 h-4 mr-1" /> {t('common.search')}
                 </Button>
@@ -2738,6 +3089,7 @@ const AdminDashboard = () => {
                     <TableHead>{t('admin.posts.colContent')}</TableHead>
                     <TableHead>{t('admin.posts.colType')}</TableHead>
                     <TableHead>{t('admin.posts.colVisibility')}</TableHead>
+                    <TableHead>{t('admin.posts.colStatus')}</TableHead>
                     <TableHead>{t('admin.posts.colLikes')}</TableHead>
                     <TableHead>{t('admin.posts.colComments')}</TableHead>
                     <TableHead>{t('admin.posts.colDate')}</TableHead>
@@ -2746,9 +3098,9 @@ const AdminDashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {postLoading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-8">{t('common.loading')}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-8">{t('common.loading')}</TableCell></TableRow>
                   ) : posts.length === 0 ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('admin.posts.empty')}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('admin.posts.empty')}</TableCell></TableRow>
                   ) : posts.map((post) => (
                     <TableRow key={post._id}>
                       <TableCell>
@@ -2767,6 +3119,11 @@ const AdminDashboard = () => {
                       <TableCell>
                         <Badge variant={post.visibility === 'public' ? 'default' : post.visibility === 'followers' ? 'secondary' : 'outline'} className="capitalize">
                           {post.visibility}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={post.status === 'disabled' ? 'destructive' : post.status === 'archived' ? 'secondary' : 'outline'} className="capitalize">
+                          {t(`admin.posts.status_${post.status || 'active'}`)}
                         </Badge>
                       </TableCell>
                       <TableCell>{post.likes_count}</TableCell>
@@ -2791,6 +3148,22 @@ const AdminDashboard = () => {
                             <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
                               {t('admin.posts.setCommunity')}
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {post.status !== 'active' && (
+                              <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'active')}>
+                                <UserCheck className="w-4 h-4 mr-2" /> {t('admin.posts.restorePost')}
+                              </DropdownMenuItem>
+                            )}
+                            {post.status !== 'disabled' && (
+                              <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'disabled')}>
+                                <Ban className="w-4 h-4 mr-2" /> {t('admin.posts.disablePost')}
+                              </DropdownMenuItem>
+                            )}
+                            {post.status !== 'archived' && (
+                              <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'archived')}>
+                                <Archive className="w-4 h-4 mr-2" /> {t('admin.posts.archivePost')}
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
                               <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}

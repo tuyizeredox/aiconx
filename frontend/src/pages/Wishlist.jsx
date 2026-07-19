@@ -10,6 +10,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import { wishlistAPI, cartAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
+import BackLink from "@/components/shared/BackLink";
 
 export default function Wishlist() {
   const { t } = useTranslation();
@@ -69,6 +70,7 @@ export default function Wishlist() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      <BackLink to="Settings" label={t("common.backTo", { page: t("nav.settings") })} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">

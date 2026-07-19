@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { notificationsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
+import BackLink from "@/components/shared/BackLink";
 
 const TYPE_ICONS = {
   like: { icon: Heart, color: "bg-red-100 text-red-500" },
@@ -78,6 +79,7 @@ export default function Notifications() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      <BackLink to="Home" label={t("common.backTo", { page: t("nav.home") })} />
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("notifications.title")}</h1>

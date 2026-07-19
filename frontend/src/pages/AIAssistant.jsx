@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Sparkles, Send, Star, ChevronRight,
-  Loader2, Bot, User, RefreshCw, Mic, MicOff, Plus
+  Loader2, Bot, User, RefreshCw, Mic, MicOff, Plus, ArrowLeft
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -313,6 +313,11 @@ export default function AIAssistant({ embedded = false }) {
       {/* Header */}
       <div className="px-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
+          {!embedded && (
+            <Link to={createPageUrl("Home")} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0" aria-label={t("common.backTo", { page: t("nav.home") })}>
+              <ArrowLeft className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            </Link>
+          )}
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-200">
             <Sparkles className="w-5 h-5 text-white" />
           </div>

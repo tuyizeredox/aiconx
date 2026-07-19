@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import AvatarImg from "@/components/shared/AvatarImg";
+import BackLink from "@/components/shared/BackLink";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { affiliateLinksAPI, productsAPI, vendorSubscriptionsAPI, ordersAPI, withdrawalsAPI } from "@/api/apiClient";
@@ -543,6 +544,7 @@ export default function Affiliate() {
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       {/* Hero */}
       <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-400 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200')] bg-cover" />
@@ -678,7 +680,7 @@ export default function Affiliate() {
             {/* My Links */}
             <div className="lg:col-span-3 space-y-3">
               <div className="flex items-center justify-between gap-2 sm:gap-3 mb-2">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">{t("affiliate.myLinks")}</h2>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate min-w-0">{t("affiliate.myLinks")}</h2>
                 <Button onClick={() => setCreating(v => !v)} size="sm" className={`rounded-xl gap-1.5 shrink-0 text-xs sm:text-sm ${creating ? "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600" : "bg-orange-600 hover:bg-orange-700"}`}>
                   <Plus className="w-4 h-4" /> {t("affiliate.newLink")}
                 </Button>

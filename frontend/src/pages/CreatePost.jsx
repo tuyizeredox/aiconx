@@ -15,6 +15,7 @@ import { authAPI, productsAPI, affiliateLinksAPI, communitiesAPI, usersAPI, post
 import { generateVideoThumbnail } from "@/lib/videoThumbnail";
 import { usePostUpload } from "@/lib/PostUploadContext";
 import AvatarImg from "@/components/shared/AvatarImg";
+import BackLink from "@/components/shared/BackLink";
 import { useTranslation } from "react-i18next";
 
 const QUICK_EMOJIS = ["😍", "🔥", "💯", "🎉", "❤️", "✨", "🛍️", "👏"];
@@ -365,6 +366,7 @@ export default function CreatePost() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      <BackLink to="Home" label={t("common.backTo", { page: t("nav.home") })} />
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{isEditMode ? (t("create.editPost") || "Edit Post") : t("create.createPost")}</h1>
 
       {isEditMode && editPostLoading ? (

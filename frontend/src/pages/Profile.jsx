@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import PostCard from "@/components/shared/PostCard";
 import ProductCard from "@/components/shared/ProductCard";
@@ -17,7 +17,7 @@ import {
   Grid3X3, ShoppingBag, UserPlus, UserCheck, LogOut,
   Store, Package, CheckCircle2, Clock, Truck, Pencil, Star, BadgeCheck, Heart,
   Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X,
-  Settings as SettingsIcon, Link2
+  Settings as SettingsIcon, Link2, ArrowLeft
 } from "lucide-react";
 import StarRating from "@/components/reviews/StarRating";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
@@ -114,6 +114,7 @@ export default function Profile() {
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
 
   const targetUsername = profileUsername || currentUser?.username;
@@ -281,6 +282,23 @@ export default function Profile() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      {/* Other users' profiles are reached from many places (a post, search, a
+          followers list, a story...) with no single logical "back to X" page, so
+          unlike the rest of the app's fixed-destination back links, this one uses
+          real browser history — falling back to Home if opened with no history
+          (e.g. a profile link shared directly). Your own profile via the bottom
+          nav stays a top-level tab with no back button. */}
+      {!isOwnProfile && (
+        <button
+          onClick={() => {
+            if (window.history.state?.idx > 0) navigate(-1);
+            else navigate(createPageUrl("Home"));
+          }}
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> {t("common.back")}
+        </button>
+      )}
       {/* Profile Header Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}

@@ -11,6 +11,7 @@ import { Bookmark, ShoppingBag, LayoutGrid, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import BackLink from "@/components/shared/BackLink";
 
 export default function Bookmarks() {
   const { t } = useTranslation();
@@ -65,6 +66,7 @@ export default function Bookmarks() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackLink to="Settings" label={t("common.backTo", { page: t("nav.settings") })} />
       <div className="flex items-center gap-3 mb-8">
         <div className="w-12 h-12 rounded-2xl bg-orange-600 flex items-center justify-center shadow-lg shadow-orange-200">
           <Bookmark className="w-6 h-6 text-white" />

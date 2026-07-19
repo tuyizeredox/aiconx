@@ -23,6 +23,7 @@ import AdvancedAnalytics from "@/components/mystore/AdvancedAnalytics";
 import CouponManager from "@/components/mystore/CouponManager";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
 import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
+import BackLink from "@/components/shared/BackLink";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
 import ColorInput from "@/components/product/ColorInput";
 import SizeInput from "@/components/product/SizeInput";
@@ -264,7 +265,7 @@ export default function MyStore() {
     mutationFn: () => storesAPI.create({
       ...storeForm,
       owner_username: currentUser.username,
-      owner_name: currentUser.full_name,
+      owner_name: currentUser.display_name || currentUser.username,
       status: "active",
     }),
     onSuccess: () => {
@@ -458,6 +459,7 @@ export default function MyStore() {
   if (!store) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} className="mb-8" />
         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-100 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center mx-auto mb-6">
           <Store className="w-9 h-9 text-orange-500" />
         </div>
@@ -697,6 +699,7 @@ export default function MyStore() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       {/* Store Header */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
         {/* Banner */}
@@ -1668,7 +1671,7 @@ export default function MyStore() {
 
       {/* Finance Tab */}
       {activeTab === "finance" && (
-        <VendorFinance />
+        <VendorFinance embedded />
       )}
 
       {/* Coupons Tab */}

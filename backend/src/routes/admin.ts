@@ -585,15 +585,52 @@ export async function adminRoutes(fastify: FastifyInstance) {
       if (status !== 'all') query.verification_status = status;
 
       const stores = await Store.find(query)
-        .select('name owner_username verification_status identity_document_type identity_document_number identity_document_image_url identity_submitted_at identity_reviewed_at identity_reviewed_by identity_rejection_reason')
         .sort({ identity_submitted_at: -1 })
         .skip(skip)
-        .limit(parseInt(limit));
+        .limit(parseInt(limit))
+        .lean();
+
+      // Enrich with the applicant's account details and store performance stats
+      // so the admin can review everything about the applicant and their store in one place.
+      const ownerUsernames = [...new Set(stores.map(s => s.owner_username).filter(Boolean))];
+      const applicants = ownerUsernames.length > 0
+        ? await User.find({ username: { $in: ownerUsernames } })
+            .select('username email display_name phone_number is_phone_verified role created_at')
+            .lean()
+        : [];
+      const applicantByUsername = new Map(applicants.map(u => [u.username, u]));
+
+      const enrichedStores = await Promise.all(stores.map(async (store) => {
+        const productCount = await Product.countDocuments({ store_id: store._id.toString() });
+
+        const revenueResult = await Order.aggregate([
+          { $match: {
+            store_id: store._id.toString(),
+            status: { $ne: 'cancelled' },
+            payment_status: 'paid'
+          }},
+          { $group: { _id: null, total: { $sum: '$total' } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+        const ordersCount = await Order.countDocuments({
+          store_id: store._id.toString(),
+          status: { $ne: 'cancelled' }
+        });
+
+        return {
+          ...store,
+          applicant: applicantByUsername.get(store.owner_username) || null,
+          products_count: productCount,
+          orders_count: ordersCount,
+          total_revenue: totalRevenue,
+        };
+      }));
 
       const total = await Store.countDocuments(query);
 
       return {
-        stores,
+        stores: enrichedStores,
         pagination: {
           total,
           page: parseInt(page),
@@ -1308,11 +1345,12 @@ export async function adminRoutes(fastify: FastifyInstance) {
   // Get all posts
   fastify.get('/posts', async (request, reply) => {
     try {
-      const { page = 1, limit = 10, search = '', visibility } = request.query as any;
+      const { page = 1, limit = 10, search = '', visibility, status } = request.query as any;
       const skip = (parseInt(page) - 1) * parseInt(limit);
 
       const query: any = {};
       if (visibility && visibility !== 'all') query.visibility = visibility;
+      if (status && status !== 'all') query.status = status;
       if (search) {
         const escaped = escapeRegex(search);
         query.$or = [
@@ -1369,6 +1407,63 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Update post status (disable / archive / restore)
+  fastify.patch('/posts/:id/status', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { status, reason } = z.object({
+        status: z.enum(['active', 'disabled', 'archived']),
+        reason: z.string().optional(),
+      }).parse(request.body);
+
+      const admin = request.user as any;
+      const post = await Post.findByIdAndUpdate(
+        id,
+        { status, is_active: status === 'active' },
+        { new: true }
+      );
+      if (!post) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+
+      await logActivity(request, 'update_post_status', post._id, 'post', { status, reason });
+
+      if (post.author_username) {
+        const titles: Record<string, string> = {
+          active: 'Your post was restored',
+          disabled: 'Your post was disabled',
+          archived: 'Your post was archived',
+        };
+        const bodies: Record<string, string> = {
+          active: 'An admin reactivated your post. It is visible again.',
+          disabled: reason || 'An admin disabled your post for review.',
+          archived: reason || 'An admin archived your post.',
+        };
+
+        const ownerNotification = new Notification({
+          recipient_username: post.author_username,
+          type: 'moderation',
+          title: titles[status],
+          body: bodies[status],
+          link: status === 'active' ? undefined : '/community-guidelines',
+          sender_username: admin.username,
+          metadata: { post_id: post._id, action: status },
+        });
+        await ownerNotification.save();
+        fastify.io?.to(`user:${post.author_username}`).emit('notification:new', ownerNotification);
+        NotificationService.sendPushNotification(post.author_username, ownerNotification, fastify);
+      }
+
+      return post;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // Delete post
   fastify.delete('/posts/:id', async (request, reply) => {
     try {
@@ -1379,6 +1474,22 @@ export async function adminRoutes(fastify: FastifyInstance) {
       }
 
       await logActivity(request, 'delete_post', post._id, 'post', { author: post.author_username });
+
+      if (post.author_username) {
+        const admin = request.user as any;
+        const ownerNotification = new Notification({
+          recipient_username: post.author_username,
+          type: 'moderation',
+          title: 'Your post was removed',
+          body: 'An admin removed your post for violating our Community Guidelines.',
+          link: '/community-guidelines',
+          sender_username: admin.username,
+          metadata: { post_id: post._id, action: 'remove' },
+        });
+        await ownerNotification.save();
+        fastify.io?.to(`user:${post.author_username}`).emit('notification:new', ownerNotification);
+        NotificationService.sendPushNotification(post.author_username, ownerNotification, fastify);
+      }
 
       return { success: true };
     } catch (error) {

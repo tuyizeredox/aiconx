@@ -13,6 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { productsAPI, storesAPI } from "@/api/apiClient";
+import BackLink from "@/components/shared/BackLink";
 
 export default function Marketplace() {
   const { t } = useTranslation();
@@ -46,6 +47,7 @@ export default function Marketplace() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
+      <BackLink to="Home" label={t("common.backTo", { page: t("nav.home") })} />
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 rounded-3xl p-6 lg:p-8 mb-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200')] bg-cover bg-center opacity-10" />

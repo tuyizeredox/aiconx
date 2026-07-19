@@ -16,6 +16,7 @@ import { ordersAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import BackLink from "@/components/shared/BackLink";
 
 const TRACKING_STEPS = [
   { key: "pending",    icon: Clock },
@@ -346,6 +347,7 @@ export default function OrderTracking() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      <BackLink to="Settings" label={t("common.backTo", { page: t("nav.settings") })} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{t("orderTracking.title")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">{t("orderTracking.subtitle")}</p>
