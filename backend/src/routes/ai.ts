@@ -190,11 +190,17 @@ export async function aiRoutes(fastify: FastifyInstance) {
       const actionRegex = /\[ACTION:\s*([^,\]]+)(?:,\s*id:\s*([^\]]+))?\]/g;
       let match;
 
+      let recommendedIds: string[] = [];
       while ((match = actionRegex.exec(result.response)) !== null) {
-        actions.push({
-          type: match[1].trim(),
-          data: match[2] ? { id: match[2].trim() } : {}
-        });
+        const type = match[1].trim();
+        const idValue = match[2]?.trim();
+        if (type === 'PRODUCTS') {
+          // Not a UI action on its own — it's how the model tells us which of
+          // the products it actually named in the reply text.
+          if (idValue) recommendedIds = idValue.split('|').map(id => id.trim()).filter(Boolean);
+          continue;
+        }
+        actions.push({ type, data: idValue ? { id: idValue } : {} });
       }
 
       // Strip internal action tags and any leaked internal IDs before showing
@@ -205,10 +211,20 @@ export async function aiRoutes(fastify: FastifyInstance) {
         .replace(/[ \t]{2,}/g, ' ')
         .trim();
 
+      // Only attach product cards for products the model actually named in its
+      // reply (per the [ACTION: PRODUCTS, id: ...] tag), so the "Recommended
+      // for you" widget always matches what the text says — never a generic
+      // fallback shown regardless of what was actually discussed.
+      const candidateProducts = searchContext.length > 0 ? searchContext : discoveryContext;
+      const productsById = new Map(candidateProducts.map((p: any) => [p.id, p]));
+      const products = recommendedIds
+        .map(id => productsById.get(id))
+        .filter((p): p is typeof candidateProducts[number] => Boolean(p));
+
       return {
         reply: cleanReply,
         actions,
-        products: searchContext.length > 0 ? searchContext : discoveryContext.slice(0, 5)
+        products
       };
     } catch (error: any) {
       if (error instanceof z.ZodError) {

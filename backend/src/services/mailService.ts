@@ -43,6 +43,25 @@ export const sendVerificationCode = async (to: string, code: string) => {
   return sendEmail(to, subject, html);
 };
 
+export const sendPasswordResetEmail = async (to: string, resetToken: string) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+  const subject = 'Reset Your Aicon X Password';
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+      <h2 style="color: #f97316; margin-bottom: 24px;">Reset Your Password</h2>
+      <p style="color: #475569; font-size: 16px; line-height: 24px;">We received a request to reset your Aicon X password. Click the button below to choose a new one. This link expires in 1 hour.</p>
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${resetLink}" style="background: #f97316; color: #ffffff; text-decoration: none; font-weight: bold; padding: 14px 32px; border-radius: 8px; display: inline-block;">Reset Password</a>
+      </div>
+      <p style="color: #94a3b8; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+      <p style="color: #64748b; font-size: 13px; word-break: break-all;">${resetLink}</p>
+      <p style="color: #94a3b8; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+    </div>
+  `;
+  return sendEmail(to, subject, html);
+};
+
 export const sendWhatsAppVerification = async (phone: string, code: string) => {
   // In production, integrate with Twilio WhatsApp API or similar
   console.log(`[WhatsApp/SMS] Sending verification code ${code} to ${phone}`);

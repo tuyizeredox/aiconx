@@ -28,15 +28,10 @@ function addToCache(key, value) {
   translationCache[key] = value;
 }
 
-function detectBrowserLang() {
-  const lang = navigator.language?.split("-")[0] || "en";
-  return SUPPORTED_LANGS.find(l => l.code === lang) ? lang : "en";
-}
-
 export function LanguageProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
   const [lang, setLangState] = useState(() => {
-    const stored = localStorage.getItem("iqon_lang") || detectBrowserLang();
+    const stored = localStorage.getItem("iqon_lang") || "en";
     if (i18n.language !== stored) {
       i18n.changeLanguage(stored);
     }

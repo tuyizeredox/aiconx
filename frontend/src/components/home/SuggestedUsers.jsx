@@ -58,15 +58,17 @@ export default function SuggestedUsers({ currentUser }) {
     queryFn: async () => {
       const statuses = {};
       for (const suggestion of allSuggestions) {
+        const key = `${suggestion.type}:${suggestion.username}`;
         try {
           const status = await followsAPI.check({
             follower_username: currentUser.username,
             following_username: suggestion.username,
-            follow_type: suggestion.type
+            follow_type: suggestion.type,
+            target_id: suggestion.type === 'store' ? suggestion.id : undefined
           });
-          statuses[suggestion.username] = status.is_following;
+          statuses[key] = status.is_following;
         } catch (e) {
-          statuses[suggestion.username] = false;
+          statuses[key] = false;
         }
       }
       return statuses;
@@ -77,8 +79,9 @@ export default function SuggestedUsers({ currentUser }) {
   // Filter out already followed - use useMemo to react to followStatuses changes
   const suggestions = useMemo(() => {
     return allSuggestions.filter(item => {
-      const apiSaysFollowing = followStatuses?.[item.username] === true;
-      const localSaysFollowing = localFollowedUsers.has(item.username);
+      const key = `${item.type}:${item.username}`;
+      const apiSaysFollowing = followStatuses?.[key] === true;
+      const localSaysFollowing = localFollowedUsers.has(key);
       const isFollowing = apiSaysFollowing || localSaysFollowing;
       return !isFollowing;
     }).slice(0, 5);
@@ -104,12 +107,14 @@ export default function SuggestedUsers({ currentUser }) {
       // Snapshot previous value
       const previousFollowStatuses = queryClient.getQueryData(["followStatuses", currentUser?.username]);
 
+      const key = `${variables.type}:${variables.username}`;
+
       // Optimistically update follow status
       queryClient.setQueryData(["followStatuses", currentUser?.username], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          [variables.username]: !variables.isFollowing
+          [key]: !variables.isFollowing
         };
       });
 
@@ -117,9 +122,9 @@ export default function SuggestedUsers({ currentUser }) {
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.add(variables.username);
+          newSet.add(key);
         } else {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         }
         return newSet;
       });
@@ -127,14 +132,15 @@ export default function SuggestedUsers({ currentUser }) {
       return { previousFollowStatuses };
     },
     onError: (error, variables, context) => {
+      const key = `${variables.type}:${variables.username}`;
       // Revert optimistic update on error
       queryClient.setQueryData(["followStatuses", currentUser?.username], context.previousFollowStatuses);
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         } else {
-          newSet.add(variables.username);
+          newSet.add(key);
         }
         return newSet;
       });
@@ -177,7 +183,7 @@ export default function SuggestedUsers({ currentUser }) {
       <div className="p-4">
         <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-x-auto sm:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0 scrollbar-hide">
           {suggestions.map((item, idx) => {
-            const isFollowing = followStatuses?.[item.username] || false;
+            const isFollowing = followStatuses?.[`${item.type}:${item.username}`] || false;
             const linkTo = item.type === 'store'
               ? createPageUrl("StoreDetail") + `?id=${item.id}`
               : createPageUrl("Profile") + `?username=${item.username}`;

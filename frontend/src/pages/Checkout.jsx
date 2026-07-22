@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { 
-  ArrowLeft, CreditCard, Shield, Truck, 
+import {
+  ArrowLeft, Shield, Truck,
   MapPin, CheckCircle2, Loader2,
-  Info, Plus, Trash2, Tag, 
-  ChevronRight, ShoppingBag, Store as StoreIcon,
-  Package, Navigation, AlertCircle
+  Info, Plus, Trash2, Tag,
+  ChevronDown, ChevronRight, Store as StoreIcon,
+  Package, Navigation, AlertCircle, Smartphone, Clock, RotateCcw,
+  BadgeCheck, Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,40 +33,81 @@ const PAYMENT_METHODS = [
   { id: 'card',   label: 'Card Payment',      logo: null, emoji: '💳',           mobile: false },
 ];
 
-const CheckoutStep = ({ number, title, active, completed, children, onEdit, summary }) => {
-  const { t } = useTranslation();
+const CheckoutStepper = ({ t, stage }) => {
+  const steps = [
+    { key: "cart", label: t("checkout.stepCart"), state: "done" },
+    { key: "checkout", label: t("checkout.stepCheckout"), state: stage === "confirm" ? "done" : "active" },
+    { key: "confirmation", label: t("checkout.stepConfirmation"), state: stage === "confirm" ? "active" : "upcoming" },
+  ];
   return (
-  <div
-    className={`bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border ${active ? "border-orange-500/50 shadow-lg shadow-orange-500/10 dark:shadow-orange-500/20" : "border-slate-200 dark:border-slate-800"} p-4 sm:p-6 mb-6 transition-all duration-300`}
-  >
-    <div className="flex items-center justify-between gap-3 mb-6">
-      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all shrink-0 ${completed ? "bg-emerald-500 text-white" : active ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`}>
-          {completed ? <CheckCircle2 className="w-5 h-5" /> : number}
-        </div>
-        <h2 className={`font-semibold text-base sm:text-lg truncate ${active ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{title}</h2>
-      </div>
-      {completed && onEdit && (
-        <button onClick={onEdit} className="text-xs font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors shrink-0">{t("checkout.editDetails")}</button>
-      )}
+    <div className="flex items-center gap-1.5 sm:gap-3">
+      {steps.map((s, idx) => (
+        <React.Fragment key={s.key}>
+          <div className="flex flex-col items-center gap-1.5">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 transition-all ${
+              s.state === "done" ? "bg-emerald-500 text-white" :
+              s.state === "active" ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" :
+              "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700"
+            }`}>
+              {s.state === "done" ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : idx + 1}
+            </div>
+            <span className={`text-[10px] sm:text-xs font-semibold whitespace-nowrap ${s.state === "upcoming" ? "text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-200"}`}>{s.label}</span>
+          </div>
+          {idx < steps.length - 1 && (
+            <div className={`w-6 sm:w-16 h-0.5 rounded-full -mt-4 shrink-0 ${s.state === "done" ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+          )}
+        </React.Fragment>
+      ))}
     </div>
-    {(active || !completed) && (
-      <div className={`${!active && "hidden"}`}>
-        {children}
-      </div>
-    )}
-    {completed && !active && (
-        <div className="animate-in fade-in slide-in-from-top-2 duration-500">
-            {summary || (
-                <div className="text-sm text-slate-500 dark:text-slate-400 font-medium bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                    {t("checkout.requirementCompleted")}
-                </div>
-            )}
-        </div>
-    )}
-  </div>
   );
 };
+
+const CheckoutSection = ({ number, title, children }) => (
+  <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 mb-6">
+    <div className="flex items-center gap-3 mb-5">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-orange-500/30">
+        {number}
+      </div>
+      <h2 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">{title}</h2>
+    </div>
+    {children}
+  </div>
+);
+
+const RadioOptionCard = ({ selected, disabled, onSelect, icon: Icon, iconImg, iconEmoji, title, subtitle, badge, badgeFree }) => (
+  <button
+    type="button"
+    onClick={() => !disabled && onSelect()}
+    disabled={disabled}
+    className={`relative flex items-center gap-3 p-4 rounded-xl border text-left transition-all w-full ${
+      disabled
+        ? "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 opacity-60 cursor-not-allowed"
+        : selected
+        ? "border-orange-500 bg-orange-50/70 dark:bg-orange-900/20 shadow-sm"
+        : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+    }`}
+  >
+    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${selected ? "border-orange-500" : "border-slate-300 dark:border-slate-600"}`}>
+      {selected && <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
+    </span>
+    <span className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${selected ? "bg-white dark:bg-slate-900" : "bg-slate-100 dark:bg-slate-800"}`}>
+      {iconImg ? (
+        <img src={iconImg} alt="" className="w-6 h-6 object-contain" />
+      ) : iconEmoji ? (
+        <span className="text-lg">{iconEmoji}</span>
+      ) : Icon ? (
+        <Icon className={`w-5 h-5 ${selected ? "text-orange-600" : "text-slate-500 dark:text-slate-400"}`} />
+      ) : null}
+    </span>
+    <span className="min-w-0 flex-1">
+      <span className={`block font-semibold text-sm truncate ${selected ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{title}</span>
+      {subtitle && <span className="block text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{subtitle}</span>}
+    </span>
+    {badge && (
+      <span className={`text-xs font-semibold shrink-0 ${badgeFree ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>{badge}</span>
+    )}
+  </button>
+);
 
 const FulfillmentMethodCard = ({ method, selected, onSelect, store, subtotal }) => {
   const { t } = useTranslation();
@@ -112,44 +154,27 @@ const FulfillmentMethodCard = ({ method, selected, onSelect, store, subtotal }) 
   const disabled = isDisabled();
 
   return (
-    <button
-      onClick={() => !disabled && onSelect(method)}
+    <RadioOptionCard
+      selected={selected}
       disabled={disabled}
-      className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left group ${
-        disabled
-          ? "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 opacity-60 cursor-not-allowed"
-          : selected
-          ? "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 shadow-md shadow-orange-500/10"
-          : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-      }`}
-    >
-      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${selected ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <div className="min-w-0">
-          <p className={`font-semibold text-sm truncate ${selected ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{getMethodLabel(method)}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate">{getSubLabel()}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {fee !== null && (
-          <span className={`text-sm font-semibold ${fee === freeLabel ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>{fee}</span>
-        )}
-        {selected && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
-      </div>
-    </button>
+      onSelect={() => onSelect(method)}
+      icon={Icon}
+      title={getMethodLabel(method)}
+      subtitle={getSubLabel()}
+      badge={fee}
+      badgeFree={fee === freeLabel}
+    />
   );
 };
 
 export default function Checkout() {
   const { t } = useTranslation();
-  const [step, setStep] = useState(1);
+  const [stage, setStage] = useState("form"); // 'form' | 'confirm'
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddressPanelOpen, setIsAddressPanelOpen] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({ street: "", city: "", state: "", zip: "", phone: "", country: "RW", label: "Home" });
   const [paymentMethod, setPaymentMethod] = useState("mtn");
-  const [mobileMoneyPhone, setMobileMoneyPhone] = useState("");
   const [orderNote, setOrderNote] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -161,13 +186,9 @@ export default function Checkout() {
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneSaving, setPhoneSaving] = useState(false);
   const [pendingPayment, setPendingPayment] = useState(null); // { reference, method, amount, status: 'pending' | 'failed' | 'cancelled' }
-  const [isContinuing, setIsContinuing] = useState(false);
   const [checkoutPhone, setCheckoutPhone] = useState("");
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isQuickPay = searchParams.get("quickpay") === "true";
-  const hasAutoAdvanced = useRef(false);
   const queryClient = useQueryClient();
   const { user: currentUser, isLoadingAuth, isAuthenticated } = useAuth();
 
@@ -246,7 +267,7 @@ export default function Checkout() {
     }
   }, [storesMap]);
 
-  const selectedAddress = useMemo(() => 
+  const selectedAddress = useMemo(() =>
     addressResponse.addresses.find(a => a._id === selectedAddressId) || addressResponse.addresses.find(a => a.is_default) || addressResponse.addresses[0]
   , [addressResponse.addresses, selectedAddressId]);
 
@@ -255,13 +276,6 @@ export default function Checkout() {
         setSelectedAddressId(selectedAddress._id);
     }
   }, [selectedAddress, selectedAddressId]);
-
-  useEffect(() => {
-    if (isQuickPay && selectedAddress && Object.keys(storesMap).length > 0 && !hasAutoAdvanced.current) {
-      hasAutoAdvanced.current = true;
-      setStep(2);
-    }
-  }, [isQuickPay, selectedAddress, storesMap]);
 
   // Initialize delivery selections for all stores
   useEffect(() => {
@@ -276,7 +290,7 @@ export default function Checkout() {
           if (ds.delivery_enabled) enabledMethods.push("delivery");
           if (ds.pickup_enabled) enabledMethods.push("pickup");
           if (enabledMethods.length === 0) enabledMethods.push("shipping");
-          
+
           if (!newSelections[group.store_id]) {
             newSelections[group.store_id] = enabledMethods[0];
           }
@@ -293,6 +307,9 @@ export default function Checkout() {
       return method === "shipping" || method === "delivery";
     });
   }, [storeGroups, storeDeliverySelections]);
+
+  const paymentSectionNumber = needsAddress ? 3 : 2;
+  const noteSectionNumber = needsAddress ? 4 : 3;
 
   const calculations = useMemo(() => {
     let subtotal = 0;
@@ -318,7 +335,7 @@ export default function Checkout() {
         } else {
           // shipping - use shipping zones
           const storeZones = shippingZones.filter(z => z.store_id === group.store_id && z.is_active);
-          const zone = storeZones.find(z => Array.isArray(z.countries) && z.countries.includes(country)) || 
+          const zone = storeZones.find(z => Array.isArray(z.countries) && z.countries.includes(country)) ||
                        storeZones.find(z => Array.isArray(z.countries) && z.countries.includes("WORLD"));
           groupShipping = zone ? (zone.flat_rate || 0) : 0;
           if (zone && zone.free_above > 0 && groupSubtotal >= zone.free_above) groupShipping = 0;
@@ -360,8 +377,9 @@ export default function Checkout() {
     onSuccess: () => {
         refetchAddresses();
         setIsAddingAddress(false);
-        toast({ 
-          title: "Success", 
+        setIsAddressPanelOpen(false);
+        toast({
+          title: "Success",
           description: t("checkout.addressAdded"),
           variant: "default"
         });
@@ -372,15 +390,15 @@ export default function Checkout() {
     mutationFn: (code) => couponsAPI.validateForCart({ code, cart_total: calculations.subtotal }),
     onSuccess: (data) => {
         setAppliedCoupon(data.coupon);
-        toast({ 
-          title: "Success", 
+        toast({
+          title: "Success",
           description: t("checkout.couponApplied"),
           variant: "default"
         });
     },
     onError: (err) => {
-        toast({ 
-          title: "Error", 
+        toast({
+          title: "Error",
           description: err.message || t("checkout.invalidCoupon"),
           variant: "destructive"
         });
@@ -388,23 +406,11 @@ export default function Checkout() {
   });
 
   const validateCheckout = () => {
-    console.log('[Checkout] validateCheckout called');
-    console.log('[Checkout] Validation state:', {
-      storeDeliverySelections,
-      selectedAddressId,
-      needsAddress,
-      paymentMethod,
-      storeGroups: storeGroups.map(g => ({ id: g.store_id, name: g.store_name }))
-    });
-
     // Validate delivery method selection for all stores
     const missingSelections = storeGroups.filter(group => !storeDeliverySelections[group.store_id]);
-    console.log('[Checkout] Missing delivery selections:', missingSelections.map(g => g.store_name));
-    
     if (missingSelections.length > 0) {
-      console.log('[Checkout] Validation failed: Missing delivery selections');
-      toast({ 
-        title: "Validation Error", 
+      toast({
+        title: "Validation Error",
         description: t("checkout.selectDeliveryMethodForAllStores"),
         variant: "destructive"
       });
@@ -412,11 +418,9 @@ export default function Checkout() {
     }
 
     // Validate address if needed
-    console.log('[Checkout] Address validation:', { needsAddress, selectedAddressId });
     if (needsAddress && !selectedAddressId) {
-      console.log('[Checkout] Validation failed: Missing address');
-      toast({ 
-        title: "Validation Error", 
+      toast({
+        title: "Validation Error",
         description: t("checkout.selectOrAddAddress"),
         variant: "destructive"
       });
@@ -429,21 +433,13 @@ export default function Checkout() {
       const ds = store?.delivery_settings || {};
       const method = storeDeliverySelections[group.store_id];
       const groupSubtotal = group.items.reduce((sum, item) => sum + (item.product_price || 0) * (item.quantity || 1), 0);
-      
-      console.log('[Checkout] Store validation:', {
-        store: group.store_name,
-        method,
-        subtotal: groupSubtotal,
-        minOrder: ds.min_order_for_delivery
-      });
-      
+
       if (method === "delivery" && ds.min_order_for_delivery && groupSubtotal < ds.min_order_for_delivery) {
-        console.log('[Checkout] Validation failed: Minimum order not met');
-        toast({ 
-          title: "Validation Error", 
-          description: t("checkout.minOrderRequiredForStore", { 
-            store: group.store_name, 
-            amount: formatCurrency(ds.min_order_for_delivery) 
+        toast({
+          title: "Validation Error",
+          description: t("checkout.minOrderRequiredForStore", {
+            store: group.store_name,
+            amount: formatCurrency(ds.min_order_for_delivery)
           }),
           variant: "destructive"
         });
@@ -452,9 +448,7 @@ export default function Checkout() {
     }
 
     // Validate payment method
-    console.log('[Checkout] Payment method validation:', { paymentMethod });
     if (!paymentMethod) {
-      console.log('[Checkout] Validation failed: No payment method selected');
       toast({
         title: "Validation Error",
         description: t("checkout.selectPaymentMethod"),
@@ -465,7 +459,6 @@ export default function Checkout() {
 
     // Validate phone number for mobile money
     if ((paymentMethod === 'mtn' || paymentMethod === 'airtel') && !checkoutPhone) {
-      console.log('[Checkout] Validation failed: Phone number required for mobile money');
       toast({
         title: "Validation Error",
         description: t("checkout.phoneNumberRequired"),
@@ -474,21 +467,27 @@ export default function Checkout() {
       return false;
     }
 
-    console.log('[Checkout] All validations passed');
     return true;
   };
 
+  const handleReviewOrder = () => {
+    if (!validateCheckout()) return;
+    setStage("confirm");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const selectedPaymentMethodInfo = useMemo(
+    () => PAYMENT_METHODS.find(m => m.id === paymentMethod),
+    [paymentMethod]
+  );
+
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-        console.log('[Checkout] Place Order clicked - starting checkout process');
-
         // Validate before proceeding
         if (!validateCheckout()) {
-          console.log('[Checkout] Validation failed, aborting checkout');
           return null; // Validation failed, error already shown
         }
 
-        console.log('[Checkout] Validation passed, preparing payload');
         if (needsAddress && !selectedAddress) throw new Error(t("checkout.selectDeliveryAddress"));
 
         const payload = {
@@ -505,8 +504,6 @@ export default function Checkout() {
           payload.mobile_money_phone = checkoutPhone;
         }
 
-        console.log('[Checkout] Checkout payload:', payload);
-
         if (needsAddress && selectedAddress) {
             payload.shipping_address = {
                 street: selectedAddress.street,
@@ -516,16 +513,12 @@ export default function Checkout() {
                 country: selectedAddress.country,
                 phone: selectedAddress.phone || currentUser.phone_number || "",
             };
-            console.log('[Checkout] Shipping address added to payload');
         }
 
-        console.log('[Checkout] Calling checkoutAPI.process');
         return await checkoutAPI.process(payload);
     },
     onSuccess: async (data) => {
-        console.log('[Checkout] Checkout API success:', data);
         if (!data) {
-          console.log('[Checkout] No data returned (validation failed)');
           return; // Validation failed
         }
 
@@ -538,7 +531,6 @@ export default function Checkout() {
           return;
         }
         localStorage.setItem('pending_order_ids', JSON.stringify(orderIds));
-        console.log('[Checkout] Stored pending order ids:', orderIds);
 
         // Checkout already initialized the real payment above (using the method
         // and phone chosen on this page, and the actual order ids/total) — use
@@ -569,7 +561,6 @@ export default function Checkout() {
         }
     },
     onError: (err) => {
-        console.log('[Checkout] Checkout API error:', err);
         let errorMsg = err.message || t("checkout.failedToPlaceOrder");
         if (err.message?.includes("Insufficient stock")) {
           errorMsg = t("checkout.insufficientStock");
@@ -580,7 +571,6 @@ export default function Checkout() {
         } else if (/balance/i.test(err.message || "") && !/does not have enough funds/i.test(err.message || "")) {
           errorMsg = "Payment declined: the selected payment method does not have enough funds to cover this order. Please top up or try a different payment method.";
         }
-        console.log('[Checkout] Error message to show:', errorMsg);
         toast({
           title: "Payment Failed",
           description: errorMsg,
@@ -592,8 +582,8 @@ export default function Checkout() {
   const doInitiatePayment = async (method, phone) => {
     const orderId = localStorage.getItem('pending_order_id');
     if (!orderId) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: "Order information lost. Please try again.",
         variant: "destructive"
       });
@@ -602,7 +592,7 @@ export default function Checkout() {
 
     setPayModal(false);
     setMobileMoneyStatus('pending');
-    
+
     try {
       const response = await initializeITECPayPayment({
         amount: calculations.total,
@@ -612,8 +602,8 @@ export default function Checkout() {
         payment_method: method,
         onSuccess: (res) => {
           if (method !== 'card') {
-            toast({ 
-              title: "Success", 
+            toast({
+              title: "Success",
               description: t("subscription.checkPhonePrompt"),
               variant: "default"
             });
@@ -629,8 +619,8 @@ export default function Checkout() {
       });
     } catch (err) {
       setMobileMoneyStatus(null);
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: err.message || t("subscription.paymentInitFailed"),
         variant: "destructive"
       });
@@ -651,8 +641,8 @@ export default function Checkout() {
   const handlePhoneSubmit = async () => {
     const cleaned = phoneInput.trim();
     if (!cleaned || cleaned.length < 9) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: t("subscription.phoneRequired"),
         variant: "destructive"
       });
@@ -690,12 +680,8 @@ export default function Checkout() {
           provider: pendingPayment.method
         });
 
-        console.log('Payment verification result:', result);
-
         const status = result.data?.status || result.status;
         const statusLower = String(status).toLowerCase();
-
-        console.log('Payment status:', statusLower);
 
         if (statusLower === 'failed' || statusLower === 'cancelled' || statusLower === 'rejected') {
           setPendingPayment(prev => ({ ...prev, status: 'failed' }));
@@ -729,7 +715,6 @@ export default function Checkout() {
           navigate(createPageUrl("orders"));
         }
       } catch (error) {
-        console.error('Error polling payment status:', error);
         // Surface the failure immediately instead of leaving the user staring at
         // a spinner forever — let them retry from a clean state.
         setPendingPayment(prev => (prev ? { ...prev, status: 'failed' } : prev));
@@ -779,136 +764,47 @@ export default function Checkout() {
     }
   }, [cartItems, cartLoading, cartFetching, navigate, checkoutMutation.isSuccess]);
 
-  const handleContinueFromStep1 = () => {
-    console.log('[Checkout] Continue to Payment clicked');
-    console.log('[Checkout] Current state:', {
-      step,
-      storeDeliverySelections,
-      selectedAddressId,
-      needsAddress,
-      storeGroups: storeGroups.map(g => ({ id: g.store_id, name: g.store_name }))
-    });
-    
-    setIsContinuing(true);
-    
-    // Validate all store delivery selections
-    const missingSelections = storeGroups.filter(group => !storeDeliverySelections[group.store_id]);
-    console.log('[Checkout] Missing delivery selections:', missingSelections.map(g => g.store_name));
-    
-    if (missingSelections.length > 0) {
-      console.log('[Checkout] Validation failed: Missing delivery selections');
-      toast({ 
-        title: "Validation Error", 
-        description: t("checkout.selectDeliveryMethodForAllStores"),
-        variant: "destructive"
-      });
-      setIsContinuing(false);
-      return;
-    }
-
-    // Validate address if needed
-    console.log('[Checkout] Address validation:', { needsAddress, selectedAddressId });
-    if (needsAddress && !selectedAddressId) {
-      console.log('[Checkout] Validation failed: Missing address');
-      toast({ 
-        title: "Validation Error", 
-        description: t("checkout.selectOrAddAddress"),
-        variant: "destructive"
-      });
-      setIsContinuing(false);
-      return;
-    }
-
-    // Validate delivery minimum orders
-    for (const group of storeGroups) {
-      const store = storesMap[group.store_id];
-      const ds = store?.delivery_settings || {};
-      const method = storeDeliverySelections[group.store_id];
-      const groupSubtotal = group.items.reduce((sum, item) => sum + (item.product_price || 0) * (item.quantity || 1), 0);
-      
-      console.log('[Checkout] Store validation:', {
-        store: group.store_name,
-        method,
-        subtotal: groupSubtotal,
-        minOrder: ds.min_order_for_delivery
-      });
-      
-      if (method === "delivery" && ds.min_order_for_delivery && groupSubtotal < ds.min_order_for_delivery) {
-        console.log('[Checkout] Validation failed: Minimum order not met');
-        toast({ 
-          title: "Validation Error", 
-          description: t("checkout.minOrderRequiredForStore", { 
-            store: group.store_name, 
-            amount: formatCurrency(ds.min_order_for_delivery) 
-          }),
-          variant: "destructive"
-        });
-        setIsContinuing(false);
-        return;
-      }
-    }
-    
-    console.log('[Checkout] All validations passed, moving to step 2');
-    // Small delay to show loading state
-    setTimeout(() => {
-      setStep(2);
-      setIsContinuing(false);
-    }, 300);
-  };
-
-  const getStep1Summary = () => {
-    const methodSummary = storeGroups.map(g => {
-      const method = storeDeliverySelections[g.store_id] || "shipping";
-      const Icon = FULFILLMENT_ICONS[method];
-      return (
-        <div key={g.store_id} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
-          <Icon className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-          <span className="font-bold text-slate-800 dark:text-white">{g.store_name}</span>
-          <span className="text-slate-400 dark:text-slate-500">·</span>
-          <span className="capitalize">{method === "shipping" ? t("checkout.shippingLabel") : method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel")}</span>
-        </div>
-      );
-    });
-
-    return (
-      <div className="bg-slate-50/80 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-3">
-        {methodSummary}
-        {needsAddress && selectedAddress && (
-          <div className="flex items-start gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 mt-3">
-            <MapPin className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{selectedAddress.street}</p>
-              <p className="text-xs text-slate-500">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   if (cartLoading || addressLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-orange-600" /></div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 lg:py-12">
-      <Link to={createPageUrl("cart")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6 sm:mb-8 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> {t("checkout.backToCart")}
-      </Link>
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 lg:py-10">
+      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8 flex-wrap">
+        <Link to={createPageUrl("cart")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0 order-1">
+          <ArrowLeft className="w-4 h-4" /> {t("checkout.backToCart")}
+        </Link>
 
-      <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-12">
+        <div className="order-3 sm:order-2 w-full sm:w-auto flex justify-center mt-2 sm:mt-0">
+          <CheckoutStepper t={t} stage={stage} />
+        </div>
+
+        <div className="hidden sm:flex order-2 sm:order-3 items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shrink-0">
+          <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="text-left leading-tight">
+            <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.secureCheckout")}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">{t("checkout.secureCheckoutDesc")}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{t("common.checkout")}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("checkout.completeInFewSteps")}</p>
+      </div>
+
+      {mobileMoneyStatus === 'completed' && (
+        <div className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
+          <p className="text-sm font-semibold text-green-800 dark:text-green-300">Your payment has been successfully processed!</p>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-12 items-start">
         <div className="min-w-0 lg:col-span-8">
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-8 sm:mb-10 tracking-tight">{t("common.checkout")}</h1>
-          
-          {/* STEP 1: DELIVERY OPTIONS */}
-          <CheckoutStep 
-            number="1" 
-            title={t("checkout.deliveryOptions")} 
-            active={step === 1} 
-            completed={step > 1} 
-            onEdit={() => setStep(1)}
-            summary={getStep1Summary()}
-          >
+          {stage === "form" ? (
+          <>
+          {/* SECTION 1: DELIVERY METHOD */}
+          <CheckoutSection number="1" title={t("checkout.deliveryOptions")}>
             <div className="space-y-6">
-              {/* Per-store delivery method selector */}
               {storeGroups.map((group, idx) => {
                 const store = storesMap[group.store_id];
                 const ds = store?.delivery_settings || {};
@@ -924,24 +820,25 @@ export default function Checkout() {
 
                 return (
                   <div key={group.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-100 dark:border-slate-700" : ""}`}>
-                    <div className="flex items-center gap-2 mb-3 flex-wrap min-w-0">
-                      <StoreIcon className="w-4 h-4 text-orange-500 shrink-0" />
-                      <h3 className="font-black text-sm text-slate-900 dark:text-white tracking-tight truncate max-w-full">{group.store_name}</h3>
-                      {enabledMethods.length === 1 && (
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-0.5 rounded-full capitalize shrink-0">{t("checkout.methodOnly", { method: enabledMethods[0] === "shipping" ? t("checkout.shippingLabel") : enabledMethods[0] === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel") })}</span>
-                      )}
-                    </div>
+                    {storeGroups.length > 1 && (
+                      <div className="flex items-center gap-2 mb-3 flex-wrap min-w-0">
+                        <StoreIcon className="w-4 h-4 text-orange-500 shrink-0" />
+                        <h3 className="font-black text-sm text-slate-900 dark:text-white tracking-tight truncate max-w-full">{group.store_name}</h3>
+                      </div>
+                    )}
 
-                    {enabledMethods.map(method => (
-                      <FulfillmentMethodCard
-                        key={method}
-                        method={method}
-                        selected={selectedMethod === method}
-                        onSelect={(m) => setStoreDeliverySelections(prev => ({ ...prev, [group.store_id]: m }))}
-                        store={store}
-                        subtotal={groupSubtotal}
-                      />
-                    ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {enabledMethods.map(method => (
+                        <FulfillmentMethodCard
+                          key={method}
+                          method={method}
+                          selected={selectedMethod === method}
+                          onSelect={(m) => setStoreDeliverySelections(prev => ({ ...prev, [group.store_id]: m }))}
+                          store={store}
+                          subtotal={groupSubtotal}
+                        />
+                      ))}
+                    </div>
 
                     {storeHasPickup && (
                       <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4 animate-in fade-in duration-300">
@@ -969,410 +866,431 @@ export default function Checkout() {
                   </div>
                 );
               })}
-
-              {/* Delivery Address (only when needed) */}
-              {needsAddress && (
-                <div className="pt-6 border-t-2 border-slate-100 dark:border-slate-700 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-4 h-4 text-orange-500" />
-                    <h3 className="font-black text-sm text-slate-900 dark:text-white">
-                      {storeGroups.every(g => storeDeliverySelections[g.store_id] === "delivery") ? t("checkout.deliveryAddress") : t("checkout.shippingAddress")}
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {addressResponse.addresses.map((addr) => (
-                      <button
-                        key={addr._id}
-                        onClick={() => setSelectedAddressId(addr._id)}
-                        className={`flex flex-col text-left p-4 rounded-xl border transition-all relative group ${
-                          selectedAddressId === addr._id 
-                            ? "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 shadow-md shadow-orange-500/10" 
-                            : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full shrink-0">{addr.label || "Address"}</span>
-                            {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />}
-                        </div>
-                        <p className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-1">{addr.street}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{addr.city}, {addr.state} {addr.zip}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{addr.country}</p>
-                      </button>
-                    ))}
-                    
-                    <button 
-                        onClick={() => setIsAddingAddress(true)}
-                        className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-gradient-to-br hover:from-orange-50 hover:to-orange-50 dark:hover:from-orange-900/10 dark:hover:to-orange-900/10 transition-all group"
-                    >
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-gradient-to-br group-hover:from-orange-100 group-hover:to-orange-100 dark:group-hover:from-orange-900/40 dark:group-hover:to-orange-900/40 flex items-center justify-center mb-2 transition-all">
-                            <Plus className="w-5 h-5 text-slate-400 group-hover:text-orange-600 dark:group-hover:text-orange-400" />
-                        </div>
-                        <span className="text-sm font-semibold text-slate-500 group-hover:text-orange-600 dark:group-hover:text-orange-400">{t("checkout.addNewAddress")}</span>
-                    </button>
-                  </div>
-
-                  {isAddingAddress && (
-                    <div className="mt-6 p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                      <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{t("checkout.newAddressDetails")}</h4>
-                          <button onClick={() => setIsAddingAddress(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">{t("common.cancel")}</button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="col-span-1 sm:col-span-2">
-                            <label htmlFor="addr-label" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.addressLabel")}</label>
-                            <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
-                        </div>
-                        <div className="col-span-1 sm:col-span-2">
-                          <label htmlFor="addr-street" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.streetAddress")}</label>
-                          <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
-                        </div>
-                        <div>
-                          <label htmlFor="addr-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.city")}</label>
-                          <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Kigali" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
-                        </div>
-                        <div>
-                          <label htmlFor="addr-state" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.state")}</label>
-                          <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Kigali City" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
-                        </div>
-                        <div>
-                          <label htmlFor="addr-zip" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.zipCode")}</label>
-                          <Input id="addr-zip" value={newAddress.zip} onChange={e => setNewAddress({...newAddress, zip: e.target.value})} placeholder="100001" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
-                        </div>
-                        <div>
-                          <label htmlFor="addr-phone" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.phone")}</label>
-                          <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+250..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => {
-                            if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.zip || !newAddress.phone) {
-                                toast({ 
-                                  title: "Validation Error", 
-                                  description: t("checkout.fillAllFields"),
-                                  variant: "destructive"
-                                });
-                                return;
-                            }
-                            addAddressMutation.mutate(newAddress);
-                        }} 
-                        disabled={addAddressMutation.isPending}
-                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl h-12 font-semibold shadow-lg shadow-orange-500/30 transition-all"
-                      >
-                        {addAddressMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("checkout.saveAddress")}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <Button 
-                onClick={handleContinueFromStep1}
-                disabled={isContinuing}
-                className="w-full mt-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 h-14 rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98]"
-              >
-                {isContinuing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                {isContinuing ? t("checkout.loading") : t("checkout.continueToPayment")}
-              </Button>
             </div>
-          </CheckoutStep>
+          </CheckoutSection>
 
-          {/* STEP 2: PAYMENT & REVIEW */}
-          <CheckoutStep 
-            number="2" 
-            title={t("checkout.paymentAndReview")} 
-            active={step === 2} 
-            completed={false}
-          >
-            <div className="space-y-6">
-{/* Payment Method */}
-               <div>
-                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">{t("checkout.paymentMethod")}</p>
-                 <div className="space-y-3">
-                   {PAYMENT_METHODS.filter(method => method.id !== 'card').map(method => (
-                     <button
-                       key={method.id}
-                       onClick={() => setPaymentMethod(method.id)}
-                       className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all group ${
-                         paymentMethod === method.id
-                           ? "border-orange-500 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 shadow-md shadow-orange-500/10"
-                           : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                       }`}
-                     >
-                       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0 ${paymentMethod === method.id ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}>
-                           {method.logo ? (
-                             <img src={method.logo} alt={method.label} className="w-5 h-5 object-contain" />
-                           ) : (
-                             <span className="text-lg">{method.emoji}</span>
-                           )}
-                         </div>
-                         <div className="text-left min-w-0">
-                           <p className={`font-semibold text-sm truncate ${paymentMethod === method.id ? "text-orange-900 dark:text-orange-300" : "text-slate-900 dark:text-white"}`}>{method.label}</p>
-                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{t("checkout.mobileMoneyPayment")}</p>
-                         </div>
-                       </div>
-                       {paymentMethod === method.id && <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
-                     </button>
-                   ))}
-                 </div>
+          {/* SECTION 2: DELIVER TO */}
+          {needsAddress && (
+            <CheckoutSection number="2" title={t("checkout.deliverToSectionTitle")}>
+              <div className="space-y-3">
+                {selectedAddress ? (
+                  <div className="flex items-start gap-3 sm:gap-4 p-4 rounded-xl border border-orange-500 bg-orange-50/70 dark:bg-orange-900/20 transition-all">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/30">
+                      <Home className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{selectedAddress.label || "Address"}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5 truncate">{selectedAddress.street}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">{selectedAddress.country}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      {selectedAddress.is_default && (
+                        <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100/70 dark:bg-orange-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{t("checkout.defaultBadge")}</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setIsAddressPanelOpen(o => !o)}
+                        className="text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                        aria-label={t("common.edit")}
+                      >
+                        <ChevronDown className={`w-5 h-5 transition-transform ${isAddressPanelOpen ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setIsAddressPanelOpen(true); setIsAddingAddress(true); }}
+                    className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 font-semibold text-sm hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> {t("checkout.addNewAddress")}
+                  </button>
+                )}
 
-                 {/* Phone Number Input for Mobile Money */}
-                 {paymentMethod === 'mtn' || paymentMethod === 'airtel' ? (
-                   <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                     <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 block">{t("checkout.phoneNumber")}</label>
-                     <Input
-                       type="tel"
-                       placeholder="+250 7XX XXX XXX"
-                       value={checkoutPhone}
-                       onChange={e => setCheckoutPhone(e.target.value)}
-                       className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                     />
-                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{t("checkout.phonePaymentNote")}</p>
-                   </div>
-                 ) : null}
-               </div>
-
-              {/* Order Items Review */}
-              <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-4">{t("checkout.orderReview")}</p>
-                {calculations.storeBreakdown.map((store, idx) => {
-                  const FulfillIcon = FULFILLMENT_ICONS[store.delivery_method] || Truck;
-                  const storeInfo = storesMap[store.store_id];
-                  const ds = storeInfo?.delivery_settings || {};
-                  return (
-                    <div key={store.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-200 dark:border-slate-700 mt-4" : ""}`}>
-                      <div className="flex items-center gap-2 flex-wrap min-w-0">
-                        <StoreIcon className="w-4 h-4 text-orange-600 shrink-0" />
-                        <h3 className="font-semibold text-sm text-slate-900 dark:text-white tracking-tight truncate max-w-full">{store.store_name}</h3>
-                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium shrink-0">{t("checkout.itemsCount", { count: store.items.length })}</span>
-                      </div>
-                      <div className="space-y-3">
-                        {store.items.map(item => (
-                          <div key={item._id} className="flex gap-3 group">
-                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
-                              <img src={item.product_image} alt={item.product_title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                {isAddressPanelOpen && (
+                  <div className="pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    {addressResponse.addresses.length > 1 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {addressResponse.addresses.map((addr) => (
+                          <button
+                            key={addr._id}
+                            onClick={() => { setSelectedAddressId(addr._id); setIsAddressPanelOpen(false); }}
+                            className={`flex flex-col text-left p-3.5 rounded-xl border transition-all ${
+                              selectedAddressId === addr._id
+                                ? "border-orange-500 bg-orange-50/70 dark:bg-orange-900/20"
+                                : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">{addr.label || "Address"}</span>
+                              {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
                             </div>
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                              <h4 className="font-semibold text-slate-900 dark:text-white text-sm truncate">{item.product_title}</h4>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("checkout.qty", { qty: item.quantity, price: formatCurrency(item.product_price) })}</p>
-                            </div>
-                            <div className="text-right flex flex-col justify-center shrink-0">
-                              <p className="font-semibold text-slate-900 dark:text-white text-sm">{formatCurrency(item.product_price * item.quantity)}</p>
-                            </div>
-                          </div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">{addr.street}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{addr.city}, {addr.state} {addr.zip}</p>
+                          </button>
                         ))}
                       </div>
-                      <div className="flex justify-between items-center gap-2 py-2.5 px-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium min-w-0 truncate">
-                          <FulfillIcon className="w-3.5 h-3.5 shrink-0" />
-                          {store.delivery_method === "shipping" ? t("checkout.shippingLabel") : store.delivery_method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel")}
+                    )}
+
+                    {!isAddingAddress ? (
+                      <button
+                        onClick={() => setIsAddingAddress(true)}
+                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 text-sm font-semibold"
+                      >
+                        <Plus className="w-4 h-4" /> {t("checkout.addNewAddress")}
+                      </button>
+                    ) : (
+                      <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{t("checkout.newAddressDetails")}</h4>
+                          <button onClick={() => setIsAddingAddress(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">{t("common.cancel")}</button>
                         </div>
-                        <span className="text-xs font-semibold text-slate-900 dark:text-white shrink-0">{store.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(store.shipping)}</span>
-                      </div>
-                      {store.delivery_method === "pickup" && (
-                        <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
-                          <Info className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            {ds.pickup_instructions && (
-                              <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mb-2">{ds.pickup_instructions}</p>
-                            )}
-                            {storeInfo?.address && (
-                              <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {storeInfo.address}
-                              </p>
-                            )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="col-span-1 sm:col-span-2">
+                            <label htmlFor="addr-label" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.addressLabel")}</label>
+                            <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          </div>
+                          <div className="col-span-1 sm:col-span-2">
+                            <label htmlFor="addr-street" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.streetAddress")}</label>
+                            <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          </div>
+                          <div>
+                            <label htmlFor="addr-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.city")}</label>
+                            <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Kigali" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          </div>
+                          <div>
+                            <label htmlFor="addr-state" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.state")}</label>
+                            <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Kigali City" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          </div>
+                          <div>
+                            <label htmlFor="addr-zip" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.zipCode")}</label>
+                            <Input id="addr-zip" value={newAddress.zip} onChange={e => setNewAddress({...newAddress, zip: e.target.value})} placeholder="100001" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                          </div>
+                          <div>
+                            <label htmlFor="addr-phone" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.phone")}</label>
+                            <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+250..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        <Button
+                          onClick={() => {
+                              if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.zip || !newAddress.phone) {
+                                  toast({
+                                    title: "Validation Error",
+                                    description: t("checkout.fillAllFields"),
+                                    variant: "destructive"
+                                  });
+                                  return;
+                              }
+                              addAddressMutation.mutate(newAddress);
+                          }}
+                          disabled={addAddressMutation.isPending}
+                          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl h-12 font-semibold shadow-lg shadow-orange-500/30 transition-all"
+                        >
+                          {addAddressMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("checkout.saveAddress")}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CheckoutSection>
+          )}
+
+          {/* SECTION: PAYMENT METHOD */}
+          <CheckoutSection number={String(paymentSectionNumber)} title={t("checkout.paymentMethod")}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PAYMENT_METHODS.filter(method => method.id !== 'card').map(method => (
+                  <RadioOptionCard
+                    key={method.id}
+                    selected={paymentMethod === method.id}
+                    onSelect={() => setPaymentMethod(method.id)}
+                    iconImg={method.logo}
+                    iconEmoji={method.emoji}
+                    title={method.label}
+                    subtitle={t("checkout.mobileMoneyPayment")}
+                  />
+                ))}
               </div>
 
-              {/* Order Note */}
-              <div className="pt-6 border-t border-slate-200 dark:border-slate-700 space-y-3">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">{t("checkout.orderNote")}</label>
-                <Textarea 
-                  value={orderNote} 
-                  onChange={e => setOrderNote(e.target.value)} 
-                  placeholder={t("checkout.orderNotePlaceholder")} 
-                  className="rounded-xl min-h-[80px] border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" 
-                />
+              {(paymentMethod === 'mtn' || paymentMethod === 'airtel') && (
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 block">{t("checkout.phoneNumber")}</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                      <span className="text-base leading-none">🇷🇼</span>
+                      <span className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
+                      <Smartphone className="w-4 h-4 text-slate-400" />
+                    </span>
+                    <Input
+                      type="tel"
+                      placeholder="+250 7XX XXX XXX"
+                      value={checkoutPhone}
+                      onChange={e => setCheckoutPhone(e.target.value)}
+                      className="rounded-xl h-12 pl-[4.5rem] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{t("checkout.phonePaymentNote")}</p>
+                </div>
+              )}
+            </div>
+          </CheckoutSection>
+
+          {/* SECTION: ORDER NOTE */}
+          <CheckoutSection number={String(noteSectionNumber)} title={t("checkout.orderNote")}>
+            <Textarea
+              value={orderNote}
+              onChange={e => setOrderNote(e.target.value)}
+              placeholder={t("checkout.orderNotePlaceholder")}
+              className="rounded-xl min-h-[100px] border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+            />
+          </CheckoutSection>
+          </>
+          ) : (
+          <>
+          {/* CONFIRMATION REVIEW */}
+          <button
+            type="button"
+            onClick={() => setStage("form")}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> {t("checkout.backToEdit")}
+          </button>
+
+          <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 mb-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/30">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <h2 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">{t("checkout.orderReview")}</h2>
+            </div>
+
+            <div className="space-y-5">
+              {/* Delivery method per store */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("checkout.deliveryOptions")}</p>
+                  <button type="button" onClick={() => setStage("form")} className="text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">{t("common.edit")}</button>
+                </div>
+                <div className="space-y-2">
+                  {calculations.storeBreakdown.map(store => {
+                    const FulfillIcon = FULFILLMENT_ICONS[store.delivery_method] || Truck;
+                    const label = store.delivery_method === "shipping" ? t("checkout.shippingLabel") : store.delivery_method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel");
+                    return (
+                      <div key={store.store_id} className="flex items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-2 min-w-0 text-sm">
+                          <FulfillIcon className="w-4 h-4 text-orange-500 shrink-0" />
+                          <span className="font-semibold text-slate-900 dark:text-white truncate">{storeGroups.length > 1 ? `${store.store_name} · ${label}` : label}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">{store.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(store.shipping)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Secure Badge */}
-              <div className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 rounded-xl px-4 py-3 border border-orange-200/50 dark:border-orange-800/30">
-                <Shield className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{t("checkout.securePaymentDesc")}</p>
-              </div>
-
-              {/* Mobile Money Payment Status */}
-              {mobileMoneyStatus && (
-                <div className={`p-6 rounded-2xl border-2 animate-in fade-in slide-in-from-bottom-4 duration-500 ${
-                  mobileMoneyStatus === 'pending'
-                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                }`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      mobileMoneyStatus === 'pending'
-                        ? 'bg-amber-100 dark:bg-amber-800'
-                        : 'bg-green-100 dark:bg-green-800'
-                    }`}>
-                      {mobileMoneyStatus === 'pending' ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-amber-600 dark:text-amber-400" />
-                      ) : (
-                        <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className={`font-black text-lg ${
-                        mobileMoneyStatus === 'pending'
-                          ? 'text-amber-900 dark:text-amber-300'
-                          : 'text-green-900 dark:text-green-300'
-                      }`}>
-                        {mobileMoneyStatus === 'pending' ? 'Payment Pending' : 'Payment Completed'}
-                      </h3>
-                      <p className={`text-sm font-medium ${
-                        mobileMoneyStatus === 'pending'
-                          ? 'text-amber-700 dark:text-amber-400'
-                          : 'text-green-700 dark:text-green-400'
-                      }`}>
-                        {mobileMoneyStatus === 'pending'
-                          ? 'Check your phone for the USSD prompt to complete the payment. This may take up to 30 seconds.'
-                          : 'Your payment has been successfully processed!'}
-                      </p>
+              {/* Address */}
+              {needsAddress && selectedAddress && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("checkout.deliverToSectionTitle")}</p>
+                    <button type="button" onClick={() => setStage("form")} className="text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">{t("common.edit")}</button>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <Home className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{selectedAddress.label ? `${selectedAddress.label} · ` : ""}{selectedAddress.street}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}, {selectedAddress.country}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-4">
-                <Button variant="outline" onClick={() => setStep(1)} className="flex-1 h-14 rounded-xl font-semibold text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 dark:hover:bg-slate-800">{t("common.back")}</Button>
-                <Button 
-                  onClick={() => checkoutMutation.mutate()} 
-                  disabled={checkoutMutation.isPending}
-                  className="flex-[2] bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white h-14 rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 flex items-center justify-center gap-3 group"
-                >
-                  {checkoutMutation.isPending ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <>
-                      {t("checkout.placeOrder")} <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </Button>
+              {/* Payment method */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("checkout.paymentMethod")}</p>
+                  <button type="button" onClick={() => setStage("form")} className="text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">{t("common.edit")}</button>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                    {selectedPaymentMethodInfo?.logo
+                      ? <img src={selectedPaymentMethodInfo.logo} alt="" className="w-5 h-5 object-contain" />
+                      : <span className="text-base">{selectedPaymentMethodInfo?.emoji}</span>
+                    }
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{selectedPaymentMethodInfo?.label}</p>
+                    {checkoutPhone && (paymentMethod === 'mtn' || paymentMethod === 'airtel') && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{checkoutPhone}</p>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Order note */}
+              {orderNote && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{t("checkout.orderNote")}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 p-3">{orderNote}</p>
+                </div>
+              )}
             </div>
-          </CheckoutStep>
+          </div>
+          </>
+          )}
         </div>
 
         {/* SUMMARY SIDEBAR */}
         <div className="min-w-0 lg:col-span-4">
           <div className="sticky top-24 space-y-6">
-            <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900/50 dark:to-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-purple-100 dark:from-orange-900/20 dark:to-purple-900/20 rounded-full -mr-16 -mt-16 opacity-50" />
-              
-              <h3 className="font-semibold text-xl text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
-                  <ShoppingBag className="w-5 h-5 text-orange-600" /> {t("cart.orderSummary")}
-              </h3>
+            <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">{t("cart.orderSummary")}</h3>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full whitespace-nowrap">{t("checkout.itemsCount", { count: calculations.itemCount })}</span>
+              </div>
 
-              <div className="space-y-4 relative z-10">
-                {/* Itemized product list */}
-                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-                  {calculations.storeBreakdown.flatMap(store => store.items).map(item => (
-                    <div key={item._id} className="flex justify-between gap-2 text-xs">
-                      <span className="text-slate-600 dark:text-slate-300 truncate min-w-0">
-                        {item.product_title} <span className="text-slate-400 dark:text-slate-500">&times;{item.quantity}</span>
-                      </span>
-                      <span className="text-slate-900 dark:text-white font-medium shrink-0">{formatCurrency(item.product_price * item.quantity)}</span>
+              {/* Itemized product list */}
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1 mb-5">
+                {calculations.storeBreakdown.flatMap(store => store.items).map(item => (
+                  <div key={item._id} className="flex gap-3">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                      <img src={item.product_image} alt={item.product_title} className="w-full h-full object-cover" />
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{item.product_title}</p>
+                      {(item.selected_color || item.selected_size) && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {item.selected_color && <>{t("product.color")}: {item.selected_color}</>}
+                          {item.selected_color && item.selected_size ? " · " : ""}
+                          {item.selected_size && <>{t("product.size")}: {item.selected_size}</>}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t("checkout.qty", { qty: item.quantity, price: formatCurrency(item.product_price) })}</p>
+                    </div>
+                    <div className="text-right shrink-0 flex items-center">
+                      <p className="font-semibold text-sm text-slate-900 dark:text-white">{formatCurrency(item.product_price * item.quantity)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                <div className="h-px bg-slate-200 dark:bg-slate-700" />
+              <div className="h-px bg-slate-200 dark:bg-slate-700 mb-4" />
 
-                <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
-                  <span>{t("checkout.itemsCount", { count: calculations.itemCount })}</span>
-                </div>
+              <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
                   <span>{t("cart.subtotal")}</span>
                   <span className="text-slate-900 dark:text-white font-semibold">{formatCurrency(calculations.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
                   <span>{t("checkout.fulfillment")}</span>
-                  <span className="text-slate-900 dark:text-white font-semibold">{calculations.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(calculations.shipping)}</span>
+                  <span className={calculations.shipping === 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-900 dark:text-white font-semibold"}>
+                    {calculations.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(calculations.shipping)}
+                  </span>
                 </div>
-                {calculations.discount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-semibold bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/30">
-                    <span className="flex items-center gap-2"><Tag className="w-3.5 h-3.5" /> {t("common.discount")}</span>
-                    <span>-{formatCurrency(calculations.discount)}</span>
+                <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
+                  <span>{t("common.discount")}</span>
+                  <span className={calculations.discount > 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-900 dark:text-white font-semibold"}>
+                    {calculations.discount > 0 ? `- ${formatCurrency(calculations.discount)}` : formatCurrency(0)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-px bg-slate-200 dark:bg-slate-700 my-4" />
+
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white">{t("cart.total")}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">{t("checkout.allTaxesIncluded")}</p>
+                </div>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{formatCurrency(calculations.total)}</span>
+              </div>
+
+              {/* Coupon Code */}
+              <div className="mt-5">
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value)}
+                      placeholder={t("checkout.couponPlaceholder")}
+                      className="rounded-xl h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+                    <Button
+                      onClick={() => validateCouponMutation.mutate(couponCode)}
+                      disabled={!couponCode || validateCouponMutation.isPending}
+                      variant="outline"
+                      className="h-11 rounded-xl font-semibold border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20 shrink-0"
+                    >
+                      {validateCouponMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.apply")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-2 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl border border-orange-100 dark:border-orange-800">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white shrink-0">
+                        <Tag className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-orange-900 dark:text-orange-300 uppercase tracking-tight truncate">{appliedCoupon.code}</p>
+                        <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold">{t("checkout.appliedSuccessfully")}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 dark:text-slate-500 hover:text-red-500 p-1 shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
-                
-                <div className="h-px bg-slate-200 dark:bg-slate-700 my-2" />
-                
-                <div className="flex justify-between items-end pt-2">
-                  <div className="flex flex-col">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("cart.total")}</span>
-                      <span className="text-3xl font-semibold text-slate-900 dark:text-white tracking-tight">{formatCurrency(calculations.total)}</span>
+              </div>
+
+              {/* Trust list */}
+              <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0"><Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /></div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.securePaymentTrust")}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("checkout.securePaymentTrustDesc")}</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0"><RotateCcw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /></div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.easyReturns")}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("checkout.easyReturnsDesc")}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0"><Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /></div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.support247")}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("checkout.support247Desc")}</p>
+                  </div>
+                </div>
+              </div>
 
-                {/* Place Order Button */}
+              {/* Pay / Review Button */}
+              {stage === "form" ? (
+                <Button
+                  onClick={handleReviewOrder}
+                  className="w-full h-14 mt-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl font-bold text-base shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {t("checkout.reviewOrder")} <ChevronRight className="w-5 h-5" />
+                </Button>
+              ) : (
                 <Button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={checkoutMutation.isPending}
-                  className="w-full h-14 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98] mt-4"
+                  className="w-full h-14 mt-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl font-bold text-base shadow-lg shadow-orange-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   {checkoutMutation.isPending ? (
-                    <><Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("checkout.processing")}</>
+                    <><Loader2 className="w-5 h-5 animate-spin" /> {t("checkout.processing")}</>
                   ) : (
-                    <><CreditCard className="w-5 h-5 mr-2" /> {t("checkout.placeOrder")}</>
+                    <><Shield className="w-5 h-5" /> {t("checkout.payAmount", { amount: formatCurrency(calculations.total) })}</>
                   )}
                 </Button>
-
-                {/* Coupon Code */}
-                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                    {!appliedCoupon ? (
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("checkout.couponCode")}</label>
-                            <div className="flex gap-2">
-                                <Input 
-                                    value={couponCode} 
-                                    onChange={e => setCouponCode(e.target.value)} 
-                                    placeholder={t("checkout.couponPlaceholder")} 
-                                    className="rounded-xl h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-                                />
-                                <Button 
-                                    onClick={() => validateCouponMutation.mutate(couponCode)}
-                                    disabled={!couponCode || validateCouponMutation.isPending}
-                                    variant="outline" 
-                                    className="h-11 rounded-xl font-semibold border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20"
-                                >
-                                    {validateCouponMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.apply")}
-                                </Button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-between gap-2 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl border border-orange-100 dark:border-orange-800">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white shrink-0">
-                                    <Tag className="w-4 h-4" />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-xs font-black text-orange-900 dark:text-orange-300 uppercase tracking-tight truncate">{appliedCoupon.code}</p>
-                                    <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold">{t("checkout.appliedSuccessfully")}</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 dark:text-slate-500 hover:text-red-500 p-1 shrink-0">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                    )}
-                </div>
-              </div>
+              )}
+              <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-3">{stage === "form" ? t("checkout.reviewBeforePay") : t("checkout.wontBeCharged")}</p>
             </div>
 
             {/* Help/Support info */}
@@ -1390,6 +1308,28 @@ export default function Checkout() {
                 <Link to="/support" className="text-xs font-black text-white hover:text-orange-400 underline underline-offset-4 decoration-white/20">{t("checkout.contactSupport")}</Link>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Bottom trust strip */}
+      <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+          {[
+            { icon: Shield, title: t("checkout.trustSecurePayment"), desc: t("checkout.trustSecurePaymentDesc") },
+            { icon: Smartphone, title: t("checkout.trustMobileMoney"), desc: t("checkout.trustMobileMoneyDesc") },
+            { icon: Truck, title: t("checkout.trustFastDelivery"), desc: t("checkout.trustFastDeliveryDesc") },
+            { icon: BadgeCheck, title: t("checkout.trustSatisfaction"), desc: t("checkout.trustSatisfactionDesc") },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0">
+                <item.icon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{item.title}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{item.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1515,7 +1455,7 @@ export default function Checkout() {
                 <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(pendingPayment.amount)}</p>
               </div>
             </div>
-            
+
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl p-4 mb-4">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />

@@ -9,6 +9,7 @@ import { Product } from '../models/Product';
 import { Review } from '../models/Review';
 import { Notification } from '../models/Notification';
 import { NotificationService } from '../services/notificationService';
+import { Follow } from '../models/Follow';
 
 export async function likeRoutes(fastify: FastifyInstance) {
   // Get likes for a specific target
@@ -293,6 +294,62 @@ export async function likeRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ 
         error: 'Internal server error', 
         message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      });
+    }
+  });
+
+  // Get people the current user follows who also liked a target ("liked by people you follow")
+  fastify.get('/known-likers', {
+    preHandler: fastify.authenticate
+  }, async (request, reply) => {
+    try {
+      const query = request.query as any;
+      const { target_type, target_id, limit = 3 } = query;
+      const user = request.user as any;
+
+      if (!target_type || !target_id) {
+        return reply.code(400).send({ error: 'Missing required parameters: target_type, target_id' });
+      }
+
+      const following = await Follow.find({
+        follower_username: user.username,
+        follow_type: 'user'
+      }).select('following_username').lean();
+
+      const followingUsernames = following.map(f => f.following_username);
+
+      if (followingUsernames.length === 0) {
+        return reply.send({ users: [], total: 0 });
+      }
+
+      const knownLikesFilter = {
+        target_type,
+        target_id,
+        user_username: { $in: followingUsernames }
+      };
+
+      const likes = await Like
+        .find(knownLikesFilter)
+        .sort({ created_at: -1 })
+        .limit(Math.min(parseInt(limit), 20))
+        .lean();
+
+      const total = await Like.countDocuments(knownLikesFilter);
+
+      const usernames = likes.map(l => l.user_username);
+      const users = await User.find({ username: { $in: usernames } })
+        .select('username display_name avatar_url')
+        .lean();
+
+      const usersByUsername = new Map(users.map(u => [u.username, u]));
+      const orderedUsers = usernames.map(u => usersByUsername.get(u)).filter(Boolean);
+
+      return reply.send({ users: orderedUsers, total });
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

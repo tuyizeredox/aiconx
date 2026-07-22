@@ -1,7 +1,7 @@
 // Remove unused imports
 import React, { useState, useEffect, memo } from "react";
 import { useTranslation } from "react-i18next";
-import { postsAPI, bookmarksAPI, followsAPI, affiliateLinksAPI, productsAPI } from "@/api/apiClient";
+import { postsAPI, bookmarksAPI, followsAPI, affiliateLinksAPI, productsAPI, likesAPI } from "@/api/apiClient";
 import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, Link2, UserPlus, UserMinus, Flag, Copy, Repeat2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -68,6 +68,14 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
   });
 
   const isFollowing = followStatus?.is_following || false;
+
+  // Who among the people I follow also liked this post
+  const { data: knownLikers } = useQuery({
+    queryKey: ["knownLikers", "post", postId, currentUser?.username],
+    queryFn: () => likesAPI.getKnownLikers("post", postId, 3),
+    enabled: !!currentUser?.username && !!postId && (displayPost?.likes_count || 0) > 0,
+    staleTime: 60000,
+  });
 
   const firstAffiliateLinkId = displayPost?.affiliate_links?.[0];
   const { data: postAffiliateLink } = useQuery({
@@ -323,6 +331,27 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       setTimeout(() => setShowHeartAnimation(false), 1000);
     }
   };
+
+  // "Liked by @a, @b and N others" when people I follow liked this post,
+  // falling back to a plain like count.
+  const knownLikerUsers = knownLikers?.users || [];
+  const knownLikerTotal = knownLikers?.total || 0;
+  let likedByLabel = null;
+  if (optimisticCount > 0) {
+    if (knownLikerTotal > 0) {
+      const names = knownLikerUsers.map(u => u.display_name || u.username);
+      const othersCount = optimisticCount - knownLikerUsers.length;
+      if (names.length === 1 && othersCount <= 0) {
+        likedByLabel = `Liked by ${names[0]}`;
+      } else if (names.length >= 2 && othersCount <= 0) {
+        likedByLabel = `Liked by ${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      } else {
+        likedByLabel = `Liked by ${names.join(", ")} and ${othersCount.toLocaleString()} other${othersCount === 1 ? "" : "s"}`;
+      }
+    } else {
+      likedByLabel = `${optimisticCount.toLocaleString()} ${optimisticCount === 1 ? (t("common.like") || "like") : (t("common.likes") || "likes")}`;
+    }
+  }
 
   return (
     <>
@@ -674,6 +703,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
                 }`}
               />
             </motion.div>
+            {optimisticCount > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {optimisticCount.toLocaleString()}
+              </span>
+            )}
           </button>
 
           <button
@@ -683,6 +717,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             className="flex items-center outline-none group"
           >
             <MessageCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
+            {displayPost.comments_count > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {displayPost.comments_count.toLocaleString()}
+              </span>
+            )}
           </button>
 
           <button
@@ -697,6 +736,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
                 optimisticReposted ? "text-green-500" : "text-slate-500 dark:text-slate-400 group-hover:text-green-500"
               }`}
             />
+            {optimisticRepostsCount > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {optimisticRepostsCount.toLocaleString()}
+              </span>
+            )}
           </button>
 
           <button
@@ -706,6 +750,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             className="flex items-center outline-none group"
           >
             <Share2 className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
+            {displayPost.shares_count > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {displayPost.shares_count.toLocaleString()}
+              </span>
+            )}
           </button>
         </div>
 
@@ -720,6 +769,15 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
           <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
         </button>
       </div>
+
+      {likedByLabel && (
+        <button
+          onClick={() => setIsDetailModalOpen(true)}
+          className="block w-full text-left px-4 pb-3 -mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:underline"
+        >
+          {likedByLabel}
+        </button>
+      )}
       </motion.div>
 
       <PostDetailModal

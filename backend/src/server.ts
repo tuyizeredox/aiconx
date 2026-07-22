@@ -42,6 +42,7 @@ import { callRoutes } from './routes/calls';
 import { checkoutRoutes } from './routes/checkout';
 import { adminRoutes } from './routes/admin';
 import { setupWebSocket, io } from './websocket/socket';
+import './services/orderCleanupService';
 import { authenticate, authenticateOptional, checkMaintenance, extractLanguage } from './middleware/auth';
 
 const fastify = Fastify({

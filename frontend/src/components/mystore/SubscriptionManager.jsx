@@ -333,36 +333,21 @@ export default function SubscriptionManager({ store, vendorUsername }) {
       return { sub, needsPayment: true, plan };
     },
     onSuccess: async (data) => {
+      // Await the refetch so `subscription` (and its freshly-set pending_plan)
+      // is up to date in the cache before doInitiatePayment reads it — otherwise
+      // picking a method right away could still see the stale pre-mutation record.
+      await queryClient.invalidateQueries({ queryKey: ["vendorSubscription"] });
       if (!data.needsPayment) {
         toast.success(t("subscription.planUpdated", { plan: data.sub.plan }));
-        queryClient.invalidateQueries({ queryKey: ["vendorSubscription"] });
       } else {
-        const targetPlanId = data.sub.pending_plan || data.plan.id;
-        const targetBillingCycle = data.sub.pending_billing_cycle || billing;
-        const targetPlanMeta = PLANS.find(p => p.id === targetPlanId) || data.plan;
-        const prices = backendPrices?.[targetPlanId];
-        const price = targetBillingCycle === "annual"
-          ? (prices?.annual ?? targetPlanMeta.priceAnnual) * 12
-          : (prices?.monthly ?? targetPlanMeta.price);
-
-        queryClient.invalidateQueries({ queryKey: ["vendorSubscription"] });
-try {
-           await initializeITECPayPayment({
-             amount: price,
-             email: user.email,
-             phone: user.phone_number,
-             order_id: `SUB-${data.sub.id || data.sub._id}`,
-             payment_method: 'mtn',
-             onSuccess: (res) => {
-               verifyPayment({ 
-                 id: data.sub.id || data.sub._id, 
-                 reference: res.reference 
-               });
-             }
-           });
-         } catch (err) {
-           toast.error(err.message || t("subscription.paymentInitFailed"));
-         }
+        // Don't charge yet — open the same payment-method/phone-number modal
+        // used by "Pay Now" so the vendor can pick MTN/Airtel/Card and confirm
+        // or enter their phone number right here, instead of silently trying
+        // to charge a possibly-missing saved number and erroring out.
+        setSelectedMethod(null);
+        setPhoneInput(user?.phone_number || "");
+        setPayStep("method");
+        setPayModal(true);
       }
     },
   });
@@ -462,7 +447,17 @@ try {
   ];
 
   const doInitiatePayment = async (method, phone) => {
-    const targetPlanId = subscription.pending_plan || subscription.plan;
+    // The backend only ever accepts payment for a subscription that has a real
+    // pending_plan target — falling back to the current plan here just produces
+    // a confusing "no pending upgrade" error from the server, so bail out early
+    // with a clear message instead of letting that request go out.
+    const targetPlanId = subscription.pending_plan;
+    if (!targetPlanId) {
+      toast.error(t("subscription.noPendingPlan"));
+      setPayModal(false);
+      queryClient.invalidateQueries({ queryKey: ["vendorSubscription"] });
+      return;
+    }
     const targetBillingCycle = subscription.pending_billing_cycle || subscription.billing_cycle;
     const plan = PLANS.find(p => p.id === targetPlanId);
     if (!plan) return;
@@ -569,7 +564,7 @@ try {
               {subscription?.billing_cycle === "annual" ? t("subscription.annual") : t("subscription.monthly")}
             </Badge>
           )}
-          {isPending && (
+          {isPending && subscription?.pending_plan && (
             <Button
               size="sm"
               variant="default"

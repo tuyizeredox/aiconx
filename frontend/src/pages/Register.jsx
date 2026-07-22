@@ -31,11 +31,11 @@ const MemoizedBackground = React.memo(() => (
   </div>
 ));
 
-const PasswordStrength = ({ password }) => {
+const PasswordStrength = ({ password, t }) => {
   const checks = [
-    { label: '6+ characters', pass: password.length >= 6 },
-    { label: 'Uppercase', pass: /[A-Z]/.test(password) },
-    { label: 'Number', pass: /\d/.test(password) },
+    { label: t("auth.passwordStrength6Chars"), pass: password.length >= 6 },
+    { label: t("auth.passwordStrengthUppercase"), pass: /[A-Z]/.test(password) },
+    { label: t("auth.passwordStrengthNumber"), pass: /\d/.test(password) },
   ];
   if (!password) return null;
   const passed = checks.filter(c => c.pass).length;
@@ -92,20 +92,20 @@ const Register = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
-      setError('Google sign-up failed: no credential received. Please try again.');
-      toast({ title: "Google sign-up failed", description: "No credential received. Please try again.", variant: "destructive" });
+      setError(t("auth.googleSignUpNoCredential"));
+      toast({ title: t("auth.googleSignUpFailedTitle"), description: t("auth.noCredentialDesc"), variant: "destructive" });
       return;
     }
     setIsGoogleLoading(true);
     setError('');
     try {
       const res = await googleLogin(credentialResponse.credential);
-      toast({ title: "Account created!", description: "Welcome aboard. Google sign-up successful.", variant: "success" });
+      toast({ title: t("auth.accountCreatedTitle"), description: t("auth.googleSignUpSuccessDesc"), variant: "success" });
       redirectAfterAuth(res.user);
     } catch (err) {
-      const msg = err.message || 'Google sign-up failed. Please try again.';
+      const msg = err.message || t("auth.googleSignUpFailed");
       setError(msg);
-      toast({ title: "Google sign-up failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.googleSignUpFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -113,9 +113,9 @@ const Register = () => {
 
   const handleGoogleError = (err) => {
     console.error('Google OAuth error:', err);
-    const msg = 'Google sign-up failed. Make sure pop-ups are not blocked and try again.';
+    const msg = t("auth.googleSignUpFailedPopup");
     setError(msg);
-    toast({ title: "Google sign-up failed", description: msg, variant: "destructive" });
+    toast({ title: t("auth.googleSignUpFailedTitle"), description: msg, variant: "destructive" });
   };
 
   const handleChange = (e) => {
@@ -127,16 +127,16 @@ const Register = () => {
     setError('');
 
     if (formData.password !== formData.confirm_password) {
-      const msg = 'Passwords do not match';
+      const msg = t("auth.passwordMismatch");
       setError(msg);
-      toast({ title: "Passwords don't match", description: "Please make sure both password fields are identical.", variant: "destructive" });
+      toast({ title: t("auth.passwordsDontMatchTitle"), description: t("auth.passwordsDontMatchDesc"), variant: "destructive" });
       return;
     }
 
     if (!formData.username || formData.username.length < 3) {
-      const msg = 'Username must be at least 3 characters';
+      const msg = t("auth.usernameTooShort");
       setError(msg);
-      toast({ title: "Username too short", description: "Your handle must be at least 3 characters long.", variant: "destructive" });
+      toast({ title: t("auth.usernameTooShortTitle"), description: t("auth.usernameTooShortDesc"), variant: "destructive" });
       return;
     }
 
@@ -148,12 +148,12 @@ const Register = () => {
         password: formData.password,
         display_name: formData.display_name
       });
-      toast({ title: "Welcome aboard!", description: "Your account has been created successfully.", variant: "success" });
+      toast({ title: t("auth.welcomeAboardTitle"), description: t("auth.accountCreatedDesc"), variant: "success" });
       redirectAfterAuth(res.user);
     } catch (err) {
-      const msg = err.message || 'Failed to create account. Please try again.';
+      const msg = err.message || t("auth.createAccountFailedGeneric");
       setError(msg);
-      toast({ title: "Registration failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.registrationFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +172,7 @@ const Register = () => {
           type="button"
           onClick={() => navigate('/welcome')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -182,7 +182,7 @@ const Register = () => {
             type="button"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-            aria-label="Toggle theme"
+            aria-label={t("auth.toggleTheme")}
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -194,7 +194,7 @@ const Register = () => {
           type="button"
           onClick={() => navigate('/welcome')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -204,7 +204,7 @@ const Register = () => {
             type="button"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-            aria-label="Toggle theme"
+            aria-label={t("auth.toggleTheme")}
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -248,7 +248,7 @@ const Register = () => {
                 <Logo
                   size="md"
                   className="flex-col !gap-4 mx-auto"
-                  subtext="Join the Network"
+                  subtext={t("auth.joinTheNetwork")}
                   showDecoration={true}
                 />
               </div>
@@ -359,7 +359,7 @@ const Register = () => {
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
-                      <PasswordStrength password={formData.password} />
+                      <PasswordStrength password={formData.password} t={t} />
                     </div>
 
                     <div className="space-y-1.5">

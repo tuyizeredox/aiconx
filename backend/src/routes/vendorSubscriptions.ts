@@ -350,8 +350,12 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       let syncWarning: string | undefined;
       let message = 'Subscription cancelled';
 
-      // Cancel a pending upgrade before payment is completed
-      if (subscription.pending_plan) {
+      // Cancel a pending upgrade on an already-active paid plan (e.g. pro -> elite
+      // in progress). The current plan stays untouched; only the pending target is cleared.
+      // Must be gated on status === 'active' — a first-time or free -> paid subscription
+      // also has pending_plan set, but its status is 'pending', not 'active', and needs
+      // the full downgrade handled below instead of just clearing the pending fields.
+      if (subscription.pending_plan && subscription.status === 'active') {
         subscription.pending_plan = undefined;
         subscription.pending_billing_cycle = undefined;
         subscription.pending_amount = undefined;
@@ -360,7 +364,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.send({ ...subscription.toObject(), message, warning: syncWarning });
       }
 
-      // Cancel a pending first-time paid subscription and revert to free
+      // Cancel a pending first-time (or free -> paid) subscription and revert to free
       if (subscription.status === 'pending') {
         subscription.plan = 'free';
         subscription.status = 'active';

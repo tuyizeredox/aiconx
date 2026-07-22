@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, MessageCircle, ArrowLeft, ShieldCheck, LifeBuoy, Clock, Sparkles, Flag } from 'lucide-react';
+import { Mail, MessageCircle, ArrowLeft, ShieldCheck, LifeBuoy, Clock, Sparkles, Flag, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/lib/utils';
@@ -29,6 +29,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+
+const SUPPORT_PHONE = "+250793828834";
+const SUPPORT_EMAIL = "support@iqon.ai";
 
 export default function Support() {
   const navigate = useNavigate();
@@ -73,10 +76,20 @@ export default function Support() {
       color: "bg-orange-600",
       onClick: () => {
         const a = document.createElement('a');
-        a.href = 'mailto:support@iqon.ai';
+        a.href = `mailto:${SUPPORT_EMAIL}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+      },
+    },
+    {
+      title: t('support.channels.phoneSupport.title'),
+      description: t('support.channels.phoneSupport.description'),
+      icon: Phone,
+      action: t('support.channels.phoneSupport.action'),
+      color: "bg-emerald-600",
+      onClick: () => {
+        window.open(`https://wa.me/${SUPPORT_PHONE.replace(/[^0-9]/g, '')}`, '_blank');
       },
     }
   ];
@@ -146,6 +159,41 @@ export default function Support() {
             </Button>
           </div>
         ))}
+      </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/30 p-6 md:p-10 mb-16">
+        <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">{t('support.contactInfo.title')}</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-6 max-w-xl">
+          {t('support.contactInfo.description')}
+        </p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <a
+            href={`https://wa.me/${SUPPORT_PHONE.replace(/[^0-9]/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+          >
+            <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center text-white shrink-0">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('support.contactInfo.phoneLabel')}</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{SUPPORT_PHONE}</p>
+            </div>
+          </a>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+          >
+            <div className="w-11 h-11 rounded-xl bg-orange-600 flex items-center justify-center text-white shrink-0">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('support.contactInfo.emailLabel')}</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{SUPPORT_EMAIL}</p>
+            </div>
+          </a>
+        </div>
       </div>
 
       <div className="bg-orange-600 rounded-[3rem] p-8 md:p-12 text-white relative overflow-hidden">

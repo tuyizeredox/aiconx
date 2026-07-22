@@ -554,12 +554,12 @@ export async function followRoutes(fastify: FastifyInstance) {
 
       const followerCount = await Follow.countDocuments(filter);
 
-      // For user follows, also get following count
+      // For user follows, also get following count (across all follow types -
+      // a profile's "following" count includes stores/communities they follow, not just people)
       let followingCount = 0;
       if (follow_type === 'user' && following_username) {
         followingCount = await Follow.countDocuments({
-          follower_username: following_username.toLowerCase(),
-          follow_type: 'user'
+          follower_username: following_username.toLowerCase()
         });
       }
 

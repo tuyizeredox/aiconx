@@ -569,7 +569,7 @@ export default function Chat() {
         content: `💰 Offer: ${formatCurrency(amount)}${productData ? ` for "${productData.title}"` : ""}`,
         message_type: "offer",
         offer_amount: amount,
-        order_id: orderId,
+        ...(orderId ? { order_id: orderId } : {}),
       });
     } catch (error) {
       toast.error(t("chat.failedToCreateOffer"));

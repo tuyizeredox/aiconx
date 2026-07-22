@@ -12,7 +12,7 @@ import {
   User, Lock, Bell, Camera, Loader2,
   ChevronRight, LogOut, Shield, Smartphone,
   Globe, Moon, Mail, CreditCard, LayoutGrid,
-  DollarSign, Link2, Heart, Bookmark, MapPin
+  DollarSign, Link2, Heart, Bookmark, MapPin, LifeBuoy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -658,6 +658,7 @@ export default function Settings() {
               { label: t("nav.wishlist"), icon: Heart, page: "Wishlist" },
               { label: t("nav.bookmarks"), icon: Bookmark, page: "Bookmarks" },
               { label: t("nav.trackOrder"), icon: MapPin, page: "OrderTracking" },
+              { label: t("nav.support"), icon: LifeBuoy, page: "Support" },
             ].map((item) => (
               <Link
                 key={item.page}

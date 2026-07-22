@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { createPageUrl } from "@/lib/utils";
 import { notificationsAPI, messagesAPI, cartAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -23,7 +24,14 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  LayoutGrid,
+  DollarSign,
+  Link2,
+  Heart,
+  Bookmark,
+  MapPin,
+  LifeBuoy
 } from "lucide-react";
 import NotificationBell from "@/components/layout/NotificationBell";
 import GlobalSearch from "@/components/layout/GlobalSearch";
@@ -66,6 +74,17 @@ const SIDEBAR_ITEMS = [
   { name: "Admin", icon: Shield, page: "AdminDashboard", href: "/admin-dashboard", adminOnly: true },
 ];
 
+// Shortcuts otherwise buried in Settings > Quick Links - surfaced in the
+// sidebar so users don't have to dig through Settings to reach them.
+const QUICK_LINK_ITEMS = [
+  { name: "Finance", tKey: "nav.finance", icon: DollarSign, page: "VendorFinance" },
+  { name: "Affiliate", tKey: "nav.affiliate", icon: Link2, page: "Affiliate" },
+  { name: "Wishlist", tKey: "nav.wishlist", icon: Heart, page: "Wishlist" },
+  { name: "Bookmarks", tKey: "nav.bookmarks", icon: Bookmark, page: "Bookmarks" },
+  { name: "Track Order", tKey: "nav.trackOrder", icon: MapPin, page: "OrderTracking" },
+  { name: "Support", tKey: "nav.support", icon: LifeBuoy, page: "Support" },
+];
+
 const HIDE_LAYOUT_PAGES = [];
 
 export default function Layout({ children, currentPageName }) {
@@ -75,6 +94,7 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);
   const [showAllItems, setShowAllItems] = useState(false);
+  const [quickLinksOpen, setQuickLinksOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -223,7 +243,7 @@ export default function Layout({ children, currentPageName }) {
           {(isDesktopExpanded || !isDesktop) && currentUser?.role !== 'super_admin' && <GlobalSearch />}
         </div>
 
-        <nav className="flex-1 px-2 space-y-0.5 overflow-hidden">
+        <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
           {(() => {
             const visibleItems = SIDEBAR_ITEMS.filter((item) => {
               if (item.adminOnly && currentUser?.role !== 'super_admin') return false;
@@ -295,6 +315,54 @@ export default function Layout({ children, currentPageName }) {
                   >
                     <ChevronRight className={`w-5 h-5 transition-transform ${showAllItems ? "rotate-90" : ""}`} />
                   </button>
+                )}
+
+                {/* Quick Links - shortcuts to Finance, Affiliate, Wishlist, Bookmarks,
+                    Track Order and Support without having to open Settings */}
+                {currentUser?.role !== 'super_admin' && (
+                  isCollapsed ? (
+                    <Link
+                      to={createPageUrl("Settings") + "?section=quickLinks"}
+                      onClick={() => !isDesktop && setSidebarOpen(false)}
+                      title={t("settings.quickLinks")}
+                      className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                    >
+                      <LayoutGrid className="w-6 h-6 shrink-0" />
+                    </Link>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setQuickLinksOpen(prev => !prev)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                      >
+                        <LayoutGrid className="w-6 h-6 shrink-0" />
+                        <span className="truncate flex-1 text-left">{t("settings.quickLinks")}</span>
+                        <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${quickLinksOpen ? "rotate-90" : ""}`} />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {quickLinksOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden pl-3 space-y-0.5"
+                          >
+                            {QUICK_LINK_ITEMS.map((link) => (
+                              <Link
+                                key={link.name}
+                                to={createPageUrl(link.page)}
+                                onClick={() => !isDesktop && setSidebarOpen(false)}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                              >
+                                <link.icon className="w-4 h-4 shrink-0" />
+                                <span className="truncate">{t(link.tKey)}</span>
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  )
                 )}
               </>
             );

@@ -17,7 +17,9 @@ import OrderStatusCard from "@/components/chat/OrderStatusCard";
 import SmartActionChips from "@/components/chat/SmartActionChips";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 
-const CHAT_STORAGE_KEY = "aicon_chat_history";
+// Bumped to v2 to drop stale cached histories from before the assistant stopped
+// auto-attaching "Recommended for you" products to every reply.
+const CHAT_STORAGE_KEY = "aicon_chat_history_v2";
 
 const getWelcomeMessage = (t) => ({
   id: "welcome",

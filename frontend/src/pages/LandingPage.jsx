@@ -197,7 +197,7 @@ export default function LandingPage() {
                         )}
                       </div>
                       <div className="p-3">
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mb-1">{product.store_name || "Store"}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mb-1">{product.store_name || t("profile.store")}</p>
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight">{product.title}</h3>
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-base font-bold text-slate-900 dark:text-slate-100">{formatCurrency(product.price)}</span>

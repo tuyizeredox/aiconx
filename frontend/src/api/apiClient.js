@@ -466,7 +466,9 @@ export const likesAPI = {
   getUserLikes: (filters) => {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/likes/user?${query}`);
-  }
+  },
+  getKnownLikers: (targetType, targetId, limit = 3) =>
+    apiClient.get(`/likes/known-likers?target_type=${targetType}&target_id=${targetId}&limit=${limit}`),
 };
 
 export const withdrawalsAPI = {

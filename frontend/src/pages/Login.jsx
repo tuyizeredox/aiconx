@@ -66,21 +66,21 @@ const Login = () => {
 
   const handleBiometricLogin = async () => {
     if (!identifier) {
-      setError('Please enter your email or username first to use biometric login');
-      toast({ title: "Identity required", description: "Enter your email or username before using biometric login.", variant: "destructive" });
+      setError(t("auth.identifierRequiredForBiometric"));
+      toast({ title: t("auth.identityRequiredTitle"), description: t("auth.identityRequiredDesc"), variant: "destructive" });
       return;
     }
     setIsLoading(true);
     setError('');
     try {
       const res = await loginBiometrics(identifier);
-      toast({ title: "Biometric verified!", description: "Welcome back. Redirecting you now.", variant: "success" });
+      toast({ title: t("auth.biometricVerifiedTitle"), description: t("auth.biometricVerifiedDesc"), variant: "success" });
       redirectAfterLogin(res.user);
     } catch (err) {
       console.error(err);
-      const msg = err.message || 'Biometric login failed. Make sure you have registered biometrics for this account.';
+      const msg = err.message || t("auth.biometricLoginFailed");
       setError(msg);
-      toast({ title: "Biometric failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.biometricFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -88,20 +88,20 @@ const Login = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
-      setError('Google login failed: no credential received. Please try again.');
-      toast({ title: "Google sign-in failed", description: "No credential received. Please try again.", variant: "destructive" });
+      setError(t("auth.googleNoCredential"));
+      toast({ title: t("auth.googleSignInFailedTitle"), description: t("auth.noCredentialDesc"), variant: "destructive" });
       return;
     }
     setIsGoogleLoading(true);
     setError('');
     try {
       const res = await googleLogin(credentialResponse.credential);
-      toast({ title: "Signed in!", description: "Welcome back. Google authentication successful.", variant: "success" });
+      toast({ title: t("auth.signedInTitle"), description: t("auth.googleAuthSuccessDesc"), variant: "success" });
       redirectAfterLogin(res.user);
     } catch (err) {
-      const msg = err.message || 'Google login failed. Please try again.';
+      const msg = err.message || t("auth.googleLoginFailed");
       setError(msg);
-      toast({ title: "Google sign-in failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.googleSignInFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -117,11 +117,11 @@ const Login = () => {
     // In Capacitor native builds, the web oauth flow can produce misleading
     // “pop-ups blocked” messages. Show a native-appropriate message.
     const msg = isNative
-      ? (err?.message || 'Google sign-in failed on this device. Please try again.')
-      : 'Google login failed. Make sure pop-ups are not blocked and try again.';
+      ? (err?.message || t("auth.googleLoginFailedNative"))
+      : t("auth.googleLoginFailedPopup");
 
     setError(msg);
-    toast({ title: "Google sign-in failed", description: msg, variant: "destructive" });
+    toast({ title: t("auth.googleSignInFailedTitle"), description: msg, variant: "destructive" });
   };
 
   const handleSubmit = async (e) => {
@@ -133,15 +133,15 @@ const Login = () => {
       if (res.two_factor_required) {
         setTwoFactorToken(res.two_factor_token);
         setShow2FA(true);
-        toast({ title: "Verification required", description: "Enter your 6-digit authentication code to continue." });
+        toast({ title: t("auth.verificationRequiredTitle"), description: t("auth.verificationRequiredDesc") });
       } else {
-        toast({ title: "Welcome back!", description: "You've been signed in successfully.", variant: "success" });
+        toast({ title: t("auth.welcomeBackTitle"), description: t("auth.signedInSuccessDesc"), variant: "success" });
         redirectAfterLogin(res.user);
       }
     } catch (err) {
-      const msg = err.message || 'Failed to login. Please check your credentials.';
+      const msg = err.message || t("auth.loginFailedGeneric");
       setError(msg);
-      toast({ title: "Sign in failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.signInFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -153,12 +153,12 @@ const Login = () => {
     setIsLoading(true);
     try {
       const res = await verify2FA(twoFactorToken, otpToken);
-      toast({ title: "Access granted!", description: "Two-factor authentication successful.", variant: "success" });
+      toast({ title: t("auth.accessGrantedTitle"), description: t("auth.twoFASuccessDesc"), variant: "success" });
       redirectAfterLogin(res.user);
     } catch (err) {
-      const msg = err.message || 'Invalid verification code.';
+      const msg = err.message || t("auth.invalidVerificationCode");
       setError(msg);
-      toast({ title: "Verification failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.verificationFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +177,7 @@ const Login = () => {
           size="icon"
           onClick={() => navigate('/welcome')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -202,7 +202,7 @@ const Login = () => {
           size="icon"
           onClick={() => navigate('/welcome')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -269,7 +269,7 @@ const Login = () => {
                     <Logo
                       size="md"
                       className="flex-col !gap-4 mx-auto"
-                      subtext="Premium Social Commerce"
+                      subtext={t("auth.premiumSocialCommerce")}
                       showDecoration={true}
                     />
                   </div>
@@ -421,7 +421,7 @@ const Login = () => {
                       >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-5 w-5" />}
                       </Button>
-                      <span className="text-[9px] font-black dark:text-slate-600 text-slate-500 uppercase tracking-[0.15em] group-hover:text-orange-400 transition-colors">Biometric</span>
+                      <span className="text-[9px] font-black dark:text-slate-600 text-slate-500 uppercase tracking-[0.15em] group-hover:text-orange-400 transition-colors">{t("auth.biometricLabel")}</span>
                     </div>
                   </div>
 
@@ -453,9 +453,9 @@ const Login = () => {
                       <ShieldCheck className="h-10 w-10" />
                     </motion.div>
                     <div className="space-y-2">
-                      <h1 className="text-3xl font-black dark:text-white text-slate-900 tracking-tighter uppercase">Vault</h1>
+                      <h1 className="text-3xl font-black dark:text-white text-slate-900 tracking-tighter uppercase">{t("auth.vaultTitle")}</h1>
                       <p className="dark:text-slate-500 text-slate-500 font-semibold text-xs tracking-[0.2em] uppercase">
-                        Identity Verification
+                        {t("auth.identityVerification")}
                       </p>
                     </div>
                   </div>
@@ -506,7 +506,7 @@ const Login = () => {
                           <Loader2 className="h-5 w-5 animate-spin text-white" />
                         ) : (
                           <span className="flex items-center gap-3">
-                            Authorize Entry <ShieldCheck className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+                            {t("auth.authorizeEntry")} <ShieldCheck className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                           </span>
                         )}
                       </Button>
@@ -516,7 +516,7 @@ const Login = () => {
                         onClick={() => setShow2FA(false)}
                         className="w-full dark:text-slate-600 text-slate-500 dark:hover:text-white hover:text-slate-900 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                       >
-                        <ArrowRight className="h-3 w-3 rotate-180" /> Back to Authentication
+                        <ArrowRight className="h-3 w-3 rotate-180" /> {t("auth.backToAuthentication")}
                       </button>
                     </div>
                   </form>

@@ -105,20 +105,22 @@ export default function Explore() {
 
       // Check users
       for (const user of suggestedUsers) {
+        const key = `user:${user.username}`;
         try {
           const status = await followsAPI.check({
             follower_username: currentUser.username,
             following_username: user.username,
             follow_type: 'user'
           });
-          statuses[user.username] = status.is_following;
+          statuses[key] = status.is_following;
         } catch (e) {
-          statuses[user.username] = false;
+          statuses[key] = false;
         }
       }
 
       // Check stores
       for (const store of suggestedStores) {
+        const key = `store:${store.owner_username}`;
         try {
           const status = await followsAPI.check({
             follower_username: currentUser.username,
@@ -126,9 +128,9 @@ export default function Explore() {
             follow_type: 'store',
             target_id: store._id
           });
-          statuses[store.owner_username] = status.is_following;
+          statuses[key] = status.is_following;
         } catch (e) {
-          statuses[store.owner_username] = false;
+          statuses[key] = false;
         }
       }
 
@@ -141,8 +143,9 @@ export default function Explore() {
   const filteredSuggestedUsers = useMemo(() => {
     if (!followStatuses) return [];
     return suggestedUsers.filter(user => {
-      const apiSaysFollowing = followStatuses[user.username] === true;
-      const localSaysFollowing = localFollowedUsers.has(user.username);
+      const key = `user:${user.username}`;
+      const apiSaysFollowing = followStatuses[key] === true;
+      const localSaysFollowing = localFollowedUsers.has(key);
       return !apiSaysFollowing && !localSaysFollowing;
     });
   }, [suggestedUsers, followStatuses, localFollowedUsers]);
@@ -150,8 +153,9 @@ export default function Explore() {
   const filteredSuggestedStores = useMemo(() => {
     if (!followStatuses) return [];
     return suggestedStores.filter(store => {
-      const apiSaysFollowing = followStatuses[store.owner_username] === true;
-      const localSaysFollowing = localFollowedUsers.has(store.owner_username);
+      const key = `store:${store.owner_username}`;
+      const apiSaysFollowing = followStatuses[key] === true;
+      const localSaysFollowing = localFollowedUsers.has(key);
       return !apiSaysFollowing && !localSaysFollowing;
     });
   }, [suggestedStores, followStatuses, localFollowedUsers]);
@@ -172,33 +176,35 @@ export default function Explore() {
     },
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ["exploreFollowStatuses", currentUser?.username] });
+      const key = `${variables.type}:${variables.username}`;
       const previousFollowStatuses = queryClient.getQueryData(["exploreFollowStatuses", currentUser?.username]);
       queryClient.setQueryData(["exploreFollowStatuses", currentUser?.username], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          [variables.username]: !variables.isFollowing
+          [key]: !variables.isFollowing
         };
       });
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.add(variables.username);
+          newSet.add(key);
         } else {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         }
         return newSet;
       });
       return { previousFollowStatuses };
     },
     onError: (error, variables, context) => {
+      const key = `${variables.type}:${variables.username}`;
       queryClient.setQueryData(["exploreFollowStatuses", currentUser?.username], context.previousFollowStatuses);
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         } else {
-          newSet.add(variables.username);
+          newSet.add(key);
         }
         return newSet;
       });
@@ -264,7 +270,7 @@ export default function Explore() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {filteredSuggestedUsers.map((user) => {
-                const isFollowing = followStatuses?.[user.username] || false;
+                const isFollowing = followStatuses?.[`user:${user.username}`] || false;
                 return (
                   <div key={user.username} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
                     <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
@@ -300,7 +306,7 @@ export default function Explore() {
                 );
               })}
               {filteredSuggestedStores.map((store) => {
-                const isFollowing = followStatuses?.[store.owner_username] || false;
+                const isFollowing = followStatuses?.[`store:${store.owner_username}`] || false;
                 return (
                   <div key={store._id} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
                     <Link to={createPageUrl("StoreDetail") + `?id=${store._id}`} className="flex items-center gap-3 min-w-0 flex-1">

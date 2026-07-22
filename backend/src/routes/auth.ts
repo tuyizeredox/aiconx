@@ -13,7 +13,7 @@ import {
 } from '@simplewebauthn/server';
 import { User } from '../models/User';
 import { Settings } from '../models/Settings';
-import { sendVerificationCode, sendWhatsAppVerification } from '../services/mailService';
+import { sendVerificationCode, sendWhatsAppVerification, sendPasswordResetEmail } from '../services/mailService';
 
 const googleClient = new OAuth2Client();
 
@@ -772,8 +772,8 @@ export async function authRoutes(fastify: FastifyInstance) {
       user.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour
       await user.save();
 
-      // Send email
-      await sendVerificationCode(email, resetToken);
+      // Send email with a clickable reset link
+      await sendPasswordResetEmail(email, resetToken);
 
       // In development, log the token
       if (process.env.NODE_ENV === 'development') {

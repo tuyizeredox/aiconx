@@ -19,7 +19,7 @@ const sendMessageSchema = z.object({
     image: z.string().optional(),
   }).optional(),
   offer_amount: z.number().optional(),
-  order_id: z.string().optional(),
+  order_id: z.string().nullable().optional(),
   reply_to_content: z.string().optional(),
   reply_to_name: z.string().optional(),
 });
@@ -202,12 +202,17 @@ export async function messageRoutes(fastify: FastifyInstance) {
       const user = request.user as any;
       const body = sendMessageSchema.parse(request.body);
 
-      const safetyCheck = checkPaymentSolicitation(body.content);
-      if (safetyCheck.blocked) {
-        return reply.code(400).send({
-          error: 'Message blocked',
-          message: "For your safety, payment details and off-platform payment requests can't be sent in chat. All purchases go through checkout.",
-        });
+      // Offers are a structured, in-app feature (numeric amount tied to an order),
+      // not free-form text soliciting off-platform payment, so they're exempt from
+      // the anti-solicitation heuristic below.
+      if (body.message_type !== 'offer') {
+        const safetyCheck = checkPaymentSolicitation(body.content);
+        if (safetyCheck.blocked) {
+          return reply.code(400).send({
+            error: 'Message blocked',
+            message: "For your safety, payment details and off-platform payment requests can't be sent in chat. All purchases go through checkout.",
+          });
+        }
       }
 
       // If no conversation_id, create one from both usernames

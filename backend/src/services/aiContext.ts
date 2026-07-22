@@ -148,14 +148,25 @@ export async function getDiscoveryContext() {
   }));
 }
 
+// Greetings/small talk that should never be treated as a product search, even
+// though as bare substrings they coincidentally appear inside common words
+// (e.g. "hi" inside "Hiking", "Shirt", "Highlighter").
+const CHITCHAT_MESSAGES = new Set([
+  'hi', 'hii', 'hiii', 'hello', 'hey', 'yo', 'sup', 'ok', 'okay', 'yes', 'no',
+  'thanks', 'thank you', 'thx', 'bye', 'good morning', 'good afternoon',
+  'good evening', 'good night', 'how are you', "what's up",
+]);
+
 /**
  * Query the database for relevant products based on a search query
  */
 export async function searchProducts(query: string) {
-  if (!query) return [];
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 3 || CHITCHAT_MESSAGES.has(trimmed.toLowerCase())) return [];
 
-  // Simple regex-based search for titles, descriptions, categories, and tags
-  const searchRegex = new RegExp(escapeRegex(query), 'i');
+  // Whole-word match so short/common queries (e.g. "hi") don't spuriously
+  // match unrelated products purely because the letters appear mid-word.
+  const searchRegex = new RegExp(`\\b${escapeRegex(trimmed)}\\b`, 'i');
   const products = await Product.find({
     status: 'active',
     $or: [
@@ -185,9 +196,10 @@ export async function searchProducts(query: string) {
  * Query the database for relevant stores based on a search query
  */
 export async function searchStores(query: string) {
-  if (!query) return [];
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 3 || CHITCHAT_MESSAGES.has(trimmed.toLowerCase())) return [];
 
-  const searchRegex = new RegExp(escapeRegex(query), 'i');
+  const searchRegex = new RegExp(`\\b${escapeRegex(trimmed)}\\b`, 'i');
   const stores = await Store.find({
     status: 'active',
     $or: [
@@ -287,6 +299,7 @@ ${productsToShow.map((p: any) => `- [ID: ${p.id}] ${p.title} - $${p.price} (${p.
    - If USER CONTEXT has no "Recent Orders" line, or none match what was asked, say plainly that you don't see any orders (e.g. "I don't see any recent orders on your account.") and suggest checking the Orders page. NEVER invent an order number, date, status, or ETA that isn't in the context — fabricating order details is strictly forbidden even to sound helpful.
 3. ACTIONS: You can trigger specialized UI components using this format at the end of your message: [ACTION: TYPE, id: VALUE]
    - For orders: [ACTION: ORDER_CARD, id: ORDER_ID]
+   - For products: if your reply names one or more specific products from AVAILABLE PRODUCTS TO RECOMMEND, end the message with [ACTION: PRODUCTS, id: ID1|ID2|ID3] listing exactly the IDs of the products you named, in the order you named them, using the real [ID: ...] values from that section. Omit this action entirely if your reply doesn't name any specific products (e.g. a greeting, a policy answer, or "I don't have that information") — never include it just because products were available in context.
 4. DISCOVERY: If it's a new conversation or the user asks "what's new", show the available products.
 5. SUPPORT: Use the PLATFORM HELP section to answer common questions about tracking, returns, and payments.
 6. STORES: If a user asks for a specific store or category, use the RELEVANT STORES context to help them find vendors.
