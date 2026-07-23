@@ -31,7 +31,15 @@ import {
   Heart,
   Bookmark,
   MapPin,
-  LifeBuoy
+  LifeBuoy,
+  BarChart3,
+  FileText,
+  Megaphone,
+  CreditCard,
+  Flag,
+  Wallet,
+  ShieldCheck,
+  History
 } from "lucide-react";
 import NotificationBell from "@/components/layout/NotificationBell";
 import GlobalSearch from "@/components/layout/GlobalSearch";
@@ -57,7 +65,26 @@ const ADMIN_NAV_ITEMS = [
   { name: "Profile", tKey: "nav.profile", icon: User, page: "Profile" },
 ];
 
-const ALLOWED_ADMIN_SIDEBAR_NAMES = ["Admin", "Profile", "Messages", "Notifications"];
+// Full admin panel navigation - one entry per AdminDashboard tab, plus the
+// account shortcuts admins still need, so every admin page is one click away.
+const ADMIN_SIDEBAR_ITEMS = [
+  { name: "Overview", tKey: "admin.tabs.overview", icon: BarChart3, page: "AdminDashboard", href: "/admin-dashboard?tab=overview" },
+  { name: "Users", tKey: "admin.tabs.users", icon: Users, page: "AdminDashboard", href: "/admin-dashboard?tab=users" },
+  { name: "Stores", tKey: "admin.tabs.stores", icon: Store, page: "AdminDashboard", href: "/admin-dashboard?tab=stores" },
+  { name: "Products", tKey: "admin.tabs.products", icon: Package, page: "AdminDashboard", href: "/admin-dashboard?tab=products" },
+  { name: "Posts", tKey: "admin.tabs.posts", icon: FileText, page: "AdminDashboard", href: "/admin-dashboard?tab=posts" },
+  { name: "Announcements", tKey: "admin.tabs.announcements", icon: Megaphone, page: "AdminDashboard", href: "/admin-dashboard?tab=announcements" },
+  { name: "Subscriptions", tKey: "admin.tabs.subscriptions", icon: CreditCard, page: "AdminDashboard", href: "/admin-dashboard?tab=subscriptions" },
+  { name: "Moderation", tKey: "admin.tabs.moderation", icon: Flag, page: "AdminDashboard", href: "/admin-dashboard?tab=moderation" },
+  { name: "Orders", tKey: "admin.tabs.orders", icon: ShoppingBag, page: "AdminDashboard", href: "/admin-dashboard?tab=orders" },
+  { name: "Withdrawals", tKey: "admin.tabs.withdrawals", icon: Wallet, page: "AdminDashboard", href: "/admin-dashboard?tab=withdrawals" },
+  { name: "Verifications", tKey: "admin.tabs.verifications", icon: ShieldCheck, page: "AdminDashboard", href: "/admin-dashboard?tab=verifications" },
+  { name: "Logs", tKey: "admin.tabs.logs", icon: History, page: "AdminDashboard", href: "/admin-dashboard?tab=logs" },
+  { name: "Settings", tKey: "admin.tabs.settings", icon: SettingsIcon, page: "AdminDashboard", href: "/admin-dashboard?tab=settings" },
+  { name: "Messages", tKey: "nav.messages", icon: MessageCircle, page: "Chat" },
+  { name: "Notifications", tKey: "nav.notifications", icon: Bell, page: "Notifications" },
+  { name: "Profile", tKey: "nav.profile", icon: User, page: "Profile" },
+];
 
 const SIDEBAR_ITEMS = [
   { name: "Feed", tKey: "nav.home", icon: Home, page: "Home" },
@@ -245,11 +272,9 @@ export default function Layout({ children, currentPageName }) {
 
         <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
           {(() => {
-            const visibleItems = SIDEBAR_ITEMS.filter((item) => {
-              if (item.adminOnly && currentUser?.role !== 'super_admin') return false;
-              if (currentUser?.role === 'super_admin' && !ALLOWED_ADMIN_SIDEBAR_NAMES.includes(item.name)) return false;
-              return true;
-            });
+            const visibleItems = currentUser?.role === 'super_admin'
+              ? ADMIN_SIDEBAR_ITEMS
+              : SIDEBAR_ITEMS.filter((item) => !item.adminOnly);
             const COLLAPSED_LIMIT = 7;
             const isCollapsed = !isDesktopExpanded && isDesktop;
             const itemsToShow = isCollapsed && !showAllItems
@@ -262,8 +287,9 @@ export default function Layout({ children, currentPageName }) {
                 {itemsToShow.map((item) => {
                   const queryParams = new URLSearchParams(window.location.search);
                   const currentTab = queryParams.get("tab");
-                  const itemTab = item.params ? new URLSearchParams(item.params).get("tab") : null;
-                  const isActive = currentPageName === item.page && (itemTab ? currentTab === itemTab : !currentTab);
+                  const itemQuery = item.href ? (item.href.split("?")[1] || "") : (item.params || "");
+                  const itemTab = new URLSearchParams(itemQuery).get("tab");
+                  const isActive = currentPageName === item.page && currentTab === itemTab;
                   return (
                     <Link
                       key={item.name}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { formatCurrency } from '@/lib/utils';
 import { adminAPI } from '@/api/apiClient';
@@ -553,9 +554,19 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
+
+  // Sidebar links navigate here with ?tab=<name> - keep the open tab in sync
+  // so clicking a sidebar item always lands on the right admin section.
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -1467,7 +1478,7 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4" onValueChange={setActiveTab}>
+      <Tabs value={activeTab} className="space-y-4" onValueChange={setActiveTab}>
         <TabsList className="w-full h-auto flex-nowrap justify-start overflow-x-auto overscroll-x-contain snap-x snap-mandatory whitespace-nowrap scrollbar-hide">
           <TabsTrigger value="overview" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.overview')}</TabsTrigger>
           <TabsTrigger value="users" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.users')}</TabsTrigger>
