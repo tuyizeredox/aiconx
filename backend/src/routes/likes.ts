@@ -311,6 +311,8 @@ export async function likeRoutes(fastify: FastifyInstance) {
         return reply.code(400).send({ error: 'Missing required parameters: target_type, target_id' });
       }
 
+      const parsedLimit = Math.min(parseInt(limit) || 3, 20);
+
       const following = await Follow.find({
         follower_username: user.username,
         follow_type: 'user'
@@ -318,25 +320,57 @@ export async function likeRoutes(fastify: FastifyInstance) {
 
       const followingUsernames = following.map(f => f.following_username);
 
-      if (followingUsernames.length === 0) {
-        return reply.send({ users: [], total: 0 });
+      // People I follow who liked this, most recent first
+      const followedLikes = followingUsernames.length > 0
+        ? await Like
+            .find({ target_type, target_id, user_username: { $in: followingUsernames } })
+            .sort({ created_at: -1 })
+            .limit(parsedLimit)
+            .lean()
+        : [];
+
+      const followedUsernames = followedLikes.map(l => l.user_username);
+      const remaining = parsedLimit - followedUsernames.length;
+
+      // Fill any remaining slots with the most-followed people who liked this
+      // (people I don't already follow), so a post with no likes from my
+      // network still shows recognizable names instead of just a number.
+      let popularUsernames: string[] = [];
+      if (remaining > 0) {
+        const excluded = [...followedUsernames, user.username];
+        const otherLikes = await Like
+          .find({ target_type, target_id, user_username: { $nin: excluded } })
+          .select('user_username')
+          .sort({ created_at: -1 })
+          .limit(200)
+          .lean();
+
+        const candidateUsernames = [...new Set(otherLikes.map(l => l.user_username))];
+        if (candidateUsernames.length > 0) {
+          const rankedByFollowers = await Follow.aggregate([
+            { $match: { following_username: { $in: candidateUsernames }, follow_type: 'user' } },
+            { $group: { _id: '$following_username', follower_count: { $sum: 1 } } },
+            { $sort: { follower_count: -1 } },
+            { $limit: remaining }
+          ]);
+          popularUsernames = rankedByFollowers.map(f => f._id);
+
+          // Candidates with zero followers never show up in the aggregation
+          // (nothing to $match) - fall back to filling the rest by recency.
+          if (popularUsernames.length < remaining) {
+            const alreadyPicked = new Set(popularUsernames);
+            for (const username of candidateUsernames) {
+              if (popularUsernames.length >= remaining) break;
+              if (!alreadyPicked.has(username)) {
+                popularUsernames.push(username);
+                alreadyPicked.add(username);
+              }
+            }
+          }
+        }
       }
 
-      const knownLikesFilter = {
-        target_type,
-        target_id,
-        user_username: { $in: followingUsernames }
-      };
-
-      const likes = await Like
-        .find(knownLikesFilter)
-        .sort({ created_at: -1 })
-        .limit(Math.min(parseInt(limit), 20))
-        .lean();
-
-      const total = await Like.countDocuments(knownLikesFilter);
-
-      const usernames = likes.map(l => l.user_username);
+      const usernames = [...followedUsernames, ...popularUsernames];
       const users = await User.find({ username: { $in: usernames } })
         .select('username display_name avatar_url')
         .lean();
@@ -344,7 +378,7 @@ export async function likeRoutes(fastify: FastifyInstance) {
       const usersByUsername = new Map(users.map(u => [u.username, u]));
       const orderedUsers = usernames.map(u => usersByUsername.get(u)).filter(Boolean);
 
-      return reply.send({ users: orderedUsers, total });
+      return reply.send({ users: orderedUsers, total: orderedUsers.length });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({

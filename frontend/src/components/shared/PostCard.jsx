@@ -333,23 +333,40 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
   };
 
   // "Liked by @a, @b and N others" when people I follow liked this post,
-  // falling back to a plain like count.
+  // falling back to a plain like count. Names link to their profile; my own
+  // like reads as "You" instead of my own name, and isn't a link.
   const knownLikerUsers = knownLikers?.users || [];
   const knownLikerTotal = knownLikers?.total || 0;
-  let likedByLabel = null;
+  const withCommas = (nodes) => nodes.flatMap((n, i) => (i === 0 ? [n] : [", ", n]));
+  let likedByNode = null;
   if (optimisticCount > 0) {
     if (knownLikerTotal > 0) {
-      const names = knownLikerUsers.map(u => u.display_name || u.username);
+      const nameNodes = knownLikerUsers.map((u) => {
+        const isSelf = currentUser && u.username === currentUser.username;
+        const label = isSelf ? "You" : (u.display_name || u.username);
+        return isSelf ? (
+          <span key={u.username}>{label}</span>
+        ) : (
+          <Link
+            key={u.username}
+            to={createPageUrl("Profile") + `?username=${u.username}`}
+            className="hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {label}
+          </Link>
+        );
+      });
       const othersCount = optimisticCount - knownLikerUsers.length;
-      if (names.length === 1 && othersCount <= 0) {
-        likedByLabel = `Liked by ${names[0]}`;
-      } else if (names.length >= 2 && othersCount <= 0) {
-        likedByLabel = `Liked by ${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      if (nameNodes.length === 1 && othersCount <= 0) {
+        likedByNode = <>Liked by {nameNodes[0]}</>;
+      } else if (nameNodes.length >= 2 && othersCount <= 0) {
+        likedByNode = <>Liked by {withCommas(nameNodes.slice(0, -1))} and {nameNodes[nameNodes.length - 1]}</>;
       } else {
-        likedByLabel = `Liked by ${names.join(", ")} and ${othersCount.toLocaleString()} other${othersCount === 1 ? "" : "s"}`;
+        likedByNode = <>Liked by {withCommas(nameNodes)} and {othersCount.toLocaleString()} other{othersCount === 1 ? "" : "s"}</>;
       }
     } else {
-      likedByLabel = `${optimisticCount.toLocaleString()} ${optimisticCount === 1 ? (t("common.like") || "like") : (t("common.likes") || "likes")}`;
+      likedByNode = `${optimisticCount.toLocaleString()} ${optimisticCount === 1 ? (t("common.like") || "like") : (t("common.likes") || "likes")}`;
     }
   }
 
@@ -770,13 +787,16 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         </button>
       </div>
 
-      {likedByLabel && (
-        <button
+      {likedByNode && (
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setIsDetailModalOpen(true)}
-          className="block w-full text-left px-4 pb-3 -mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:underline"
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setIsDetailModalOpen(true); }}
+          className="w-full text-left px-4 pb-3 -mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:underline cursor-pointer"
         >
-          {likedByLabel}
-        </button>
+          {likedByNode}
+        </div>
       )}
       </motion.div>
 

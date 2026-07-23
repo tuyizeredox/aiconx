@@ -1385,99 +1385,6 @@ const AdminDashboard = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.users || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.platformUsers')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.activeStores')}</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.stores?.active || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.pendingApproval', { count: stats?.counts?.stores?.pending || 0 })}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.totalProducts')}</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.products || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.liveProducts')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.pendingWithdrawals')}</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.withdrawals?.pending || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.awaitingProcessing')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.pendingReports')}</CardTitle>
-            <Flag className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.reports?.pending || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.reportsToReview')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.disputedOrders')}</CardTitle>
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.disputed_orders || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.awaitingResolution')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.platformEarnings')}</CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.platform_earnings ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.platformEarningsSub', { fee: stats?.counts?.platform_fee_percent ?? 5 })}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.subscriptionRevenue')}</CardTitle>
-            <Crown className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.subscriptions?.total_revenue ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.activeSubscriptions', { count: stats?.counts?.subscriptions?.active || 0 })}</p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Tabs value={activeTab} className="space-y-4" onValueChange={setActiveTab}>
         <TabsList className="w-full h-auto flex-nowrap justify-start overflow-x-auto overscroll-x-contain snap-x snap-mandatory whitespace-nowrap scrollbar-hide">
           <TabsTrigger value="overview" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.overview')}</TabsTrigger>
@@ -1496,6 +1403,98 @@ const AdminDashboard = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.users || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.platformUsers')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.activeStores')}</CardTitle>
+                <Store className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.stores?.active || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.pendingApproval', { count: stats?.counts?.stores?.pending || 0 })}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalProducts')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.products || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.liveProducts')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingWithdrawals')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.withdrawals?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingProcessing')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingReports')}</CardTitle>
+                <Flag className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.reports?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.reportsToReview')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.disputedOrders')}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.disputed_orders || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingResolution')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.platformEarnings')}</CardTitle>
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.platform_earnings ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.platformEarningsSub', { fee: stats?.counts?.platform_fee_percent ?? 5 })}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.subscriptionRevenue')}</CardTitle>
+                <Crown className="h-4 w-4 text-amber-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.subscriptions?.total_revenue ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.activeSubscriptions', { count: stats?.counts?.subscriptions?.active || 0 })}</p>
+              </CardContent>
+            </Card>
+          </div>
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
@@ -1599,6 +1598,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.users || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.platformUsers')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1763,6 +1774,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="stores" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.activeStores')}</CardTitle>
+                <Store className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.stores?.active || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.pendingApproval', { count: stats?.counts?.stores?.pending || 0 })}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1955,6 +1978,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalProducts')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.products || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.liveProducts')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2106,6 +2141,28 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.disputedOrders')}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.disputed_orders || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingResolution')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2259,6 +2316,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="withdrawals" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingWithdrawals')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.withdrawals?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingProcessing')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
               <div>
@@ -2609,6 +2678,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="subscriptions" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.subscriptionRevenue')}</CardTitle>
+                <Crown className="h-4 w-4 text-amber-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.subscriptions?.total_revenue ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.activeSubscriptions', { count: stats?.counts?.subscriptions?.active || 0 })}</p>
+              </CardContent>
+            </Card>
+          </div>
           {/* Plan Pricing Editor */}
           <Card>
             <CardHeader>
@@ -2763,6 +2844,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="moderation" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingReports')}</CardTitle>
+                <Flag className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.reports?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.reportsToReview')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
               <div>
