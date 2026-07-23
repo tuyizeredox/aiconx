@@ -2049,6 +2049,7 @@
       "mediaFiles": "{{count}} media file(s)",
       "empty": "No posts found",
       "menuLabel": "Actions",
+      "viewPost": "View Post",
       "setPublic": "Set Public",
       "setFollowers": "Set Followers Only",
       "setCommunity": "Set Community Only",

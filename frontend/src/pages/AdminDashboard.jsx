@@ -3385,7 +3385,85 @@ const AdminDashboard = () => {
                   <Search className="w-4 h-4 mr-1" /> {t('common.search')}
                 </Button>
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile: card list */}
+              <div className="md:hidden space-y-3">
+                {postLoading ? (
+                  <div className="text-center py-8">{t('common.loading')}</div>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">{t('admin.posts.empty')}</div>
+                ) : posts.map((post) => (
+                  <div key={post._id} className="border rounded-lg p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">@{post.author_username}</div>
+                        {post.author_name && <div className="text-xs text-muted-foreground truncate">{post.author_name}</div>}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0"><MoreVertical className="w-4 h-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>{t('admin.posts.menuLabel')}</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => window.open(`/postdetail?id=${post._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}>
+                            <ExternalLink className="w-4 h-4 mr-2" /> {t('admin.posts.viewPost')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'public')}>
+                            {t('admin.posts.setPublic')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'followers')}>
+                            {t('admin.posts.setFollowers')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
+                            {t('admin.posts.setCommunity')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {post.status !== 'active' && (
+                            <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'active')}>
+                              <UserCheck className="w-4 h-4 mr-2" /> {t('admin.posts.restorePost')}
+                            </DropdownMenuItem>
+                          )}
+                          {post.status !== 'disabled' && (
+                            <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'disabled')}>
+                              <Ban className="w-4 h-4 mr-2" /> {t('admin.posts.disablePost')}
+                            </DropdownMenuItem>
+                          )}
+                          {post.status !== 'archived' && (
+                            <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'archived')}>
+                              <Archive className="w-4 h-4 mr-2" /> {t('admin.posts.archivePost')}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
+                            <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <p className="text-sm">{post.content || <span className="text-muted-foreground italic">{t('admin.posts.noText')}</span>}</p>
+                    {post.media_urls?.length > 0 && (
+                      <span className="text-xs text-muted-foreground">{t('admin.posts.mediaFiles', { count: post.media_urls.length })}</span>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="capitalize">{post.media_type}</Badge>
+                      <Badge variant={post.visibility === 'public' ? 'default' : post.visibility === 'followers' ? 'secondary' : 'outline'} className="capitalize">
+                        {post.visibility}
+                      </Badge>
+                      <Badge variant={post.status === 'disabled' ? 'destructive' : post.status === 'archived' ? 'secondary' : 'outline'} className="capitalize">
+                        {t(`admin.posts.status_${post.status || 'active'}`)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{t('admin.posts.colLikes')}: {post.likes_count} · {t('admin.posts.colComments')}: {post.comments_count}</span>
+                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / tablet: table */}
+              <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -3436,44 +3514,55 @@ const AdminDashboard = () => {
                         {new Date(post.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm"><MoreVertical className="w-4 h-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>{t('admin.posts.menuLabel')}</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'public')}>
-                              {t('admin.posts.setPublic')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'followers')}>
-                              {t('admin.posts.setFollowers')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
-                              {t('admin.posts.setCommunity')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {post.status !== 'active' && (
-                              <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'active')}>
-                                <UserCheck className="w-4 h-4 mr-2" /> {t('admin.posts.restorePost')}
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title={t('admin.posts.viewPost')}
+                            onClick={() => window.open(`/postdetail?id=${post._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreVertical className="w-4 h-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>{t('admin.posts.menuLabel')}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'public')}>
+                                {t('admin.posts.setPublic')}
                               </DropdownMenuItem>
-                            )}
-                            {post.status !== 'disabled' && (
-                              <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'disabled')}>
-                                <Ban className="w-4 h-4 mr-2" /> {t('admin.posts.disablePost')}
+                              <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'followers')}>
+                                {t('admin.posts.setFollowers')}
                               </DropdownMenuItem>
-                            )}
-                            {post.status !== 'archived' && (
-                              <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'archived')}>
-                                <Archive className="w-4 h-4 mr-2" /> {t('admin.posts.archivePost')}
+                              <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
+                                {t('admin.posts.setCommunity')}
                               </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
-                              <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              <DropdownMenuSeparator />
+                              {post.status !== 'active' && (
+                                <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'active')}>
+                                  <UserCheck className="w-4 h-4 mr-2" /> {t('admin.posts.restorePost')}
+                                </DropdownMenuItem>
+                              )}
+                              {post.status !== 'disabled' && (
+                                <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'disabled')}>
+                                  <Ban className="w-4 h-4 mr-2" /> {t('admin.posts.disablePost')}
+                                </DropdownMenuItem>
+                              )}
+                              {post.status !== 'archived' && (
+                                <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'archived')}>
+                                  <Archive className="w-4 h-4 mr-2" /> {t('admin.posts.archivePost')}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
+                                <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
