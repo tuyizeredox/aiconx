@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Logo from '@/components/layout/Logo';
+import Seo from '@/components/shared/Seo';
 
 const Guidelines = () => {
   const { t } = useTranslation();
 
   return (
     <div className="min-h-screen w-full dark:bg-[#0a0a0c] bg-slate-50 font-sans transition-colors duration-300">
+      <Seo path="/community-guidelines" title="Community Guidelines" description="Read the Aicon X Community Guidelines for respectful, safe participation in our marketplace and social features." />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: -10 }}

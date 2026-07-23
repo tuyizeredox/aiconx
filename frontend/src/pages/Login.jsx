@@ -6,6 +6,7 @@ import { getRedirectPath } from '@/lib/utils';
 import { Mail, Lock, Loader2, ShieldCheck, ArrowRight, ArrowLeft, Eye, EyeOff, Fingerprint, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
+import Seo from '@/components/shared/Seo';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -168,6 +169,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-[max(1rem,env(safe-area-inset-top))] lg:pt-0">
+      <Seo path="/login" title="Sign In" description="Sign in to your Aicon X account to shop, sell, and connect with communities." />
       <MemoizedBackground />
 
       <div className="flex lg:hidden items-center justify-between w-full max-w-md mx-auto px-4 sm:px-6 mb-4 relative z-20">

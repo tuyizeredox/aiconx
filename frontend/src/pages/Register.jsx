@@ -6,6 +6,7 @@ import { getRedirectPath } from '@/lib/utils';
 import { Mail, Lock, User, Loader2, ArrowRight, ArrowLeft, Eye, EyeOff, Sun, Moon, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
+import Seo from '@/components/shared/Seo';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -165,6 +166,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8 sm:px-6 lg:py-8">
+      <Seo path="/register" title="Create Account" description="Create your free Aicon X account to start shopping, selling, and connecting with communities today." />
       <MemoizedBackground />
 
       <div className="flex lg:hidden items-center justify-between w-full max-w-md mx-auto mb-4 relative z-20">

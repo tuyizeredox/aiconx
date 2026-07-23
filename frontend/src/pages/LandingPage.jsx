@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import Seo from "@/components/shared/Seo";
 
 export default function LandingPage() {
   const { t } = useTranslation();
@@ -48,6 +49,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 overflow-x-hidden">
+      <Seo
+        path="/"
+        title="Social Commerce & AI-Powered Shopping"
+        description="Discover products, follow stores, connect with communities, and shop smarter with AI on Aicon X."
+      />
 
       {/* Sticky Navbar */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 pt-[env(safe-area-inset-top)]">
