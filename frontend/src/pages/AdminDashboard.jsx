@@ -65,7 +65,8 @@ import {
   Phone,
   MapPin,
   Globe,
-  FileText
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { 
   Dialog,
@@ -104,6 +105,8 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
   const { t } = useTranslation();
   if (!store) return null;
 
+  const owner = store.owner;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -119,10 +122,6 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">{t('admin.storeModal.ownerInfo')}</Label>
-              <div className="mt-1 font-medium">@{store.owner_username}</div>
-            </div>
             <div>
               <Label className="text-muted-foreground">{t('admin.storeModal.status')}</Label>
               <div className="mt-1">
@@ -167,13 +166,131 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
             {store.logo_url && (
               <div>
                 <Label className="text-muted-foreground">{t('admin.storeModal.logo')}</Label>
-                <img 
-                  src={store.logo_url} 
-                  alt={store.name} 
+                <img
+                  src={store.logo_url}
+                  alt={store.name}
                   className="mt-2 w-24 h-24 object-cover rounded-md border"
                 />
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Owner Profile */}
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-3">{t('admin.verifications.applicantSection')}</h4>
+          <div className="flex items-start gap-4 bg-muted p-4 rounded-lg">
+            {owner?.avatar_url && (
+              <img
+                src={owner.avatar_url}
+                alt={owner.display_name || owner.username}
+                className="w-16 h-16 object-cover rounded-full border shrink-0"
+              />
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantName')}</Label>
+                <div className="mt-1 font-medium flex items-center gap-1">
+                  {owner?.display_name || '—'}
+                  {owner?.is_verified && <ShieldCheckIcon className="w-4 h-4 text-orange-500" />}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantUsername')}</Label>
+                <div className="mt-1 font-medium">@{store.owner_username}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> {t('admin.verifications.applicantEmail')}</Label>
+                <div className="mt-1">{owner?.email || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {t('admin.verifications.applicantPhone')}</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  {owner?.phone_number || '—'}
+                  {owner?.phone_number && (
+                    <Badge variant={owner.is_phone_verified ? 'success' : 'outline'} className="text-[10px]">
+                      {owner.is_phone_verified ? t('admin.verifications.phoneVerified') : t('admin.verifications.phoneUnverified')}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantRole')}</Label>
+                <div className="mt-1 capitalize">{owner?.role || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantJoined')}</Label>
+                <div className="mt-1">{owner?.created_at ? new Date(owner.created_at).toLocaleDateString() : '—'}</div>
+              </div>
+              {owner?.bio && (
+                <div className="sm:col-span-2">
+                  <Label className="text-muted-foreground">{t('admin.storeModal.description')}</Label>
+                  <div className="mt-1 text-sm">{owner.bio}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Identity Verification (KYC) */}
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4" /> {t('admin.verifications.documentSection')}</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.docType')}</Label>
+                <div className="mt-1 capitalize">{store.identity_document_type?.replace('_', ' ') || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.docNumber')}</Label>
+                <div className="mt-1">{store.identity_document_number || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.colStatus')}</Label>
+                <div className="mt-1">
+                  <Badge variant={
+                    store.verification_status === 'approved' ? 'success' :
+                    store.verification_status === 'pending' ? 'warning' :
+                    store.verification_status === 'rejected' ? 'destructive' : 'default'
+                  }>
+                    {store.verification_status || 'unverified'}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.submittedAt')}</Label>
+                <div className="mt-1">{store.identity_submitted_at ? new Date(store.identity_submitted_at).toLocaleString() : '—'}</div>
+              </div>
+              {store.identity_reviewed_at && (
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.reviewedAt')}</Label>
+                  <div className="mt-1">
+                    {new Date(store.identity_reviewed_at).toLocaleString()}
+                    {store.identity_reviewed_by && <span className="text-muted-foreground"> · @{store.identity_reviewed_by}</span>}
+                  </div>
+                </div>
+              )}
+              {store.identity_rejection_reason && (
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.rejectionReason')}</Label>
+                  <div className="mt-1 text-sm italic">{store.identity_rejection_reason}</div>
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-muted-foreground">{t('admin.verifications.colImage')}</Label>
+              {store.identity_document_image_url ? (
+                <a href={store.identity_document_image_url} target="_blank" rel="noreferrer">
+                  <img
+                    src={store.identity_document_image_url}
+                    alt=""
+                    className="mt-2 w-full max-w-xs max-h-64 object-contain rounded-md border"
+                  />
+                </a>
+              ) : (
+                <div className="mt-1 text-sm text-muted-foreground">—</div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2030,7 +2147,81 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              {/* Mobile: card list */}
+              <div className="md:hidden space-y-3">
+                {products.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">{t('admin.products.empty')}</div>
+                ) : (
+                  products.map((p) => (
+                    <div key={p._id} className="border rounded-lg p-3 space-y-3">
+                      <div className="flex items-start gap-3">
+                        {p.images && p.images[0] ? (
+                          <img src={p.images[0]} alt="" className="w-12 h-12 object-cover rounded bg-muted shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center shrink-0">
+                            <Package className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{p.title}</div>
+                          <div className="text-xs text-muted-foreground truncate">{p.store_name} · @{p.vendor_username}</div>
+                          <div className="text-xs text-muted-foreground">ID: {p._id.substring(0, 8)}...</div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>{t('admin.products.menuLabel')}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => window.open(`/productdetail?id=${p._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}>
+                              <ExternalLink className="w-4 h-4 mr-2" /> {t('admin.products.viewInStore')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleUpdateProductStatus(p._id, 'active')}>
+                              <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.products.activate')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUpdateProductStatus(p._id, 'archived')}>
+                              <Archive className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.products.archive')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteProduct(p._id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> {t('admin.products.deleteProduct')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{formatCurrency(p.price)}</span>
+                          {p.compare_at_price > p.price && (
+                            <span className="text-xs text-muted-foreground line-through">{formatCurrency(p.compare_at_price)}</span>
+                          )}
+                        </div>
+                        <Badge variant={
+                          p.status === 'active' ? 'success' :
+                          p.status === 'draft' ? 'warning' :
+                          p.status === 'sold_out' ? 'destructive' : 'outline'
+                        }>
+                          {p.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{t('admin.products.salesCount', { count: p.sales_count || 0 })}</span>
+                        <span>{t('admin.products.viewsCount', { count: p.views_count || 0 })}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop / tablet: table */}
+              <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -2083,8 +2274,8 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant={
-                            p.status === 'active' ? 'success' : 
-                            p.status === 'draft' ? 'warning' : 
+                            p.status === 'active' ? 'success' :
+                            p.status === 'draft' ? 'warning' :
                             p.status === 'sold_out' ? 'destructive' : 'outline'
                           }>
                             {p.status}
@@ -2098,6 +2289,15 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              title={t('admin.products.viewInStore')}
+                              onClick={() => window.open(`/productdetail?id=${p._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -2114,7 +2314,7 @@ const AdminDashboard = () => {
                                   <Archive className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.products.archive')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => handleDeleteProduct(p._id)}
                                   className="text-destructive"
                                 >

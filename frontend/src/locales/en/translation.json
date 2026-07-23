@@ -1823,6 +1823,7 @@
       "salesCount": "Sales: {{count}}",
       "viewsCount": "Views: {{count}}",
       "menuLabel": "Product Actions",
+      "viewInStore": "View in Store",
       "activate": "Activate",
       "archive": "Archive",
       "deleteProduct": "Delete Product",

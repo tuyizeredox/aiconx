@@ -200,13 +200,23 @@ export async function adminRoutes(fastify: FastifyInstance) {
         .limit(parseInt(limit))
         .lean();
 
+      // Enrich with the owner's account details so the admin can review the
+      // whole store — owner profile and identity verification — in one place.
+      const ownerUsernames = [...new Set(stores.map(s => s.owner_username).filter(Boolean))];
+      const owners = ownerUsernames.length > 0
+        ? await User.find({ username: { $in: ownerUsernames } })
+            .select('username email display_name bio avatar_url phone_number is_phone_verified is_verified role created_at')
+            .lean()
+        : [];
+      const ownerByUsername = new Map(owners.map(u => [u.username, u]));
+
       // Enrich stores with product counts and income data
       const enrichedStores = await Promise.all(stores.map(async (store) => {
         const productCount = await Product.countDocuments({ store_id: store._id.toString() });
-        
+
         // Calculate total revenue from orders for this store
         const revenueResult = await Order.aggregate([
-          { $match: { 
+          { $match: {
             store_id: store._id.toString(),
             status: { $ne: 'cancelled' },
             payment_status: 'paid'
@@ -216,13 +226,14 @@ export async function adminRoutes(fastify: FastifyInstance) {
         const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
 
         // Count orders for this store
-        const ordersCount = await Order.countDocuments({ 
+        const ordersCount = await Order.countDocuments({
           store_id: store._id.toString(),
           status: { $ne: 'cancelled' }
         });
 
         return {
           ...store,
+          owner: ownerByUsername.get(store.owner_username) || null,
           products_count: productCount,
           orders_count: ordersCount,
           total_revenue: totalRevenue

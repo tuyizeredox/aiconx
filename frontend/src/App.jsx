@@ -54,6 +54,11 @@ const LegacyStoreRedirect = () => {
   return <Navigate to={`/StoreDetail${location.search}`} replace />;
 };
 
+// Lets a super_admin preview a live product/store page from the admin dashboard
+// (e.g. the "View in Store" button) without being bounced back by the guards
+// below, which otherwise keep super_admins confined to the admin dashboard.
+const isAdminPreview = (location) => new URLSearchParams(location.search).get('adminPreview') === '1';
+
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>
     <ErrorBoundary>{children}</ErrorBoundary>
@@ -99,7 +104,7 @@ const AppRoutes = () => {
 
       {/* Product detail is publicly viewable so affiliate links work for logged-out visitors */}
       <Route path="/productdetail" element={
-        isAuthenticated && user?.role === 'super_admin' ? <Navigate to="/admin-dashboard" replace /> :
+        isAuthenticated && user?.role === 'super_admin' && !isAdminPreview(location) ? <Navigate to="/admin-dashboard" replace /> :
         <LayoutWrapper currentPageName="ProductDetail">
           <Pages.ProductDetail />
         </LayoutWrapper>
@@ -145,7 +150,7 @@ const AppRoutes = () => {
             element={
               !isAuthenticated ? <Navigate to="/welcome" replace /> :
               // NOTE: This is a UX-only guard. Backend APIs must independently enforce super_admin authorization.
-              user?.role === 'super_admin' && !['AdminDashboard', 'Profile', 'Chat', 'Notifications', 'Settings'].includes(path) ? 
+              user?.role === 'super_admin' && !isAdminPreview(location) && !['AdminDashboard', 'Profile', 'Chat', 'Notifications', 'Settings'].includes(path) ?
               <Navigate to="/admin-dashboard" replace /> :
               <LayoutWrapper currentPageName={path}>
                 <Page />
