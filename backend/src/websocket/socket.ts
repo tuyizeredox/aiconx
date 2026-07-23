@@ -90,6 +90,9 @@ export function setupWebSocket(fastify: FastifyInstance) {
           .filter(Boolean);
 
         const allowedOrigins = [
+          'https://aiconx.vercel.app',
+          'https://aiconx.net',
+          'https://www.aiconx.net',
           process.env.FRONTEND_URL,
           'http://localhost:5173',
           'http://localhost:3000',

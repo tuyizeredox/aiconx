@@ -86,6 +86,8 @@ fastify.register(cors, {
     const allowedOrigins = [
       // Production frontend — hardcoded as fallback in case env var is missing on Render
       'https://aiconx.vercel.app',
+      'https://aiconx.net',
+      'https://www.aiconx.net',
       process.env.FRONTEND_URL,
       // Local development
       'http://localhost:5173',
