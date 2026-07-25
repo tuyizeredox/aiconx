@@ -59,8 +59,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
           return reply.code(400).send({ error: 'Invalid subscription amount' });
         }
       } else {
-        // Calculate total from all orders (comma-separated IDs)
-        const orderIds = order_id.split(',').map(id => id.trim());
+        // Calculate total from all orders (comma-separated IDs). Order ids sent from
+        // the client may carry the "ORD-" tag (used elsewhere as an ITEC Pay reference
+        // prefix) — strip it before looking up the real Order documents.
+        const orderIds = order_id.split(',').map(id => id.trim().replace(/^ORD-/, ''));
         const orders = await Order.find({ _id: { $in: orderIds } });
 
         if (orders.length !== new Set(orderIds).size) {
@@ -96,11 +98,19 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         phone
       );
 
-      // Persist payment_method on subscription so verify-payment can use the right provider
+      // Persist payment_method so verify-payment later checks the right gateway
+      // provider — this matters most on retry, where the buyer may pick a different
+      // method than the one originally stored on the order/subscription.
       if (isSubscriptionPayment) {
         const subIds = order_id.split(',').map(id => id.trim().replace(/^SUB-/, ''));
         await VendorSubscription.updateMany(
           { _id: { $in: subIds } },
+          { $set: { payment_method: provider } }
+        );
+      } else {
+        const orderIds = order_id.split(',').map(id => id.trim().replace(/^ORD-/, ''));
+        await Order.updateMany(
+          { _id: { $in: orderIds } },
           { $set: { payment_method: provider } }
         );
       }

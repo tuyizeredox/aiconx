@@ -144,7 +144,16 @@ class APIClient {
       const error = new Error(data?.message || data?.error || `API Error: ${response.status}`);
       error.status = response.status;
       error.details = data?.details; // Save validation details
-      
+
+      // The site-wide maintenance gate (checkMaintenance on the backend) returns
+      // 503 with { maintenance: true } for every blocked request. Surface it as a
+      // global event so a single listener can show one full-screen notice instead
+      // of every individual API caller showing its own "failed to load" toast.
+      if (response.status === 503 && data?.maintenance) {
+        error.maintenance = true;
+        window.dispatchEvent(new CustomEvent('maintenance:active', { detail: { message: error.message } }));
+      }
+
       if (!response.ok) {
         // Detailed validation error logging
         if (data?.details && Array.isArray(data.details)) {
@@ -528,6 +537,7 @@ export const adminAPI = {
   updateUserRole: (id, role) => apiClient.patch(`/admin/users/${id}/role`, { role }),
   updateUserVerification: (id, is_verified) => apiClient.patch(`/admin/users/${id}/verify`, { is_verified }),
   deleteUser: (id) => apiClient.delete(`/admin/users/${id}`),
+  assignUserSubscription: (id, data) => apiClient.patch(`/admin/users/${id}/subscription`, data),
   // Stores
   getStores: (params) => {
     const query = apiClient.buildQueryString(params);
@@ -601,6 +611,38 @@ export const adminAPI = {
   cancelSubscription: (id) => apiClient.post(`/admin/subscriptions/${id}/cancel`, {}),
   getSubscriptionPlans: () => apiClient.get('/admin/subscriptions/plans'),
   updateSubscriptionPlans: (planPrices) => apiClient.put('/admin/subscriptions/plans', { plan_prices: planPrices }),
+  // Cashouts
+  verifyCashoutPassword: (password) => apiClient.post('/admin/cashouts/verify-password', { password }),
+  getCashouts: () => apiClient.get('/admin/cashouts'),
+  createCashout: (data) => apiClient.post('/admin/cashouts', data),
+  deleteCashout: (id) => apiClient.delete(`/admin/cashouts/${id}`),
+  // Backups
+  getBackups: (params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/backups?${query}`);
+  },
+  runBackup: () => apiClient.post('/admin/backups/run', {}),
+  downloadBackup: async (id, filename) => {
+    const response = await fetch(`${apiClient.baseURL}/admin/backups/${id}/download`, {
+      headers: apiClient.getHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to download backup');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || 'backup.json.gz';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+};
+
+export const settingsAPI = {
+  // Unauthenticated. Blocked (503) while maintenance mode is on — see
+  // MaintenanceGate, which polls this to detect when maintenance ends.
+  getPublic: () => apiClient.get('/settings/public'),
 };
 
 export const announcementsAPI = {

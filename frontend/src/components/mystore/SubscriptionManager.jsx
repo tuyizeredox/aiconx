@@ -3,7 +3,7 @@ import { vendorSubscriptionsAPI, authAPI, paymentAPI } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Crown, Zap, Star, Check, Globe, TrendingUp, Image, Infinity, Loader2, Shield, BadgeCheck, AlertCircle, Info, Lock
+  Crown, Zap, Star, Check, Globe, TrendingUp, Image, Infinity, Loader2, Shield, BadgeCheck, AlertCircle, Info, Lock, Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -254,11 +254,17 @@ export default function SubscriptionManager({ store, vendorUsername }) {
   const queryClient = useQueryClient();
   const { user, checkUserAuth } = useAuth();
 
-  const { data: plansData } = useQuery({
+  const { data: plansData, isLoading: isPlansLoading } = useQuery({
     queryKey: ["publicPlans"],
     queryFn: () => vendorSubscriptionsAPI.getPlans(),
     staleTime: 5 * 60 * 1000,
   });
+
+  // While subscription mode is off, every vendor already gets elite access for
+  // free (see backend middleware/subscription.ts's getVendorPlan) — paying for
+  // a plan would do nothing, so the plan-picker/payment UI is replaced with a
+  // promo instead of letting vendors pointlessly try to buy something free.
+  const subscriptionModeEnabled = plansData?.subscription_mode ?? true;
 
   const backendPrices = plansData?.plans
     ? {
@@ -531,7 +537,37 @@ export default function SubscriptionManager({ store, vendorUsername }) {
     await doInitiatePayment(selectedMethod.id, cleaned);
   };
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>;
+  if (isLoading || isPlansLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>;
+
+  if (!subscriptionModeEnabled) {
+    const eliteFeatures = PLANS.find(p => p.id === "elite")?.features || [];
+    return (
+      <div className="space-y-6">
+        <div className="relative overflow-hidden rounded-3xl border-2 border-dashed border-green-300 dark:border-green-800 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950 dark:via-emerald-950 dark:to-teal-950 p-6 sm:p-10 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center">
+            <Gift className="w-8 h-8 text-green-600" />
+          </div>
+          <Badge className="mb-3 bg-green-600 hover:bg-green-600 text-white border-0">{t("subscription.allFreeBadge")}</Badge>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-2">{t("subscription.allFreeTitle")}</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto">{t("subscription.allFreeDesc")}</p>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-3 text-center">
+            {t("subscription.allFreeFeaturesTitle")}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {eliteFeatures.map((f, i) => (
+              <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 px-4 py-3">
+                <Check className="w-4 h-4 text-green-500 shrink-0" />
+                <span className="text-sm text-slate-700 dark:text-slate-200">{t(f)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

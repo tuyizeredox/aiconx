@@ -78,6 +78,7 @@ const ADMIN_SIDEBAR_ITEMS = [
   { name: "Moderation", tKey: "admin.tabs.moderation", icon: Flag, page: "AdminDashboard", href: "/admin-dashboard?tab=moderation" },
   { name: "Orders", tKey: "admin.tabs.orders", icon: ShoppingBag, page: "AdminDashboard", href: "/admin-dashboard?tab=orders" },
   { name: "Withdrawals", tKey: "admin.tabs.withdrawals", icon: Wallet, page: "AdminDashboard", href: "/admin-dashboard?tab=withdrawals" },
+  { name: "Cashouts", tKey: "admin.tabs.cashouts", icon: DollarSign, page: "AdminDashboard", href: "/admin-dashboard?tab=cashouts" },
   { name: "Verifications", tKey: "admin.tabs.verifications", icon: ShieldCheck, page: "AdminDashboard", href: "/admin-dashboard?tab=verifications" },
   { name: "Logs", tKey: "admin.tabs.logs", icon: History, page: "AdminDashboard", href: "/admin-dashboard?tab=logs" },
   { name: "Settings", tKey: "admin.tabs.settings", icon: SettingsIcon, page: "AdminDashboard", href: "/admin-dashboard?tab=settings" },

@@ -15,6 +15,7 @@ import AffiliateTracker from './components/shared/AffiliateTracker';
 import ScrollToTop from './components/shared/ScrollToTop';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import { LanguageProvider } from '@/components/providers/LanguageContext';
+import MaintenanceGate from '@/components/shared/MaintenanceGate';
 import { ThemeProvider } from "next-themes";
 import { PostUploadProvider } from '@/lib/PostUploadContext';
 import PostUploadIndicator from '@/components/shared/PostUploadIndicator';
@@ -197,7 +198,9 @@ function App() {
                   <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                     <ScrollToTop />
                     <AffiliateTracker />
-                    <AppRoutes />
+                    <MaintenanceGate>
+                      <AppRoutes />
+                    </MaintenanceGate>
                     <PostUploadIndicator />
                   </Router>
                   <Toaster />

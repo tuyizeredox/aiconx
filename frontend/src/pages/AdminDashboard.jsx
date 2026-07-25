@@ -66,7 +66,8 @@ import {
   MapPin,
   Globe,
   FileText,
-  ExternalLink
+  ExternalLink,
+  DatabaseBackup
 } from 'lucide-react';
 import { 
   Dialog,
@@ -667,6 +668,272 @@ const VerificationDetailsModal = ({ verification, isOpen, onOpenChange, onApprov
   );
 };
 
+// formatCurrency rounds to whole RWF, which is right for real balances but
+// hides a 3% iTechPay charge on small breakdown amounts (e.g. 3% of RF 10 is
+// RF 0.3, invisible once rounded) — this keeps 2dp only when there's a
+// fractional part to show, so normal whole-unit figures stay unchanged.
+const formatBreakdownAmount = (amount) => {
+  if (amount === undefined || amount === null || isNaN(amount)) return formatCurrency(0);
+  if (Number.isInteger(amount)) return formatCurrency(amount);
+  return new Intl.NumberFormat('en-RW', { style: 'currency', currency: 'RWF', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+};
+
+// One independent cashout pool (profit or orders): its own balance cards,
+// send form, and history table. Rendered twice with different props so the
+// two pools never share state or get confused with each other.
+const CashoutTypeSection = ({ desc, summary, breakdown, form, onFormChange, onSubmit, submitting, cashouts, onDelete, onRefresh, loading, t }) => (
+  <div className="space-y-4">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('admin.cashouts.grandTotalRevenue')}</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(summary?.grandTotalRevenue || 0)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('admin.cashouts.totalCashedOut')}</CardTitle>
+          <Wallet className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(summary?.totalCashedOut || 0)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('admin.cashouts.availableBalance')}</CardTitle>
+          <CreditCard className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-success">{formatCurrency(summary?.availableBalance || 0)}</div>
+        </CardContent>
+      </Card>
+    </div>
+
+    {breakdown && 'netOrdersRevenue' in breakdown && (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('admin.cashouts.breakdownTitle')}</CardTitle>
+          <CardDescription>
+            {t('admin.cashouts.ordersBreakdownDesc', { feePercent: breakdown.platformFeePercent })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm max-w-md">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('admin.cashouts.breakdownGrossOrders')}</span>
+              <span className="font-medium">{formatBreakdownAmount(breakdown.orderTotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                {t('admin.cashouts.breakdownOrderCommission')} ({breakdown.platformFeePercent}%)
+              </span>
+              <span className="text-destructive">-{formatBreakdownAmount(breakdown.platformCommission)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('admin.cashouts.breakdownAffiliateCommission')}</span>
+              <span className="text-destructive">-{formatBreakdownAmount(breakdown.affiliateCommission)}</span>
+            </div>
+            <div className="flex justify-between border-t-2 pt-2">
+              <span className="font-bold">{t('admin.cashouts.breakdownOrdersTotal')}</span>
+              <span className="font-bold text-success">{formatBreakdownAmount(breakdown.netOrdersRevenue)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    {breakdown && 'subscriptions' in breakdown && (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('admin.cashouts.breakdownTitle')}</CardTitle>
+          <CardDescription>
+            {t('admin.cashouts.breakdownDesc', { feePercent: breakdown.platformFeePercent, itecPercent: breakdown.itecChargeRatePercent })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('admin.cashouts.breakdownComponent')}</TableHead>
+                  <TableHead className="text-right">{t('admin.cashouts.breakdownGross')}</TableHead>
+                  <TableHead className="text-right">{t('admin.cashouts.breakdownItec', { percent: breakdown.itecChargeRatePercent })}</TableHead>
+                  <TableHead className="text-right">{t('admin.cashouts.breakdownNet')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">{t('admin.cashouts.breakdownOrderCommission')}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t('admin.cashouts.breakdownOrderCommissionHint', { percent: breakdown.platformFeePercent, total: formatCurrency(breakdown.orderCommission.orderTotal) })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatBreakdownAmount(breakdown.orderCommission.gross)}</TableCell>
+                  <TableCell className="text-right text-destructive">-{formatBreakdownAmount(breakdown.orderCommission.itecCharge)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatBreakdownAmount(breakdown.orderCommission.net)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">{t('admin.cashouts.breakdownAffiliateCommission')}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t('admin.cashouts.breakdownAffiliateCommissionHint', { percent: breakdown.platformFeePercent, total: formatCurrency(breakdown.affiliateCommission.affiliateTotal) })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatBreakdownAmount(breakdown.affiliateCommission.gross)}</TableCell>
+                  <TableCell className="text-right text-destructive">-{formatBreakdownAmount(breakdown.affiliateCommission.itecCharge)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatBreakdownAmount(breakdown.affiliateCommission.net)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">{t('admin.cashouts.breakdownSubscriptions')}</div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatBreakdownAmount(breakdown.subscriptions.gross)}</TableCell>
+                  <TableCell className="text-right text-destructive">-{formatBreakdownAmount(breakdown.subscriptions.itecCharge)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatBreakdownAmount(breakdown.subscriptions.net)}</TableCell>
+                </TableRow>
+                <TableRow className="border-t-2">
+                  <TableCell className="font-bold">{t('admin.cashouts.breakdownTotal')}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell className="text-right font-bold text-success">{formatBreakdownAmount(breakdown.grandTotalRevenue)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('admin.cashouts.newTitle')}</CardTitle>
+        <CardDescription>{desc}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.amount')}</Label>
+            <Input
+              type="number"
+              min="1"
+              value={form.amount}
+              onChange={(e) => onFormChange({ ...form, amount: e.target.value })}
+              placeholder="10000"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.phoneNumber')}</Label>
+            <Input
+              value={form.phoneNumber}
+              onChange={(e) => onFormChange({ ...form, phoneNumber: e.target.value })}
+              placeholder="0798760888"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.provider')}</Label>
+            <Select value={form.provider} onValueChange={(v) => onFormChange({ ...form, provider: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mtn">MTN</SelectItem>
+                <SelectItem value="airtel">Airtel</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.note')}</Label>
+            <Input
+              value={form.note}
+              onChange={(e) => onFormChange({ ...form, note: e.target.value })}
+              placeholder={t('admin.cashouts.notePlaceholder')}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={onSubmit} disabled={submitting}>
+            {submitting ? t('common.loading') : t('admin.cashouts.send')}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+        <div>
+          <CardTitle>{t('admin.cashouts.historyTitle')}</CardTitle>
+          <CardDescription>{t('admin.cashouts.historyDesc')}</CardDescription>
+        </div>
+        <Button onClick={onRefresh} disabled={loading} variant="ghost" size="sm">
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          {t('common.refresh')}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('admin.cashouts.colDate')}</TableHead>
+                <TableHead>{t('admin.cashouts.colAmount')}</TableHead>
+                <TableHead>{t('admin.cashouts.colPhone')}</TableHead>
+                <TableHead>{t('admin.cashouts.colProvider')}</TableHead>
+                <TableHead>{t('admin.cashouts.colBy')}</TableHead>
+                <TableHead>{t('admin.cashouts.colNote')}</TableHead>
+                <TableHead className="text-right">{t('admin.cashouts.colActions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cashouts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    {t('admin.cashouts.empty')}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                cashouts.map((c) => (
+                  <TableRow key={c._id}>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(c.createdAt).toLocaleDateString()}<br/>
+                      {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </TableCell>
+                    <TableCell className="font-bold">{formatCurrency(c.amount)}</TableCell>
+                    <TableCell>{c.phoneNumber}</TableCell>
+                    <TableCell className="uppercase">
+                      <Badge variant="outline">{c.provider}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {c.requestedBy?.display_name || c.requestedBy?.email || '—'}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground italic max-w-[160px] truncate" title={c.note}>
+                      {c.note || '—'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10 h-8"
+                        onClick={() => onDelete(c._id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -692,6 +959,9 @@ const AdminDashboard = () => {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [userPage, setUserPage] = useState(1);
   const [userPagination, setUserPagination] = useState(null);
+  const [planModalUser, setPlanModalUser] = useState(null);
+  const [planModalForm, setPlanModalForm] = useState({ plan: 'pro', billing_cycle: 'monthly' });
+  const [planModalSaving, setPlanModalSaving] = useState(false);
 
   // Stores State
   const [stores, setStores] = useState([]);
@@ -722,6 +992,11 @@ const AdminDashboard = () => {
   const [orderPage, setOrderPage] = useState(1);
   const [orderPagination, setOrderPagination] = useState(null);
 
+  // Backups State
+  const [backups, setBackups] = useState([]);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupRunning, setBackupRunning] = useState(false);
+
   // Withdrawals State
   const [withdrawals, setWithdrawals] = useState([]);
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
@@ -730,6 +1005,19 @@ const AdminDashboard = () => {
   const [withdrawalNotes, setWithdrawalNotes] = useState('');
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [withdrawalAction, setWithdrawalAction] = useState('completed');
+
+  // Cashouts State — 'profit' and 'orders' are two independent pools with
+  // their own balance and history, so each gets its own form state.
+  const [cashoutVerified, setCashoutVerified] = useState(false);
+  const [cashoutPassword, setCashoutPassword] = useState('');
+  const [cashoutVerifying, setCashoutVerifying] = useState(false);
+  const [cashoutSubTab, setCashoutSubTab] = useState('profit');
+  const [cashouts, setCashouts] = useState([]);
+  const [cashoutsLoading, setCashoutsLoading] = useState(false);
+  const emptyCashoutForm = { amount: '', phoneNumber: '', provider: 'mtn', note: '' };
+  const [profitCashoutForm, setProfitCashoutForm] = useState(emptyCashoutForm);
+  const [ordersCashoutForm, setOrdersCashoutForm] = useState(emptyCashoutForm);
+  const [cashoutSubmitting, setCashoutSubmitting] = useState(false);
 
   // Verifications State
   const [verifications, setVerifications] = useState([]);
@@ -952,6 +1240,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchBackups = async () => {
+    try {
+      setBackupLoading(true);
+      const data = await adminAPI.getBackups({});
+      setBackups(data.backups || []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('admin.backups.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
   const fetchWithdrawals = async (filter = withdrawalFilter) => {
     try {
       setWithdrawalLoading(true);
@@ -967,6 +1271,94 @@ const AdminDashboard = () => {
       });
     } finally {
       setWithdrawalLoading(false);
+    }
+  };
+
+  const fetchCashouts = async () => {
+    try {
+      setCashoutsLoading(true);
+      const data = await adminAPI.getCashouts();
+      setCashouts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCashoutsLoading(false);
+    }
+  };
+
+  const handleVerifyCashoutPassword = async () => {
+    if (!cashoutPassword) return;
+    try {
+      setCashoutVerifying(true);
+      await adminAPI.verifyCashoutPassword(cashoutPassword);
+      setCashoutVerified(true);
+      setCashoutPassword('');
+      fetchCashouts();
+      fetchStats();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.verifyFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCashoutVerifying(false);
+    }
+  };
+
+  const handleCreateCashout = async (type) => {
+    const form = type === 'profit' ? profitCashoutForm : ordersCashoutForm;
+    const setForm = type === 'profit' ? setProfitCashoutForm : setOrdersCashoutForm;
+
+    const amountNum = Number(form.amount);
+    if (!amountNum || amountNum <= 0) {
+      toast({ title: t('common.error'), description: t('admin.cashouts.invalidAmount'), variant: 'destructive' });
+      return;
+    }
+    if (!form.phoneNumber.trim()) {
+      toast({ title: t('common.error'), description: t('admin.cashouts.phoneRequired'), variant: 'destructive' });
+      return;
+    }
+    try {
+      setCashoutSubmitting(true);
+      await adminAPI.createCashout({
+        type,
+        amount: amountNum,
+        phoneNumber: form.phoneNumber.trim(),
+        provider: form.provider,
+        note: form.note.trim() || undefined,
+      });
+      toast({ title: t('common.success'), description: t('admin.cashouts.sentSuccess') });
+      setForm(emptyCashoutForm);
+      fetchCashouts();
+      fetchStats();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.sendFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCashoutSubmitting(false);
+    }
+  };
+
+  const handleDeleteCashout = async (id) => {
+    if (!window.confirm(t('admin.cashouts.confirmDelete'))) return;
+    try {
+      await adminAPI.deleteCashout(id);
+      toast({ title: t('common.success'), description: t('admin.cashouts.deletedSuccess') });
+      fetchCashouts();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.failedDelete'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1093,13 +1485,15 @@ const AdminDashboard = () => {
     if (activeTab === 'products') fetchProducts();
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'withdrawals') fetchWithdrawals();
+    if (activeTab === 'cashouts' && cashoutVerified) fetchCashouts();
     if (activeTab === 'verifications') fetchVerifications();
     if (activeTab === 'moderation') fetchReports();
     if (activeTab === 'logs') fetchActivityLogs();
+    if (activeTab === 'backups') fetchBackups();
     if (activeTab === 'subscriptions') fetchSubscriptions();
     if (activeTab === 'announcements') fetchAnnouncements();
     if (activeTab === 'posts') { setPostPage(1); fetchPosts(1); }
-  }, [activeTab, user]);
+  }, [activeTab, user, cashoutVerified]);
 
   const handleBlockUser = async (userId, isBlocked) => {
     try {
@@ -1270,6 +1664,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleRunBackup = async () => {
+    setBackupRunning(true);
+    try {
+      const backup = await adminAPI.runBackup();
+      if (backup.status === 'success') {
+        toast({ title: t('common.success'), description: t('admin.backups.runSuccess') });
+      } else {
+        toast({ title: t('common.error'), description: backup.error_message || t('admin.backups.runFailed'), variant: 'destructive' });
+      }
+      fetchBackups();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.backups.runFailed'), variant: 'destructive' });
+    } finally {
+      setBackupRunning(false);
+    }
+  };
+
+  const handleDownloadBackup = async (backup) => {
+    try {
+      await adminAPI.downloadBackup(backup._id, backup.filename);
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.backups.failedDownload'), variant: 'destructive' });
+    }
+  };
+
   const handleWithdrawalStatus = async (id, status, notes = '') => {
     try {
       await adminAPI.updateWithdrawalStatus(id, status, notes);
@@ -1408,6 +1827,28 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleAssignPlan = async () => {
+    if (!planModalUser) return;
+    setPlanModalSaving(true);
+    try {
+      await adminAPI.assignUserSubscription(planModalUser._id, planModalForm);
+      toast({
+        title: t('common.success'),
+        description: t('admin.users.assignPlanSuccess', { plan: planModalForm.plan, user: planModalUser.username }),
+      });
+      setPlanModalUser(null);
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.users.assignPlanFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setPlanModalSaving(false);
+    }
+  };
+
   const handleDeleteStore = async (storeId) => {
     if (!window.confirm(t('admin.stores.confirmDelete'))) return;
     try {
@@ -1514,8 +1955,10 @@ const AdminDashboard = () => {
           <TabsTrigger value="moderation" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.moderation')}</TabsTrigger>
           <TabsTrigger value="orders" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.orders')}</TabsTrigger>
           <TabsTrigger value="withdrawals" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.withdrawals')}</TabsTrigger>
+          <TabsTrigger value="cashouts" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.cashouts')}</TabsTrigger>
           <TabsTrigger value="verifications" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.verifications')}</TabsTrigger>
           <TabsTrigger value="logs" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.logs')}</TabsTrigger>
+          <TabsTrigger value="backups" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.backups')}</TabsTrigger>
           <TabsTrigger value="settings" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.settings')}</TabsTrigger>
         </TabsList>
 
@@ -1864,6 +2307,13 @@ const AdminDashboard = () => {
                                 <ShieldAlert className="mr-2 h-4 w-4" />
                                 {t('admin.users.changeRole')}
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setPlanModalForm({ plan: 'pro', billing_cycle: 'monthly' });
+                                setPlanModalUser(u);
+                              }}>
+                                <Crown className="mr-2 h-4 w-4 text-amber-500" />
+                                {t('admin.users.assignPlan')}
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
@@ -1888,6 +2338,61 @@ const AdminDashboard = () => {
               />
             </CardContent>
           </Card>
+
+          <Dialog open={!!planModalUser} onOpenChange={(open) => !open && setPlanModalUser(null)}>
+            <DialogContent className="max-w-[95vw] sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t('admin.users.assignPlanTitle')}</DialogTitle>
+                <DialogDescription>
+                  {t('admin.users.assignPlanDesc', { user: planModalUser?.username })}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label>{t('admin.users.planLabel')}</Label>
+                  <Select
+                    value={planModalForm.plan}
+                    onValueChange={(v) => setPlanModalForm((prev) => ({ ...prev, plan: v }))}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">{t('admin.users.planFree')}</SelectItem>
+                      <SelectItem value="pro">{t('admin.users.planPro')}</SelectItem>
+                      <SelectItem value="elite">{t('admin.users.planElite')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {planModalForm.plan !== 'free' && (
+                  <div className="space-y-2">
+                    <Label>{t('admin.users.billingCycleLabel')}</Label>
+                    <Select
+                      value={planModalForm.billing_cycle}
+                      onValueChange={(v) => setPlanModalForm((prev) => ({ ...prev, billing_cycle: v }))}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">{t('subscription.monthly')}</SelectItem>
+                        <SelectItem value="annual">{t('subscription.annual')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">{t('admin.users.assignPlanNote')}</p>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setPlanModalUser(null)} disabled={planModalSaving}>
+                  {t('common.cancel')}
+                </Button>
+                <Button onClick={handleAssignPlan} disabled={planModalSaving}>
+                  {planModalSaving ? t('common.loading') : t('admin.users.assignPlanConfirm')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="stores" className="space-y-4">
@@ -2682,6 +3187,75 @@ const AdminDashboard = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </TabsContent>
+
+        <TabsContent value="cashouts" className="space-y-4">
+          {!cashoutVerified ? (
+            <Card className="max-w-md mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><ShieldAlert className="w-5 h-5" /> {t('admin.cashouts.gateTitle')}</CardTitle>
+                <CardDescription>{t('admin.cashouts.gateDesc')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cashout-password">{t('admin.cashouts.yourPassword')}</Label>
+                  <Input
+                    id="cashout-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={cashoutPassword}
+                    onChange={(e) => setCashoutPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyCashoutPassword(); }}
+                    placeholder={t('admin.cashouts.passwordPlaceholder')}
+                  />
+                </div>
+                <Button className="w-full" onClick={handleVerifyCashoutPassword} disabled={cashoutVerifying || !cashoutPassword}>
+                  {cashoutVerifying ? t('common.loading') : t('admin.cashouts.unlock')}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Tabs value={cashoutSubTab} onValueChange={setCashoutSubTab} className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="profit">{t('admin.cashouts.profitTab')}</TabsTrigger>
+                <TabsTrigger value="orders">{t('admin.cashouts.ordersTab')}</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="profit" className="space-y-4">
+                <CashoutTypeSection
+                  desc={t('admin.cashouts.profitDesc')}
+                  summary={stats?.cashoutSummary?.profit}
+                  breakdown={stats?.cashoutSummary?.profit?.breakdown}
+                  form={profitCashoutForm}
+                  onFormChange={setProfitCashoutForm}
+                  onSubmit={() => handleCreateCashout('profit')}
+                  submitting={cashoutSubmitting}
+                  cashouts={cashouts.filter((c) => c.type === 'profit')}
+                  onDelete={handleDeleteCashout}
+                  onRefresh={fetchCashouts}
+                  loading={cashoutsLoading}
+                  t={t}
+                />
+              </TabsContent>
+
+              <TabsContent value="orders" className="space-y-4">
+                <CashoutTypeSection
+                  desc={t('admin.cashouts.ordersDesc')}
+                  summary={stats?.cashoutSummary?.orders}
+                  breakdown={stats?.cashoutSummary?.orders?.breakdown}
+                  form={ordersCashoutForm}
+                  onFormChange={setOrdersCashoutForm}
+                  onSubmit={() => handleCreateCashout('orders')}
+                  submitting={cashoutSubmitting}
+                  cashouts={cashouts.filter((c) => c.type === 'orders')}
+                  onDelete={handleDeleteCashout}
+                  onRefresh={fetchCashouts}
+                  loading={cashoutsLoading}
+                  t={t}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
         </TabsContent>
 
         <TabsContent value="verifications" className="space-y-4">
@@ -3836,6 +4410,94 @@ const AdminDashboard = () => {
                         <TableCell className="font-mono text-xs">{log.ip_address || t('admin.logs.internal')}</TableCell>
                         <TableCell className="text-xs">
                           {new Date(log.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="backups" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle>{t('admin.backups.title')}</CardTitle>
+                <CardDescription>{t('admin.backups.desc')}</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={() => fetchBackups()} disabled={backupLoading} variant="ghost" size="sm">
+                  <RefreshCw className={`h-4 w-4 mr-2 ${backupLoading ? 'animate-spin' : ''}`} />
+                  {t('common.refresh')}
+                </Button>
+                <Button onClick={handleRunBackup} disabled={backupRunning} size="sm">
+                  <DatabaseBackup className={`h-4 w-4 mr-2 ${backupRunning ? 'animate-spin' : ''}`} />
+                  {backupRunning ? t('admin.backups.running') : t('admin.backups.runNow')}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.backups.colDate')}</TableHead>
+                    <TableHead>{t('admin.backups.colStatus')}</TableHead>
+                    <TableHead>{t('admin.backups.colSize')}</TableHead>
+                    <TableHead>{t('admin.backups.colCollections')}</TableHead>
+                    <TableHead>{t('admin.backups.colTrigger')}</TableHead>
+                    <TableHead className="text-right">{t('admin.backups.colActions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {backups.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {backupLoading ? t('admin.backups.loading') : t('admin.backups.empty')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    backups.map((b) => (
+                      <TableRow key={b._id}>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(b.started_at).toLocaleDateString()}<br/>
+                          {new Date(b.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            b.status === 'success' ? 'success' :
+                            b.status === 'running' ? 'warning' : 'destructive'
+                          }>
+                            {t(`admin.backups.status.${b.status}`)}
+                          </Badge>
+                          {b.status === 'failed' && b.error_message && (
+                            <div className="text-[10px] text-destructive mt-1 max-w-[220px] truncate" title={b.error_message}>
+                              {b.error_message}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {b.size_bytes ? `${(b.size_bytes / (1024 * 1024)).toFixed(2)} MB` : '-'}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {b.collections_count ?? '-'} {t('admin.backups.collectionsUnit')} · {b.documents_count ?? '-'} {t('admin.backups.documentsUnit')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">{b.triggered_by}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {b.status === 'success' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownloadBackup(b)}
+                            >
+                              {t('admin.backups.download')}
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

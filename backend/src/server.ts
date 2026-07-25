@@ -41,8 +41,10 @@ import { reportRoutes } from './routes/reports';
 import { callRoutes } from './routes/calls';
 import { checkoutRoutes } from './routes/checkout';
 import { adminRoutes } from './routes/admin';
+import { publicSettingsRoutes } from './routes/publicSettings';
 import { setupWebSocket, io } from './websocket/socket';
 import './services/orderCleanupService';
+import './services/backupService';
 import { authenticate, authenticateOptional, checkMaintenance, extractLanguage } from './middleware/auth';
 
 const fastify = Fastify({
@@ -214,6 +216,7 @@ fastify.register(reportRoutes, { prefix: '/api' });
 fastify.register(callRoutes, { prefix: '/api/calls' });
 fastify.register(checkoutRoutes, { prefix: '/api/checkout' });
 fastify.register(adminRoutes, { prefix: '/api/admin' });
+fastify.register(publicSettingsRoutes, { prefix: '/api/settings' });
 
 // Error handling for uncaught exceptions — always exit; let process manager restart
 process.on('uncaughtException', (error) => {

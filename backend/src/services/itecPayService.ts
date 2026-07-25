@@ -122,6 +122,65 @@ export const itecPayService = {
   },
 
   /**
+   * Send money out to a phone number via ITEC Pay (api/transfer) — used for admin
+   * cashouts. Distinct from initializeMobileMoneyPayment, which collects money
+   * *from* a customer; this pushes money *out* of the platform's account.
+   */
+  async transferToPhone(
+    amount: number,
+    phone: string,
+    provider: 'mtn' | 'airtel'
+  ): Promise<{ transactionId: string; raw: any }> {
+    const apiKeyMap: Record<string, string> = {
+      mtn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
+      airtel: process.env.ITECPAY_API_KEY_AIRTEL_MONEY || '',
+    };
+
+    const apiKey = apiKeyMap[provider];
+
+    if (!apiKey) {
+      throw new Error(`ITEC Pay API key not configured for provider: ${provider}`);
+    }
+
+    const normalizedPhone = this.normalizePhone(phone);
+    const reqRef = crypto.randomUUID();
+
+    try {
+      const response = await axios.post(
+        'https://pay.itecpay.rw/api/transfer',
+        {
+          amount: Number(amount),
+          phone: normalizedPhone,
+          key: apiKey,
+          req_ref: reqRef,
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const res = response.data as any;
+      console.log('ITEC Pay transfer raw response:', JSON.stringify(res));
+
+      // Same success heuristic as the collection endpoint — still unverified
+      // against a real successful transfer response, so treat with caution.
+      const statusVal = String(res.status ?? '').toLowerCase();
+      const ok = res.status === 200 || res.status === true || res.status === 1 ||
+        statusVal === 'success' || statusVal === 'ok' || statusVal === '200';
+
+      if (!ok) {
+        const errMsg = res.data?.message || res.message || `Transfer failed (status: ${res.status})`;
+        throw new Error(errMsg);
+      }
+
+      const transactionId = res.data?.transaction_id || res.transaction_id || reqRef;
+      return { transactionId, raw: res };
+    } catch (error: any) {
+      console.error('ITEC Pay Transfer Error:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || error.response?.data?.data?.message || error.message || 'Failed to transfer funds via ITEC Pay';
+      throw new Error(errorMessage);
+    }
+  },
+
+  /**
    * Initialize a card payment via ITEC Pay (pesapal/generatecode)
    */
   async initializeCardPayment(

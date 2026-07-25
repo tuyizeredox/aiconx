@@ -8,6 +8,7 @@ import { NotificationService } from '../services/notificationService';
 import { checkProductCountLimit, checkProductMediaLimit, checkAdvancedAnalyticsLimit, checkAffiliateLimit } from '../middleware/subscription';
 import { checkStoreVerified } from '../middleware/verification';
 import { escapeRegex } from '../utils/sanitize';
+import { deleteProductCascade } from '../services/cascadeService';
 
 export async function productRoutes(fastify: FastifyInstance) {
   // Get recommended products for the current user
@@ -316,7 +317,7 @@ export async function productRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: 'Unauthorized - invalid user data' });
       }
 
-      const product = await Product.findOneAndDelete({
+      const product = await Product.findOne({
         _id: id,
         vendor_username: user.username
       });
@@ -325,9 +326,10 @@ export async function productRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Product not found or access denied' });
       }
 
-      if (product.store_id) {
-        await Store.findByIdAndUpdate(product.store_id, { $inc: { product_count: -1 } });
-      }
+      // Cascades to cart/wishlist entries, reviews, affiliate links, sentiment
+      // summaries, likes/bookmarks, uploaded media, and decrements the store's
+      // product_count.
+      await deleteProductCascade(product);
 
       // Emit real-time event — target store/vendor room only
       const deletedStoreRoom = product.store_id ? `store:${product.store_id}` : `vendor:${user.username}`;

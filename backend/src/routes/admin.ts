@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { User } from '../models/User';
 import { Store } from '../models/Store';
@@ -13,10 +14,171 @@ import { ActivityLog } from '../models/ActivityLog';
 import { Post } from '../models/Post';
 import { VendorSubscription } from '../models/VendorSubscription';
 import { Notification } from '../models/Notification';
+import { Cashout } from '../models/Cashout';
+import { Backup } from '../models/Backup';
 import { authenticate, isAdmin, logActivity, invalidateMaintenanceCache } from '../middleware/auth';
 import { NotificationService } from '../services/notificationService';
 import { escapeRegex } from '../utils/sanitize';
 import { DEFAULT_PLATFORM_FEE_PERCENT } from '../utils/platformFinance';
+import { itecPayService } from '../services/itecPayService';
+import { deleteProductCascade, deleteStoreCascade, deleteUserCascade } from '../services/cascadeService';
+import { runBackup, getBackupStream } from '../services/backupService';
+
+// Shared by GET /stats (reporting) and POST /cashouts (balance-guard before
+// sending money out) so the two never drift into disagreeing about how much
+// the platform has actually earned vs. already paid out.
+// iTechPay's own processing cut — deducted from every revenue stream before
+// it's counted as the platform's actual take-home profit.
+const ITECPAY_CHARGE_RATE = 0.03;
+
+// Rounds breakdown display figures to 2dp instead of whole RWF. At real
+// transaction volumes this is invisible, but on tiny amounts (test data, or a
+// single small subscription) a 3% charge can be under 1 RWF — rounding that
+// to a whole unit shows "0" and makes the deduction look like it never
+// happened even though it's correctly subtracted from the actual total.
+const roundDisplay = (n: number) => Math.round(n * 100) / 100;
+
+type ProfitBreakdownLine = { gross: number; itecCharge: number; net: number };
+type ProfitBreakdown = {
+  platformFeePercent: number;
+  itecChargeRatePercent: number;
+  subscriptions: ProfitBreakdownLine;
+  orderCommission: ProfitBreakdownLine & { orderTotal: number };
+  affiliateCommission: ProfitBreakdownLine & { affiliateTotal: number };
+  grandTotalRevenue: number;
+};
+type OrdersBreakdown = {
+  platformFeePercent: number;
+  orderTotal: number;
+  platformCommission: number;
+  affiliateCommission: number;
+  netOrdersRevenue: number;
+};
+type CashoutBucket = { grandTotalRevenue: number; totalCashedOut: number; availableBalance: number; breakdown?: ProfitBreakdown | OrdersBreakdown };
+type CashoutBalances = { profit: CashoutBucket; orders: CashoutBucket };
+
+// Two independent pools, so cashing one out never eats into the other's
+// available balance:
+//  - 'profit'  — the platform's own take-home earnings: its commission cut of
+//                approved/completed order sales, its cut of what affiliates
+//                earned on those same orders, and subscription payments
+//                actually collected — each net of iTechPay's 3% processing charge.
+//  - 'orders'  — what's actually owed to vendors: approved/completed order
+//                revenue with the platform's commission and the affiliate
+//                commission subtracted out (both of those are the platform's/
+//                affiliates' money, not the vendor's). Unlike 'profit', this
+//                pool is NOT reduced by iTechPay's charge — vendors are owed
+//                their full net share. This is the pool vendor withdrawal
+//                requests get paid out of.
+async function getCashoutBalance(): Promise<CashoutBalances> {
+  const [settings, orderAgg, subscriptionRevenueAgg, profitCashedAgg, ordersCashedAgg] = await Promise.all([
+    Settings.findOne().select('platform_fee_percent').lean(),
+    Order.aggregate([
+      // Only orders that were actually paid for and have progressed past
+      // acceptance count as "approved completed" — excludes pending/cancelled/
+      // refunded orders, whose payment_status may still misleadingly read 'paid'
+      // (see the note on VendorSubscription below for why status must gate this).
+      { $match: { payment_status: 'paid', status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] } } },
+      { $group: { _id: null, orderTotal: { $sum: '$total' }, affiliateTotal: { $sum: '$affiliate_commission' } } }
+    ]),
+    VendorSubscription.aggregate([
+      // `amount` alone isn't proof of payment — it gets set to the plan's price
+      // as soon as an upgrade is requested, even while the record sits at
+      // status: 'pending' awaiting payment that may never arrive. status only
+      // ever reaches 'active' via itecPayService's successful-payment webhook
+      // handler, and 'expired' only ever transitions from 'active' once its
+      // term lapses — so both statuses mean the payment genuinely cleared.
+      // comped (admin-granted, unpaid) subscriptions are excluded — no money
+      // actually changed hands, so they must never count as platform revenue.
+      { $match: { status: { $in: ['active', 'expired'] }, amount: { $gt: 0 }, comped: { $ne: true } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    Cashout.aggregate([
+      { $match: { type: 'profit' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    Cashout.aggregate([
+      { $match: { type: 'orders' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+  ]);
+
+  const platformFeePercent = (settings as any)?.platform_fee_percent ?? DEFAULT_PLATFORM_FEE_PERCENT;
+  const orderTotal = orderAgg.length > 0 ? orderAgg[0].orderTotal : 0;
+  const affiliateTotal = orderAgg.length > 0 ? orderAgg[0].affiliateTotal : 0;
+  const totalSubscriptionRevenue = subscriptionRevenueAgg.length > 0 ? subscriptionRevenueAgg[0].total : 0;
+  const totalProfitCashedOut = profitCashedAgg.length > 0 ? profitCashedAgg[0].total : 0;
+  const totalOrdersCashedOut = ordersCashedAgg.length > 0 ? ordersCashedAgg[0].total : 0;
+
+  const platformCommission = orderTotal * (platformFeePercent / 100);
+  const affiliateCommissionCut = affiliateTotal * (platformFeePercent / 100);
+
+  const subscriptionItecCharge = totalSubscriptionRevenue * ITECPAY_CHARGE_RATE;
+  const orderCommissionItecCharge = platformCommission * ITECPAY_CHARGE_RATE;
+  const affiliateCommissionItecCharge = affiliateCommissionCut * ITECPAY_CHARGE_RATE;
+
+  const subscriptionProfit = totalSubscriptionRevenue - subscriptionItecCharge;
+  const orderCommissionProfit = platformCommission - orderCommissionItecCharge;
+  const affiliateCommissionProfit = affiliateCommissionCut - affiliateCommissionItecCharge;
+
+  // Percentage math naturally lands on fractional RWF; round once here so the
+  // balance check and the frontend both work off the same whole-unit figure.
+  const grandProfitRevenue = Math.round(subscriptionProfit + orderCommissionProfit + affiliateCommissionProfit);
+
+  // Vendor-owed amount: the order's gross total, minus the platform's own
+  // commission cut and the affiliate's commission — both already deducted at
+  // their full (not iTechPay-discounted) value, since that's the actual size
+  // of the slice that isn't the vendor's to begin with. No iTechPay charge is
+  // applied here — that discount only applies to the platform's own take-home
+  // profit streams, not to money owed out to vendors.
+  const netOrdersRevenue = Math.round(orderTotal - platformCommission - affiliateTotal);
+
+  const ordersBreakdown: OrdersBreakdown = {
+    platformFeePercent,
+    orderTotal: roundDisplay(orderTotal),
+    platformCommission: roundDisplay(platformCommission),
+    affiliateCommission: roundDisplay(affiliateTotal),
+    netOrdersRevenue,
+  };
+
+  const breakdown: ProfitBreakdown = {
+    platformFeePercent,
+    itecChargeRatePercent: ITECPAY_CHARGE_RATE * 100,
+    subscriptions: {
+      gross: roundDisplay(totalSubscriptionRevenue),
+      itecCharge: roundDisplay(subscriptionItecCharge),
+      net: roundDisplay(subscriptionProfit),
+    },
+    orderCommission: {
+      orderTotal: roundDisplay(orderTotal),
+      gross: roundDisplay(platformCommission),
+      itecCharge: roundDisplay(orderCommissionItecCharge),
+      net: roundDisplay(orderCommissionProfit),
+    },
+    affiliateCommission: {
+      affiliateTotal: roundDisplay(affiliateTotal),
+      gross: roundDisplay(affiliateCommissionCut),
+      itecCharge: roundDisplay(affiliateCommissionItecCharge),
+      net: roundDisplay(affiliateCommissionProfit),
+    },
+    grandTotalRevenue: grandProfitRevenue,
+  };
+
+  return {
+    profit: {
+      grandTotalRevenue: grandProfitRevenue,
+      totalCashedOut: totalProfitCashedOut,
+      availableBalance: grandProfitRevenue - totalProfitCashedOut,
+      breakdown,
+    },
+    orders: {
+      grandTotalRevenue: netOrdersRevenue,
+      totalCashedOut: totalOrdersCashedOut,
+      availableBalance: netOrdersRevenue - totalOrdersCashedOut,
+      breakdown: ordersBreakdown,
+    },
+  };
+}
 
 export async function adminRoutes(fastify: FastifyInstance) {
   // Add authentication and admin check to all routes in this plugin
@@ -111,17 +273,97 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete user
+  // Delete user — cascades to their store/products, social content, and
+  // marketplace activity so no orphaned data survives the account (see
+  // cascadeService.deleteUserCascade for exactly what is removed vs. kept).
   fastify.delete('/users/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const user = await User.findByIdAndDelete(id);
+      const user = await User.findById(id);
       if (!user) {
         return reply.code(404).send({ error: 'User not found' });
       }
-      await logActivity(request, 'delete_user', user._id, 'user', { email: user.email });
-      return { success: true };
+      const email = user.email;
+      const summary = await deleteUserCascade(user);
+      await logActivity(request, 'delete_user', id, 'user', { email, ...summary });
+      return { success: true, ...summary };
     } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Grant a user a plan directly — no payment involved. Used by super admins to
+  // comp a vendor a plan (promo, support goodwill, etc). Always free (amount: 0,
+  // comped: true) so it never gets counted as real revenue in the cashout/stats
+  // aggregations (see getCashoutBalance and GET /stats below, both of which
+  // filter on `comped`).
+  fastify.patch('/users/:id/subscription', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { plan, billing_cycle } = z.object({
+        plan: z.enum(['free', 'pro', 'elite']),
+        billing_cycle: z.enum(['monthly', 'annual']),
+      }).parse(request.body);
+
+      const user = await User.findById(id);
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      const admin = request.user as any;
+      const now = new Date();
+      let expiresAt: Date | undefined;
+      if (plan !== 'free') {
+        expiresAt = new Date(now);
+        if (billing_cycle === 'annual') {
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        } else {
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+        }
+      }
+
+      const store = await Store.findOne({ owner_username: user.username }).select('_id');
+
+      const grantFields = {
+        plan,
+        billing_cycle,
+        status: 'active' as const,
+        started_at: now,
+        expires_at: expiresAt,
+        amount: 0,
+        comped: true,
+        granted_by: admin.username,
+        payment_method: 'admin_grant',
+        last_payment_date: now,
+        pending_plan: null,
+        pending_billing_cycle: null,
+        pending_amount: null,
+      };
+
+      let subscription = await VendorSubscription.findOne({ vendor_username: user.username, status: 'active' });
+      if (subscription) {
+        Object.assign(subscription, grantFields);
+        await subscription.save();
+      } else {
+        subscription = await VendorSubscription.create({
+          vendor_username: user.username,
+          store_id: store?._id?.toString(),
+          ...grantFields,
+        });
+      }
+
+      await logActivity(request, 'assign_subscription_plan', subscription._id, 'vendor_subscription', {
+        target_user: user.username,
+        plan,
+        billing_cycle,
+      });
+
+      return subscription;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Internal server error' });
     }
@@ -304,15 +546,19 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete store
+  // Delete store — cascades to all of its products and store-scoped records
+  // (reviews, coupons, shipping zones, subscriptions, withdrawals, affiliate
+  // links) and removes its uploaded images. See cascadeService.deleteStoreCascade.
   fastify.delete('/stores/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const store = await Store.findByIdAndDelete(id);
+      const store = await Store.findById(id);
       if (!store) {
         return reply.code(404).send({ error: 'Store not found' });
       }
-      await logActivity(request, 'delete_store', store._id, 'store', { name: store.name });
+      const { name } = store;
+      await deleteStoreCascade(store);
+      await logActivity(request, 'delete_store', id, 'store', { name });
       return { success: true };
     } catch (error) {
       fastify.log.error(error);
@@ -584,6 +830,191 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // --- Cashouts (super admin sends platform revenue out to a phone number) ---
+
+  // Step-up auth gate the frontend calls before revealing the cashout panel.
+  fastify.post('/cashouts/verify-password', async (request, reply) => {
+    try {
+      const parsed = z.object({ password: z.string().min(1) }).safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ message: 'Password is required' });
+      }
+
+      const { userId } = request.user as any;
+      const user = await User.findById(userId).select('+password');
+      if (!user || !user.password) {
+        // Not 401: the frontend's global fetch wrapper treats any 401 as an
+        // expired session and force-logs-out the user, which a mistyped
+        // password should never trigger.
+        return reply.code(400).send({ message: 'Incorrect password' });
+      }
+
+      const isMatch = await bcrypt.compare(parsed.data.password, user.password);
+      if (!isMatch) {
+        return reply.code(400).send({ message: 'Incorrect password' });
+      }
+
+      return { verified: true };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // Send money to a phone number via iTechPay and, only on success, log it.
+  fastify.post('/cashouts', async (request, reply) => {
+    try {
+      const parsed = z.object({
+        type: z.enum(['profit', 'orders']),
+        amount: z.number().min(1),
+        phoneNumber: z.string().min(1),
+        provider: z.enum(['mtn', 'airtel']),
+        note: z.string().optional(),
+      }).safeParse(request.body);
+
+      if (!parsed.success) {
+        return reply.code(400).send({ message: 'Invalid type / amount / missing phone / bad provider' });
+      }
+
+      const { type, amount, phoneNumber, provider, note } = parsed.data;
+      const { userId } = request.user as any;
+
+      const balances = await getCashoutBalance();
+      const { availableBalance } = balances[type];
+      if (amount > availableBalance) {
+        return reply.code(400).send({ message: 'Amount exceeds available balance' });
+      }
+
+      let transfer;
+      try {
+        transfer = await itecPayService.transferToPhone(amount, phoneNumber, provider);
+      } catch (transferError: any) {
+        return reply.code(502).send({ message: `iTechPay declined the transfer: ${transferError.message}` });
+      }
+
+      const cashout = await Cashout.create({
+        type,
+        amount,
+        phoneNumber,
+        provider,
+        note,
+        transactionId: transfer.transactionId,
+        gatewayResponse: transfer.raw,
+        requestedBy: userId,
+      });
+
+      await logActivity(request, 'cashout_created', cashout._id, 'cashout', { type, amount, provider, phoneNumber });
+
+      return reply.code(201).send(cashout);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // List cashout log entries, most recent first. Optional ?type=profit|orders.
+  fastify.get('/cashouts', async (request, reply) => {
+    try {
+      const { type } = request.query as { type?: string };
+      const query: any = {};
+      if (type === 'profit' || type === 'orders') query.type = type;
+
+      const cashouts = await Cashout.find(query)
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .populate('requestedBy', 'display_name email');
+
+      return cashouts;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // Remove a log entry only — does not reverse the transfer.
+  fastify.delete('/cashouts/:id', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const cashout = await Cashout.findByIdAndDelete(id);
+      if (!cashout) {
+        return reply.code(404).send({ message: 'Cashout record not found' });
+      }
+
+      await logActivity(request, 'cashout_deleted', id, 'cashout', {});
+
+      return { message: 'Cashout record deleted' };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // --- Database Backups ---
+
+  // List backup history, most recent first.
+  fastify.get('/backups', async (request, reply) => {
+    try {
+      const { page = 1, limit = 20 } = request.query as any;
+      const parsedLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+      const parsedPage = Math.max(parseInt(page) || 1, 1);
+      const skip = (parsedPage - 1) * parsedLimit;
+
+      const [backups, total] = await Promise.all([
+        Backup.find().sort({ started_at: -1 }).skip(skip).limit(parsedLimit),
+        Backup.countDocuments(),
+      ]);
+
+      return {
+        backups,
+        pagination: {
+          total,
+          page: parsedPage,
+          limit: parsedLimit,
+          pages: Math.ceil(total / parsedLimit),
+        },
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Trigger an on-demand backup. Runs synchronously so the admin sees the
+  // final status (success/failed, size) in the response, not just "started".
+  fastify.post('/backups/run', async (request, reply) => {
+    try {
+      const { userId } = request.user as any;
+      const backup = await runBackup('manual', userId);
+      await logActivity(request, 'run_backup', backup._id, 'backup', { status: backup.status });
+      return reply.code(backup.status === 'success' ? 201 : 500).send(backup);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Download a backup archive (gzip-compressed JSON dump of every collection).
+  fastify.get('/backups/:id/download', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const backup = await Backup.findById(id);
+      if (!backup) {
+        return reply.code(404).send({ error: 'Backup not found' });
+      }
+      if (backup.status !== 'success') {
+        return reply.code(409).send({ error: 'This backup did not complete successfully' });
+      }
+
+      const stream = await getBackupStream(backup);
+      reply.header('Content-Type', 'application/gzip');
+      reply.header('Content-Disposition', `attachment; filename="${backup.filename}"`);
+      return reply.send(stream);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // --- Seller Identity Verification (KYC) ---
 
   // List stores by verification status (defaults to pending — the review queue)
@@ -810,9 +1241,13 @@ export async function adminRoutes(fastify: FastifyInstance) {
             contentLabel = 'post';
           }
         } else if (report.target_type === 'product') {
-          const product = content_action === 'remove'
-            ? await Product.findByIdAndDelete(report.target_id)
-            : await Product.findByIdAndUpdate(report.target_id, { status: 'archived' });
+          let product;
+          if (content_action === 'remove') {
+            product = await Product.findById(report.target_id);
+            if (product) await deleteProductCascade(product);
+          } else {
+            product = await Product.findByIdAndUpdate(report.target_id, { status: 'archived' });
+          }
           if (product) {
             ownerUsername = product.vendor_username;
             contentLabel = 'product';
@@ -1105,16 +1540,19 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete product
+  // Delete product — cascades to cart/wishlist entries, reviews, affiliate
+  // links, sentiment summaries, likes/bookmarks, and its uploaded media. See
+  // cascadeService.deleteProductCascade.
   fastify.delete('/products/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const product = await Product.findByIdAndDelete(id);
+      const product = await Product.findById(id);
       if (!product) {
         return reply.code(404).send({ error: 'Product not found' });
       }
 
-      await logActivity(request, 'delete_product', product._id, 'product');
+      await deleteProductCascade(product);
+      await logActivity(request, 'delete_product', id, 'product');
 
       return { success: true };
     } catch (error) {
@@ -1234,7 +1672,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         disputedOrders,
         settings,
         activeSubscriptions,
-        subscriptionRevenue
+        subscriptionRevenue,
+        cashoutSummary
       ] = await Promise.all([
         User.countDocuments(),
         Store.countDocuments(),
@@ -1249,7 +1688,9 @@ export async function adminRoutes(fastify: FastifyInstance) {
         Order.countDocuments({ buyer_confirmation_status: 'disputed' }),
         Settings.findOne(),
         VendorSubscription.countDocuments({ status: 'active' }),
-        VendorSubscription.find({ plan: { $ne: 'free' }, status: 'active' }).select('plan billing_cycle amount')
+        // comped (admin-granted) subscriptions are excluded from the revenue figure below.
+        VendorSubscription.find({ plan: { $ne: 'free' }, status: 'active', comped: { $ne: true } }).select('plan billing_cycle amount'),
+        getCashoutBalance()
       ]);
 
       // Calculate total sales from all orders
@@ -1340,7 +1781,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         charts: {
           sales: salesChart
         },
-        settings: settings || { 
+        cashoutSummary,
+        settings: settings || {
           maintenance_mode: false, 
           maintenance_message: '',
           allow_registration: true,

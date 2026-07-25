@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { initializeITECPayPayment } from "@/lib/itecpay";
+import { checkoutAPI, paymentAPI } from "@/api/apiClient";
+import { PAYMENT_METHODS } from "@/lib/paymentMethods";
+import RadioOptionCard from "@/components/shared/RadioOptionCard";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +34,9 @@ import {
   User,
   Navigation,
   Info,
-  Palette
+  Palette,
+  Loader2,
+  ChevronLeft
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,39 +66,137 @@ export default function OrderDetailModal({
 }) {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  const [showPhoneInput, setShowPhoneInput] = useState(false);
+  // 'method' -> choosing mtn/airtel/card, 'phone' -> entering mobile money number,
+  // 'pending' -> waiting for the buyer to confirm on their phone
+  const [payStep, setPayStep] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState(null);
   const [retryPhone, setRetryPhone] = useState(currentUser?.phone_number || "");
+  const [pendingPayment, setPendingPayment] = useState(null); // { reference, method }
 
-  const isMobileMoneyMethod = ['mtn', 'airtel', 'spenn'].includes(order?.payment_method);
+  const orderId = order ? String(order._id || order.id) : null;
 
-  const retryPaymentMutation = useMutation({
-    mutationFn: (phone) => initializeITECPayPayment({
-      amount: order.total,
-      email: currentUser?.email,
-      phone: phone || undefined,
-      order_id: `ORD-${order._id || order.id}`,
-      payment_method: order.payment_method,
-    }),
-    onSuccess: () => {
-      // Card payments redirect via window.location.href inside initializeITECPayPayment.
-      if (order.payment_method !== 'card') {
-        toast.success("Payment request sent — check your phone to confirm.");
-        setShowPhoneInput(false);
-        queryClient.invalidateQueries({ queryKey: ["myOrders"] });
+  const initiateMutation = useMutation({
+    mutationFn: async ({ method, phone }) => {
+      if (method === 'card') {
+        // PaymentSuccess.jsx picks this up when the gateway redirects back.
+        localStorage.setItem('pending_order_ids', JSON.stringify([orderId]));
       }
+      let result = null;
+      await initializeITECPayPayment({
+        amount: order.total,
+        email: currentUser?.email,
+        phone: phone || undefined,
+        order_id: orderId,
+        payment_method: method,
+        onSuccess: (res) => { result = res; },
+      });
+      return { method, response: result };
+    },
+    onSuccess: ({ method, response }) => {
+      if (method === 'card') return; // browser is navigating to the hosted payment page
+      const reference = response?.data?.reference || response?.reference;
+      if (!reference) {
+        toast.error("Failed to start payment. Please try again.");
+        setPayStep('method');
+        return;
+      }
+      toast.success("Payment request sent — check your phone to confirm.");
+      setPendingPayment({ reference, method });
+      setPayStep('pending');
     },
     onError: (err) => {
       toast.error(err.message || "Failed to start payment. Please try again.");
+      setPayStep('method');
     },
   });
 
-  const handlePayAgain = () => {
-    if (isMobileMoneyMethod) {
-      setShowPhoneInput(true);
+  const handleSelectMethod = (method) => {
+    setSelectedMethod(method);
+    if (method.mobile) {
+      setPayStep('phone');
     } else {
-      retryPaymentMutation.mutate(null);
+      initiateMutation.mutate({ method: method.id, phone: null });
     }
   };
+
+  const handlePhoneSubmit = () => {
+    if (!retryPhone.trim()) return;
+    initiateMutation.mutate({ method: selectedMethod.id, phone: retryPhone });
+  };
+
+  const resetPayFlow = () => {
+    setPayStep(null);
+    setSelectedMethod(null);
+    setPendingPayment(null);
+  };
+
+  // Poll for confirmation after a mobile money prompt is sent, mirroring the
+  // Checkout page's flow — then flip the order to paid via the same
+  // single-order verify endpoint checkout uses for existing orders.
+  useEffect(() => {
+    if (!pendingPayment) return;
+    let stopped = false;
+
+    const finish = (fn) => {
+      if (stopped) return;
+      stopped = true;
+      clearInterval(poll);
+      clearTimeout(timeout);
+      fn();
+    };
+
+    const poll = setInterval(async () => {
+      try {
+        const result = await paymentAPI.itecpay.verify({
+          req_ref: pendingPayment.reference,
+          provider: pendingPayment.method,
+        });
+        const status = String(result.data?.status || result.status || '').toLowerCase();
+
+        if (['completed', 'success', 'successful', 'paid', 'approved'].includes(status)) {
+          finish(async () => {
+            try {
+              await checkoutAPI.verifyPayment(orderId, pendingPayment.reference);
+              toast.success("Payment confirmed! Your order is now paid.");
+              queryClient.invalidateQueries({ queryKey: ["myOrders"] });
+              resetPayFlow();
+              onOpenChange(false);
+            } catch (err) {
+              toast.error(err.message || "We couldn't confirm your payment. Please try again.");
+              resetPayFlow();
+            }
+          });
+        } else if (['failed', 'cancelled', 'rejected'].includes(status)) {
+          finish(() => {
+            toast.error("Payment was cancelled or failed. Please try again.");
+            setPendingPayment(null);
+            setPayStep('method');
+          });
+        }
+      } catch (err) {
+        finish(() => {
+          toast.error(err.message || "We couldn't confirm your payment. Please try again.");
+          setPendingPayment(null);
+          setPayStep('method');
+        });
+      }
+    }, 5000);
+
+    const timeout = setTimeout(() => {
+      finish(() => {
+        toast.error("Payment confirmation timed out. Please try again.");
+        setPendingPayment(null);
+        setPayStep('method');
+      });
+    }, 120000);
+
+    return () => {
+      stopped = true;
+      clearInterval(poll);
+      clearTimeout(timeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPayment]);
 
   if (!order) return null;
 
@@ -146,34 +249,80 @@ export default function OrderDetailModal({
                     Your payment for this order didn't go through, so it's on hold until payment is completed.
                   </p>
 
-                  {showPhoneInput ? (
-                    <div className="mt-3 flex items-center gap-2">
-                      <Input
-                        type="tel"
-                        value={retryPhone}
-                        onChange={(e) => setRetryPhone(e.target.value)}
-                        placeholder="e.g. 078xxxxxxx"
-                        className="flex-1 min-w-0 h-10 rounded-xl border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 text-sm"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => retryPaymentMutation.mutate(retryPhone)}
-                        disabled={!retryPhone.trim() || retryPaymentMutation.isPending}
-                        className="bg-red-600 hover:bg-red-700 text-white rounded-xl h-10 shrink-0"
-                      >
-                        {retryPaymentMutation.isPending ? "Sending..." : "Send"}
-                      </Button>
-                    </div>
-                  ) : (
+                  {!payStep && (
                     <Button
                       size="sm"
-                      onClick={handlePayAgain}
-                      disabled={retryPaymentMutation.isPending}
+                      onClick={() => setPayStep('method')}
                       className="mt-3 bg-red-600 hover:bg-red-700 text-white rounded-xl gap-2 h-9"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      {retryPaymentMutation.isPending ? "Starting..." : "Pay Again"}
+                      Pay Again
                     </Button>
+                  )}
+
+                  {payStep === 'method' && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-700/70 dark:text-red-400/70">
+                        Choose a payment method
+                      </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {PAYMENT_METHODS.map(method => (
+                          <RadioOptionCard
+                            key={method.id}
+                            selected={selectedMethod?.id === method.id}
+                            disabled={initiateMutation.isPending}
+                            onSelect={() => handleSelectMethod(method)}
+                            iconImg={method.logo}
+                            iconEmoji={method.emoji}
+                            title={method.label}
+                            subtitle={method.mobile ? "Mobile money" : "Visa / Mastercard"}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={resetPayFlow}
+                        className="text-xs font-semibold text-red-700 dark:text-red-400 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {payStep === 'phone' && (
+                    <div className="mt-3 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setPayStep('method')}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 dark:text-red-400 hover:underline"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" /> Change method
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="tel"
+                          value={retryPhone}
+                          onChange={(e) => setRetryPhone(e.target.value)}
+                          placeholder="e.g. 078xxxxxxx"
+                          className="flex-1 min-w-0 h-10 rounded-xl border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 text-sm"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handlePhoneSubmit}
+                          disabled={!retryPhone.trim() || initiateMutation.isPending}
+                          className="bg-red-600 hover:bg-red-700 text-white rounded-xl h-10 shrink-0"
+                        >
+                          {initiateMutation.isPending ? "Sending..." : "Send"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {payStep === 'pending' && (
+                    <div className="mt-3 flex items-center gap-2 text-red-700 dark:text-red-400">
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span className="text-xs font-medium">Waiting for confirmation on your phone…</span>
+                    </div>
                   )}
                 </div>
               </div>
