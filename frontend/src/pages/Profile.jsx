@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl, formatCurrency } from "@/lib/utils";
+import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
 import PostCard from "@/components/shared/PostCard";
 import ProductCard from "@/components/shared/ProductCard";
 import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -475,7 +475,7 @@ export default function Profile() {
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {store && (
                 <Link 
-                  to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} 
+                  to={storeUrl(store)}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 dark:bg-orange-950 rounded-lg text-xs text-orange-700 dark:text-orange-400 font-bold hover:bg-orange-100 dark:hover:bg-orange-900 transition-colors"
                 >
                   <Store className="w-3.5 h-3.5" /> {store.name}
@@ -558,7 +558,7 @@ export default function Profile() {
                   <ShoppingBag className="w-4 h-4 text-orange-500" />
                   {t("profile.storeHighlights")}
                 </h2>
-                <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} className="text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:underline">
+                <Link to={storeUrl(store)} className="text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:underline">
                   {t("profile.visitStore")}
                 </Link>
               </div>

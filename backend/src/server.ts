@@ -6,6 +6,7 @@ import compress from '@fastify/compress';
 import rateLimit from '@fastify/rate-limit';
 import mongoose from 'mongoose';
 import { connectDB } from './config/database';
+import { backfillStoreSlugs } from './models/Store';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { productRoutes } from './routes/products';
@@ -186,8 +187,7 @@ fastify.register(async (authScope) => {
 // Register routes
 fastify.register(userRoutes, { prefix: '/api/users' });
 fastify.register(productRoutes, { prefix: '/api/products' });
-fastify.register(productQuestionRoutes, { prefix: '/api/product-questions' });
-fastify.register(productBookingRoutes, { prefix: '/api/product-bookings' });
+ 
 fastify.register(orderRoutes, { prefix: '/api/orders' });
 fastify.register(messageRoutes, { prefix: '/api/messages' });
 fastify.register(notificationRoutes, { prefix: '/api/notifications' });
@@ -255,10 +255,19 @@ const start = async () => {
   try {
     // Try to connect to database but don't block server startup if it's not ready
     // This allows the server to at least start so the proxy doesn't fail with 500/504
-    connectDB().catch(err => {
+    connectDB().then(async () => {
+      // Stores predating slug-based URLs (/store/:slug) have no handle yet — give
+      // them one so their pretty link resolves. No-op once every store has a slug.
+      try {
+        const filled = await backfillStoreSlugs();
+        if (filled > 0) console.log(`🔗 Backfilled slugs for ${filled} store(s)`);
+      } catch (err: any) {
+        console.error('⚠️  Store slug backfill failed:', err.message);
+      }
+    }).catch(err => {
       console.error('❌ Delayed MongoDB connection failed:', err.message);
     });
-    
+
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     

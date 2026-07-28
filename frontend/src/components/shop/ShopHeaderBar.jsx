@@ -14,7 +14,10 @@ import LanguagePicker from "@/components/layout/LanguagePicker";
 // Those pages render outside the app's sidebar layout (see App.jsx) so the
 // product/cart content gets the full viewport width — this bar is then the only
 // way back into the app, and the only place a guest sees their cart count.
-export default function ShopHeaderBar({ backTo, backLabel, onShare, showCart = true }) {
+// `onBack` (from useBackLink) turns the arrow into a real history "back" while
+// `backTo` stays the href — so a click returns the visitor to the page they came
+// from, and middle-click / open-in-new-tab still resolve to a URL.
+export default function ShopHeaderBar({ backTo, backLabel, onBack, onShare, showCart = true }) {
   const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const [guestCartCount, setGuestCartCount] = React.useState(() => getGuestCartCount());
@@ -45,6 +48,7 @@ export default function ShopHeaderBar({ backTo, backLabel, onShare, showCart = t
         <div className="flex-1 min-w-0 flex items-center">
           <Link
             to={backTo}
+            onClick={onBack}
             className="inline-flex items-center gap-1.5 min-w-0 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 shrink-0" />

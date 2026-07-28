@@ -7,7 +7,7 @@ import StoriesRow from "@/components/stories/StoriesRow";
 import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import EmptyState from "@/components/shared/EmptyState";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2, Link2, Bot, Store, CheckCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RecommendedSection from "@/components/home/RecommendedSection";
@@ -156,7 +156,7 @@ export default function Home() {
                   {stores.map((store) => (
                     <Link
                       key={store._id || store.id}
-                      to={createPageUrl("StoreDetail") + `?id=${store._id || store.id}`}
+                      to={storeUrl(store)}
                       className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors min-w-0"
                     >
                       <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">

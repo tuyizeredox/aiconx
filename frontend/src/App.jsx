@@ -52,7 +52,7 @@ const LegacyCommunityRedirect = () => {
 
 const LegacyStoreRedirect = () => {
   const location = useLocation();
-  return <Navigate to={`/StoreDetail${location.search}`} replace />;
+  return <Navigate to={`/storedetail${location.search}`} replace />;
 };
 
 // Lets a super_admin preview a live product/store page from the admin dashboard
@@ -125,7 +125,15 @@ const AppRoutes = () => {
 
       {/* Store pages are their own standalone full page (no sidebar/app chrome) so a
           vendor's custom storefront reads as a real landing page, and publicly
-          viewable so shared store links work for logged-out visitors too. */}
+          viewable so shared store links work for logged-out visitors too.
+
+          /store/:slug is the shareable form ("/store/kigali-coffee"); /storedetail?id=
+          stays for links already out in the wild (notifications, bookmarks). Both
+          render the same page — StoreDetail resolves either identifier. */}
+      <Route path="/store/:slug" element={
+        isAuthenticated && user?.role === 'super_admin' && !isAdminPreview(location) ? <Navigate to="/admin-dashboard" replace /> :
+        <ErrorBoundary><Pages.StoreDetail /></ErrorBoundary>
+      } />
       <Route path="/storedetail" element={
         isAuthenticated && user?.role === 'super_admin' && !isAdminPreview(location) ? <Navigate to="/admin-dashboard" replace /> :
         <ErrorBoundary><Pages.StoreDetail /></ErrorBoundary>

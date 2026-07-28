@@ -10,6 +10,30 @@ export function createPageUrl(pageName) {
   return `/${pageName.toLowerCase()}`;
 }
 
+// Link to a store page. Prefers the readable handle (/store/kigali-coffee) and
+// falls back to the legacy /storedetail?id=<ObjectId> route when the caller only
+// has an id (or the store predates slugs and hasn't been backfilled yet) — both
+// resolve server-side, so either form always works.
+//
+// `store` may be a store object, or a bare id string when that's all the caller
+// has. `query` is an optional object of extra params (e.g. { view: "shop" }).
+export function storeUrl(store, query) {
+  const isObject = store && typeof store === "object";
+  const slug = isObject ? store.slug : null;
+  const id = isObject ? (store.id || store._id) : store;
+
+  let url;
+  if (slug) url = `/store/${encodeURIComponent(slug)}`;
+  else if (id) url = `/storedetail?id=${encodeURIComponent(id)}`;
+  else return "/marketplace";
+
+  const extra = new URLSearchParams(
+    Object.entries(query || {}).filter(([, v]) => v !== undefined && v !== null && v !== "")
+  ).toString();
+  if (!extra) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}${extra}`;
+}
+
 export function getRedirectPath(user) {
   return user?.role === 'super_admin' ? '/admin-dashboard' : '/';
 }

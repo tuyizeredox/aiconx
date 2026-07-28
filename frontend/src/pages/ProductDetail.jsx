@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl, formatCurrency } from "@/lib/utils";
+import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
 import ShopHeaderBar from "@/components/shop/ShopHeaderBar";
 import ReviewGallery from "@/components/reviews/ReviewGallery";
 import ReviewForm from "@/components/reviews/ReviewForm";
@@ -18,6 +18,7 @@ import BoughtTogether from "@/components/product/BoughtTogether";
 import ProductTrustFooter from "@/components/product/ProductTrustFooter";
 import ShareModal from "@/components/shared/ShareModal";
 import ReportModal from "@/components/shared/ReportModal";
+import { useBackLink } from "@/hooks/useBackLink";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI, storesAPI, productQuestionsAPI, productBookingsAPI } from "@/api/apiClient";
 import { addToGuestCart, getGuestCart } from "@/lib/guestCart";
@@ -50,10 +51,10 @@ function StarRow({ rating, className = "w-4 h-4" }) {
 // The page renders outside the app sidebar layout (see App.jsx) so it owns its
 // own background + top chrome — including on the loading/error states, which
 // otherwise leave a visitor with no way back.
-function ProductPageShell({ backTo, backLabel, onShare, children }) {
+function ProductPageShell({ backTo, backLabel, onBack, onShare, children }) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
-      <ShopHeaderBar backTo={backTo} backLabel={backLabel} onShare={onShare} />
+      <ShopHeaderBar backTo={backTo} backLabel={backLabel} onBack={onBack} onShare={onShare} />
       {children}
     </div>
   );
@@ -386,15 +387,22 @@ export default function ProductDetail() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wishlist"] }),
   });
 
-  const backTo = createPageUrl("Marketplace");
-  const backLabel = t("product.backToMarketplace");
+  // Back returns to wherever the visitor came from — a store page, the feed,
+  // search results — and only falls back to the marketplace when this page was
+  // opened cold (a shared or affiliate link, a new tab).
+  const { to: backTo, label: backLabel, onClick: onBack } = useBackLink(
+    createPageUrl("Marketplace"),
+    t("product.backToMarketplace")
+  );
 
   const emptyState = (message) => (
-    <ProductPageShell backTo={backTo} backLabel={backLabel}>
+    <ProductPageShell backTo={backTo} backLabel={backLabel} onBack={onBack}>
       <div className="max-w-3xl mx-auto px-4 py-16 sm:py-24 flex flex-col items-center text-center">
         <p className="text-base font-medium text-slate-500 dark:text-slate-400 mb-6">{message}</p>
-        <Link to={backTo}>
-          <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl font-bold">{backLabel}</Button>
+        {/* The dead-end states keep the marketplace as their explicit way out —
+            "back" from a product that doesn't exist would just bounce them. */}
+        <Link to={createPageUrl("Marketplace")}>
+          <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl font-bold">{t("product.backToMarketplace")}</Button>
         </Link>
       </div>
     </ProductPageShell>
@@ -618,7 +626,7 @@ export default function ProductDetail() {
                         {storeSince && <span>· {t("product.since", { year: storeSince })}</span>}
                       </div>
                     </div>
-                    <Link to={createPageUrl("StoreDetail") + `?id=${product.store_id}`} className="shrink-0">
+                    <Link to={storeUrl(store || product.store_id)} className="shrink-0">
                       <Button variant="outline" size="sm" className="rounded-xl h-8 text-xs gap-1.5">
                         <StoreIcon className="w-3.5 h-3.5" /> {t("product.visitStore")}
                       </Button>

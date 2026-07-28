@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createPageUrl } from "@/lib/utils";
+import { storeUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { storesAPI } from "@/api/apiClient";
 import ThemeEditor from "./storefront-builder/ThemeEditor";
@@ -367,7 +367,7 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
             <div className="flex items-center gap-3 shrink-0">
               {storeId && (
                 <Link
-                  to={createPageUrl("StoreDetail") + `?id=${storeId}`}
+                  to={storeUrl(store)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hidden sm:inline-flex items-center gap-1 text-slate-300 hover:text-white"

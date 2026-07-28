@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { createPageUrl, formatCurrency } from "@/lib/utils";
+import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
 import {
   Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, Eye,
   X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
@@ -1209,7 +1209,7 @@ export default function MyStore() {
                 </Tabs>
               </DialogContent>
             </Dialog>
-            <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`}>
+            <Link to={storeUrl(store)}>
               <Button variant="outline" size="sm" className="rounded-xl">
                 <Eye className="w-4 h-4 mr-1.5" /> {t("store.viewStore")}
               </Button>

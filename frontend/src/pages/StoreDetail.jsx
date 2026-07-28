@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import {
@@ -25,8 +25,15 @@ import toast from "react-hot-toast";
 
 export default function StoreDetail() {
   const { t } = useTranslation();
-  const params = new URLSearchParams(window.location.search);
-  const storeId = params.get("id");
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Two ways in: the shareable /store/:slug URL, and the legacy
+  // /storedetail?id=<ObjectId> one still carried by older links. The API
+  // resolves either, so the page just passes through whichever it got.
+  const { slug } = useParams();
+  const params = new URLSearchParams(location.search);
+  const idParam = params.get("id");
+  const identifier = slug || idParam;
   const view = params.get("view");
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
@@ -35,17 +42,33 @@ export default function StoreDetail() {
   const [category, setCategory] = React.useState("all");
   const [sort, setSort] = React.useState("-created_at");
 
-  const isValidId = !!storeId && storeId !== "undefined" && storeId !== "null" && storeId.length >= 8;
+  const isValidId = !!identifier && identifier !== "undefined" && identifier !== "null" && identifier.length >= 3;
 
   const { data: store, error: storeError, isLoading: storeLoading } = useQuery({
-    queryKey: ["storeDetail", storeId],
+    queryKey: ["storeDetail", identifier],
     queryFn: async () => {
       if (!isValidId) throw new Error("Invalid Store ID");
-      return storesAPI.get(storeId);
+      return storesAPI.get(identifier);
     },
     enabled: isValidId,
     retry: false,
   });
+
+  // Everything below (products, reviews, follows) keys off the real ObjectId.
+  // With ?id= we have it up front; with a slug it arrives once the store loads.
+  const storeId = store?.id || store?._id || (slug ? null : idParam);
+
+  // Land on an id URL (or a handle the vendor has since renamed away from) and
+  // the address bar is rewritten to the store's current /store/:slug, so what
+  // visitors copy and share is always the readable, canonical link.
+  React.useEffect(() => {
+    if (!store?.slug || store.slug === slug) return;
+    // ?id= is what the slug replaces; anything else (view, adminPreview) rides along.
+    const nextParams = new URLSearchParams(location.search);
+    nextParams.delete("id");
+    const search = nextParams.toString();
+    navigate({ pathname: `/store/${store.slug}`, search: search ? `?${search}` : "" }, { replace: true });
+  }, [store?.slug, slug, location.search, navigate]);
 
   const { data: followStatus = { is_following: false, is_followed_by: false } } = useQuery({
     queryKey: ["followStatus", currentUser?.username, storeId],
@@ -61,7 +84,7 @@ export default function StoreDetail() {
         is_followed_by: !!res.is_followed_by
       };
     },
-    enabled: !!currentUser?.username && !!storeId && isValidId,
+    enabled: !!currentUser?.username && !!storeId,
   });
 
   const isFollowing = followStatus.is_following;
@@ -84,7 +107,7 @@ export default function StoreDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["followStatus", currentUser?.username, storeId] });
-      queryClient.invalidateQueries({ queryKey: ["storeDetail", storeId] });
+      queryClient.invalidateQueries({ queryKey: ["storeDetail", identifier] });
       toast.success(isFollowing ? t("storeDetail.unfollowedStore") : t("storeDetail.followingStore"));
     },
     onError: (error) => {
@@ -95,14 +118,14 @@ export default function StoreDetail() {
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ["storeProducts", storeId, category, sort],
     queryFn: async () => {
-      if (!isValidId) return { list: [], total: 0 };
+      if (!storeId) return { list: [], total: 0 };
       const filters = { store_id: storeId, status: "active", sort, limit: 50 };
       if (category !== "all") filters.category = category;
       const res = await productsAPI.list(filters);
       const list = res.data || (Array.isArray(res) ? res : []);
       return { list, total: typeof res.total === "number" ? res.total : list.length };
     },
-    enabled: isValidId,
+    enabled: !!storeId,
     retry: false,
   });
 
@@ -140,11 +163,11 @@ export default function StoreDetail() {
   const { data: storeReviewsData } = useQuery({
     queryKey: ["storeReviews", storeId],
     queryFn: async () => {
-      if (!isValidId) return [];
+      if (!storeId) return [];
       const res = await reviewsAPI.list({ store_id: storeId, sort: "-created_at", limit: 100 });
       return res.data || res || [];
     },
-    enabled: isValidId,
+    enabled: !!storeId,
     retry: false,
   });
 
@@ -222,7 +245,7 @@ export default function StoreDetail() {
       <StoreHeaderBar
         store={store}
         onShare={handleShare}
-        backTo={cameFromStorefront ? `${createPageUrl("StoreDetail")}?id=${storeId}` : createPageUrl("Marketplace")}
+        backTo={cameFromStorefront ? storeUrl(store) : createPageUrl("Marketplace")}
         backLabel={cameFromStorefront ? store.name : t("storeDetail.marketplace")}
       />
       <div className="max-w-6xl mx-auto px-4 lg:px-6 pb-4 lg:pb-6">

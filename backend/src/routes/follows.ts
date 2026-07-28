@@ -199,7 +199,7 @@ export async function followRoutes(fastify: FastifyInstance) {
               await Store.findByIdAndUpdate(target_id, { $inc: { follower_count: 1 } });
               recipientUsername = targetEntity.owner_username;
               title = `${currentUserDisplayName} started following your store: ${targetEntity.name}`;
-              link = `/StoreDetail?id=${targetEntity._id}`;
+              link = targetEntity.slug ? `/store/${targetEntity.slug}` : `/storedetail?id=${targetEntity._id}`;
             }
           } else if (follow_type === 'community' && target_id) {
             if (targetEntity) {

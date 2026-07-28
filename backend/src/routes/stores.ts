@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
 import { Store, IStore } from '../models/Store';
 import { Product } from '../models/Product';
 import { z } from 'zod';
@@ -251,6 +252,20 @@ async function computeStorefrontActive(store: { owner_username: string; storefro
   return !!limits.custom_storefront;
 }
 
+// Store pages are addressed by slug (/store/kigali-coffee), but every link
+// shared, notified or bookmarked before slugs existed carries an ObjectId — so
+// this endpoint accepts either. A renamed store is also findable by the handle
+// it used to have; the response's own `slug` is the canonical one, which the
+// client uses to correct the address bar.
+async function findStoreByIdentifier(identifier: string) {
+  if (mongoose.Types.ObjectId.isValid(identifier) && String(new mongoose.Types.ObjectId(identifier)) === identifier) {
+    const byId = await Store.findById(identifier).lean();
+    if (byId) return byId;
+  }
+  const slug = identifier.toLowerCase();
+  return (await Store.findOne({ slug }).lean()) || (await Store.findOne({ previous_slugs: slug }).lean());
+}
+
 const EARTH_RADIUS_KM = 6371;
 const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
@@ -291,7 +306,7 @@ export async function storeRoutes(fastify: FastifyInstance) {
 
       const radius = Math.min(Math.max(parseFloat(radius_km) || 25, 1), 500);
       const resultLimit = Math.min(Math.max(parseInt(limit) || 100, 1), 200);
-      const select = 'name logo_url category follower_count owner_username status is_verified product_count rating_avg address location';
+      const select = 'name slug logo_url category follower_count owner_username status is_verified product_count rating_avg address location';
 
       const conditions: any[] = [];
 
@@ -379,7 +394,7 @@ export async function storeRoutes(fastify: FastifyInstance) {
         .sort(filter.$text ? { score: { $meta: 'textScore' }, follower_count: -1 } : sort)
         .limit(parseInt(limit))
         .skip(parseInt(skip))
-        .select('name logo_url category follower_count owner_username status is_verified product_count rating_avg address location')
+        .select('name slug logo_url category follower_count owner_username status is_verified product_count rating_avg address location')
         .lean();
 
       const total = await Store.countDocuments(filter);
@@ -399,18 +414,18 @@ export async function storeRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get store by ID
+  // Get store by slug (preferred) or by ObjectId (legacy links)
   fastify.get('/:id', { preHandler: [fastify.authenticateOptional] }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const store = await Store.findById(id).lean();
+      const store = await findStoreByIdentifier(id);
 
       if (!store) {
         return reply.code(404).send({ error: 'Store not found' });
       }
 
       // Get store products
-      const products = await Product.find({ store_id: id, status: 'active' })
+      const products = await Product.find({ store_id: String(store._id), status: 'active' })
         .limit(20)
         .lean();
 
@@ -418,6 +433,9 @@ export async function storeRoutes(fastify: FastifyInstance) {
 
       return {
         ...forViewer(store, (request.user as any)?.username),
+        // Resolving by slug means the caller may not know the id yet, and every
+        // dependent query (products, reviews, follows) keys off it.
+        id: String(store._id),
         storefront_active,
         products
       };

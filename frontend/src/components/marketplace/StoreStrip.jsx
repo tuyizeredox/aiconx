@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { MapPin, BadgeCheck, Store as StoreIcon } from "lucide-react";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { StoreSkeleton } from "@/components/shared/LoadingSkeleton";
 
 /**
@@ -39,7 +39,7 @@ export default function StoreStrip({ stores, isLoading, nearbyMode }) {
                 return (
                   <Link
                     key={id || `store-${idx}`}
-                    to={createPageUrl("StoreDetail") + `?id=${id}`}
+                    to={storeUrl(store)}
                     className="w-40 shrink-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 text-center hover:shadow-lg hover:border-orange-200 dark:hover:border-orange-900 transition-all"
                   >
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-950 dark:to-orange-900 flex items-center justify-center mx-auto mb-2 text-2xl font-bold text-orange-700 dark:text-orange-300 overflow-hidden">

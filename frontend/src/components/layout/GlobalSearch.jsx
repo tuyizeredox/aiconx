@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { productsAPI, storesAPI, usersAPI } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { Search, Package, Store, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { debounce } from "lodash";
@@ -174,7 +174,7 @@ export default function GlobalSearch() {
                   {stores.map(s => (
                     <Link
                       key={s.id || s._id}
-                      to={createPageUrl("StoreDetail") + `?id=${s.id || s._id}`}
+                      to={storeUrl(s)}
                       onClick={handleResultClick}
                       className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                     >

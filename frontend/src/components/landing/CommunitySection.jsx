@@ -7,7 +7,6 @@ import { StoreSkeleton } from "@/components/shared/LoadingSkeleton";
 import { authLink, storePath } from "./authLink";
 
 function StoreItem({ store, t }) {
-  const storeId = store.id || store._id;
   return (
     <div className="flex flex-col items-center text-center gap-1.5 w-[30vw] sm:w-auto shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 active:scale-[0.97] transition-transform">
       <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center text-sm font-bold text-orange-600 dark:text-orange-300 shrink-0">
@@ -22,7 +21,7 @@ function StoreItem({ store, t }) {
         {t("landing.stores.followers", { count: store.follower_count || 0 })}
       </p>
       <Link
-        {...authLink(storePath(storeId))}
+        {...authLink(storePath(store))}
         className="mt-1 w-full text-[11px] font-bold text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/30 rounded-lg py-1.5 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
       >
         {t("landing.stores.follow")}

@@ -5,7 +5,7 @@ import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import AvatarImg from "@/components/shared/AvatarImg";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { Search, TrendingUp, Sparkles, X, User, Store, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { productsAPI, communitiesAPI, usersAPI, storesAPI, followsAPI } from "@/api/apiClient";
@@ -309,7 +309,7 @@ export default function Explore() {
                 const isFollowing = followStatuses?.[`store:${store.owner_username}`] || false;
                 return (
                   <div key={store._id} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                    <Link to={createPageUrl("StoreDetail") + `?id=${store._id}`} className="flex items-center gap-3 min-w-0 flex-1">
+                    <Link to={storeUrl(store)} className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt="" className="w-full h-full object-cover" />

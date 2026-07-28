@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storesAPI, followsAPI, usersAPI } from "@/api/apiClient";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { UserPlus, Store, User, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -185,7 +185,7 @@ export default function SuggestedUsers({ currentUser }) {
           {suggestions.map((item, idx) => {
             const isFollowing = followStatuses?.[`${item.type}:${item.username}`] || false;
             const linkTo = item.type === 'store'
-              ? createPageUrl("StoreDetail") + `?id=${item.id}`
+              ? storeUrl(item)
               : createPageUrl("Profile") + `?username=${item.username}`;
 
             return (

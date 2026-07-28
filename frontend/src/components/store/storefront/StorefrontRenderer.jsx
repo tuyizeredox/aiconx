@@ -1,5 +1,5 @@
 import React from "react";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import StoreHeaderBar from "@/components/store/StoreHeaderBar";
 import BlockWrapper from "./BlockWrapper";
@@ -53,7 +53,7 @@ export default function StorefrontRenderer({
   // full product catalog when left blank — never a bare "#". This is also
   // where AI- or vendor-entered links land if they turn out to be invalid
   // (sanitized server-side in stores.ts/ai.ts before ever being saved).
-  const shopLink = storeId ? `${createPageUrl("StoreDetail")}?id=${storeId}&view=shop` : createPageUrl("Marketplace");
+  const shopLink = storeId ? storeUrl(store, { view: "shop" }) : createPageUrl("Marketplace");
 
   return (
     <div

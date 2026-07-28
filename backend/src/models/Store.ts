@@ -1,8 +1,16 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { slugify } from '../utils/slug';
 
 export interface IStore extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
+  // URL handle derived from `name` — what /store/:slug resolves against, so
+  // shared links read as /store/kigali-coffee instead of /storedetail?id=<oid>.
+  // Auto-maintained by the pre-save hook below; never set it by hand.
+  slug: string;
+  // Slugs this store used before it was renamed. Old links keep resolving
+  // (and redirect to the current slug) instead of 404-ing.
+  previous_slugs?: string[];
   description?: string;
   owner_username: string;
   owner_name?: string;
@@ -101,6 +109,15 @@ const StoreSchema = new Schema<IStore>({
     type: String,
     required: true,
     trim: true,
+  },
+  slug: {
+    type: String,
+    trim: true,
+    lowercase: true,
+  },
+  previous_slugs: {
+    type: [String],
+    default: undefined,
   },
   description: {
     type: String,
@@ -252,5 +269,72 @@ StoreSchema.index({ rating_avg: -1 });
 StoreSchema.index({ status: 1, 'location.lat': 1, 'location.lng': 1 });
 StoreSchema.index({ 'location.city': 1 });
 StoreSchema.index({ name: 'text' }); // For text search
+// sparse: stores created before slugs existed have none until the backfill runs
+// (see backfillStoreSlugs), and a plain unique index would collide on those nulls.
+StoreSchema.index({ slug: 1 }, { unique: true, sparse: true });
+StoreSchema.index({ previous_slugs: 1 });
+
+// Keeps `slug` in step with `name`: filled on create, regenerated on rename.
+// Renaming pushes the old handle onto previous_slugs so links already shared
+// keep working (routes/stores.ts resolves those too).
+StoreSchema.pre('save', async function (next) {
+  if (this.slug && !this.isModified('name')) return next();
+  try {
+    const nextSlug = await generateStoreSlug(this.name, this._id);
+    if (nextSlug !== this.slug) {
+      if (this.slug) {
+        const history = (this.previous_slugs || []).filter(s => s !== nextSlug);
+        history.push(this.slug);
+        // Bounded so a vendor renaming repeatedly can't grow the doc forever.
+        this.previous_slugs = history.slice(-10);
+      }
+      this.slug = nextSlug;
+    }
+    next();
+  } catch (error: any) {
+    next(error);
+  }
+});
 
 export const Store = mongoose.model<IStore>('Store', StoreSchema);
+
+// Slugs that would shadow a route or read as an app page rather than a store.
+const RESERVED_STORE_SLUGS = new Set(['new', 'edit', 'admin', 'api', 'store', 'stores', 'undefined', 'null']);
+
+/**
+ * A URL handle for `name` that no other store is using (as its current slug or
+ * a previous one). Collisions get a numeric suffix: kigali-coffee-2, -3, …
+ * `excludeId` keeps a store from colliding with itself on rename.
+ */
+export async function generateStoreSlug(name: string, excludeId?: mongoose.Types.ObjectId | string): Promise<string> {
+  // Names with no Latin characters at all (e.g. fully non-Latin scripts) slugify
+  // to '' — fall back to a generic base so the suffix loop still yields a handle.
+  const slugified = slugify(name);
+  const base = !slugified || RESERVED_STORE_SLUGS.has(slugified) ? `${slugified || 'store'}-shop` : slugified;
+
+  for (let attempt = 0; attempt < 25; attempt++) {
+    const candidate = attempt === 0 ? base : `${base}-${attempt + 1}`;
+    const filter: any = { $or: [{ slug: candidate }, { previous_slugs: candidate }] };
+    if (excludeId) filter._id = { $ne: excludeId };
+    if (!(await Store.exists(filter))) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
+/**
+ * Gives stores created before slugs existed a handle, so their /store/:slug URL
+ * works without anyone re-saving them. Runs once at boot; a no-op after that.
+ */
+export async function backfillStoreSlugs(): Promise<number> {
+  const stores = await Store.find({ $or: [{ slug: { $exists: false } }, { slug: null }, { slug: '' }] })
+    .select('_id name')
+    .lean();
+
+  let updated = 0;
+  for (const store of stores) {
+    const slug = await generateStoreSlug(store.name, store._id);
+    await Store.updateOne({ _id: store._id }, { $set: { slug } });
+    updated++;
+  }
+  return updated;
+}
