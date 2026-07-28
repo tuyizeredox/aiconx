@@ -20,7 +20,8 @@ export const PLAN_LIMITS = {
     live_sessions: false,
     live_chat: false,
     coupons: false,
-    advanced_analytics: false
+    advanced_analytics: false,
+    custom_storefront: false
   },
   pro: {
     stores: 1,
@@ -35,7 +36,8 @@ export const PLAN_LIMITS = {
     live_sessions: true,
     live_chat: true,
     coupons: true,
-    advanced_analytics: true
+    advanced_analytics: true,
+    custom_storefront: true
   },
   elite: {
     stores: 1,
@@ -50,7 +52,8 @@ export const PLAN_LIMITS = {
     live_sessions: true,
     live_chat: true,
     coupons: true,
-    advanced_analytics: true
+    advanced_analytics: true,
+    custom_storefront: true
   }
 };
 
@@ -323,6 +326,41 @@ export async function checkCustomDomainLimit(request: FastifyRequest, reply: Fas
       await sendLimitNotification(user.username, message, request);
       return reply.code(403).send({ 
         error: 'Subscription feature restricted', 
+        message
+      });
+    }
+  } catch (err: any) {
+    reply.log.error(err);
+    return reply.code(500).send({ error: 'Internal server error during limit check' });
+  }
+}
+
+/**
+ * Middleware to check if a vendor can enable the custom storefront builder
+ */
+export async function checkStorefrontLimit(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const user = request.user as any;
+    if (!user?.username) {
+      return reply.code(401).send({ error: 'Unauthorized' });
+    }
+
+    const body = request.body as any;
+    // Only check when the vendor is publishing a custom storefront, or saving a
+    // draft of one. Clearing a draft (null) is always allowed — a downgraded
+    // vendor must still be able to discard work, and their saved config is
+    // never touched here.
+    const publishing = !!body?.storefront_config?.enabled;
+    const savingDraft = !!body?.storefront_draft;
+    if (!publishing && !savingDraft) return;
+
+    const { plan, limits } = await getVendorPlan(user.username, request);
+
+    if (!limits.custom_storefront) {
+      const message = `Custom storefronts are not available on the ${plan} plan. Please upgrade to Pro or Elite.`;
+      await sendLimitNotification(user.username, message, request);
+      return reply.code(403).send({
+        error: 'Subscription feature restricted',
         message
       });
     }

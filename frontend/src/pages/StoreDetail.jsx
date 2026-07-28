@@ -6,7 +6,7 @@ import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import {
   ArrowLeft, Users, Package, CheckCircle, MessageCircle, UserPlus, UserCheck,
-  Search, Share2, TrendingUp, X, SlidersHorizontal
+  Search, TrendingUp, X, SlidersHorizontal
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import StoreReviewSection from "@/components/store/StoreReviewSection";
+import StoreHeaderBar from "@/components/store/StoreHeaderBar";
+import StorefrontRenderer from "@/components/store/storefront/StorefrontRenderer";
 import StarRating from "@/components/reviews/StarRating";
 import { storesAPI, productsAPI, reviewsAPI, followsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -25,6 +27,7 @@ export default function StoreDetail() {
   const { t } = useTranslation();
   const params = new URLSearchParams(window.location.search);
   const storeId = params.get("id");
+  const view = params.get("view");
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
 
@@ -190,24 +193,45 @@ export default function StoreDetail() {
     );
   }
 
+  // Pro/Elite vendors can publish a fully custom storefront layout. `storefront_active`
+  // is computed server-side (plan check + enabled flag) so a plan downgrade reverts to
+  // the fixed template below without ever touching the vendor's saved config.
+  // `?view=shop` forces the fixed template's full searchable/filterable catalog even
+  // when a custom storefront is active — the "view all products" sub-page linked from
+  // StorefrontRenderer's header.
+  const hasCustomStorefront = store.storefront_active && store.storefront_config?.blocks?.length > 0;
+  if (hasCustomStorefront && view !== "shop") {
+    return (
+      <StorefrontRenderer
+        store={store}
+        products={products}
+        currentUser={currentUser}
+        isFollowing={isFollowing}
+        isFollowedBy={isFollowedBy}
+        onFollowToggle={() => followMutation.mutate()}
+        followPending={followMutation.isPending}
+        onShare={handleShare}
+      />
+    );
+  }
+
+  const cameFromStorefront = hasCustomStorefront && view === "shop";
+
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
-      <Link to={createPageUrl("Marketplace")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> {t("storeDetail.marketplace")}
-      </Link>
+    <div>
+      <StoreHeaderBar
+        store={store}
+        onShare={handleShare}
+        backTo={cameFromStorefront ? `${createPageUrl("StoreDetail")}?id=${storeId}` : createPageUrl("Marketplace")}
+        backLabel={cameFromStorefront ? store.name : t("storeDetail.marketplace")}
+      />
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 pb-4 lg:pb-6">
 
       {/* Store Banner */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
         <div className="h-36 lg:h-56 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 relative">
           {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0" />
-          <button
-            onClick={handleShare}
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/50 transition-colors"
-            aria-label={t("storeDetail.shareStore")}
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
         </div>
         <div className="p-5 lg:p-6 -mt-12 relative">
           <div className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-700 flex items-center justify-center text-2xl font-bold overflow-hidden">
@@ -365,6 +389,7 @@ export default function StoreDetail() {
       )}
 
       <StoreReviewSection store={store} currentUser={currentUser} />
+      </div>
     </div>
   );
 }

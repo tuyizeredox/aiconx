@@ -5,7 +5,7 @@ import { createPageUrl, formatCurrency } from "@/lib/utils";
 import {
   Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, Eye,
   X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
-  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle, Megaphone
+  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle, Megaphone, LayoutTemplate, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +23,14 @@ import AdvancedAnalytics from "@/components/mystore/AdvancedAnalytics";
 import CouponManager from "@/components/mystore/CouponManager";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
 import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
+import StorefrontBuilder from "@/components/mystore/StorefrontBuilder";
 import BackLink from "@/components/shared/BackLink";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
 import ColorInput from "@/components/product/ColorInput";
 import SizeInput from "@/components/product/SizeInput";
 import CustomOptionsInput from "@/components/product/CustomOptionsInput";
+import HighlightsInput from "@/components/product/HighlightsInput";
+import SpecificationsInput from "@/components/product/SpecificationsInput";
 import VendorFinance from "./VendorFinance";
 import OrderDetailModal from "@/components/orders/OrderDetailModal";
 import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI, filesAPI } from "@/api/apiClient";
@@ -47,7 +50,7 @@ const PLAN_LIMITS = {
 export default function MyStore() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "products";
+  const defaultTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [orderSearch, setOrderSearch] = useState("");
   const [orderTab, setOrderTab] = useState("all");
@@ -92,6 +95,9 @@ export default function MyStore() {
     // Additional Info
     phone_number: "",
     address: "",
+    // Powers the marketplace "near me" filter — a city alone already makes the
+    // store findable; the pin makes it sortable by real distance.
+    location: { lat: null, lng: null, city: "", country: "" },
     website_url: "",
     social_links: {
       facebook: "",
@@ -100,7 +106,7 @@ export default function MyStore() {
       tiktok: "",
     }
   });
-  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
+  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
   const [productImages, setProductImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -112,7 +118,7 @@ export default function MyStore() {
   const [uploadingVerificationDoc, setUploadingVerificationDoc] = useState(false);
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
   const queryClient = useQueryClient();
 
   const handleFileChange = (e) => {
@@ -275,6 +281,40 @@ export default function MyStore() {
     },
   });
 
+  // Drops a map pin on the vendor's current position so shoppers using the
+  // marketplace's "near me" filter can find this store by real distance.
+  const [locating, setLocating] = useState(false);
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error(t("store.locationUnsupported"));
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setStoreForm(p => ({
+          ...p,
+          location: {
+            ...p.location,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+        }));
+        setLocating(false);
+        toast.success(t("store.locationCaptured"));
+      },
+      (error) => {
+        setLocating(false);
+        toast.error(
+          error.code === error.PERMISSION_DENIED
+            ? t("store.locationDenied")
+            : t("store.locationFailed")
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   const updateStoreMutation = useMutation({
     mutationFn: (data) => storesAPI.update(store.id || store._id, data),
     onSuccess: () => {
@@ -341,7 +381,7 @@ export default function MyStore() {
     onSuccess: () => {
       toast.success("Product added!");
       setShowAddProduct(false);
-      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [] });
+      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
       setProductImages([]);
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews([]);
@@ -409,6 +449,8 @@ export default function MyStore() {
       colors: product.colors || [],
       sizes: product.sizes || [],
       custom_options: product.custom_options || [],
+      highlights: product.highlights || [],
+      specifications: product.specifications || [],
     });
     setShowEditProduct(true);
   };
@@ -425,6 +467,8 @@ export default function MyStore() {
       colors: editForm.colors,
       sizes: editForm.sizes,
       custom_options: editForm.custom_options,
+      highlights: editForm.highlights,
+      specifications: editForm.specifications,
       ...(currentPlan === 'elite' ? {
         affiliate_enabled: editForm.affiliate_enabled,
         affiliate_commission_pct: Math.min(100, Math.max(0, parseFloat(editForm.affiliate_commission_pct) || 0)),
@@ -718,41 +762,27 @@ export default function MyStore() {
         </div>
 
         <div className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-10 sm:-mt-12 mb-5">
-          <div className="flex items-end gap-4 min-w-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
-              {store.logo_url ? (
-                <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="bg-gradient-to-br from-orange-400 to-purple-500 w-full h-full flex items-center justify-center text-2xl">
-                  {store.name?.[0]?.toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 pb-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{store.name}</h1>
-                {isStoreVerified && (
-                  <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border-0 gap-1 shrink-0">
-                    <ShieldCheck className="w-3 h-3" /> {t("common.verified")}
-                  </Badge>
-                )}
-                {store.category && (
-                  <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize shrink-0">
-                    {store.category}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-md mt-0.5">{store.description || t("store.noDescription")}</p>
-            </div>
+        {/* Avatar overlaps the banner on its own — never shares a row with text,
+            so a long store name can never visually collide with the banner.
+            -mt-14/-mt-16 gives a clearly-intentional ~55-60% overlap into the
+            banner (not just a few px) so it reads as deliberate at any zoom. */}
+        <div className="flex items-start justify-between gap-4 -mt-8 sm:-mt-16">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
+            {store.logo_url ? (
+              <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="bg-gradient-to-br from-orange-400 to-purple-500 w-full h-full flex items-center justify-center text-2xl">
+                {store.name?.[0]?.toUpperCase()}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+          <div className="flex items-center flex-wrap gap-2 justify-end pt-8 sm:pt-16">
             <Dialog open={showEditStore} onOpenChange={setShowEditStore}>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-xl flex-1 sm:flex-none"
+                  className="rounded-xl"
                   onClick={() => setStoreForm({
                     name: store.name,
                     description: store.description,
@@ -779,6 +809,12 @@ export default function MyStore() {
                     },
                     phone_number: store.phone_number || "",
                     address: store.address || "",
+                    location: {
+                      lat: Number.isFinite(store.location?.lat) ? store.location.lat : null,
+                      lng: Number.isFinite(store.location?.lng) ? store.location.lng : null,
+                      city: store.location?.city || "",
+                      country: store.location?.country || "",
+                    },
                     website_url: store.website_url || "",
                     social_links: {
                       facebook: store.social_links?.facebook || "",
@@ -1044,6 +1080,70 @@ export default function MyStore() {
                         <label className="text-sm font-medium">{t("store.storeAddress")}</label>
                         <Input placeholder={t("store.storeAddressPlaceholder")} value={storeForm.address} onChange={(e) => setStoreForm(p => ({ ...p, address: e.target.value }))} />
                       </div>
+
+                      <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-start gap-2 pt-3">
+                          <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <label className="text-sm font-bold text-slate-800 dark:text-slate-200 block">{t("store.locationTitle")}</label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.locationHelp")}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">{t("store.city")}</label>
+                            <Input
+                              placeholder={t("store.cityPlaceholder")}
+                              value={storeForm.location.city}
+                              onChange={(e) => setStoreForm(p => ({ ...p, location: { ...p.location, city: e.target.value } }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">{t("store.country")}</label>
+                            <Input
+                              placeholder={t("store.countryPlaceholder")}
+                              value={storeForm.location.country}
+                              onChange={(e) => setStoreForm(p => ({ ...p, location: { ...p.location, country: e.target.value } }))}
+                            />
+                          </div>
+                        </div>
+                        {storeForm.location.lat !== null && storeForm.location.lng !== null ? (
+                          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-900 rounded-xl px-3 py-2">
+                            <MapPin className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                            <p className="text-xs text-green-800 dark:text-green-400 font-medium flex-1 min-w-0 truncate">
+                              {/* "lon" not "lng": i18next reserves `lng` for the
+                                  target language, so passing it here would make
+                                  the lookup miss and print the raw key. */}
+                              {t("store.pinnedAt", {
+                                lat: storeForm.location.lat.toFixed(4),
+                                lon: storeForm.location.lng.toFixed(4),
+                              })}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setStoreForm(p => ({ ...p, location: { ...p.location, lat: null, lng: null } }))}
+                              className="text-green-700 dark:text-green-500 hover:text-red-600 transition-colors shrink-0"
+                              aria-label={t("store.removePin")}
+                              title={t("store.removePin")}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={locating}
+                            onClick={handleUseCurrentLocation}
+                            className="rounded-xl gap-1.5 w-full sm:w-auto"
+                          >
+                            {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+                            {t("store.useCurrentLocation")}
+                          </Button>
+                        )}
+                      </div>
+
                       <div className="space-y-3 pt-2">
                         <label className="text-sm font-bold text-slate-800 dark:text-slate-200">{t("store.socialMediaHandles")}</label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1109,12 +1209,30 @@ export default function MyStore() {
                 </Tabs>
               </DialogContent>
             </Dialog>
-            <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} className="flex-1 sm:flex-none">
-              <Button variant="outline" size="sm" className="rounded-xl w-full">
+            <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`}>
+              <Button variant="outline" size="sm" className="rounded-xl">
                 <Eye className="w-4 h-4 mr-1.5" /> {t("store.viewStore")}
               </Button>
             </Link>
           </div>
+        </div>
+
+        {/* Name, badges, description — normal flow, always clear of the banner */}
+        <div className="min-w-0 mt-3 sm:mt-4 mb-5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{store.name}</h1>
+            {isStoreVerified && (
+              <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border-0 gap-1 shrink-0">
+                <ShieldCheck className="w-3 h-3" /> {t("common.verified")}
+              </Badge>
+            )}
+            {store.category && (
+              <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize shrink-0">
+                {store.category}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mt-0.5">{store.description || t("store.noDescription")}</p>
         </div>
 
         {/* Verification Banner */}
@@ -1235,81 +1353,6 @@ export default function MyStore() {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              label: t("store.products"),
-              value: `${activeProductsCount}/${products.length}`,
-              sub: t("store.activeCount", { count: activeProductsCount }),
-              icon: Package,
-              color: "text-orange-500 bg-orange-50 dark:bg-orange-950",
-            },
-            {
-              label: t("store.orders"),
-              value: orders.length,
-              sub: actionNeededOrders > 0 ? t("store.pendingActionSub", { count: actionNeededOrders }) : undefined,
-              icon: ShoppingCart,
-              color: "text-purple-500 bg-purple-50 dark:bg-purple-950",
-            },
-            {
-              label: t("store.revenue"),
-              value: formatCurrency(totalRevenue),
-              sub: t("store.fromPaidOrders"),
-              icon: DollarSign,
-              color: "text-green-500 bg-green-50 dark:bg-green-950",
-            },
-            {
-              label: t("store.avgOrderValue"),
-              value: formatCurrency(avgOrderValue),
-              icon: TrendingUp,
-              color: "text-blue-500 bg-blue-50 dark:bg-blue-950",
-            },
-            {
-              label: t("store.needsAction"),
-              value: actionNeededOrders,
-              sub: t("store.needsActionSub"),
-              icon: Clock,
-              color: actionNeededOrders > 0 ? "text-amber-600 bg-amber-100 dark:bg-amber-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
-              onClick: () => setActiveTab("orders"),
-            },
-            {
-              label: t("store.lowStockShort"),
-              value: lowStockCount + outOfStockCount,
-              sub: outOfStockCount > 0 ? t("store.outOfStockCount", { count: outOfStockCount }) : undefined,
-              icon: AlertTriangle,
-              color: (lowStockCount + outOfStockCount) > 0 ? "text-rose-600 bg-rose-100 dark:bg-rose-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
-              onClick: () => setActiveTab("products"),
-            },
-            {
-              label: t("store.followers"),
-              value: store.follower_count || 0,
-              icon: Users,
-              color: "text-pink-500 bg-pink-50 dark:bg-pink-950",
-            },
-            {
-              label: t("store.rating"),
-              value: store.rating_avg ? store.rating_avg.toFixed(1) : "—",
-              sub: !store.rating_avg ? t("store.notRatedYet") : undefined,
-              icon: Star,
-              color: "text-amber-500 bg-amber-50 dark:bg-amber-950",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              onClick={stat.onClick}
-              role={stat.onClick ? "button" : undefined}
-              className={`bg-slate-50 dark:bg-slate-800 rounded-xl p-3 ${stat.onClick ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" : ""}`}
-            >
-              <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
-                <stat.icon className="w-4 h-4" />
-              </div>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
-              {stat.sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{stat.sub}</p>}
-            </div>
-          ))}
-        </div>
         </div>
       </div>
 
@@ -1317,6 +1360,7 @@ export default function MyStore() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 w-full sm:w-auto">
           <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full sm:w-auto h-auto flex-wrap justify-start gap-1.5 p-1.5">
+            <TabsTrigger value="overview">{t("store.overview")}</TabsTrigger>
             <TabsTrigger value="products">{t("store.products")}</TabsTrigger>
             <TabsTrigger value="orders">{t("store.orders")}</TabsTrigger>
             <TabsTrigger value="coupons">{t("store.coupons")}</TabsTrigger>
@@ -1326,6 +1370,10 @@ export default function MyStore() {
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-1.5">
               {t("store.shipping")}
+              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="storefront" className="gap-1.5">
+              {t("store.storefrontBuilder")}
               {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="subscription">{t("store.plan")}</TabsTrigger>
@@ -1436,6 +1484,8 @@ export default function MyStore() {
                 <ColorInput colors={productForm.colors} onChange={(colors) => setProductForm(p => ({ ...p, colors }))} />
                 <SizeInput sizes={productForm.sizes} onChange={(sizes) => setProductForm(p => ({ ...p, sizes }))} />
                 <CustomOptionsInput options={productForm.custom_options} onChange={(custom_options) => setProductForm(p => ({ ...p, custom_options }))} />
+                <HighlightsInput highlights={productForm.highlights} onChange={(highlights) => setProductForm(p => ({ ...p, highlights }))} />
+                <SpecificationsInput specifications={productForm.specifications} onChange={(specifications) => setProductForm(p => ({ ...p, specifications }))} />
 
                 {/* Affiliate Marketing Settings */}
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
@@ -1491,6 +1541,89 @@ export default function MyStore() {
           </Dialog>
         )}
       </div>
+
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 p-4 sm:p-6">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">{t("store.overview")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                label: t("store.products"),
+                value: `${activeProductsCount}/${products.length}`,
+                sub: t("store.activeCount", { count: activeProductsCount }),
+                icon: Package,
+                color: "text-orange-500 bg-orange-50 dark:bg-orange-950",
+                onClick: () => setActiveTab("products"),
+              },
+              {
+                label: t("store.orders"),
+                value: orders.length,
+                sub: actionNeededOrders > 0 ? t("store.pendingActionSub", { count: actionNeededOrders }) : undefined,
+                icon: ShoppingCart,
+                color: "text-purple-500 bg-purple-50 dark:bg-purple-950",
+                onClick: () => setActiveTab("orders"),
+              },
+              {
+                label: t("store.revenue"),
+                value: formatCurrency(totalRevenue),
+                sub: t("store.fromPaidOrders"),
+                icon: DollarSign,
+                color: "text-green-500 bg-green-50 dark:bg-green-950",
+              },
+              {
+                label: t("store.avgOrderValue"),
+                value: formatCurrency(avgOrderValue),
+                icon: TrendingUp,
+                color: "text-blue-500 bg-blue-50 dark:bg-blue-950",
+              },
+              {
+                label: t("store.needsAction"),
+                value: actionNeededOrders,
+                sub: t("store.needsActionSub"),
+                icon: Clock,
+                color: actionNeededOrders > 0 ? "text-amber-600 bg-amber-100 dark:bg-amber-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+                onClick: () => setActiveTab("orders"),
+              },
+              {
+                label: t("store.lowStockShort"),
+                value: lowStockCount + outOfStockCount,
+                sub: outOfStockCount > 0 ? t("store.outOfStockCount", { count: outOfStockCount }) : undefined,
+                icon: AlertTriangle,
+                color: (lowStockCount + outOfStockCount) > 0 ? "text-rose-600 bg-rose-100 dark:bg-rose-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+                onClick: () => setActiveTab("products"),
+              },
+              {
+                label: t("store.followers"),
+                value: store.follower_count || 0,
+                icon: Users,
+                color: "text-pink-500 bg-pink-50 dark:bg-pink-950",
+              },
+              {
+                label: t("store.rating"),
+                value: store.rating_avg ? store.rating_avg.toFixed(1) : "—",
+                sub: !store.rating_avg ? t("store.notRatedYet") : undefined,
+                icon: Star,
+                color: "text-amber-500 bg-amber-50 dark:bg-amber-950",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                onClick={stat.onClick}
+                role={stat.onClick ? "button" : undefined}
+                className={`bg-slate-50 dark:bg-slate-800 rounded-xl p-3 ${stat.onClick ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" : ""}`}
+              >
+                <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
+                  <stat.icon className="w-4 h-4" />
+                </div>
+                <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
+                {stat.sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{stat.sub}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Products Tab */}
       {activeTab === "products" && (
@@ -1594,6 +1727,8 @@ export default function MyStore() {
             <ColorInput colors={editForm.colors} onChange={(colors) => setEditForm(p => ({ ...p, colors }))} />
             <SizeInput sizes={editForm.sizes} onChange={(sizes) => setEditForm(p => ({ ...p, sizes }))} />
             <CustomOptionsInput options={editForm.custom_options} onChange={(custom_options) => setEditForm(p => ({ ...p, custom_options }))} />
+            <HighlightsInput highlights={editForm.highlights} onChange={(highlights) => setEditForm(p => ({ ...p, highlights }))} />
+            <SpecificationsInput specifications={editForm.specifications} onChange={(specifications) => setEditForm(p => ({ ...p, specifications }))} />
 
             {/* Affiliate Marketing Settings */}
             <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
@@ -1687,6 +1822,22 @@ export default function MyStore() {
           </div>
         ) : (
           <CouponManager store={store} vendorUsername={currentUser?.username} />
+        )
+      )}
+
+      {/* Storefront Builder Tab */}
+      {activeTab === "storefront" && (
+        currentPlan === 'free' ? (
+          <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
+             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+               <LayoutTemplate className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+             </div>
+             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.storefrontBuilderRestricted")}</h3>
+             <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.storefrontBuilderRestrictedDesc")}</p>
+             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
+          </div>
+        ) : (
+          <StorefrontBuilder store={store} products={products} vendorUsername={currentUser?.username} />
         )
       )}
 

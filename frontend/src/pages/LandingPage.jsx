@@ -1,27 +1,77 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { productsAPI, storesAPI } from "@/api/apiClient";
+import { productsAPI, storesAPI, reviewsAPI, postsAPI } from "@/api/apiClient";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Logo from "@/components/layout/Logo";
 import LanguagePicker from "@/components/layout/LanguagePicker";
-import { ProductSkeleton, StoreSkeleton } from "@/components/shared/LoadingSkeleton";
-import { Search, ShoppingBag, Star, ChevronDown } from "lucide-react";
+import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Search, Star, Bell, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import Seo from "@/components/shared/Seo";
+import Hero from "@/components/landing/Hero";
+import HowItWorks from "@/components/landing/HowItWorks";
+import TrendingProducts from "@/components/landing/TrendingProducts";
+import CommunitySection from "@/components/landing/CommunitySection";
+import CategoryPills from "@/components/landing/CategoryPills";
+import SellBanner from "@/components/landing/SellBanner";
+import MobileTabBar from "@/components/landing/MobileTabBar";
+import SocialFeed from "@/components/landing/SocialFeed";
+import { authLink, productPath } from "@/components/landing/authLink";
 
 export default function LandingPage() {
   const { t } = useTranslation();
-  const [storesOpen, setStoresOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [sort, setSort] = useState("-created_date");
+  const [sort, setSort] = useState("-sales_count");
+  const [topBarHidden, setTopBarHidden] = useState(false);
+  const lastScrollYRef = useRef(0);
+
+  // Auto-hide the mobile top bar on scroll-down and reveal it on scroll-up,
+  // matching the native app feel used across the rest of the product (see Layout.jsx).
+  useEffect(() => {
+    if (isMobile === false) return;
+    lastScrollYRef.current = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollYRef.current;
+        if (currentY < 60) {
+          setTopBarHidden(false);
+        } else if (delta > 8) {
+          setTopBarHidden(true);
+        } else if (delta < -8) {
+          setTopBarHidden(false);
+        }
+        lastScrollYRef.current = currentY;
+        ticking = false;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isMobile]);
+
+  // Smooth-scroll for the in-page nav anchors (#trending, #stores, #community, #sell).
+  useEffect(() => {
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "smooth";
+    return () => {
+      document.documentElement.style.scrollBehavior = prev;
+    };
+  }, []);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["landingProducts", category, sort],
@@ -33,11 +83,63 @@ export default function LandingPage() {
     },
   });
 
+  const { data: trendingProducts = [], isLoading: trendingLoading } = useQuery({
+    queryKey: ["landingTrending"],
+    queryFn: async () => {
+      const res = await productsAPI.list({ status: "active", sort: "-sales_count", limit: 4 });
+      return res.data || [];
+    },
+  });
+
+  const { data: recentProducts = [] } = useQuery({
+    queryKey: ["landingRecentProducts"],
+    queryFn: async () => {
+      const res = await productsAPI.list({ status: "active", sort: "-created_at", limit: 3 });
+      return res.data || [];
+    },
+  });
+
+  // Public lifestyle posts — the social half of the platform. Only posts that
+  // actually have something to show (media or text) make it into the preview.
+  const { data: feedPosts = [], isLoading: feedLoading } = useQuery({
+    queryKey: ["landingFeedPosts"],
+    queryFn: async () => {
+      const res = await postsAPI.list({ visibility: "public", sort: "-likes_count", limit: 12 });
+      const list = res.data || [];
+      return list
+        .filter((p) => p.media_urls?.length > 0 || p.content?.trim())
+        .slice(0, 4);
+    },
+  });
+
+  const { data: recentReviews = [], isLoading: reviewsLoading } = useQuery({
+    queryKey: ["landingRecentReviews"],
+    queryFn: async () => {
+      const res = await reviewsAPI.list({ sort: "-created_at", limit: 4 });
+      return res.data || [];
+    },
+  });
+
   const { data: storesResponse = {}, isLoading: storesLoading } = useQuery({
     queryKey: ["landingFeaturedStores"],
+    queryFn: async () => storesAPI.list({ status: "active", sort: "-follower_count", limit: 5 }),
+  });
+
+  const { data: platformStats = { postsTotal: 0, productsTotal: 0, storesTotal: 0, reviewsTotal: 0 } } = useQuery({
+    queryKey: ["landingStats"],
     queryFn: async () => {
-      const res = await storesAPI.list({ status: "active", sort: "-follower_count", limit: 6 });
-      return res;
+      const [postsRes, productsRes, storesRes, reviewsRes] = await Promise.all([
+        postsAPI.list({ visibility: "public", limit: 1 }),
+        productsAPI.list({ status: "active", limit: 1 }),
+        storesAPI.list({ status: "active", limit: 1 }),
+        reviewsAPI.list({ limit: 1 }),
+      ]);
+      return {
+        postsTotal: postsRes.total || 0,
+        productsTotal: productsRes.total || 0,
+        storesTotal: storesRes.total || 0,
+        reviewsTotal: reviewsRes.pagination?.total || 0,
+      };
     },
   });
 
@@ -47,89 +149,190 @@ export default function LandingPage() {
     ? products.filter(p => p.title?.toLowerCase().includes(search.toLowerCase()))
     : products;
 
+  const avgRating = useMemo(() => {
+    const rated = products.filter(p => p.rating_count > 0);
+    const totalCount = rated.reduce((sum, p) => sum + p.rating_count, 0);
+    if (totalCount === 0) return 0;
+    const weighted = rated.reduce((sum, p) => sum + p.rating_avg * p.rating_count, 0);
+    return weighted / totalCount;
+  }, [products]);
+
+  const productById = useMemo(() => {
+    const map = new Map();
+    [...products, ...trendingProducts, ...recentProducts].forEach((p) => {
+      const id = p.id || p._id;
+      if (id) map.set(id, p);
+    });
+    return map;
+  }, [products, trendingProducts, recentProducts]);
+
+  const activity = useMemo(() => {
+    const reviewItems = recentReviews.map((r) => {
+      const relatedProduct = productById.get(r.product_id);
+      return {
+        id: `review-${r._id || r.id}`,
+        name: r.reviewer_name || r.reviewer_username,
+        text: relatedProduct
+          ? t("landing.activity.reviewedOn", { rating: r.rating, product: relatedProduct.title })
+          : t("landing.activity.reviewed", { rating: r.rating }),
+        rating: r.rating,
+        thumbnail: relatedProduct?.images?.[0],
+        timestamp: r.created_at,
+      };
+    });
+    const productItems = recentProducts
+      .filter((p) => p.created_at)
+      .map((p) => ({
+        id: `product-${p.id || p._id}`,
+        name: p.store_name,
+        text: t("landing.activity.newProduct", { product: p.title }),
+        rating: 0,
+        thumbnail: p.images?.[0],
+        timestamp: p.created_at,
+      }));
+    return [...reviewItems, ...productItems]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 5);
+  }, [recentReviews, recentProducts, productById, t]);
+
+  const scrollToCatalogue = () => {
+    document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") scrollToCatalogue();
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 overflow-x-hidden">
       <Seo
         path="/"
         title="Social Commerce & AI-Powered Shopping"
-        description="Discover products, follow stores, connect with communities, and shop smarter with AI on Aicon X."
+        description="Post your lifestyle, follow creators, join communities and shop what you discover — Aicon X is the social network where shopping happens."
       />
 
-      {/* Sticky Navbar */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      {/* Navbar — compact + auto-hiding on mobile scroll, full nav on desktop */}
+      <header
+        className={`sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 pt-[env(safe-area-inset-top)] transition-transform duration-300 ease-out ${
+          topBarHidden ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 lg:h-16 flex items-center gap-4">
           <Logo size="sm" showText />
 
-          <div className="flex items-center gap-2 shrink-0 ml-auto">
+          <nav className="hidden lg:flex items-center gap-1 ml-4">
+            <a href="#feed" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+              {t("landing.nav.explore")}
+            </a>
+            <a href="#trending" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+              {t("landing.nav.shop")}
+            </a>
+            <a href="#stores" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+              {t("landing.nav.stores")}
+            </a>
+            <a href="#community" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+              {t("landing.nav.community")}
+            </a>
+            <a href="#sell" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+              {t("landing.nav.sell")}
+            </a>
+          </nav>
+
+          <div className="hidden md:block relative flex-1 max-w-md mx-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder={t("landing.nav.searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="pl-10 h-9 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+            />
+          </div>
+
+          {/* Desktop action cluster */}
+          <div className="hidden lg:flex items-center gap-2 shrink-0 ml-auto">
+            <Link
+              to="/login"
+              state={{ from: "/notifications" }}
+              className="flex w-9 h-9 rounded-full items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/login"
+              state={{ from: "/wishlist" }}
+              className="flex w-9 h-9 rounded-full items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Wishlist"
+            >
+              <Heart className="w-4 h-4" />
+            </Link>
             <LanguagePicker compact />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-slate-700 dark:text-slate-300 font-semibold hover:text-slate-900 dark:hover:text-white">
                 {t("common.login")}
               </Button>
             </Link>
-            <Link to="/register">
+            <Link {...authLink("/mystore")}>
               <Button size="sm" className="bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl shadow-md shadow-orange-500/20">
-                {t("common.register")}
+                {t("landing.nav.createStore")}
               </Button>
             </Link>
+          </div>
+
+          {/* Mobile action cluster — everything else lives in the bottom tab bar */}
+          <div className="flex lg:hidden items-center gap-1 shrink-0 ml-auto">
+            <LanguagePicker compact />
+            <button
+              onClick={scrollToCatalogue}
+              aria-label={t("shop.searchProducts")}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+            >
+              <Search className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-8 sm:space-y-14 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-6">
 
-        {/* Products Catalogue */}
-        <div>
+        <Hero
+          stats={{
+            postsTotal: platformStats.postsTotal,
+            productsTotal: platformStats.productsTotal,
+            storesTotal: platformStats.storesTotal,
+            reviewsTotal: platformStats.reviewsTotal,
+          }}
+          avgRating={avgRating}
+        />
+
+        <HowItWorks />
+
+        <SocialFeed posts={feedPosts} isLoading={feedLoading} />
+
+        <TrendingProducts products={trendingProducts} isLoading={trendingLoading} />
+
+        <CommunitySection
+          stores={stores}
+          storesLoading={storesLoading}
+          activity={activity}
+          activityLoading={reviewsLoading}
+        />
+
+        <div className="sticky top-14 lg:static z-30 -mx-4 px-4 py-2.5 lg:mx-0 lg:px-0 lg:py-0 bg-white/95 dark:bg-slate-950/95 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-b border-slate-100 dark:border-slate-800 lg:border-0">
+          <CategoryPills value={category} onChange={setCategory} />
+        </div>
+
+        {/* Full Products Catalogue */}
+        <div id="catalogue" className="scroll-mt-20">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t("shop.products")}</h2>
-              {(stores.length > 0 || storesLoading) && (
-                <button
-                  onClick={() => setStoresOpen(o => !o)}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:border-orange-400 hover:text-orange-500 transition-colors"
-                >
-                  {t("shop.stores")}
-                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${storesOpen ? "rotate-180" : ""}`} />
-                </button>
-              )}
-            </div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t("shop.products")}</h2>
             <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <ShoppingBag className="w-4 h-4" />
               <span>{products.length} {t("shop.products").toLowerCase()}</span>
             </div>
           </div>
 
-          {/* Stores carousel — shown only when toggled open */}
-          {storesOpen && (
-            <div className="overflow-x-auto -mx-4 px-4 hide-scrollbar mb-4">
-              <div className="flex gap-3" style={{ width: "max-content" }}>
-                {storesLoading
-                  ? Array(6).fill(0).map((_, i) => <StoreSkeleton key={`ls-${i}`} />)
-                  : stores.map((store, idx) => (
-                    <Link
-                      key={store.id || store._id || `ls-store-${idx}`}
-                      to="/register"
-                      className="w-24 shrink-0 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-2.5 text-center hover:shadow-md transition-shadow"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-100 to-orange-100 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center mx-auto mb-1.5 text-sm overflow-hidden">
-                        {store.logo_url ? (
-                          <img src={store.logo_url} alt="" className="w-full h-full object-cover rounded-xl" />
-                        ) : (
-                          store.name?.[0]?.toUpperCase()
-                        )}
-                      </div>
-                      <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{store.name}</h3>
-                      <div className="flex items-center justify-center gap-0.5 mt-0.5">
-                        {store.is_verified && <span className="text-orange-500 text-[10px]">✓</span>}
-                        <span className="text-[10px] text-slate-400">{store.product_count || 0}</span>
-                      </div>
-                    </Link>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Search & Filters */}
+          {/* Search & Sort */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -140,27 +343,13 @@ export default function LandingPage() {
                 className="pl-10 h-10 rounded-xl"
               />
             </div>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-40 h-10 rounded-xl">
-                <SelectValue placeholder={t("shop.category")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("shop.allCategories")}</SelectItem>
-                <SelectItem value="fashion">{t("shop.categoryFashion")}</SelectItem>
-                <SelectItem value="electronics">{t("shop.categoryElectronics")}</SelectItem>
-                <SelectItem value="home">{t("shop.categoryHome")}</SelectItem>
-                <SelectItem value="beauty">{t("shop.categoryBeauty")}</SelectItem>
-                <SelectItem value="sports">{t("shop.categorySports")}</SelectItem>
-                <SelectItem value="art">{t("shop.categoryArt")}</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={sort} onValueChange={setSort}>
               <SelectTrigger className="w-44 h-10 rounded-xl">
                 <SelectValue placeholder={t("shop.sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="-created_date">{t("shop.newest")}</SelectItem>
                 <SelectItem value="-sales_count">{t("shop.bestSelling")}</SelectItem>
+                <SelectItem value="-created_at">{t("shop.newest")}</SelectItem>
                 <SelectItem value="price">{t("shop.priceLowHigh")}</SelectItem>
                 <SelectItem value="-price">{t("shop.priceHighLow")}</SelectItem>
                 <SelectItem value="-rating_avg">{t("shop.topRated")}</SelectItem>
@@ -178,7 +367,7 @@ export default function LandingPage() {
                   ? Math.round((1 - product.price / product.compare_at_price) * 100)
                   : 0;
                 return (
-                  <Link key={productId || idx} to="/register">
+                  <Link key={productId || idx} {...authLink(productPath(productId))}>
                     <motion.div
                       whileHover={{ y: -4 }}
                       className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300 group"
@@ -230,7 +419,11 @@ export default function LandingPage() {
           )}
         </div>
 
+        <SellBanner />
+
       </div>
+
+      <MobileTabBar />
     </div>
   );
 }

@@ -8,12 +8,12 @@ import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkelet
 import EmptyState from "@/components/shared/EmptyState";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2, Link2, Bot } from "lucide-react";
+import { Flame, TrendingUp, Sparkles, ChevronRight, Loader2, Link2, Bot, Store, CheckCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RecommendedSection from "@/components/home/RecommendedSection";
 import SuggestedUsers from "@/components/home/SuggestedUsers";
 import AIAssistant from "@/pages/AIAssistant";
-import { postsAPI, productsAPI } from "@/api/apiClient";
+import { postsAPI, productsAPI, storesAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -54,7 +54,7 @@ export default function Home() {
       return undefined;
     },
     initialPageParam: 1,
-    enabled: activeTab !== "ai",
+    enabled: activeTab !== "ai" && activeTab !== "stores",
   });
 
   const posts = postsData?.pages.flatMap(page => page.data) || [];
@@ -82,10 +82,18 @@ export default function Home() {
   });
   const trendingProducts = trendingProductsResponse?.data || [];
 
+  const { data: storesResponse, isLoading: storesLoading } = useQuery({
+    queryKey: ["homeStores"],
+    queryFn: () => storesAPI.list({ limit: 30, sort: "-follower_count" }),
+    enabled: activeTab === "stores",
+  });
+  const stores = storesResponse?.data || [];
+
   const tabs = [
     { id: "for_you", label: t("home.forYou"), icon: Sparkles },
     { id: "trending", label: t("home.trending"), icon: Flame },
     { id: "following", label: t("home.following"), icon: TrendingUp },
+    { id: "stores", label: t("home.stores"), icon: Store },
     { id: "ai", label: t("support.channels.aiAssistant.title"), icon: Bot },
   ];
 
@@ -129,6 +137,51 @@ export default function Home() {
         >
           {activeTab === "ai" ? (
             <AIAssistant embedded />
+          ) : activeTab === "stores" ? (
+            <div className="space-y-4">
+              {storesLoading ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {Array(6).fill(0).map((_, i) => (
+                    <div key={`store-skeleton-${i}`} className="h-24 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                  ))}
+                </div>
+              ) : stores.length === 0 ? (
+                <EmptyState
+                  icon={Store}
+                  title={t("home.storesEmptyTitle")}
+                  description={t("home.storesEmptyDesc")}
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {stores.map((store) => (
+                    <Link
+                      key={store._id || store.id}
+                      to={createPageUrl("StoreDetail") + `?id=${store._id || store.id}`}
+                      className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors min-w-0"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
+                        {store.logo_url ? (
+                          <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Store className="w-6 h-6 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{store.name}</p>
+                          {store.is_verified && (
+                            <CheckCircle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 flex items-center gap-1 truncate">
+                          <Users className="w-3 h-3 shrink-0" /> {t("storeDetail.followersCount", { count: store.follower_count || 0 })}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
           <>
           {/* Affiliate Marketing Promo */}

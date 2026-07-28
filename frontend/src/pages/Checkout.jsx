@@ -21,6 +21,7 @@ import { formatCurrency } from "@/lib/utils";
 import { initializeITECPayPayment } from "@/lib/itecpay";
 import { PAYMENT_METHODS } from "@/lib/paymentMethods";
 import RadioOptionCard from "@/components/shared/RadioOptionCard";
+import ShopHeaderBar from "@/components/shop/ShopHeaderBar";
 import { motion } from "framer-motion";
 
 const FULFILLMENT_ICONS = {
@@ -728,17 +729,18 @@ export default function Checkout() {
   if (cartLoading || addressLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-orange-600" /></div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 lg:py-10">
-      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8 flex-wrap">
-        <Link to={createPageUrl("cart")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0 order-1">
-          <ArrowLeft className="w-4 h-4" /> {t("checkout.backToCart")}
-        </Link>
+    // Renders outside the app sidebar layout (see App.jsx) so nothing competes
+    // with the checkout flow — ShopHeaderBar is the only chrome.
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
+      <ShopHeaderBar backTo={createPageUrl("cart")} backLabel={t("checkout.backToCart")} showCart={false} />
 
-        <div className="order-3 sm:order-2 w-full sm:w-auto flex justify-center mt-2 sm:mt-0">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-5 sm:py-8 lg:py-10 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8 flex-wrap">
+        <div className="order-1 w-full sm:w-auto flex justify-center sm:justify-start">
           <CheckoutStepper t={t} stage={stage} />
         </div>
 
-        <div className="hidden sm:flex order-2 sm:order-3 items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shrink-0">
+        <div className="hidden sm:flex order-2 items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shrink-0">
           <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <div className="text-left leading-tight">
             <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.secureCheckout")}</p>
@@ -747,8 +749,8 @@ export default function Checkout() {
         </div>
       </div>
 
-      <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{t("common.checkout")}</h1>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{t("common.checkout")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("checkout.completeInFewSteps")}</p>
       </div>
 
@@ -1105,7 +1107,7 @@ export default function Checkout() {
 
         {/* SUMMARY SIDEBAR */}
         <div className="min-w-0 lg:col-span-4">
-          <div className="sticky top-24 space-y-6">
+          <div className="lg:sticky lg:top-[4.5rem] space-y-6">
             <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">{t("cart.orderSummary")}</h3>
@@ -1292,6 +1294,7 @@ export default function Checkout() {
             </div>
           ))}
         </div>
+      </div>
       </div>
 
       {/* Payment Method Modal */}

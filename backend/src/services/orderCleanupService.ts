@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Order } from '../models/Order';
 import { Product } from '../models/Product';
+import { notifyRestockedBookings } from './bookingService';
 
 // A payment that hasn't been confirmed within this window is treated as
 // abandoned (buyer closed the tab, mobile money prompt timed out, etc.) and
@@ -45,6 +46,13 @@ async function sweepExpiredPendingOrders() {
   for (const order of expiredOrders) {
     try {
       await cancelOrder(order);
+      // Stock the abandoned order was holding is available again, so anyone
+      // waiting on those items can be told.
+      for (const item of order.items) {
+        if (item.inventory_deducted) {
+          void notifyRestockedBookings(item.product_id);
+        }
+      }
     } catch (err) {
       console.error(`[orderCleanup] Failed to auto-cancel order ${order._id}:`, err);
     }

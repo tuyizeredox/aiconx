@@ -14,6 +14,10 @@ export interface IProduct extends Document {
   custom_options: { name: string; values: string[] }[];
   category: string;
   tags: string[];
+  // Buyer-facing detail content. Both are vendor-authored and optional: the
+  // product page only renders these blocks when they're populated.
+  highlights: string[];
+  specifications: { name: string; value: string }[];
   store_id: string;
   store_name?: string;
   vendor_username: string;
@@ -87,6 +91,16 @@ const ProductSchema = new Schema<IProduct>({
     type: String,
     trim: true,
     lowercase: true,
+  }],
+  highlights: [{
+    type: String,
+    trim: true,
+    maxlength: 120,
+  }],
+  specifications: [{
+    name: { type: String, required: true, trim: true, maxlength: 60 },
+    value: { type: String, required: true, trim: true, maxlength: 200 },
+    _id: false,
   }],
   store_id: {
     type: String,

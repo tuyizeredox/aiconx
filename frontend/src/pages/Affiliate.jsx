@@ -6,7 +6,7 @@ import {
   Link2, Copy, DollarSign, MousePointerClick, ShoppingCart,
   Plus, Loader2, Check, Search, Package, Zap, Trophy,
   ChevronDown, ChevronUp, Instagram, Mail, MessageSquare,
-  Twitter, Ruler, Medal, Crown, Star, Radio, Clock
+  Twitter, Ruler, Medal, Crown, Star, Radio, Clock, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,16 @@ import { toast } from "sonner";
 import AvatarImg from "@/components/shared/AvatarImg";
 import BackLink from "@/components/shared/BackLink";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { affiliateLinksAPI, productsAPI, vendorSubscriptionsAPI, ordersAPI, withdrawalsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -339,6 +349,7 @@ export default function Affiliate() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [pendingProductId, setPendingProductId] = useState(null);
   const [copiedLinkId, setCopiedLinkId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [leaderboardPeriod, setLeaderboardPeriod] = useState("month");
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -515,6 +526,16 @@ export default function Affiliate() {
     onSettled: () => {
       setPendingProductId(null);
     }
+  });
+
+  const deleteLinkMutation = useMutation({
+    mutationFn: (link) => affiliateLinksAPI.delete(link._id || link.id),
+    onSuccess: () => {
+      toast.success(t("affiliate.linkDeleted"));
+      setDeleteTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["affiliateLinks"] });
+    },
+    onError: (error) => toast.error(error?.message || t("affiliate.linkDeleteFailed")),
   });
 
   const buildAffiliateUrl = (link) =>
@@ -700,15 +721,40 @@ export default function Affiliate() {
                   return (
                     <motion.div key={linkId} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3 sm:p-4">
                       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 flex-wrap">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{link.product_title}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{link.store_name} · {formatCurrency(link.product_price)}</p>
-                        </div>
+                        <Link
+                          to={`${createPageUrl("ProductDetail")}?id=${link.product_id}`}
+                          className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 group"
+                        >
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                            {link.product_image ? (
+                              <img
+                                src={link.product_image}
+                                alt={link.product_title || ""}
+                                loading="lazy"
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                              />
+                            ) : (
+                              <Package className="w-5 h-5 text-slate-300 dark:text-slate-500" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{link.product_title}</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{link.store_name} · {formatCurrency(link.product_price)}</p>
+                          </div>
+                        </Link>
                         <div className="flex items-center gap-2 shrink-0">
                           <Badge className={`text-[10px] border-0 capitalize ${link.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"}`}>
                             {link.status}
                           </Badge>
                           <span className="text-xs font-bold text-orange-600 whitespace-nowrap">{link.commission_pct}% comm.</span>
+                          <button
+                            onClick={() => setDeleteTarget(link)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors shrink-0"
+                            title={t("affiliate.deleteLink")}
+                            aria-label={t("affiliate.deleteLink")}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
@@ -949,6 +995,31 @@ export default function Affiliate() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open && !deleteLinkMutation.isPending) setDeleteTarget(null); }}
+      >
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("affiliate.deleteLinkTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("affiliate.deleteLinkDesc", { product: deleteTarget?.product_title || t("affiliate.aProduct") })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLinkMutation.isPending}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteLinkMutation.isPending}
+              onClick={(e) => { e.preventDefault(); deleteLinkMutation.mutate(deleteTarget); }}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleteLinkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

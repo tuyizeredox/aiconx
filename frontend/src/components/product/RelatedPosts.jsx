@@ -62,12 +62,12 @@ export default function RelatedPosts({ productId }) {
   if (!isLoading && posts.length === 0) return null;
 
   return (
-    <div className="mt-12 border-t border-slate-100 dark:border-slate-700 pt-8">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Layers className="w-5 h-5 text-orange-500" />
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t("product.featuredInPosts")}</h2>
+        <Layers className="w-4 h-4 text-orange-500 shrink-0" />
+        <h2 className="text-base font-bold text-slate-900 dark:text-white">{t("product.featuredInPosts")}</h2>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
         {isLoading
           ? Array(6).fill(0).map((_, i) => <PostThumbSkeleton key={`skeleton-${i}`} />)
           : posts.map(post => <PostThumb key={post.id || post._id} post={post} />)

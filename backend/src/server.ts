@@ -9,6 +9,8 @@ import { connectDB } from './config/database';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { productRoutes } from './routes/products';
+import { productQuestionRoutes } from './routes/productQuestions';
+import { productBookingRoutes } from './routes/productBookings';
 import { orderRoutes } from './routes/orders';
 import { messageRoutes } from './routes/messages';
 import { notificationRoutes } from './routes/notifications';
@@ -184,6 +186,8 @@ fastify.register(async (authScope) => {
 // Register routes
 fastify.register(userRoutes, { prefix: '/api/users' });
 fastify.register(productRoutes, { prefix: '/api/products' });
+fastify.register(productQuestionRoutes, { prefix: '/api/product-questions' });
+fastify.register(productBookingRoutes, { prefix: '/api/product-bookings' });
 fastify.register(orderRoutes, { prefix: '/api/orders' });
 fastify.register(messageRoutes, { prefix: '/api/messages' });
 fastify.register(notificationRoutes, { prefix: '/api/notifications' });

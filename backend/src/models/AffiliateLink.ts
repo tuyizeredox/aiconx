@@ -10,6 +10,7 @@ export interface IAffiliateLink extends Document {
   product_id: string;
   product_title?: string;
   product_price?: number;
+  product_image?: string;
   ref_code: string;
   commission_pct: number;
   clicks: number;
@@ -56,6 +57,10 @@ const AffiliateLinkSchema = new Schema<IAffiliateLink>({
   product_price: {
     type: Number,
     min: 0,
+  },
+  product_image: {
+    type: String,
+    trim: true,
   },
   ref_code: {
     type: String,

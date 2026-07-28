@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
 import { Product, IProduct } from '../models/Product';
+import { Order } from '../models/Order';
 import { User } from '../models/User';
 import { Follow } from '../models/Follow';
 import { Notification } from '../models/Notification';
@@ -9,6 +11,90 @@ import { checkProductCountLimit, checkProductMediaLimit, checkAdvancedAnalyticsL
 import { checkStoreVerified } from '../middleware/verification';
 import { escapeRegex } from '../utils/sanitize';
 import { deleteProductCascade } from '../services/cascadeService';
+import { notifyRestockedBookings } from '../services/bookingService';
+
+// Translates the marketplace's query-string filters into a Mongo filter.
+// Shared by the product list and the facet counts so the two can never drift
+// apart — a sidebar that says "Fashion (12)" must lead to those same 12.
+// `omit` lets the facet endpoint drop the dimension it's counting.
+function buildProductFilter(query: any, omit: { category?: boolean } = {}): any {
+  const {
+    category,
+    status = 'active',
+    vendor_username,
+    vendor_plan,
+    store_id,
+    store_ids,
+    search,
+    affiliate_enabled,
+    min_price,
+    max_price,
+    min_rating,
+    in_stock,
+    on_sale,
+  } = query;
+
+  const filter: any = {};
+
+  if (status) filter.status = status;
+  if (category && !omit.category) filter.category = category;
+  if (vendor_username) filter.vendor_username = vendor_username;
+  if (vendor_plan) filter.vendor_plan = vendor_plan;
+  if (store_id) filter.store_id = store_id;
+  // affiliate_enabled defaults to true on the schema, so treat missing field as enabled
+  if (affiliate_enabled === 'true') filter.affiliate_enabled = { $ne: false };
+
+  // Restrict to a set of stores — how the marketplace's "near me" filter
+  // narrows products down to stores within the shopper's radius. An empty
+  // list is honoured as "no stores matched" rather than ignored, so a
+  // location with no nearby stores shows an empty state instead of
+  // silently falling back to every product on the platform. Takes precedence
+  // over a single store_id if a caller somehow sends both.
+  if (store_ids !== undefined) {
+    const ids = String(store_ids).split(',').map((s: string) => s.trim()).filter(Boolean);
+    filter.store_id = { $in: ids };
+  }
+
+  const minPrice = parseFloat(min_price);
+  const maxPrice = parseFloat(max_price);
+  if (Number.isFinite(minPrice) || Number.isFinite(maxPrice)) {
+    filter.price = {};
+    if (Number.isFinite(minPrice)) filter.price.$gte = minPrice;
+    if (Number.isFinite(maxPrice)) filter.price.$lte = maxPrice;
+  }
+
+  const minRating = parseFloat(min_rating);
+  if (Number.isFinite(minRating) && minRating > 0) {
+    filter.rating_avg = { $gte: minRating };
+  }
+
+  if (in_stock === 'true') {
+    filter.inventory_count = { $gt: 0 };
+  }
+
+  // Discounted items only: a compare-at price that's actually above the
+  // current price (a leftover compare_at_price <= price isn't a deal).
+  if (on_sale === 'true') {
+    filter.compare_at_price = { $gt: 0 };
+    filter.$expr = { $gt: ['$compare_at_price', '$price'] };
+  }
+
+  // Character-based incremental search: match products whose title (or
+  // description/tags/category/store) contains the query as a substring, so
+  // results appear as the user types rather than requiring a full word match.
+  if (search) {
+    const searchRegex = new RegExp(escapeRegex(search), 'i');
+    filter.$or = [
+      { title: searchRegex },
+      { description: searchRegex },
+      { tags: searchRegex },
+      { category: searchRegex },
+      { store_name: searchRegex },
+    ];
+  }
+
+  return filter;
+}
 
 export async function productRoutes(fastify: FastifyInstance) {
   // Get recommended products for the current user
@@ -47,42 +133,9 @@ export async function productRoutes(fastify: FastifyInstance) {
   fastify.get('/', async (request, reply) => {
     try {
       const query = request.query as any;
-      const {
-        category,
-        status = 'active',
-        vendor_username,
-        vendor_plan,
-        store_id,
-        search,
-        affiliate_enabled,
-        sort = '-sales_count',
-        limit = 50,
-        skip = 0
-      } = query;
+      const { sort = '-sales_count', limit = 50, skip = 0 } = query;
 
-      // Build filter object
-      const filter: any = {};
-
-      if (status) filter.status = status;
-      if (category) filter.category = category;
-      if (vendor_username) filter.vendor_username = vendor_username;
-      if (vendor_plan) filter.vendor_plan = vendor_plan;
-      if (store_id) filter.store_id = store_id;
-      // affiliate_enabled defaults to true on the schema, so treat missing field as enabled
-      if (affiliate_enabled === 'true') filter.affiliate_enabled = { $ne: false };
-
-      // Character-based incremental search: match products whose title (or
-      // tags/category) contains the query as a substring, so results appear
-      // as the user types rather than requiring a full word match.
-      if (search) {
-        const searchRegex = new RegExp(escapeRegex(search), 'i');
-        filter.$or = [
-          { title: searchRegex },
-          { tags: searchRegex },
-          { category: searchRegex },
-          { store_name: searchRegex },
-        ];
-      }
+      const filter = buildProductFilter(query);
 
       // Build sort object
       const sortObj: any = { plan_priority: -1 };
@@ -97,7 +150,7 @@ export async function productRoutes(fastify: FastifyInstance) {
         .sort(sortObj)
         .limit(parseInt(limit))
         .skip(parseInt(skip))
-        .select('title description price compare_at_price images category store_name vendor_username rating_avg rating_count sales_count status inventory_count affiliate_enabled affiliate_commission_pct')
+        .select('title description price compare_at_price images category store_name store_id vendor_username rating_avg rating_count sales_count status inventory_count affiliate_enabled affiliate_commission_pct created_at')
         .lean();
 
       const total = await Product.countDocuments(filter);
@@ -116,6 +169,117 @@ export async function productRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ 
         error: 'Internal server error', 
         message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      });
+    }
+  });
+
+  // Facet counts for the marketplace filter sidebar: how many products each
+  // category would return under the *rest* of the active filters, plus the
+  // real price range of the current result set (so the price inputs can show
+  // meaningful bounds instead of guessed ones). Accepts the same query params
+  // as GET /products.
+  fastify.get('/facets', async (request, reply) => {
+    try {
+      const query = request.query as any;
+      // Category counts ignore the selected category — otherwise picking one
+      // would zero out every other row and the user could never see what else
+      // is available without clearing their choice first.
+      const categoryFilter = buildProductFilter(query, { category: true });
+      const activeFilter = buildProductFilter(query);
+
+      const [categories, priceRange] = await Promise.all([
+        Product.aggregate([
+          { $match: categoryFilter },
+          { $group: { _id: '$category', count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+        ]),
+        Product.aggregate([
+          { $match: activeFilter },
+          { $group: { _id: null, min: { $min: '$price' }, max: { $max: '$price' } } },
+        ]),
+      ]);
+
+      return {
+        categories: categories
+          .filter((c: any) => c._id)
+          .map((c: any) => ({ category: c._id, count: c.count })),
+        price: {
+          min: priceRange[0]?.min ?? 0,
+          max: priceRange[0]?.max ?? 0,
+        },
+      };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
+    }
+  });
+
+  // Products genuinely bought in the same order as this one, most frequent
+  // first. Falls back to the store's other best sellers once real co-purchases
+  // run out, so a new product still shows a useful bundle instead of an empty
+  // strip — `source` tells the client which it got, so the UI can label it
+  // honestly rather than claiming a buying pattern that wasn't measured.
+  fastify.get('/:id/bought-together', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { limit = 3 } = request.query as any;
+      const want = Math.min(Math.max(parseInt(limit) || 3, 1), 8);
+
+      const product = await Product.findById(id).lean();
+      if (!product) {
+        return reply.code(404).send({ error: 'Product not found' });
+      }
+
+      const coPurchased = await Order.aggregate([
+        { $match: { 'items.product_id': id, payment_status: 'paid' } },
+        { $unwind: '$items' },
+        { $match: { 'items.product_id': { $ne: id } } },
+        { $group: { _id: '$items.product_id', orders: { $sum: 1 } } },
+        { $sort: { orders: -1 } },
+        { $limit: want },
+      ]);
+
+      const coPurchasedIds = coPurchased
+        .map((row: any) => row._id)
+        .filter((pid: string) => mongoose.Types.ObjectId.isValid(pid));
+
+      const select = 'title price compare_at_price images store_id store_name status inventory_count';
+
+      let products = coPurchasedIds.length
+        ? await Product.find({ _id: { $in: coPurchasedIds }, status: 'active' }).select(select).lean()
+        : [];
+
+      // Preserve the co-purchase ranking, which the $in query does not.
+      products.sort((a, b) => coPurchasedIds.indexOf(String(a._id)) - coPurchasedIds.indexOf(String(b._id)));
+
+      const source = products.length >= want ? 'orders' : products.length > 0 ? 'mixed' : 'store';
+
+      if (products.length < want && product.store_id) {
+        const exclude = [id, ...products.map(p => String(p._id))];
+        const filler = await Product.find({
+          store_id: product.store_id,
+          status: 'active',
+          _id: { $nin: exclude.filter(pid => mongoose.Types.ObjectId.isValid(pid)) },
+        })
+          .sort({ sales_count: -1, created_at: -1 })
+          .limit(want - products.length)
+          .select(select)
+          .lean();
+        products = [...products, ...filler];
+      }
+
+      return {
+        data: products.map(p => ({ ...p, id: String(p._id) })),
+        source,
+      };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
   });
@@ -294,6 +458,13 @@ export async function productRoutes(fastify: FastifyInstance) {
       // Emit real-time event — target store/vendor room only
       const updatedStoreRoom = product.store_id ? `store:${product.store_id}` : `vendor:${user.username}`;
       fastify.io?.to(updatedStoreRoom).emit('product:updated', product);
+
+      // A vendor restocking is the main way a booked product becomes buyable
+      // again. Not awaited: the vendor's save shouldn't wait on a fan-out of
+      // notifications, and the service swallows its own errors.
+      if (safeUpdate.inventory_count !== undefined || safeUpdate.status !== undefined) {
+        void notifyRestockedBookings(String(product._id), fastify);
+      }
 
       return product;
     } catch (error: any) {

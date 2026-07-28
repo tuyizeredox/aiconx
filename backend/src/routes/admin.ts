@@ -23,6 +23,7 @@ import { DEFAULT_PLATFORM_FEE_PERCENT } from '../utils/platformFinance';
 import { itecPayService } from '../services/itecPayService';
 import { deleteProductCascade, deleteStoreCascade, deleteUserCascade } from '../services/cascadeService';
 import { runBackup, getBackupStream } from '../services/backupService';
+import { notifyRestockedBookings } from '../services/bookingService';
 
 // Shared by GET /stats (reporting) and POST /cashouts (balance-guard before
 // sending money out) so the two never drift into disagreeing about how much
@@ -1437,6 +1438,14 @@ export async function adminRoutes(fastify: FastifyInstance) {
               }
               order.stock_restored = true;
             });
+
+            // Refunded stock goes back on the shelf, so waitlisted shoppers
+            // are told they can buy it now.
+            for (const item of order.items) {
+              if (item.inventory_deducted) {
+                void notifyRestockedBookings(item.product_id, fastify);
+              }
+            }
           } finally {
             await session.endSession();
           }

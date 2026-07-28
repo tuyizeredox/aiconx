@@ -344,6 +344,10 @@ export const productsAPI = {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/products?${query}`);
   },
+  facets: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/products/facets?${query}`);
+  },
   get: (id) => apiClient.get(`/products/${id}`),
   create: (data) => apiClient.post('/products', data),
   update: (id, data) => apiClient.patch(`/products/${id}`, data),
@@ -351,7 +355,29 @@ export const productsAPI = {
   search: (query) => apiClient.get(`/products/search?q=${encodeURIComponent(query)}`),
   getTopSelling: (limit = 10) => apiClient.get(`/products/top-selling?limit=${limit}`),
   getRelated: (id, limit = 10) => apiClient.get(`/products/related/${id}?limit=${limit}`),
+  getBoughtTogether: (id, limit = 3) => apiClient.get(`/products/${id}/bought-together?limit=${limit}`),
   getRecommendations: (limit = 10) => apiClient.get(`/products/recommendations?limit=${limit}`),
+};
+
+export const productQuestionsAPI = {
+  listForProduct: (productId, filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/product-questions/product/${productId}?${query}`);
+  },
+  ask: (data) => apiClient.post('/product-questions', data),
+  answer: (id, answer) => apiClient.post(`/product-questions/${id}/answer`, { answer }),
+  delete: (id) => apiClient.delete(`/product-questions/${id}`),
+};
+
+export const productBookingsAPI = {
+  waitingCount: (productId) => apiClient.get(`/product-bookings/product/${productId}`),
+  listForMe: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/product-bookings/me?${query}`);
+  },
+  listForVendor: () => apiClient.get('/product-bookings/vendor/me'),
+  book: (data) => apiClient.post('/product-bookings', data),
+  cancel: (id) => apiClient.delete(`/product-bookings/${id}`),
 };
 
 export const ordersAPI = {
@@ -653,6 +679,10 @@ export const storesAPI = {
   list: (filters) => {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/stores?${query}`);
+  },
+  nearby: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/stores/nearby?${query}`);
   },
   get: (id) => apiClient.get(`/stores/${id}`),
   create: (data) => apiClient.post('/stores', data),
@@ -976,6 +1006,7 @@ export const aiAPI = {
   assistant: (message, history = [], init = false, language = 'en') => apiClient.post('/ai/assistant', { message, history, init, language }),
   generateProductDescription: (data) => apiClient.post('/ai/generate-product-description', data),
   generateProductContent: (data) => apiClient.post('/ai/generate-product-content', data),
+  generateStorefront: (data) => apiClient.post('/ai/generate-storefront', data),
   generateSentimentSummary: (data) => apiClient.post('/ai/generate-sentiment-summary', data),
   translate: (data) => apiClient.post('/ai/translate', data),
 };

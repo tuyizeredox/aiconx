@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
 import { AffiliateLink, IAffiliateLink } from '../models/AffiliateLink';
 import { Product } from '../models/Product';
 import { User } from '../models/User';
@@ -258,6 +259,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
           product_id: product._id,
           product_title: product.title,
           product_price: product.price,
+          product_image: product.images?.[0],
           ref_code: refCode,
           // Commission rate is set by the seller on the product, not by the
           // affiliate creating the link — never trust body.commission_pct here.
@@ -418,6 +420,28 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
         .limit(parseInt(limit))
         .skip(parseInt(skip));
 
+      // Links only store a snapshot of the product, and product_image was added
+      // after some links were created — resolve the current product so the
+      // affiliate always sees an up-to-date image/title/price for each link.
+      const productIds = links
+        .map(l => l.product_id)
+        .filter(id => mongoose.Types.ObjectId.isValid(id));
+      const products = productIds.length
+        ? await Product.find({ _id: { $in: productIds } }, { title: 1, price: 1, images: 1, store_name: 1 })
+        : [];
+      const productMap = new Map(products.map(p => [String(p._id), p]));
+
+      const enrichedLinks = links.map(link => {
+        const product = productMap.get(String(link.product_id)) as any;
+        return {
+          ...link.toObject(),
+          product_title: product?.title || link.product_title,
+          product_price: product?.price ?? link.product_price,
+          product_image: product?.images?.[0] || link.product_image || null,
+          store_name: product?.store_name || link.store_name,
+        };
+      });
+
       const total = await AffiliateLink.countDocuments(filter);
 
       // Calculate totals
@@ -435,7 +459,7 @@ export async function affiliateLinkRoutes(fastify: FastifyInstance) {
       ]);
 
       return reply.send({
-        links,
+        links: enrichedLinks,
         stats: stats[0] || {
           total_clicks: 0,
           total_conversions: 0,

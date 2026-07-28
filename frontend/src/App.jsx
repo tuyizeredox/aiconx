@@ -103,30 +103,46 @@ const AppRoutes = () => {
         isAuthenticated ? <Navigate to="/" replace /> : <Pages.LandingPage />
       } />
 
-      {/* Product detail is publicly viewable so affiliate links work for logged-out visitors */}
+      {/* The shopping flow (product → cart → checkout) renders standalone, outside the
+          sidebar/bottom-nav chrome, so the buying experience gets the full viewport and
+          reads like a storefront. Each of those pages brings its own ShopHeaderBar.
+
+          Product detail is publicly viewable so affiliate links work for logged-out visitors */}
       <Route path="/productdetail" element={
         isAuthenticated && user?.role === 'super_admin' && !isAdminPreview(location) ? <Navigate to="/admin-dashboard" replace /> :
-        <LayoutWrapper currentPageName="ProductDetail">
-          <Pages.ProductDetail />
-        </LayoutWrapper>
+        <ErrorBoundary><Pages.ProductDetail /></ErrorBoundary>
+      } />
+
+      {/* The marketplace is the front door of that same shopping flow, so it
+          renders standalone too — the filter column plus a 4-up product grid
+          needs the full viewport width, and the sidebar chrome would compete
+          with its own search/filter toolbar. */}
+      <Route path="/marketplace" element={
+        !isAuthenticated ? <Navigate to="/welcome" replace /> :
+        user?.role === 'super_admin' && !isAdminPreview(location) ? <Navigate to="/admin-dashboard" replace /> :
+        <ErrorBoundary><Pages.Marketplace /></ErrorBoundary>
+      } />
+
+      {/* Store pages are their own standalone full page (no sidebar/app chrome) so a
+          vendor's custom storefront reads as a real landing page, and publicly
+          viewable so shared store links work for logged-out visitors too. */}
+      <Route path="/storedetail" element={
+        isAuthenticated && user?.role === 'super_admin' && !isAdminPreview(location) ? <Navigate to="/admin-dashboard" replace /> :
+        <ErrorBoundary><Pages.StoreDetail /></ErrorBoundary>
       } />
 
       {/* Cart is publicly viewable (guest cart lives in localStorage) so a guest can add to
           cart from an affiliate link and only needs to sign in once they reach checkout */}
       <Route path="/cart" element={
         isAuthenticated && user?.role === 'super_admin' ? <Navigate to="/admin-dashboard" replace /> :
-        <LayoutWrapper currentPageName="Cart">
-          <Pages.Cart />
-        </LayoutWrapper>
+        <ErrorBoundary><Pages.Cart /></ErrorBoundary>
       } />
 
       {/* Checkout requires login, but remembers where to return to so guest carts aren't lost */}
       <Route path="/checkout" element={
         !isAuthenticated ? <Navigate to="/login" state={{ from: location.pathname + location.search }} replace /> :
         user?.role === 'super_admin' ? <Navigate to="/admin-dashboard" replace /> :
-        <LayoutWrapper currentPageName="Checkout">
-          <Pages.Checkout />
-        </LayoutWrapper>
+        <ErrorBoundary><Pages.Checkout /></ErrorBoundary>
       } />
 
       {/* Main app routes (with layout & auth check) */}
@@ -142,7 +158,7 @@ const AppRoutes = () => {
       {Object.entries(Pages).map(([path, Page]) => {
         const lowerPath = path.toLowerCase();
         // Skip Login and Register as they are handled above; ProductDetail, Cart and Checkout are handled above too
-        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'LandingPage', 'Terms', 'Privacy', 'Guidelines', 'ProductDetail', 'Cart', 'Checkout'].includes(path)) return null;
+        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'LandingPage', 'Terms', 'Privacy', 'Guidelines', 'ProductDetail', 'Cart', 'Checkout', 'StoreDetail', 'Marketplace'].includes(path)) return null;
         
         return (
           <Route

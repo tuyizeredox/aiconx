@@ -8,6 +8,8 @@ import { Review } from '../models/Review';
 import { SentimentSummary } from '../models/SentimentSummary';
 import { Like } from '../models/Like';
 import { Bookmark } from '../models/Bookmark';
+import { ProductQuestion } from '../models/ProductQuestion';
+import { ProductBooking } from '../models/ProductBooking';
 import { StoreReview } from '../models/StoreReview';
 import { ShippingZone } from '../models/ShippingZone';
 import { VendorSubscription } from '../models/VendorSubscription';
@@ -89,6 +91,8 @@ export async function deleteProductCascade(product: IProduct): Promise<void> {
     SentimentSummary.deleteMany({ product_id: productId }),
     Like.deleteMany({ target_type: 'product', target_id: productId }),
     Bookmark.deleteMany({ target_type: 'product', target_id: productId }),
+    ProductQuestion.deleteMany({ product_id: productId }),
+    ProductBooking.deleteMany({ product_id: productId }),
   ]);
 
   await deleteMediaUrls([
@@ -215,6 +219,8 @@ export async function deleteUserCascade(user: IUser): Promise<UserDeletionSummar
     CartItem.deleteMany({ user_username: username }),
     WishlistItem.deleteMany({ user_username: username }),
     AffiliateLink.deleteMany({ influencer_username: username }),
+    ProductQuestion.deleteMany({ asker_username: username }),
+    ProductBooking.deleteMany({ user_username: username }),
     Withdrawal.deleteMany({ vendor_username: username }),
     Message.deleteMany({ $or: [{ sender_username: username }, { receiver_username: username }] }),
     Notification.deleteMany({ $or: [{ recipient_username: username }, { sender_username: username }] }),

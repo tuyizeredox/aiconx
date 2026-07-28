@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import EmptyState from "@/components/shared/EmptyState";
-import { Minus, Plus, Trash2, ArrowLeft, CreditCard, Loader2, ShoppingBag, Tag, X, CheckCircle2, Zap
+import ShopHeaderBar from "@/components/shop/ShopHeaderBar";
+import { Minus, Plus, Trash2, CreditCard, Loader2, ShoppingBag, Tag, X, CheckCircle2, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,15 +132,17 @@ export default function Cart() {
   const total = discountedSubtotal + shipping;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <Link
-        to={createPageUrl("Marketplace")}
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 sm:mb-6 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> {t("common.continueShopping")}
-      </Link>
+    // Renders outside the app sidebar layout (see App.jsx) — the cart owns its
+    // full-width canvas and its own top chrome.
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
+      <ShopHeaderBar
+        backTo={createPageUrl("Marketplace")}
+        backLabel={t("common.continueShopping")}
+        showCart={false}
+      />
 
-      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 mb-6 sm:mb-8 tracking-tight">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 mb-5 sm:mb-8 tracking-tight">
         {t("cart.title")} ({cartItems.length})
       </h1>
 
@@ -243,7 +246,7 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-6 lg:sticky lg:top-6 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-6 lg:sticky lg:top-[4.5rem] transition-colors">
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">
                 {t("cart.orderSummary")}
               </h3>
@@ -361,6 +364,7 @@ export default function Cart() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { ShippingZone } from '../models/ShippingZone';
 import { AffiliateLink } from '../models/AffiliateLink';
 import { Notification } from '../models/Notification';
 import { NotificationService } from '../services/notificationService';
+import { notifyRestockedBookings } from '../services/bookingService';
 import { z } from 'zod';
 import mongoose from 'mongoose';
 
@@ -515,6 +516,15 @@ export async function orderRoutes(fastify: FastifyInstance) {
             order.stock_restored = true;
             await order.save({ session });
           });
+
+          // Returned stock is real stock — anyone who booked these items while
+          // they were sold out gets told they can buy now. Fired after the
+          // transaction commits so nobody is told about a rolled-back restock.
+          for (const item of order.items) {
+            if (item.inventory_deducted) {
+              void notifyRestockedBookings(item.product_id, fastify);
+            }
+          }
         } finally {
           await session.endSession();
         }

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
-  ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCcw, Maximize2,
+  ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCcw, Maximize2, Play,
 } from "lucide-react";
 
 const MAX_ZOOM = 4;
@@ -238,7 +238,7 @@ function Lightbox({ images, index, setIndex, title, onClose }) {
   );
 }
 
-export default function ImageZoomGallery({ images, title, badge, onSelectedImageChange }) {
+export default function ImageZoomGallery({ images, videos = [], title, badge, onSelectedImageChange, expandLabel }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -247,11 +247,24 @@ export default function ImageZoomGallery({ images, title, badge, onSelectedImage
   const containerRef = useRef(null);
 
   const list = images.length > 0 ? images : [];
+  // Videos live after the images in one combined strip, so the thumbnail row
+  // matches what the shopper sees when they page through with the arrows.
+  const media = React.useMemo(
+    () => [
+      ...list.map(url => ({ type: "image", url })),
+      ...(videos || []).filter(Boolean).map(url => ({ type: "video", url })),
+    ],
+    [list, videos]
+  );
+  const current = media[selected] || media[0];
+  const isVideo = current?.type === "video";
 
   React.useEffect(() => {
-    onSelectedImageChange?.(list[selected], selected);
-     
-  }, [selected, list[selected]]);
+    // Only images can be a cart line's selected_image, so a video selection
+    // reports nothing rather than writing a video URL into the order.
+    onSelectedImageChange?.(current?.type === "image" ? current.url : undefined, selected);
+
+  }, [selected, current?.url]);
 
   const handleMouseMove = useCallback((e) => {
     if (!supportsHover || !containerRef.current) return;
@@ -271,49 +284,77 @@ export default function ImageZoomGallery({ images, title, badge, onSelectedImage
         onMouseMove={handleMouseMove}
       >
         <AnimatePresence mode="wait">
-          <motion.img
-            key={selected}
-            src={list[selected]}
-            alt={title}
-            className="w-full h-full object-cover cursor-zoom-in"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setLightboxOpen(true)}
-          />
+          {isVideo ? (
+            <motion.video
+              key={`video-${selected}`}
+              src={current.url}
+              controls
+              playsInline
+              className="w-full h-full object-contain bg-black"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+          ) : (
+            <motion.img
+              key={selected}
+              src={current?.url}
+              alt={title}
+              className="w-full h-full object-cover cursor-zoom-in"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setLightboxOpen(true)}
+            />
+          )}
         </AnimatePresence>
 
-        {/* Hover magnifier (desktop only) */}
-        {supportsHover && hovering && (
+        {/* Hover magnifier (desktop only) — images only */}
+        {supportsHover && hovering && !isVideo && (
           <div
             className="absolute inset-0 pointer-events-none bg-no-repeat"
             style={{
-              backgroundImage: `url(${list[selected]})`,
+              backgroundImage: `url(${current?.url})`,
               backgroundSize: `${HOVER_ZOOM * 100}%`,
               backgroundPosition: `${hoverPos.x}% ${hoverPos.y}%`,
             }}
           />
         )}
 
-        <button
-          onClick={() => setLightboxOpen(true)}
-          className="absolute bottom-3 right-3 w-9 h-9 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label={t("product.viewFullscreen")}
-        >
-          <Maximize2 className="w-4 h-4 text-slate-700 dark:text-slate-200" />
-        </button>
+        {/* Fullscreen: a labelled control when the caller asks for one (the
+            product page shows "Expand"), the subtle hover icon otherwise. */}
+        {!isVideo && (expandLabel ? (
+          <button
+            onClick={() => setLightboxOpen(true)}
+            className="absolute top-3 right-3 h-8 px-3 bg-white/95 dark:bg-slate-900/95 rounded-lg flex items-center gap-1.5 shadow-md text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors"
+          >
+            <Maximize2 className="w-3.5 h-3.5" /> {expandLabel}
+          </button>
+        ) : (
+          <button
+            onClick={() => setLightboxOpen(true)}
+            className="absolute bottom-3 right-3 w-9 h-9 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label={t("product.viewFullscreen")}
+          >
+            <Maximize2 className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+          </button>
+        ))}
 
-        {list.length > 1 && (
+        {media.length > 1 && (
           <>
             <button
               onClick={() => setSelected((i) => Math.max(0, i - 1))}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg"
+              disabled={selected === 0}
+              aria-label={t("common.previous")}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 transition-opacity"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setSelected((i) => Math.min(list.length - 1, i + 1))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg"
+              onClick={() => setSelected((i) => Math.min(media.length - 1, i + 1))}
+              disabled={selected === media.length - 1}
+              aria-label={t("common.next")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 transition-opacity"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -323,17 +364,28 @@ export default function ImageZoomGallery({ images, title, badge, onSelectedImage
         {badge}
       </div>
 
-      {list.length > 1 && (
+      {media.length > 1 && (
         <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-          {list.map((img, i) => (
+          {media.map((item, i) => (
             <button
-              key={`thumb-${i}-${img}`}
+              key={`thumb-${i}-${item.url}`}
               onClick={() => setSelected(i)}
-              className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+              className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
                 selected === i ? "border-orange-500 ring-2 ring-orange-100" : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              {item.type === "video" ? (
+                <>
+                  <video src={item.url} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+                    <span className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center">
+                      <Play className="w-3 h-3 text-slate-900 fill-slate-900 ml-0.5" />
+                    </span>
+                  </span>
+                </>
+              ) : (
+                <img src={item.url} alt="" className="w-full h-full object-cover" />
+              )}
             </button>
           ))}
         </div>

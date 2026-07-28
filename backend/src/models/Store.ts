@@ -49,6 +49,16 @@ export interface IStore extends Document {
   // Additional Store Info
   phone_number?: string;
   address?: string;
+  // Physical location, used by the marketplace's "near me" search. Kept as
+  // plain lat/lng (not a GeoJSON point) because distance is computed in the
+  // application layer — see routes/stores.ts's /nearby — which lets stores
+  // that only filled in a city still be matched by name.
+  location?: {
+    lat?: number;
+    lng?: number;
+    city?: string;
+    country?: string;
+  };
   website_url?: string;
   custom_domain?: string;
   social_links?: {
@@ -57,7 +67,31 @@ export interface IStore extends Document {
     twitter?: string;
     tiktok?: string;
   };
-  
+
+  // Storefront Builder (Pro/Elite) — freeform block-based custom storefront.
+  // Stored as Mixed since blocks are polymorphic (each block type has a different
+  // `data` shape); real shape/bounds validation happens at the zod layer in
+  // routes/stores.ts, not here. `enabled` can stay true after a plan downgrade —
+  // whether it actually renders is a read-time computation (see storefront_active
+  // in routes/stores.ts), so a vendor's work is never lost on downgrade.
+  storefront_config?: {
+    enabled: boolean;
+    theme?: { primary_color?: string; accent_color?: string };
+    blocks: any[];
+  };
+
+  // Unpublished working copy of the above. The builder auto-saves here (on AI
+  // generation and on every edit) so a vendor can navigate away and come back
+  // to work in progress without touching what visitors currently see.
+  // Publishing copies it into storefront_config and clears this. Owner-only:
+  // it is stripped from every store response the owner didn't request.
+  storefront_draft?: {
+    theme?: { primary_color?: string; accent_color?: string };
+    blocks: any[];
+    generated_by_ai?: boolean;
+    updated_at?: Date;
+  };
+
   created_at: Date;
   updated_at: Date;
 }
@@ -181,6 +215,12 @@ const StoreSchema = new Schema<IStore>({
   // Additional Store Info
   phone_number: { type: String },
   address: { type: String },
+  location: {
+    lat: { type: Number, min: -90, max: 90 },
+    lng: { type: Number, min: -180, max: 180 },
+    city: { type: String, trim: true },
+    country: { type: String, trim: true },
+  },
   website_url: { type: String },
   custom_domain: { type: String, unique: true, sparse: true },
   social_links: {
@@ -189,6 +229,9 @@ const StoreSchema = new Schema<IStore>({
     twitter: { type: String },
     tiktok: { type: String },
   },
+
+  storefront_config: { type: Schema.Types.Mixed },
+  storefront_draft: { type: Schema.Types.Mixed },
 }, {
   timestamps: {
     createdAt: 'created_at',
@@ -205,6 +248,9 @@ StoreSchema.index({ verification_status: 1 });
 StoreSchema.index({ category: 1, status: 1 });
 StoreSchema.index({ follower_count: -1 });
 StoreSchema.index({ rating_avg: -1 });
+// Narrows the "near me" scan to stores that actually published coordinates.
+StoreSchema.index({ status: 1, 'location.lat': 1, 'location.lng': 1 });
+StoreSchema.index({ 'location.city': 1 });
 StoreSchema.index({ name: 'text' }); // For text search
 
 export const Store = mongoose.model<IStore>('Store', StoreSchema);
