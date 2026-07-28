@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, ImagePlay, Users, ShoppingBag } from "lucide-react";
+import { ImagePlay, Users, ShoppingBag } from "lucide-react";
 
 const STEPS = [
   { n: 1, icon: ImagePlay, color: "violet", titleKey: "step1Title", descKey: "step1Desc" },
@@ -14,34 +14,45 @@ const COLOR_CLASSES = {
   emerald: { icon: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500", badge: "bg-emerald-500" },
 };
 
+// Deliberately compact: this is orientation copy, not a feature pitch, so it sits
+// on one line per step (icon beside the text rather than above it) and stays out
+// of the way of the feed and products below.
 export default function HowItWorks() {
   const { t } = useTranslation();
 
   return (
     <section>
-      <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mb-5">{t("landing.how.title")}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-4 items-stretch">
-        {STEPS.map((step, idx) => {
+      <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-3">
+        {t("landing.how.title")}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        {STEPS.map((step) => {
           const Icon = step.icon;
           const colors = COLOR_CLASSES[step.color];
           return (
-            <React.Fragment key={step.n}>
-              <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5">
-                <div className="relative w-11 h-11 mb-4">
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${colors.icon}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className={`absolute -top-2 -left-2 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center ${colors.badge}`}>
-                    {step.n}
-                  </div>
+            <div
+              key={step.n}
+              className="flex items-start gap-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3"
+            >
+              <div className="relative shrink-0">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors.icon}`}>
+                  <Icon className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1">{t(`landing.how.${step.titleKey}`)}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{t(`landing.how.${step.descKey}`)}</p>
+                <div
+                  className={`absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center ${colors.badge}`}
+                >
+                  {step.n}
+                </div>
               </div>
-              {idx < STEPS.length - 1 && (
-                <ChevronRight className="hidden md:block w-6 h-6 text-slate-300 dark:text-slate-700 self-center" />
-              )}
-            </React.Fragment>
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                  {t(`landing.how.${step.titleKey}`)}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
+                  {t(`landing.how.${step.descKey}`)}
+                </p>
+              </div>
+            </div>
           );
         })}
       </div>

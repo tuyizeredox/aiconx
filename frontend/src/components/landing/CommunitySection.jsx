@@ -1,9 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { ArrowRight, Star } from "lucide-react";
-import { timeAgo } from "@/lib/timeAgo";
+import { ArrowRight, Store } from "lucide-react";
 import { StoreSkeleton } from "@/components/shared/LoadingSkeleton";
+import EmptyState from "./EmptyState";
 import { authLink, storePath } from "./authLink";
 
 function StoreItem({ store, t }) {
@@ -30,53 +30,30 @@ function StoreItem({ store, t }) {
   );
 }
 
-function ActivityRow({ item }) {
-  const initials = (item.name || "?").slice(0, 2).toUpperCase();
-  return (
-    <div className="flex items-center gap-3 p-2.5 rounded-xl active:bg-slate-50 dark:active:bg-slate-800/60 sm:hover:bg-slate-50 dark:sm:hover:bg-slate-800/60 transition-colors">
-      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0">
-        {initials}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug">
-          <span className="font-bold text-slate-900 dark:text-white">{item.name}</span> {item.text}
-        </p>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {item.rating > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-amber-500 font-semibold">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              {item.rating}
-            </span>
-          )}
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">{item.time}</p>
-        </div>
-      </div>
-      {item.thumbnail && (
-        <img src={item.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
-      )}
-    </div>
-  );
-}
-
-export default function CommunitySection({ stores, storesLoading, activity, activityLoading }) {
-  const { t, i18n } = useTranslation();
-
-  const activityItems = activity.map((a) => ({
-    ...a,
-    time: timeAgo(a.timestamp, i18n.language),
-  }));
+export default function CommunitySection({ stores, storesLoading }) {
+  const { t } = useTranslation();
 
   return (
-    <section id="community" className="grid lg:grid-cols-2 gap-6 scroll-mt-20">
-      <div id="stores" className="scroll-mt-20">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{t("landing.stores.title")}</h2>
-          <Link {...authLink("/marketplace")} className="inline-flex items-center gap-1 text-sm font-bold text-orange-600 dark:text-orange-400 hover:text-orange-500">
-            {t("landing.stores.viewAll")}
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-        <div className="flex sm:grid sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5 gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none -mx-4 sm:mx-0 px-4 sm:px-0 pb-1 sm:pb-0 hide-scrollbar">
+    <section id="stores" className="scroll-mt-20">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{t("landing.stores.title")}</h2>
+        <Link {...authLink("/marketplace")} className="inline-flex items-center gap-1 text-sm font-bold text-orange-600 dark:text-orange-400 hover:text-orange-500">
+          {t("landing.stores.viewAll")}
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {!storesLoading && stores.length === 0 ? (
+        <EmptyState
+          variant="subtle"
+          icon={Store}
+          title={t("landing.stores.emptyTitle")}
+          description={t("landing.stores.emptyDesc")}
+          cta={t("landing.stores.emptyCta")}
+          to={authLink("/mystore")}
+        />
+      ) : (
+        <div className="flex sm:grid sm:grid-cols-5 gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none -mx-4 sm:mx-0 px-4 sm:px-0 pb-1 sm:pb-0 hide-scrollbar">
           {storesLoading
             ? Array(5).fill(0).map((_, i) => (
                 <div key={`pop-store-sk-${i}`} className="w-[30vw] sm:w-auto shrink-0">
@@ -87,30 +64,7 @@ export default function CommunitySection({ stores, storesLoading, activity, acti
                 <StoreItem key={store.id || store._id || `pop-store-${idx}`} store={store} t={t} />
               ))}
         </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{t("landing.activity.title")}</h2>
-          <Link {...authLink("/")} className="inline-flex items-center gap-1 text-sm font-bold text-orange-600 dark:text-orange-400 hover:text-orange-500">
-            {t("landing.activity.viewAll")}
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-2">
-          {activityLoading ? (
-            <div className="p-4 space-y-3">
-              {Array(4).fill(0).map((_, i) => (
-                <div key={i} className="h-9 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
-              ))}
-            </div>
-          ) : activityItems.length === 0 ? (
-            <p className="text-center text-sm text-slate-400 py-8 px-4">{t("landing.activity.empty")}</p>
-          ) : (
-            activityItems.map((item) => <ActivityRow key={item.id} item={item} />)
-          )}
-        </div>
-      </div>
+      )}
     </section>
   );
 }

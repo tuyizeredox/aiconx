@@ -2,10 +2,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowRight, Heart, ShoppingCart, Star, Store } from "lucide-react";
+import { ArrowRight, Heart, ShoppingBag, ShoppingCart, Star, Store } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { addToGuestCart } from "@/lib/guestCart";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
+import EmptyState from "./EmptyState";
 import { authLink, productPath } from "./authLink";
 
 function TrendingCard({ product, t, navigate }) {
@@ -41,8 +42,10 @@ function TrendingCard({ product, t, navigate }) {
   };
 
   return (
+    // Straight to the product — /productdetail is a public route, so guests browse
+    // freely and only hit the sign-in wall at checkout (or on wishlist, below).
     <Link
-      {...authLink(productPath(productId))}
+      to={productPath(productId)}
       className="group block w-[44vw] sm:w-auto shrink-0 snap-start bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 active:scale-[0.98] sm:hover:shadow-xl sm:hover:shadow-slate-100 dark:sm:hover:shadow-black/30 transition-all duration-300"
     >
       <div className="relative aspect-square overflow-hidden">
@@ -102,17 +105,27 @@ export default function TrendingProducts({ products, isLoading }) {
           <ArrowRight className="w-3.5 h-3.5" />
         </a>
       </div>
-      <div className="flex sm:grid sm:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none -mx-4 sm:mx-0 px-4 sm:px-0 pb-1 sm:pb-0 hide-scrollbar">
-        {isLoading
-          ? Array(4).fill(0).map((_, i) => (
-              <div key={`trend-sk-${i}`} className="w-[44vw] sm:w-auto shrink-0">
-                <ProductSkeleton />
-              </div>
-            ))
-          : products.map((product) => (
-              <TrendingCard key={product.id || product._id} product={product} t={t} navigate={navigate} />
-            ))}
-      </div>
+      {!isLoading && products.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          title={t("landing.trending.emptyTitle")}
+          description={t("landing.trending.emptyDesc")}
+          cta={t("landing.trending.emptyCta")}
+          to={authLink("/mystore")}
+        />
+      ) : (
+        <div className="flex sm:grid sm:grid-cols-4 gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none -mx-4 sm:mx-0 px-4 sm:px-0 pb-1 sm:pb-0 hide-scrollbar">
+          {isLoading
+            ? Array(4).fill(0).map((_, i) => (
+                <div key={`trend-sk-${i}`} className="w-[44vw] sm:w-auto shrink-0">
+                  <ProductSkeleton />
+                </div>
+              ))
+            : products.map((product) => (
+                <TrendingCard key={product.id || product._id} product={product} t={t} navigate={navigate} />
+              ))}
+        </div>
+      )}
     </section>
   );
 }

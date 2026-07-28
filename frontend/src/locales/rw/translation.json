@@ -227,10 +227,8 @@
   },
   "landing": {
     "nav": {
-      "explore": "Amakuru",
       "shop": "Isoko",
       "stores": "Amaduka",
-      "community": "Umuryango",
       "sell": "Gurisha kuri Aiconx",
       "searchPlaceholder": "Shakisha ibicuruzwa, amaduka cyangwa abantu...",
       "createStore": "Kora Iduka"
@@ -247,7 +245,11 @@
       "statPosts": "Ibiganiro",
       "statProducts": "Ibicuruzwa",
       "statStores": "Amaduka Akora",
-      "statReviews": "Ibitekerezo"
+      "statReviews": "Ibitekerezo",
+      "featurePost": "Sangiza ibiganiro",
+      "featureShop": "Gura mu makuru",
+      "featureSell": "Fungura iduka ku buntu",
+      "featureCommunity": "Injira mu miryango"
     },
     "how": {
       "title": "Porogaramu imwe, impande ebyiri",
@@ -258,33 +260,31 @@
       "step3Title": "Gura & Gurisha",
       "step3Desc": "Gura ibyo ubona mu makuru, cyangwa ufungure iduka ryawe utangire kugurisha."
     },
-    "feed": {
-      "title": "Ibiri kuba",
-      "subtitle": "Ibiganiro nyabyo by'abantu nyabo kuri Aiconx",
-      "viewAll": "Reba amakuru",
-      "empty": "Nta biganiro birahari — ba uwa mbere usangiza abandi!"
-    },
     "trending": {
       "title": "Bikunzwe Uyu Munsi",
       "viewAll": "Reba byose",
-      "addToCart": "Ongeraho mu gitebo"
+      "addToCart": "Ongeraho mu gitebo",
+      "emptyTitle": "Nta bicuruzwa birashyirwaho",
+      "emptyDesc": "Fungura iduka maze ibicuruzwa byawe bibe ibya mbere abaguzi babona hano.",
+      "emptyCta": "Tangira kugurisha"
     },
     "stores": {
       "title": "Amaduka Akunzwe",
       "viewAll": "Reba byose",
       "follow": "Kurikira",
-      "followers": "Abakurikira {{count}}"
-    },
-    "activity": {
-      "title": "Ibikorwa by'Umuryango",
-      "viewAll": "Reba byose",
-      "reviewed": "yatanze igitekerezo cy'inyenyeri {{rating}}",
-      "reviewedOn": "yatanze igitekerezo cy'inyenyeri {{rating}} kuri {{product}}",
-      "newProduct": "aherutse gushyiraho {{product}}",
-      "empty": "Nta bikorwa by'umuryango birahari — ba uwa mbere utanga igitekerezo!"
+      "followers": "Abakurikira {{count}}",
+      "emptyTitle": "Nta duka rirafungurwa",
+      "emptyDesc": "Gufungura iduka ni ubuntu kandi bifata iminota mike gusa.",
+      "emptyCta": "Fungura iduka ryawe"
     },
     "categories": {
       "title": "Shakisha mu byiciro"
+    },
+    "catalogue": {
+      "showMore": "Erekana ibindi {{count}}",
+      "emptyTitle": "Ibicuruzwa biracyashyirwaho",
+      "emptyDesc": "Nta kintu kirashyirwaho. Fungura iduka maze ibicuruzwa byawe bibe ibya mbere.",
+      "emptyCta": "Shyiraho igicuruzwa cya mbere"
     },
     "sell": {
       "title": "Witeguye gukuza ubucuruzi bwawe?",
@@ -292,6 +292,18 @@
       "cta": "Kora Iduka Ryawe",
       "badgeFree": "Gahunda y'ubuntu",
       "badgeNoCode": "Ntibisaba ubumenyi bwa tekiniki"
+    },
+    "footer": {
+      "tagline": "Urubuga nkoranyambaga aho ubucuruzi bubera. Ohereza, kurikira, sanga — kandi ugure ibyo ukunda utavuye mu makuru.",
+      "platform": "Urubuga",
+      "account": "Konti",
+      "legal": "Amategeko",
+      "contact": "Vugana n'ubufasha",
+      "getItOn": "BIKURE KURI",
+      "googlePlay": "Google Play",
+      "downloadOn": "Bikure kuri",
+      "appStore": "App Store",
+      "copyright": "© {{year}} Aicon X. Uburenganzira bwose burafitwe."
     }
   },
   "home": {

@@ -9,7 +9,7 @@ import Logo from "@/components/layout/Logo";
 import LanguagePicker from "@/components/layout/LanguagePicker";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Search, Star, Bell, Heart } from "lucide-react";
+import { Search, ShoppingBag, Star, Bell, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,10 +21,16 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import TrendingProducts from "@/components/landing/TrendingProducts";
 import CommunitySection from "@/components/landing/CommunitySection";
 import CategoryPills from "@/components/landing/CategoryPills";
+import EmptyState from "@/components/landing/EmptyState";
 import SellBanner from "@/components/landing/SellBanner";
 import MobileTabBar from "@/components/landing/MobileTabBar";
-import SocialFeed from "@/components/landing/SocialFeed";
+import SiteFooter from "@/components/landing/SiteFooter";
 import { authLink, productPath } from "@/components/landing/authLink";
+
+// The landing page is a shop window, not the full catalogue — dumping every
+// product makes it endless to scroll on mobile. Products are revealed a page at
+// a time instead, which also keeps guests off /marketplace (that one is auth-gated).
+const CATALOGUE_PAGE_SIZE = 10;
 
 export default function LandingPage() {
   const { t } = useTranslation();
@@ -32,6 +38,7 @@ export default function LandingPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("-sales_count");
+  const [visibleCount, setVisibleCount] = useState(CATALOGUE_PAGE_SIZE);
   const [topBarHidden, setTopBarHidden] = useState(false);
   const lastScrollYRef = useRef(0);
 
@@ -91,35 +98,6 @@ export default function LandingPage() {
     },
   });
 
-  const { data: recentProducts = [] } = useQuery({
-    queryKey: ["landingRecentProducts"],
-    queryFn: async () => {
-      const res = await productsAPI.list({ status: "active", sort: "-created_at", limit: 3 });
-      return res.data || [];
-    },
-  });
-
-  // Public lifestyle posts — the social half of the platform. Only posts that
-  // actually have something to show (media or text) make it into the preview.
-  const { data: feedPosts = [], isLoading: feedLoading } = useQuery({
-    queryKey: ["landingFeedPosts"],
-    queryFn: async () => {
-      const res = await postsAPI.list({ visibility: "public", sort: "-likes_count", limit: 12 });
-      const list = res.data || [];
-      return list
-        .filter((p) => p.media_urls?.length > 0 || p.content?.trim())
-        .slice(0, 4);
-    },
-  });
-
-  const { data: recentReviews = [], isLoading: reviewsLoading } = useQuery({
-    queryKey: ["landingRecentReviews"],
-    queryFn: async () => {
-      const res = await reviewsAPI.list({ sort: "-created_at", limit: 4 });
-      return res.data || [];
-    },
-  });
-
   const { data: storesResponse = {}, isLoading: storesLoading } = useQuery({
     queryKey: ["landingFeaturedStores"],
     queryFn: async () => storesAPI.list({ status: "active", sort: "-follower_count", limit: 5 }),
@@ -149,6 +127,15 @@ export default function LandingPage() {
     ? products.filter(p => p.title?.toLowerCase().includes(search.toLowerCase()))
     : products;
 
+  // Collapse back to the first page whenever the result set changes underneath,
+  // otherwise a narrow search inherits however far the previous one was expanded.
+  useEffect(() => {
+    setVisibleCount(CATALOGUE_PAGE_SIZE);
+  }, [search, category, sort]);
+
+  const visibleProducts = filtered.slice(0, visibleCount);
+  const remainingCount = filtered.length - visibleProducts.length;
+
   const avgRating = useMemo(() => {
     const rated = products.filter(p => p.rating_count > 0);
     const totalCount = rated.reduce((sum, p) => sum + p.rating_count, 0);
@@ -156,44 +143,6 @@ export default function LandingPage() {
     const weighted = rated.reduce((sum, p) => sum + p.rating_avg * p.rating_count, 0);
     return weighted / totalCount;
   }, [products]);
-
-  const productById = useMemo(() => {
-    const map = new Map();
-    [...products, ...trendingProducts, ...recentProducts].forEach((p) => {
-      const id = p.id || p._id;
-      if (id) map.set(id, p);
-    });
-    return map;
-  }, [products, trendingProducts, recentProducts]);
-
-  const activity = useMemo(() => {
-    const reviewItems = recentReviews.map((r) => {
-      const relatedProduct = productById.get(r.product_id);
-      return {
-        id: `review-${r._id || r.id}`,
-        name: r.reviewer_name || r.reviewer_username,
-        text: relatedProduct
-          ? t("landing.activity.reviewedOn", { rating: r.rating, product: relatedProduct.title })
-          : t("landing.activity.reviewed", { rating: r.rating }),
-        rating: r.rating,
-        thumbnail: relatedProduct?.images?.[0],
-        timestamp: r.created_at,
-      };
-    });
-    const productItems = recentProducts
-      .filter((p) => p.created_at)
-      .map((p) => ({
-        id: `product-${p.id || p._id}`,
-        name: p.store_name,
-        text: t("landing.activity.newProduct", { product: p.title }),
-        rating: 0,
-        thumbnail: p.images?.[0],
-        timestamp: p.created_at,
-      }));
-    return [...reviewItems, ...productItems]
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, 5);
-  }, [recentReviews, recentProducts, productById, t]);
 
   const scrollToCatalogue = () => {
     document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -221,17 +170,15 @@ export default function LandingPage() {
           <Logo size="sm" showText />
 
           <nav className="hidden lg:flex items-center gap-1 ml-4">
-            <a href="#feed" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
-              {t("landing.nav.explore")}
-            </a>
+            {/* #feed and #community are gone with the feed/activity sections. */}
             <a href="#trending" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
               {t("landing.nav.shop")}
             </a>
             <a href="#stores" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
               {t("landing.nav.stores")}
             </a>
-            <a href="#community" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
-              {t("landing.nav.community")}
+            <a href="#catalogue" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
+              {t("shop.products")}
             </a>
             <a href="#sell" className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors">
               {t("landing.nav.sell")}
@@ -294,7 +241,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-8 sm:space-y-14 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:pb-6">
+      {/* The MobileTabBar clearance now lives on SiteFooter, which is the last thing on the page. */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-8 sm:space-y-14 pb-8 lg:pb-6">
 
         <Hero
           stats={{
@@ -308,16 +256,9 @@ export default function LandingPage() {
 
         <HowItWorks />
 
-        <SocialFeed posts={feedPosts} isLoading={feedLoading} />
-
         <TrendingProducts products={trendingProducts} isLoading={trendingLoading} />
 
-        <CommunitySection
-          stores={stores}
-          storesLoading={storesLoading}
-          activity={activity}
-          activityLoading={reviewsLoading}
-        />
+        <CommunitySection stores={stores} storesLoading={storesLoading} />
 
         <div className="sticky top-14 lg:static z-30 -mx-4 px-4 py-2.5 lg:mx-0 lg:px-0 lg:py-0 bg-white/95 dark:bg-slate-950/95 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-b border-slate-100 dark:border-slate-800 lg:border-0">
           <CategoryPills value={category} onChange={setCategory} />
@@ -327,9 +268,12 @@ export default function LandingPage() {
         <div id="catalogue" className="scroll-mt-20">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t("shop.products")}</h2>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span>{products.length} {t("shop.products").toLowerCase()}</span>
-            </div>
+            {/* "0 products" reads as a dead catalogue, so the count only appears once there is one. */}
+            {filtered.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <span>{filtered.length} {t("shop.products").toLowerCase()}</span>
+              </div>
+            )}
           </div>
 
           {/* Search & Sort */}
@@ -361,13 +305,14 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 lg:gap-4">
             {isLoading
               ? Array(15).fill(0).map((_, i) => <ProductSkeleton key={`lp-sk-${i}`} />)
-              : filtered.map((product, idx) => {
+              : visibleProducts.map((product, idx) => {
                 const productId = product?.id || product?._id;
                 const discount = product.compare_at_price
                   ? Math.round((1 - product.price / product.compare_at_price) * 100)
                   : 0;
                 return (
-                  <Link key={productId || idx} {...authLink(productPath(productId))}>
+                  // Public route — no sign-up wall between a guest and a product page.
+                  <Link key={productId || idx} to={productPath(productId)}>
                     <motion.div
                       whileHover={{ y: -4 }}
                       className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300 group"
@@ -414,14 +359,38 @@ export default function LandingPage() {
               })}
           </div>
 
+          {remainingCount > 0 && (
+            <div className="flex justify-center mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount((c) => c + CATALOGUE_PAGE_SIZE)}
+                className="h-11 px-6 font-bold rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-orange-400 hover:text-orange-600 active:scale-[0.98] transition-transform"
+              >
+                {t("landing.catalogue.showMore", { count: remainingCount })}
+              </Button>
+            </div>
+          )}
+
           {!isLoading && filtered.length === 0 && (
-            <div className="text-center py-16 text-slate-400">{t("shop.noProducts")}</div>
+            search ? (
+              <div className="text-center py-16 text-slate-400">{t("shop.noProducts")}</div>
+            ) : (
+              <EmptyState
+                icon={ShoppingBag}
+                title={t("landing.catalogue.emptyTitle")}
+                description={t("landing.catalogue.emptyDesc")}
+                cta={t("landing.catalogue.emptyCta")}
+                to={authLink("/mystore")}
+              />
+            )
           )}
         </div>
 
         <SellBanner />
 
       </div>
+
+      <SiteFooter />
 
       <MobileTabBar />
     </div>

@@ -29,7 +29,7 @@ export default function MobileTabBar() {
         </button>
 
         <a
-          href="#feed"
+          href="#trending"
           className="flex flex-col items-center gap-0.5 min-w-[3rem] py-1 active:scale-90 transition-transform"
         >
           <Compass className="w-5 h-5 text-slate-400 dark:text-slate-500" />

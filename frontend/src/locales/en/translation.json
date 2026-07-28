@@ -236,10 +236,8 @@
   },
   "landing": {
     "nav": {
-      "explore": "Feed",
       "shop": "Shop",
       "stores": "Stores",
-      "community": "Community",
       "sell": "Sell on Aiconx",
       "searchPlaceholder": "Search products, stores or people...",
       "createStore": "Create Store"
@@ -256,7 +254,11 @@
       "statPosts": "Posts Shared",
       "statProducts": "Products",
       "statStores": "Active Stores",
-      "statReviews": "Reviews"
+      "statReviews": "Reviews",
+      "featurePost": "Share posts",
+      "featureShop": "Shop the feed",
+      "featureSell": "Open a free store",
+      "featureCommunity": "Join communities"
     },
     "how": {
       "title": "One app, two worlds",
@@ -267,33 +269,31 @@
       "step3Title": "Shop & Sell",
       "step3Desc": "Buy what you see in the feed, or open your own store and start selling."
     },
-    "feed": {
-      "title": "What's happening",
-      "subtitle": "Real posts from real people on Aiconx",
-      "viewAll": "View feed",
-      "empty": "No posts yet — be the first to share something!"
-    },
     "trending": {
       "title": "Trending Today",
       "viewAll": "View all",
-      "addToCart": "Add to Cart"
+      "addToCart": "Add to Cart",
+      "emptyTitle": "No products listed yet",
+      "emptyDesc": "Open a store and your products are the first thing shoppers see here.",
+      "emptyCta": "Start selling"
     },
     "stores": {
       "title": "Popular Stores",
       "viewAll": "View all",
       "follow": "Follow",
-      "followers": "{{count}} followers"
-    },
-    "activity": {
-      "title": "Community Activity",
-      "viewAll": "View all",
-      "reviewed": "left a {{rating}}-star review",
-      "reviewedOn": "left a {{rating}}-star review on {{product}}",
-      "newProduct": "just listed {{product}}",
-      "empty": "No community activity yet — be the first to leave a review!"
+      "followers": "{{count}} followers",
+      "emptyTitle": "No stores open yet",
+      "emptyDesc": "Stores are free to open and take a couple of minutes to set up.",
+      "emptyCta": "Open your store"
     },
     "categories": {
       "title": "Browse by category"
+    },
+    "catalogue": {
+      "showMore": "Show {{count}} more",
+      "emptyTitle": "The catalogue is still filling up",
+      "emptyDesc": "Nothing is listed yet. Open a store and your products lead the catalogue from day one.",
+      "emptyCta": "List your first product"
     },
     "sell": {
       "title": "Ready to grow your business?",
@@ -301,6 +301,18 @@
       "cta": "Create Your Store",
       "badgeFree": "Free plan",
       "badgeNoCode": "No coding needed"
+    },
+    "footer": {
+      "tagline": "The social network where shopping happens. Post, follow, discover — and buy what you love without leaving the feed.",
+      "platform": "Platform",
+      "account": "Account",
+      "legal": "Legal",
+      "contact": "Contact support",
+      "getItOn": "GET IT ON",
+      "googlePlay": "Google Play",
+      "downloadOn": "Download on the",
+      "appStore": "App Store",
+      "copyright": "© {{year}} Aicon X. All rights reserved."
     }
   },
   "home": {

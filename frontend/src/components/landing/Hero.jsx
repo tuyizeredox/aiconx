@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { ArrowRight, ImagePlay, ShoppingBag, Store, Star } from "lucide-react";
+import { ArrowRight, ImagePlay, ShoppingBag, Store, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authLink } from "./authLink";
 
@@ -12,15 +12,32 @@ const AVATARS = [
   "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=100&h=100&fit=crop&q=80",
 ];
 
+// Tailwind can't compile a class name built at runtime, so the column counts are
+// spelled out for the JIT compiler to pick up.
+const GRID_COLS = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" };
+
 export default function Hero({ stats, avgRating }) {
   const { t } = useTranslation();
 
+  // A counter reading "0 Posts Shared" reads as a dead platform rather than a new
+  // one, so empty totals are dropped. If nothing has a real number behind it yet,
+  // the card falls back to what the platform *does* rather than inventing figures.
   const statItems = [
     { icon: ImagePlay, value: stats.postsTotal, label: t("landing.hero.statPosts") },
     { icon: ShoppingBag, value: stats.productsTotal, label: t("landing.hero.statProducts") },
     { icon: Store, value: stats.storesTotal, label: t("landing.hero.statStores") },
     { icon: Star, value: stats.reviewsTotal, label: t("landing.hero.statReviews") },
+  ].filter((s) => s.value > 0);
+
+  const featureItems = [
+    { icon: ImagePlay, label: t("landing.hero.featurePost") },
+    { icon: ShoppingBag, label: t("landing.hero.featureShop") },
+    { icon: Store, label: t("landing.hero.featureSell") },
+    { icon: Users, label: t("landing.hero.featureCommunity") },
   ];
+
+  const showStats = statItems.length > 0;
+  const cardItems = showStats ? statItems : featureItems;
 
   return (
     <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-50 via-white to-orange-50/60 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 border border-orange-100/80 dark:border-slate-800 pb-5 sm:pb-8 lg:pb-10">
@@ -32,9 +49,13 @@ export default function Hero({ stats, avgRating }) {
             {t("landing.hero.badge")}
           </div>
 
+          {/* The lines are separate blocks, so the spaces below collapse visually but
+              keep the h1's text content readable as one sentence — that string is what
+              search snippets, link previews, screen readers and copy-paste all use, and
+              without them it runs together as "Discover. Share.Shop. Sell.All in one place." */}
           <h1 className="text-[2.1rem] leading-[1.1] sm:text-[2.9rem] sm:leading-[1.06] lg:text-[3.2rem] font-black tracking-tight mb-4">
-            <span className="text-slate-900 dark:text-white block">{t("landing.hero.titleLine1")}</span>
-            <span className="text-orange-500 block">{t("landing.hero.titleLine2")}</span>
+            <span className="text-slate-900 dark:text-white block">{t("landing.hero.titleLine1")}</span>{" "}
+            <span className="text-orange-500 block">{t("landing.hero.titleLine2")}</span>{" "}
             <span className="text-slate-400 dark:text-slate-500 block text-[1.35rem] sm:text-[1.8rem] lg:text-[2rem] mt-1">
               {t("landing.hero.titleLine3")}
             </span>
@@ -51,7 +72,7 @@ export default function Hero({ stats, avgRating }) {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <a href="#feed" className="w-full sm:w-auto">
+            <a href="#trending" className="w-full sm:w-auto">
               <Button
                 variant="outline"
                 className="w-full sm:w-auto h-12 px-6 font-bold rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-orange-400 hover:text-orange-600 active:scale-[0.98] transition-transform"
@@ -100,16 +121,26 @@ export default function Hero({ stats, avgRating }) {
           </div>
 
           {/* Sits under the image on mobile so it never covers the photo; floats over it on desktop. */}
-          <div className="mt-3 lg:mt-0 lg:absolute lg:left-6 lg:right-6 lg:-bottom-8 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4 grid grid-cols-4 gap-1.5 sm:gap-3">
-            {statItems.map(({ icon: Icon, value, label }) => (
+          <div
+            className={`mt-3 lg:mt-0 lg:absolute lg:left-6 lg:right-6 lg:-bottom-8 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4 grid ${GRID_COLS[cardItems.length]} gap-1.5 sm:gap-3`}
+          >
+            {cardItems.map(({ icon: Icon, value, label }) => (
               <div key={label} className="flex flex-col items-center text-center gap-1">
                 <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-500">
                   <Icon className="w-4 h-4" />
                 </div>
-                <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-none">
-                  {value.toLocaleString()}
+                {showStats && (
+                  <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-none">
+                    {value.toLocaleString()}
+                  </p>
+                )}
+                <p
+                  className={`text-[10px] leading-tight font-semibold ${
+                    showStats ? "text-slate-500 dark:text-slate-400" : "text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {label}
                 </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">{label}</p>
               </div>
             ))}
           </div>
