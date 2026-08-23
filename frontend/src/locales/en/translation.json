@@ -304,7 +304,12 @@
     "categoryEmptyTitle": "Nothing in {{category}} yet",
     "categoryEmptyDesc": "Try another category, or search for exactly what you want.",
     "endOfResults": "That is everything",
-    "nearbyInviteTitle": "Shop near you"
+    "nearbyInviteTitle": "Shop near you",
+    "suggestedToFollow": "People & shops to follow",
+    "suggestedToFollowDesc": "Follow them to see their posts in your feed",
+    "follow": "Follow",
+    "nowFollowing": "Following {{name}}",
+    "followFailed": "Couldn't follow. Please try again."
   },
   "explore": {
     "title": "Explore",

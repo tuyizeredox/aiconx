@@ -684,6 +684,11 @@ export const storesAPI = {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/stores/nearby?${query}`);
   },
+  // Stores to follow, already excluding the ones the caller follows.
+  getSuggested: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/stores/suggested?${query}`);
+  },
   get: (id) => apiClient.get(`/stores/${id}`),
   create: (data) => apiClient.post('/stores', data),
   update: (id, data) => apiClient.patch(`/stores/${id}`, data),

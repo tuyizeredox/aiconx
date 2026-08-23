@@ -153,31 +153,60 @@ export default function Home() {
 
   /* ------------------------------------------------------------- assembly */
 
-  // Interleaving is positional rather than random so the feed doesn't reshuffle
-  // under the shopper on every render: a nearby rail early (it is the most
-  // location-specific thing we can offer), then shops and picks spaced far
-  // enough apart that the column still reads as content, not as a catalogue.
+  // Which section follows which post.
+  //
+  // The first three are pinned to fixed positions near the top, because a feed
+  // with four posts in it is exactly the feed that most needs products to buy
+  // and people to follow. Anything spaced on a modulo — "every 6th post" —
+  // simply never appears on a young platform.
+  const EARLY_SECTIONS = ["recommended", "nearby", "suggested"];
+  // Deeper in, the same three plus shops rotate so a long scroll stays varied.
+  const SECTION_CYCLE = ["business", "recommended", "business", "suggested", "business", "nearby"];
+  const CYCLE_EVERY = 4;
+
+  // Positional rather than random, so the feed doesn't reshuffle under the
+  // shopper on every render.
   const feedNodes = useMemo(() => {
     const nodes = [];
     let businessIndex = 0;
+    let cycleIndex = 0;
+    const emitted = new Set();
+
+    const pushSection = (type, slot) => {
+      if (type === "business") {
+        // Out of shops with something new: fall back to picks rather than
+        // leaving a gap where a section was meant to be.
+        if (businessIndex >= businessPosts.length) return pushSection("recommended", slot);
+        const business = businessPosts[businessIndex++];
+        nodes.push({ key: "business-" + business.storeId, type: "business", business });
+      } else {
+        nodes.push({ key: type + "-" + slot, type });
+      }
+      emitted.add(type);
+    };
 
     posts.forEach((post, i) => {
       nodes.push({ key: "post-" + (post.id || post._id || i), type: "post", post });
 
-      if (i === 1) {
-        nodes.push({ key: "nearby", type: "nearby" });
-      } else if (i > 1 && (i - 2) % 4 === 0 && businessIndex < businessPosts.length) {
-        const business = businessPosts[businessIndex++];
-        nodes.push({ key: "business-" + business.storeId, type: "business", business });
-      } else if (i > 3 && (i - 4) % 6 === 0) {
-        nodes.push({ key: "recommended-" + i, type: "recommended" });
-      } else if (i === 8 && currentUser) {
-        nodes.push({ key: "suggested", type: "suggested" });
+      if (i < EARLY_SECTIONS.length) {
+        pushSection(EARLY_SECTIONS[i], i);
+      } else if ((i - EARLY_SECTIONS.length) % CYCLE_EVERY === 0) {
+        pushSection(SECTION_CYCLE[cycleIndex % SECTION_CYCLE.length], i);
+        cycleIndex += 1;
       }
     });
 
+    // With fewer posts than early slots, the sections that never got one are
+    // appended instead. However thin the feed, a shopper still lands on
+    // something to buy and someone to follow.
+    if (posts.length > 0) {
+      EARLY_SECTIONS.filter((type) => !emitted.has(type)).forEach((type, n) => {
+        pushSection(type, "tail-" + n);
+      });
+    }
+
     return nodes;
-  }, [posts, businessPosts, currentUser]);
+  }, [posts, businessPosts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* --------------------------------------------------------------- render */
 

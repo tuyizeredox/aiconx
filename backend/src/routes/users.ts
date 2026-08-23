@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { User, IUser } from '../models/User';
+import { Follow } from '../models/Follow';
 import { escapeRegex } from '../utils/sanitize';
 import { z } from 'zod';
 
@@ -95,11 +96,35 @@ export async function userRoutes(fastify: FastifyInstance) {
   });
 
   // Get suggested users (random users with high follower count)
-  fastify.get('/suggested', async (request, reply) => {
+  // People worth following, that the caller isn't already following.
+  //
+  // The exclusion has to happen here. Returning the top accounts by follower
+  // count and letting the client filter meant that a user who already follows
+  // the popular accounts got an empty list — and the client had to spend one
+  // follow-status request per candidate to discover that. Anyone signed in
+  // gets themselves and their existing follows removed before the limit is
+  // applied, so a full page of suggestions comes back every time.
+  fastify.get('/suggested', {
+    preHandler: [fastify.authenticateOptional],
+  }, async (request, reply) => {
     try {
       const { limit = 10 } = request.query as any;
+      const user = request.user as any;
 
-      const users = await User.find({})
+      const exclude: string[] = [];
+      if (user?.username) {
+        const username = user.username.toLowerCase();
+        exclude.push(username);
+        const following = await Follow.find(
+          { follower_username: username, follow_type: 'user' },
+          { following_username: 1 }
+        ).lean();
+        following.forEach(f => exclude.push(f.following_username));
+      }
+
+      const filter: any = exclude.length ? { username: { $nin: exclude } } : {};
+
+      const users = await User.find(filter)
         .sort({ follower_count: -1, created_at: -1 })
         .limit(parseInt(limit))
         .select('username display_name avatar_url is_verified follower_count')

@@ -116,7 +116,7 @@ export async function productRoutes(fastify: FastifyInstance) {
       })
       .sort({ sales_count: -1, created_at: -1 })
       .limit(parseInt(limit))
-      .select('title price compare_at_price images store_name store_id vendor_username rating_avg rating_count')
+      .select('title price compare_at_price images category status inventory_count store_name store_id vendor_username vendor_plan rating_avg rating_count affiliate_enabled affiliate_commission_pct')
       .lean({ virtuals: true });
 
       return { data: recommendations };

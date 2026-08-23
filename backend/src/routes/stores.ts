@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import mongoose from 'mongoose';
 import { Store, IStore } from '../models/Store';
 import { Product } from '../models/Product';
+import { Follow } from '../models/Follow';
 import { z } from 'zod';
 import { checkCustomDomainLimit, checkShippingZoneLimit, checkStoreLimit, checkStorefrontLimit, getVendorPlan } from '../middleware/subscription';
 
@@ -280,6 +281,54 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 }
 
 export async function storeRoutes(fastify: FastifyInstance) {
+  // Stores worth following, that the caller isn't already following.
+  //
+  // The mirror of /users/suggested, and it exists for the same reason: a
+  // shopper who already follows the biggest stores was getting an empty
+  // "suggested" section, because the exclusion only happened after the top-N
+  // cut. Excluding first means a full list comes back every time.
+  fastify.get('/suggested', {
+    preHandler: [fastify.authenticateOptional],
+  }, async (request, reply) => {
+    try {
+      const { limit = 10 } = request.query as any;
+      const user = request.user as any;
+
+      const filter: any = { status: 'active' };
+
+      if (user?.username) {
+        const username = user.username.toLowerCase();
+        const following = await Follow.find(
+          { follower_username: username, follow_type: 'store' },
+          { target_id: 1, following_username: 1 }
+        ).lean();
+
+        // A store follow records both the store id and the owner, and older
+        // rows may carry only one — exclude on either so a followed store
+        // can't slip back into the list.
+        const followedIds = following.map(f => f.target_id).filter(Boolean);
+        const followedOwners = following.map(f => f.following_username).filter(Boolean);
+
+        const excludeIds = followedIds.filter(id => mongoose.Types.ObjectId.isValid(String(id)));
+        if (excludeIds.length) filter._id = { $nin: excludeIds };
+
+        // Never suggest a vendor their own store.
+        filter.owner_username = { $nin: [...followedOwners, username] };
+      }
+
+      const stores = await Store.find(filter)
+        .sort({ follower_count: -1, created_at: -1 })
+        .limit(parseInt(limit))
+        .select('name slug logo_url category owner_username follower_count product_count is_verified')
+        .lean();
+
+      return { data: stores.map(store => ({ ...store, id: String(store._id) })) };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // Stores near a point — powers the marketplace's "near me" filter.
   //
   // Matching is deliberately two-tier so the feature is useful before every

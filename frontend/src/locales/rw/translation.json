@@ -292,7 +292,12 @@
     "categoryEmptyTitle": "Nta kintu kiri muri {{category}} ubu",
     "categoryEmptyDesc": "Gerageza ikindi cyiciro, cyangwa ushakishe icyo ushaka.",
     "endOfResults": "Ibyo ni byo byose",
-    "nearbyInviteTitle": "Gura hafi yawe"
+    "nearbyInviteTitle": "Gura hafi yawe",
+    "suggestedToFollow": "Abantu n'amaduka wakurikira",
+    "suggestedToFollowDesc": "Bakurikire kugira ngo ubone ibyo batanga",
+    "follow": "Kurikira",
+    "nowFollowing": "Ukurikiye {{name}}",
+    "followFailed": "Ntibyakunze. Ongera ugerageze."
   },
   "explore": {
     "title": "Shakisha",
