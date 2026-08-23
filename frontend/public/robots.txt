@@ -1,0 +1,45 @@
+# Aicon X (aiconx.net) — robots.txt
+# This is primarily a logged-in social-commerce app; only the public
+# marketing/legal pages are meant to be indexed.
+
+User-agent: *
+Allow: /$
+Allow: /welcome
+Allow: /login
+Allow: /register
+Allow: /terms
+Allow: /privacy
+Allow: /community-guidelines
+Allow: /productdetail
+Allow: /storedetail
+
+# Authenticated app areas — no SEO value, and crawling them just wastes
+# crawl budget since anonymous requests get redirected to /welcome anyway.
+Disallow: /home
+Disallow: /explore
+Disallow: /marketplace
+Disallow: /communities
+Disallow: /communitydetail
+Disallow: /postdetail
+Disallow: /createpost
+Disallow: /chat
+Disallow: /notifications
+Disallow: /settings
+Disallow: /profile
+Disallow: /bookmarks
+Disallow: /wishlist
+Disallow: /orders
+Disallow: /ordertracking
+Disallow: /cart
+Disallow: /checkout
+Disallow: /payment-success
+Disallow: /mystore
+Disallow: /vendorfinance
+Disallow: /affiliate
+Disallow: /aiassistant
+Disallow: /support
+Disallow: /admin-dashboard
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://www.aiconx.net/sitemap.xml

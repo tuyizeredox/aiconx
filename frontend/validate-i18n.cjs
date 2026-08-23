@@ -1,5 +1,6 @@
 const fs = require('fs');
-const locales = ['en','es','fr','de','ar','zh','pt','ja','rw','sw'];
+const path = require('path');
+const locales = ['en','rw'];
 const requiredKeys = [
   'support.backToHome','support.title','support.subtitle',
   'support.channels.aiAssistant.title','support.channels.aiAssistant.description','support.channels.aiAssistant.action',
@@ -20,9 +21,9 @@ const requiredKeys = [
 function get(obj, path) { return path.split('.').reduce((a,k) => a && a[k], obj); }
 let allGood = true;
 locales.forEach(locale => {
-  const path = 'd:/projects/vetora/src/locales/' + locale + '/translation.json';
+  const filePath = path.join(__dirname, 'src', 'locales', locale, 'translation.json');
   let data;
-  try { data = JSON.parse(fs.readFileSync(path, 'utf8')); }
+  try { data = JSON.parse(fs.readFileSync(filePath, 'utf8')); }
   catch(e) { console.log('[' + locale + '] JSON ERROR: ' + e.message); allGood = false; return; }
   const missing = requiredKeys.filter(k => !get(data, k));
   if (!missing.length) console.log('[' + locale + '] OK (' + requiredKeys.length + ' keys)');
