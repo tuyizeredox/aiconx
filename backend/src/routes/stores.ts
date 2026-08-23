@@ -5,6 +5,7 @@ import { Product } from '../models/Product';
 import { Follow } from '../models/Follow';
 import { z } from 'zod';
 import { checkCustomDomainLimit, checkShippingZoneLimit, checkStoreLimit, checkStorefrontLimit, getVendorPlan } from '../middleware/subscription';
+import { deleteProductCascade, deleteStoreCascade } from '../services/cascadeService';
 
 // A store's physical location. Every part is optional so a vendor can publish
 // just a city (still matchable by name in "near me") or drop a precise pin.
@@ -648,6 +649,90 @@ export async function storeRoutes(fastify: FastifyInstance) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
       }
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Bulk-delete every product in the caller's own store. Separate from
+  // deleting the store itself so a vendor can clear a stale catalogue and
+  // start over without losing the store, its followers, or its reviews.
+  fastify.delete('/:id/products', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const user = request.user as any;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return reply.code(400).send({ error: 'Invalid store id' });
+      }
+
+      const store = await Store.findById(id);
+      if (!store) {
+        return reply.code(404).send({ error: 'Store not found' });
+      }
+      if (store.owner_username !== user.username) {
+        return reply.code(403).send({ error: 'Unauthorized' });
+      }
+
+      const storeId = store._id.toString();
+      const products = await Product.find({ store_id: storeId });
+      for (const product of products) {
+        // Same cascade a single delete uses — carts, wishlists, reviews,
+        // affiliate links and uploaded media all go with the product.
+        await deleteProductCascade(product);
+        fastify.io?.to(`store:${storeId}`).emit('product:deleted', { id: product._id.toString() });
+      }
+
+      // deleteProductCascade decrements product_count per product; pin it to 0
+      // so a drifted counter can't leave the store showing phantom stock.
+      store.product_count = 0;
+      store.updated_at = new Date();
+      await store.save();
+
+      return { success: true, deleted: products.length };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Delete the caller's own store. Cascades to every product and store-scoped
+  // record (reviews, coupons, shipping zones, subscriptions, withdrawals,
+  // affiliate links) and removes uploaded logo/banner/ID images. Orders are
+  // deliberately kept — they are the buyers' purchase history.
+  fastify.delete('/:id', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const user = request.user as any;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return reply.code(400).send({ error: 'Invalid store id' });
+      }
+
+      const store = await Store.findById(id);
+      if (!store) {
+        return reply.code(404).send({ error: 'Store not found' });
+      }
+      if (store.owner_username !== user.username) {
+        return reply.code(403).send({ error: 'Unauthorized' });
+      }
+
+      const storeId = store._id.toString();
+      await deleteStoreCascade(store);
+      fastify.io?.to(`store:${storeId}`).emit('store:deleted', { id: storeId });
+
+      return { success: true };
+    } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({
         error: 'Internal server error',

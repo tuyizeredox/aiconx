@@ -695,6 +695,8 @@ export const storesAPI = {
   getByOwner: (username) => apiClient.get(`/stores/owner/${username}`),
   getByOwnerUsername: (username) => apiClient.get(`/stores/owner/username/${username}`),
   submitVerification: (data) => apiClient.post('/stores/verification', data),
+  delete: (id) => apiClient.delete(`/stores/${id}`),
+  deleteAllProducts: (id) => apiClient.delete(`/stores/${id}/products`),
 };
 
 export const usersAPI = {

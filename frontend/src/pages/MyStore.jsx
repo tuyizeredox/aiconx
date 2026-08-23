@@ -47,26 +47,7 @@ const PLAN_LIMITS = {
   elite: { products: Infinity, images: Infinity, videos: Infinity, media: Infinity },
 };
 
-export default function MyStore() {
-  const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "overview";
-  const [activeTab, setActiveTab] = useState(defaultTab);
-  const [orderSearch, setOrderSearch] = useState("");
-  const [orderTab, setOrderTab] = useState("all");
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const navigate = useNavigate();
-
-  React.useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab && tab !== activeTab) {
-      setActiveTab(tab);
-    }
-  }, [searchParams, activeTab]);
-  const [showCreateStore, setShowCreateStore] = useState(false);
-  const [showEditStore, setShowEditStore] = useState(false);
-  const [showAddProduct, setShowAddProduct] = useState(false);
-  const [storeForm, setStoreForm] = useState({ 
+const emptyStoreForm = () => ({ 
     name: "", 
     description: "", 
     category: "other", 
@@ -106,6 +87,27 @@ export default function MyStore() {
       tiktok: "",
     }
   });
+
+export default function MyStore() {
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "overview";
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderTab, setOrderTab] = useState("all");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
+  const [showCreateStore, setShowCreateStore] = useState(false);
+  const [showEditStore, setShowEditStore] = useState(false);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [storeForm, setStoreForm] = useState(emptyStoreForm);
   const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
   const [productImages, setProductImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -118,6 +120,20 @@ export default function MyStore() {
   const [uploadingVerificationDoc, setUploadingVerificationDoc] = useState(false);
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  // Destructive store actions ask the vendor to retype the store name — both
+  // wipe data that cannot be restored, so a single misclick must not do it.
+  const [dangerAction, setDangerAction] = useState(null); // "products" | "store" | null
+  const [dangerConfirm, setDangerConfirm] = useState("");
+
+  const closeDangerDialog = () => {
+    setDangerAction(null);
+    setDangerConfirm("");
+  };
+
+  // Wipes the shared store form back to blanks. Needed after a delete: the
+  // form still holds the old store's values, and its logo/banner URLs point at
+  // files the cascade already removed from storage.
+  const resetStoreForm = () => setStoreForm(emptyStoreForm());
   const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
   const queryClient = useQueryClient();
 
@@ -218,7 +234,16 @@ export default function MyStore() {
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ["myStore", currentUser?.username],
     queryFn: async () => {
-      return storesAPI.getByOwnerUsername(currentUser?.username);
+      try {
+        return await storesAPI.getByOwnerUsername(currentUser?.username);
+      } catch (err) {
+        // "No store yet" is a normal state, not a failure — it is what a brand
+        // new vendor sees, and what the owner sees right after deleting a
+        // store. Returning null renders the create-store screen immediately
+        // instead of burning a retry on an expected 404.
+        if (err?.status === 404) return null;
+        throw err;
+      }
     },
     enabled: !!currentUser?.username,
   });
@@ -407,6 +432,40 @@ export default function MyStore() {
     onSuccess: () => {
       toast.success("Product deleted");
       queryClient.invalidateQueries({ queryKey: ["myProducts"] });
+    },
+  });
+
+  const deleteAllProductsMutation = useMutation({
+    mutationFn: () => storesAPI.deleteAllProducts(store.id || store._id),
+    onSuccess: (res) => {
+      toast.success(t("store.allProductsDeleted", { count: res?.deleted ?? 0 }));
+      closeDangerDialog();
+      queryClient.invalidateQueries({ queryKey: ["myProducts"] });
+      queryClient.invalidateQueries({ queryKey: ["myStore"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.deleteAllProductsFailed"));
+    },
+  });
+
+  const deleteStoreMutation = useMutation({
+    mutationFn: () => storesAPI.delete(store.id || store._id),
+    onSuccess: () => {
+      toast.success(t("store.storeDeletedCanCreate"));
+      closeDangerDialog();
+      // The store query has to be dropped, not just refetched — the page keys
+      // its whole render off `store`, and a stale cached copy would leave the
+      // vendor looking at a store that no longer exists.
+      queryClient.removeQueries({ queryKey: ["myStore"] });
+      queryClient.removeQueries({ queryKey: ["myProducts"] });
+      // Stay on this page rather than bouncing to the profile: with the store
+      // gone, MyStore renders the create-store screen, so the vendor can open
+      // a fresh store straight away.
+      setActiveTab("overview");
+      resetStoreForm();
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.deleteStoreFailed"));
     },
   });
 
@@ -764,9 +823,11 @@ export default function MyStore() {
         <div className="p-4 sm:p-6">
         {/* Avatar overlaps the banner on its own — never shares a row with text,
             so a long store name can never visually collide with the banner.
-            -mt-14/-mt-16 gives a clearly-intentional ~55-60% overlap into the
-            banner (not just a few px) so it reads as deliberate at any zoom. */}
-        <div className="flex items-start justify-between gap-4 -mt-8 sm:-mt-16">
+            The overlap is a modest ~40% so the logo always reads as a complete
+            square, and `relative z-10` is required: the banner above is
+            positioned, so without it the banner paints over the logo and hides
+            the part that sits inside it. */}
+        <div className="relative z-10 flex items-start justify-between gap-4 -mt-8 sm:-mt-10">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
             {store.logo_url ? (
               <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
@@ -776,7 +837,7 @@ export default function MyStore() {
               </span>
             )}
           </div>
-          <div className="flex items-center flex-wrap gap-2 justify-end pt-8 sm:pt-16">
+          <div className="flex items-center flex-wrap gap-2 justify-end pt-8 sm:pt-10">
             <Dialog open={showEditStore} onOpenChange={setShowEditStore}>
               <DialogTrigger asChild>
                 <Button
@@ -1382,6 +1443,16 @@ export default function MyStore() {
         </Tabs>
 
         {activeTab === "products" && (
+          <div className="flex items-center gap-2 shrink-0">
+          {products.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => { setDangerConfirm(""); setDangerAction("products"); }}
+              className="rounded-xl border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+            >
+              <Trash2 className="w-4 h-4 mr-1.5" /> {t("store.deleteAll")}
+            </Button>
+          )}
           <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
             {!isStoreVerified ? (
               <Button
@@ -1539,6 +1610,7 @@ export default function MyStore() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         )}
       </div>
 
@@ -1624,6 +1696,112 @@ export default function MyStore() {
           </div>
         </div>
       )}
+
+      {/* Danger Zone — irreversible store-wide actions, kept off in their own
+          card at the bottom of Overview so they are findable but never sit
+          next to the everyday buttons. */}
+      {activeTab === "overview" && (
+        <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl border border-rose-100 dark:border-rose-900/50 p-4 sm:p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            <h3 className="font-bold text-rose-600 dark:text-rose-400">{t("store.dangerZone")}</h3>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t("store.dangerZoneDesc")}</p>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("store.deleteAllProducts")}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.deleteAllProductsDesc", { count: products.length })}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={products.length === 0}
+                onClick={() => { setDangerConfirm(""); setDangerAction("products"); }}
+                className="rounded-xl border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 shrink-0"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" /> {t("store.deleteAll")}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("store.deleteStore")}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.deleteStoreDesc")}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{t("store.deleteStoreCanCreateNote")}</p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => { setDangerConfirm(""); setDangerAction("store"); }}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white shrink-0"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" /> {t("store.deleteStore")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation for both destructive actions — the vendor must retype the
+          store name, so neither can happen by a stray click. */}
+      <Dialog open={!!dangerAction} onOpenChange={(open) => { if (!open) closeDangerDialog(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-rose-600 dark:text-rose-400">
+              {dangerAction === "store" ? t("store.deleteStore") : t("store.deleteAllProducts")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900">
+              <p className="text-sm text-rose-900 dark:text-rose-300">
+                {dangerAction === "store"
+                  ? t("store.deleteStoreWarning")
+                  : t("store.deleteAllProductsWarning", { count: products.length })}
+              </p>
+              {dangerAction === "store" && (
+                <p className="text-xs text-rose-700/80 dark:text-rose-400/80 mt-2">
+                  {t("store.deleteStoreCanCreateNote")}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                {t("store.typeStoreNameToConfirm", { name: store.name })}
+              </Label>
+              <Input
+                autoFocus
+                value={dangerConfirm}
+                onChange={(e) => setDangerConfirm(e.target.value)}
+                placeholder={store.name}
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1 rounded-xl h-11" onClick={closeDangerDialog}>
+                {t("common.cancel")}
+              </Button>
+              <Button
+                className="flex-1 rounded-xl h-11 bg-rose-600 hover:bg-rose-700 text-white"
+                disabled={
+                  dangerConfirm.trim() !== store.name ||
+                  deleteStoreMutation.isPending ||
+                  deleteAllProductsMutation.isPending
+                }
+                onClick={() => {
+                  if (dangerAction === "store") deleteStoreMutation.mutate();
+                  else deleteAllProductsMutation.mutate();
+                }}
+              >
+                {(deleteStoreMutation.isPending || deleteAllProductsMutation.isPending) && (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                )}
+                {t("store.confirmDelete")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Products Tab */}
       {activeTab === "products" && (
