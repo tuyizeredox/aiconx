@@ -49,7 +49,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         id: session._id.toString()
       }));
 
-      reply.send({
+      return reply.send({
         sessions: sessionsWithId,
         pagination: {
           total,
@@ -89,10 +89,10 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         id: session._id.toString()
       };
 
-      reply.send(sessionWithId);
+      return reply.send(sessionWithId);
     } catch (error: any) {
       fastify.log.error(error?.message || 'Error fetching live session');
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -130,7 +130,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         session: session.toObject()
       });
 
-      reply.code(201).send(session);
+      return reply.code(201).send(session);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -185,7 +185,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         session: session.toObject()
       });
 
-      reply.send(session);
+      return reply.send(session);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -227,7 +227,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         session: session.toObject()
       });
 
-      reply.send(session);
+      return reply.send(session);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -269,7 +269,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         session: session.toObject()
       });
 
-      reply.send(session);
+      return reply.send(session);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -304,7 +304,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         viewer_count: session.viewer_count
       });
 
-      reply.send({ viewer_count: session.viewer_count });
+      return reply.send({ viewer_count: session.viewer_count });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -345,7 +345,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
         session_id: id
       });
 
-      reply.send({ message: 'Live session deleted successfully' });
+      return reply.send({ message: 'Live session deleted successfully' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -375,7 +375,7 @@ export async function liveSessionRoutes(fastify: FastifyInstance) {
 
       const total = await LiveSession.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         sessions,
         pagination: {
           total,

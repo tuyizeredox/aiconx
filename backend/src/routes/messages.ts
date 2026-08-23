@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { Message, IMessage } from '../models/Message';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
+import { NotificationService } from '../services/notificationService';
+import { checkPaymentSolicitation } from '../utils/chatSafety';
 import { z } from 'zod';
 
 const sendMessageSchema = z.object({
@@ -17,7 +19,9 @@ const sendMessageSchema = z.object({
     image: z.string().optional(),
   }).optional(),
   offer_amount: z.number().optional(),
-  order_id: z.string().optional(),
+  order_id: z.string().nullable().optional(),
+  reply_to_content: z.string().optional(),
+  reply_to_name: z.string().optional(),
 });
 
 export async function messageRoutes(fastify: FastifyInstance) {
@@ -95,7 +99,8 @@ export async function messageRoutes(fastify: FastifyInstance) {
             $or: [
               { sender_username: user.username },
               { receiver_username: user.username }
-            ]
+            ],
+            deleted_for: { $ne: user.username }
           }
         },
         {
@@ -147,9 +152,11 @@ export async function messageRoutes(fastify: FastifyInstance) {
         const otherUser = userMap[conv.other_user_username];
         return {
           ...conv,
-          other_user_name: otherUser?.display_name || otherUser?.username,
+          other_user_name: otherUser?.display_name || otherUser?.username || conv.other_user_username,
           other_user_avatar: otherUser?.avatar_url,
-          other_user_username: otherUser?.username
+          // Keep the aggregated username even if the account was deleted/renamed,
+          // so the conversation stays openable/deletable instead of turning into undefined.
+          other_user_username: otherUser?.username || conv.other_user_username
         };
       });
 
@@ -169,10 +176,14 @@ export async function messageRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { conversationId } = request.params as { conversationId: string };
-      const messages = await Message.find({ conversation_id: conversationId })
+      const user = request.user as any;
+      const messages = await Message.find({
+        conversation_id: conversationId,
+        deleted_for: { $ne: user.username }
+      })
         .sort({ created_at: 1 })
         .lean();
-      
+
       return messages;
     } catch (error: any) {
       fastify.log.error(error);
@@ -190,7 +201,20 @@ export async function messageRoutes(fastify: FastifyInstance) {
     try {
       const user = request.user as any;
       const body = sendMessageSchema.parse(request.body);
-      
+
+      // Offers are a structured, in-app feature (numeric amount tied to an order),
+      // not free-form text soliciting off-platform payment, so they're exempt from
+      // the anti-solicitation heuristic below.
+      if (body.message_type !== 'offer') {
+        const safetyCheck = checkPaymentSolicitation(body.content);
+        if (safetyCheck.blocked) {
+          return reply.code(400).send({
+            error: 'Message blocked',
+            message: "For your safety, payment details and off-platform payment requests can't be sent in chat. All purchases go through checkout.",
+          });
+        }
+      }
+
       // If no conversation_id, create one from both usernames
       const usernames = [user.username, body.recipient_username].sort();
       const conversationId = body.conversation_id || `chat_${usernames[0]}_${usernames[1]}`;
@@ -229,8 +253,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
       try {
         if (body.recipient_username && body.recipient_username !== user.username) {
-          const recipientUser = await User.findOne({ username: body.recipient_username }).lean();
-          const senderName = recipientUser?.display_name || user.username;
+          const senderName = user.display_name || user.username;
           const newMessage = new Notification({
             recipient_username: body.recipient_username,
             type: body.message_type === 'offer' ? 'offer' : 'message',
@@ -247,6 +270,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
           });
           await newMessage.save();
           fastify.io?.to(`user:${body.recipient_username}`).emit('notification:new', newMessage);
+          NotificationService.sendPushNotification(body.recipient_username, newMessage, fastify);
         }
       } catch (notifErr: any) {
         fastify.log.error(notifErr, 'Failed to create message notification');
@@ -328,10 +352,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Message not found or unauthorized' });
       }
 
-      // Decrement user's unread count
+      // Decrement user's unread count (clamped at 0 to avoid violating the schema's min constraint)
       await User.updateOne(
         { username: user.username },
-        { $inc: { unread_messages_count: -1 } }
+        [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', 1] }] } } }]
       );
 
       return message;
@@ -358,10 +382,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
       );
 
       if (result.modifiedCount > 0) {
-        // Decrement user's unread count by the number of messages marked as read
+        // Decrement user's unread count by the number of messages marked as read (clamped at 0)
         await User.updateOne(
           { username: user.username },
-          { $inc: { unread_messages_count: -result.modifiedCount } }
+          [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', result.modifiedCount] }] } } }]
         );
       }
 
@@ -400,19 +424,62 @@ export async function messageRoutes(fastify: FastifyInstance) {
       await Message.deleteOne({ _id: id });
 
       if (wasUnread) {
-        // Decrement recipient's count (could be me OR the other user)
+        // Decrement recipient's count (could be me OR the other user), clamped at 0
         await User.updateOne(
           { username: message.receiver_username },
-          { $inc: { unread_messages_count: -1 } }
+          [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', 1] }] } } }]
         );
       }
 
       return { success: true };
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(500).send({ 
-        error: 'Internal server error', 
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Delete a conversation (hides it for the current user only; the other party keeps their history)
+  fastify.delete('/conversation/:conversationId', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { conversationId } = request.params as { conversationId: string };
+      const user = request.user as any;
+
+      const unreadCount = await Message.countDocuments({
+        conversation_id: conversationId,
+        receiver_username: user.username,
+        is_read: false,
+        deleted_for: { $ne: user.username }
+      });
+
+      const result = await Message.updateMany(
+        {
+          conversation_id: conversationId,
+          $or: [
+            { sender_username: user.username },
+            { receiver_username: user.username }
+          ]
+        },
+        { $addToSet: { deleted_for: user.username } }
+      );
+
+      if (unreadCount > 0) {
+        await User.updateOne(
+          { username: user.username },
+          [{ $set: { unread_messages_count: { $max: [0, { $subtract: ['$unread_messages_count', unreadCount] }] } } }]
+        );
+      }
+
+      return { success: true, count: result.modifiedCount };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

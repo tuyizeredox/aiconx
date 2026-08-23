@@ -5,12 +5,8 @@ import { Settings } from '../models/Settings';
 import { User } from '../models/User';
 import { checkCustomDomainLimit, PLAN_PRIORITY } from '../middleware/subscription';
 import { itecPayService } from '../services/itecPayService';
-
-const DEFAULT_PLAN_PRICES: { [key: string]: { monthly: number; annual: number } } = {
-  pro: { monthly: 29000, annual: 23000 },
-  elite: { monthly: 79000, annual: 63000 },
-  free: { monthly: 0, annual: 0 }
-};
+import { getPlanPrice, DEFAULT_PLAN_PRICES } from '../utils/planPricing';
+import { DEFAULT_PLATFORM_FEE_PERCENT, DEFAULT_MIN_WITHDRAWAL_AMOUNT } from '../utils/platformFinance';
 
 export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
   // Get subscription for a vendor
@@ -35,10 +31,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'No active subscription found' });
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -56,10 +52,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'No active subscription found for this store' });
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -143,7 +139,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
 
       const total = await VendorSubscription.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         subscriptions: subscriptionsWithRoles,
         pagination: {
           total,
@@ -154,7 +150,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -169,10 +165,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Vendor subscription not found' });
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -227,13 +223,13 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.code(201).send(subscription);
+      return reply.code(201).send(subscription);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-        reply.code(409).send({ error: 'An active subscription already exists for this vendor' });
+        return reply.code(409).send({ error: 'An active subscription already exists for this vendor' });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   });
@@ -275,19 +271,27 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
           subscription.status = 'active';
           subscription.pending_plan = undefined;
           subscription.pending_billing_cycle = undefined;
+          subscription.pending_amount = undefined;
           subscription.set('custom_domain', null);
         } else if (subscription.status === 'active' && subscription.plan !== 'free' && subscription.plan !== body.plan) {
           // Upgrading from an active PAID plan (pro → elite):
           // Do NOT downgrade current plan — store target in pending_plan so the user
           // keeps their existing paid features while the new payment is processed.
+          const targetCycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
           subscription.pending_plan = body.plan as 'pro' | 'elite';
-          subscription.pending_billing_cycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+          subscription.pending_billing_cycle = targetCycle;
+          // Server-computed price for this plan/cycle — the amount actually charged
+          // and verified before activation must be checked against this, never
+          // against whatever amount the client later claims to have paid.
+          subscription.pending_amount = await getPlanPrice(subscription.pending_plan, targetCycle);
           // status and plan remain unchanged
         } else if (subscription.plan !== body.plan || subscription.status !== 'active') {
           // First-time paid sub, or free → paid upgrade, or re-attempting a pending payment:
           // Store target plan in pending_plan - only activate after payment verification
+          const targetCycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
           subscription.pending_plan = body.plan as 'pro' | 'elite';
-          subscription.pending_billing_cycle = (body.billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+          subscription.pending_billing_cycle = targetCycle;
+          subscription.pending_amount = await getPlanPrice(subscription.pending_plan, targetCycle);
           subscription.status = 'pending';
           // Keep current plan unchanged until payment is verified
           if (body.billing_cycle) {
@@ -313,13 +317,13 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       }
 
-      reply.send(subscription);
+      return reply.send(subscription);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-        reply.code(409).send({ error: 'Custom domain is already in use' });
+        return reply.code(409).send({ error: 'Custom domain is already in use' });
       } else {
         fastify.log.error(error);
-        reply.code(500).send({ error: 'Internal server error' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   });
@@ -346,22 +350,28 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       let syncWarning: string | undefined;
       let message = 'Subscription cancelled';
 
-      // Cancel a pending upgrade before payment is completed
-      if (subscription.pending_plan) {
+      // Cancel a pending upgrade on an already-active paid plan (e.g. pro -> elite
+      // in progress). The current plan stays untouched; only the pending target is cleared.
+      // Must be gated on status === 'active' — a first-time or free -> paid subscription
+      // also has pending_plan set, but its status is 'pending', not 'active', and needs
+      // the full downgrade handled below instead of just clearing the pending fields.
+      if (subscription.pending_plan && subscription.status === 'active') {
         subscription.pending_plan = undefined;
         subscription.pending_billing_cycle = undefined;
+        subscription.pending_amount = undefined;
         await subscription.save();
         message = 'Pending upgrade cancelled';
         return reply.send({ ...subscription.toObject(), message, warning: syncWarning });
       }
 
-      // Cancel a pending first-time paid subscription and revert to free
+      // Cancel a pending first-time (or free -> paid) subscription and revert to free
       if (subscription.status === 'pending') {
         subscription.plan = 'free';
         subscription.status = 'active';
         subscription.billing_cycle = 'monthly';
         subscription.pending_plan = undefined;
         subscription.pending_billing_cycle = undefined;
+        subscription.pending_amount = undefined;
         subscription.set('custom_domain', null);
         await subscription.save();
         message = 'Pending subscription cancelled';
@@ -383,6 +393,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       subscription.billing_cycle = 'monthly';
       subscription.pending_plan = undefined;
       subscription.pending_billing_cycle = undefined;
+      subscription.pending_amount = undefined;
       subscription.set('custom_domain', null);
       await subscription.save();
 
@@ -400,7 +411,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       return reply.send({ ...subscription.toObject(), message, warning: syncWarning });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -410,6 +421,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const { reference } = (request.body || {}) as { reference?: string };
       const user = request.user as any;
 
       const subscription = await VendorSubscription.findById(id);
@@ -421,6 +433,37 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       // Check if user owns the subscription
       if (subscription.vendor_username !== user.username) {
         return reply.code(403).send({ error: 'You can only renew your own subscription' });
+      }
+
+      // Renewing a paid plan must never just extend expiry on trust — it requires
+      // a real payment, verified with the gateway, for at least the plan's price.
+      if (subscription.plan !== 'free') {
+        if (!reference) {
+          return reply.code(400).send({ error: 'Missing payment reference. Renewals require a completed payment.' });
+        }
+
+        if (subscription.payment_reference === reference) {
+          return reply.code(409).send({ error: 'This payment reference has already been used.' });
+        }
+
+        let verifyResult: any;
+        try {
+          const provider = (subscription.payment_method || 'mtn') as 'mtn' | 'airtel' | 'spenn' | 'card';
+          verifyResult = await itecPayService.verifyPayment(reference, provider);
+        } catch (verifyErr: any) {
+          return reply.code(402).send({ error: 'Payment not confirmed', message: verifyErr.message });
+        }
+
+        const paidAmount = Number(verifyResult?.data?.amount || 0);
+        const expectedAmount = await getPlanPrice(subscription.plan, subscription.billing_cycle);
+        const TOLERANCE = 1; // guard against gateway float rounding, not a discount
+        if (paidAmount + TOLERANCE < expectedAmount) {
+          return reply.code(402).send({ error: 'Payment amount does not cover the renewal price' });
+        }
+
+        subscription.payment_reference = reference;
+        subscription.last_payment_date = new Date();
+        subscription.amount = paidAmount;
       }
 
       // Calculate new expiration date
@@ -452,10 +495,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         syncWarning = 'Subscription renewed but product plan sync failed. Contact support.';
       }
 
-      reply.send({ ...subscription.toObject(), warning: syncWarning });
+      return reply.send({ ...subscription.toObject(), warning: syncWarning });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -480,10 +523,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
 
       await VendorSubscription.findByIdAndDelete(id);
 
-      reply.send({ message: 'Vendor subscription deleted successfully' });
+      return reply.send({ message: 'Vendor subscription deleted successfully' });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -513,7 +556,7 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         ? Math.ceil((subscription.expires_at.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
-      reply.send({
+      return reply.send({
         subscription_id: id,
         plan: subscription.plan,
         status: currentStatus,
@@ -525,22 +568,18 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
-
-  const DEFAULT_PLAN_PRICES = {
-    free:  { monthly: 0,     annual: 0 },
-    pro:   { monthly: 29000, annual: 23000 },
-    elite: { monthly: 79000, annual: 63000 },
-  };
 
   // Get subscription plans and pricing (public endpoint)
   fastify.get('/public/plans', async (request, reply) => {
     try {
-      const settings = await Settings.findOne().select('subscription_mode plan_prices').lean();
+      const settings = await Settings.findOne().select('subscription_mode plan_prices platform_fee_percent min_withdrawal_amount').lean();
       const subscription_mode = settings?.subscription_mode ?? false;
       const prices = settings?.plan_prices ?? DEFAULT_PLAN_PRICES;
+      const platform_fee_percent = settings?.platform_fee_percent ?? DEFAULT_PLATFORM_FEE_PERCENT;
+      const min_withdrawal_amount = settings?.min_withdrawal_amount ?? DEFAULT_MIN_WITHDRAWAL_AMOUNT;
 
       const plans = {
         free: {
@@ -592,10 +631,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         }
       };
 
-      reply.send({ plans, subscription_mode });
+      return reply.send({ plans, subscription_mode, platform_fee_percent, min_withdrawal_amount });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -621,10 +660,10 @@ export async function vendorSubscriptionRoutes(fastify: FastifyInstance) {
         { upsert: true, new: true }
       );
 
-      reply.send({ success: true, plan_prices: settings.plan_prices });
+      return reply.send({ success: true, plan_prices: settings.plan_prices });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 

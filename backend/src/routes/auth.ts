@@ -12,11 +12,17 @@ import {
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
 import { User } from '../models/User';
-import { sendVerificationCode, sendWhatsAppVerification } from '../services/mailService';
+import { Settings } from '../models/Settings';
+import { sendVerificationCode, sendWhatsAppVerification, sendPasswordResetEmail } from '../services/mailService';
 
-const googleClient = new OAuth2Client({
-  clientId: process.env.GOOGLE_CLIENT_ID,
-});
+const googleClient = new OAuth2Client();
+
+// Accepts a comma-separated list so the web browser client ID and the
+// Capacitor native (Android/iOS) server client ID can both be verified.
+const googleAudiences = (process.env.GOOGLE_CLIENT_ID || '')
+  .split(',')
+  .map(id => id.trim())
+  .filter(Boolean);
 
 const AUTH_RATE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const AUTH_RATE_MAX = 200; // max attempts per window per IP
@@ -96,7 +102,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       // Verify the ID token with Google
       const ticket = await googleClient.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: googleAudiences.length ? googleAudiences : undefined,
       });
 
       const payload = ticket.getPayload();
@@ -110,6 +116,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       let user = await User.findOne({ email: email.toLowerCase() }).select('username email display_name avatar_url banner_url role is_blocked is_verified google_id');
 
       if (!user) {
+        const settings = await Settings.findOne().select('allow_registration').lean();
+        if (settings?.allow_registration === false) {
+          return reply.code(403).send({ error: 'New registrations are currently disabled. Please check back later.' });
+        }
+
         // Create new user with optimized username generation
         const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
         
@@ -180,7 +191,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           phone_number: finalUser.phone_number || '',
           is_phone_verified: finalUser.is_phone_verified || false,
           notifications: finalUser.notifications || { notif_sales: true, notif_msg: true, notif_follow: true, notif_live: false },
-          preferences: finalUser.preferences || { theme: 'light', language: 'en' },
+          preferences: finalUser.preferences || { theme: 'system', language: 'en' },
           unread_messages_count: finalUser.unread_messages_count || 0,
         },
         token,
@@ -447,13 +458,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         expectedRPID: rpID,
       });
 
-      if (verification.verified && (verification as any).registrationInfo) {
-        const { credentialID, credentialPublicKey, counter, credentialDeviceType, credentialBackedUp } = (verification as any).registrationInfo;
+      if (verification.verified && verification.registrationInfo) {
+        const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
 
         user.authenticators.push({
-          credentialID: Buffer.from(credentialID).toString('base64url'),
-          credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64url'),
-          counter,
+          credentialID: credential.id,
+          credentialPublicKey: Buffer.from(credential.publicKey).toString('base64url'),
+          counter: credential.counter,
           credentialDeviceType,
           credentialBackedUp,
           transports: body.response.transports,
@@ -605,8 +616,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.code(429).send({ error: 'Too many registration attempts. Please try again later.' });
     }
     try {
+      const settings = await Settings.findOne().select('allow_registration').lean();
+      if (settings?.allow_registration === false) {
+        return reply.code(403).send({ error: 'New registrations are currently disabled. Please check back later.' });
+      }
+
       const body = request.body;
-      
+
       const { email, username, password, display_name } = registerSchema.parse(body);
 
       // Check if user already exists
@@ -756,8 +772,8 @@ export async function authRoutes(fastify: FastifyInstance) {
       user.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour
       await user.save();
 
-      // Send email
-      await sendVerificationCode(email, resetToken);
+      // Send email with a clickable reset link
+      await sendPasswordResetEmail(email, resetToken);
 
       // In development, log the token
       if (process.env.NODE_ENV === 'development') {
@@ -871,7 +887,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         notif_live: z.boolean().optional(),
       }).optional(),
       preferences: z.object({
-        theme: z.enum(['light', 'dark']).optional(),
+        theme: z.enum(['light', 'dark', 'system']).optional(),
         language: z.string().optional(),
       }).optional(),
     });

@@ -61,7 +61,6 @@ import CommunityDetail from './pages/CommunityDetail';
 import CreatePost from './pages/CreatePost';
 import Explore from './pages/Explore';
 import Home from './pages/Home';
-import Live from './pages/Live';
 import Marketplace from './pages/Marketplace';
 import MyStore from './pages/MyStore';
 import Notifications from './pages/Notifications';
@@ -78,9 +77,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import Support from './pages/Support';
-import LandingPage from './pages/LandingPage';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Guidelines from './pages/Guidelines';
 import __Layout from './Layout.jsx';
 
 
@@ -99,7 +98,6 @@ export const PAGES = {
     "CreatePost": CreatePost,
     "Explore": Explore,
     "Home": Home,
-    "Live": Live,
     "Marketplace": Marketplace,
     "MyStore": MyStore,
     "Notifications": Notifications,
@@ -116,9 +114,9 @@ export const PAGES = {
     "Register": Register,
     "AdminDashboard": AdminDashboard,
     "Support": Support,
-    "LandingPage": LandingPage,
     "Terms": Terms,
     "Privacy": Privacy,
+    "Guidelines": Guidelines,
 }
 
 export const pagesConfig = {

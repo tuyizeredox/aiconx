@@ -93,8 +93,8 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
   });
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl border border-slate-200 p-5">
-      <h4 className="font-semibold text-slate-900 mb-4">{t("product.writeReview")}</h4>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+      <h4 className="font-semibold text-slate-900 dark:text-white mb-4">{t("product.writeReview")}</h4>
 
       {/* Star Rating */}
       <div className="flex items-center gap-1 mb-4">
@@ -105,10 +105,10 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
             onMouseLeave={() => setHoverRating(0)}
             onClick={() => setRating(s)}
           >
-            <Star className={`w-8 h-8 transition-colors ${s <= (hoverRating || rating) ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
+            <Star className={`w-8 h-8 transition-colors ${s <= (hoverRating || rating) ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-slate-700"}`} />
           </button>
         ))}
-        {rating > 0 && <span className="text-sm text-slate-500 ml-2">{["", t("product.ratingPoor"), t("product.ratingFair"), t("product.ratingGood"), t("product.ratingVeryGood"), t("product.ratingExcellent")][rating]}</span>}
+        {rating > 0 && <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">{["", t("product.ratingPoor"), t("product.ratingFair"), t("product.ratingGood"), t("product.ratingVeryGood"), t("product.ratingExcellent")][rating]}</span>}
       </div>
 
       <Input
@@ -126,12 +126,12 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
 
       {/* Media Upload */}
       <div className="mb-4">
-        <p className="text-xs font-medium text-slate-600 mb-2 flex items-center gap-1.5">
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1.5">
           <Camera className="w-3.5 h-3.5" /> {t("product.addPhotosVideos")}
         </p>
         <div className="flex gap-2 flex-wrap">
           {previews.map((prev, i) => (
-            <div key={`preview-${i}-${prev}`} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+            <div key={`preview-${i}-${prev}`} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
               <img src={prev} alt="" className="w-full h-full object-cover" />
               <button
                 onClick={() => removeMedia(i)}
@@ -142,9 +142,9 @@ export default function ReviewForm({ productId, storeId, currentUser, onClose })
             </div>
           ))}
           {mediaFiles.length < 5 && (
-            <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors">
-              <Upload className="w-5 h-5 text-slate-400" />
-              <span className="text-[9px] text-slate-400 mt-0.5">{t("common.upload")}</span>
+            <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors">
+              <Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <span className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">{t("common.upload")}</span>
               <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileChange} />
             </label>
           )}

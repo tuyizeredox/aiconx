@@ -1,4 +1,6 @@
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { User } from '../models/User';
 import { Store } from '../models/Store';
@@ -11,8 +13,173 @@ import { Report } from '../models/Report';
 import { ActivityLog } from '../models/ActivityLog';
 import { Post } from '../models/Post';
 import { VendorSubscription } from '../models/VendorSubscription';
+import { Notification } from '../models/Notification';
+import { Cashout } from '../models/Cashout';
+import { Backup } from '../models/Backup';
 import { authenticate, isAdmin, logActivity, invalidateMaintenanceCache } from '../middleware/auth';
+import { NotificationService } from '../services/notificationService';
 import { escapeRegex } from '../utils/sanitize';
+import { DEFAULT_PLATFORM_FEE_PERCENT } from '../utils/platformFinance';
+import { itecPayService } from '../services/itecPayService';
+import { deleteProductCascade, deleteStoreCascade, deleteUserCascade } from '../services/cascadeService';
+import { runBackup, getBackupStream } from '../services/backupService';
+import { notifyRestockedBookings } from '../services/bookingService';
+
+// Shared by GET /stats (reporting) and POST /cashouts (balance-guard before
+// sending money out) so the two never drift into disagreeing about how much
+// the platform has actually earned vs. already paid out.
+// iTechPay's own processing cut — deducted from every revenue stream before
+// it's counted as the platform's actual take-home profit.
+const ITECPAY_CHARGE_RATE = 0.03;
+
+// Rounds breakdown display figures to 2dp instead of whole RWF. At real
+// transaction volumes this is invisible, but on tiny amounts (test data, or a
+// single small subscription) a 3% charge can be under 1 RWF — rounding that
+// to a whole unit shows "0" and makes the deduction look like it never
+// happened even though it's correctly subtracted from the actual total.
+const roundDisplay = (n: number) => Math.round(n * 100) / 100;
+
+type ProfitBreakdownLine = { gross: number; itecCharge: number; net: number };
+type ProfitBreakdown = {
+  platformFeePercent: number;
+  itecChargeRatePercent: number;
+  subscriptions: ProfitBreakdownLine;
+  orderCommission: ProfitBreakdownLine & { orderTotal: number };
+  affiliateCommission: ProfitBreakdownLine & { affiliateTotal: number };
+  grandTotalRevenue: number;
+};
+type OrdersBreakdown = {
+  platformFeePercent: number;
+  orderTotal: number;
+  platformCommission: number;
+  affiliateCommission: number;
+  netOrdersRevenue: number;
+};
+type CashoutBucket = { grandTotalRevenue: number; totalCashedOut: number; availableBalance: number; breakdown?: ProfitBreakdown | OrdersBreakdown };
+type CashoutBalances = { profit: CashoutBucket; orders: CashoutBucket };
+
+// Two independent pools, so cashing one out never eats into the other's
+// available balance:
+//  - 'profit'  — the platform's own take-home earnings: its commission cut of
+//                approved/completed order sales, its cut of what affiliates
+//                earned on those same orders, and subscription payments
+//                actually collected — each net of iTechPay's 3% processing charge.
+//  - 'orders'  — what's actually owed to vendors: approved/completed order
+//                revenue with the platform's commission and the affiliate
+//                commission subtracted out (both of those are the platform's/
+//                affiliates' money, not the vendor's). Unlike 'profit', this
+//                pool is NOT reduced by iTechPay's charge — vendors are owed
+//                their full net share. This is the pool vendor withdrawal
+//                requests get paid out of.
+async function getCashoutBalance(): Promise<CashoutBalances> {
+  const [settings, orderAgg, subscriptionRevenueAgg, profitCashedAgg, ordersCashedAgg] = await Promise.all([
+    Settings.findOne().select('platform_fee_percent').lean(),
+    Order.aggregate([
+      // Only orders that were actually paid for and have progressed past
+      // acceptance count as "approved completed" — excludes pending/cancelled/
+      // refunded orders, whose payment_status may still misleadingly read 'paid'
+      // (see the note on VendorSubscription below for why status must gate this).
+      { $match: { payment_status: 'paid', status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] } } },
+      { $group: { _id: null, orderTotal: { $sum: '$total' }, affiliateTotal: { $sum: '$affiliate_commission' } } }
+    ]),
+    VendorSubscription.aggregate([
+      // `amount` alone isn't proof of payment — it gets set to the plan's price
+      // as soon as an upgrade is requested, even while the record sits at
+      // status: 'pending' awaiting payment that may never arrive. status only
+      // ever reaches 'active' via itecPayService's successful-payment webhook
+      // handler, and 'expired' only ever transitions from 'active' once its
+      // term lapses — so both statuses mean the payment genuinely cleared.
+      // comped (admin-granted, unpaid) subscriptions are excluded — no money
+      // actually changed hands, so they must never count as platform revenue.
+      { $match: { status: { $in: ['active', 'expired'] }, amount: { $gt: 0 }, comped: { $ne: true } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    Cashout.aggregate([
+      { $match: { type: 'profit' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    Cashout.aggregate([
+      { $match: { type: 'orders' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+  ]);
+
+  const platformFeePercent = (settings as any)?.platform_fee_percent ?? DEFAULT_PLATFORM_FEE_PERCENT;
+  const orderTotal = orderAgg.length > 0 ? orderAgg[0].orderTotal : 0;
+  const affiliateTotal = orderAgg.length > 0 ? orderAgg[0].affiliateTotal : 0;
+  const totalSubscriptionRevenue = subscriptionRevenueAgg.length > 0 ? subscriptionRevenueAgg[0].total : 0;
+  const totalProfitCashedOut = profitCashedAgg.length > 0 ? profitCashedAgg[0].total : 0;
+  const totalOrdersCashedOut = ordersCashedAgg.length > 0 ? ordersCashedAgg[0].total : 0;
+
+  const platformCommission = orderTotal * (platformFeePercent / 100);
+  const affiliateCommissionCut = affiliateTotal * (platformFeePercent / 100);
+
+  const subscriptionItecCharge = totalSubscriptionRevenue * ITECPAY_CHARGE_RATE;
+  const orderCommissionItecCharge = platformCommission * ITECPAY_CHARGE_RATE;
+  const affiliateCommissionItecCharge = affiliateCommissionCut * ITECPAY_CHARGE_RATE;
+
+  const subscriptionProfit = totalSubscriptionRevenue - subscriptionItecCharge;
+  const orderCommissionProfit = platformCommission - orderCommissionItecCharge;
+  const affiliateCommissionProfit = affiliateCommissionCut - affiliateCommissionItecCharge;
+
+  // Percentage math naturally lands on fractional RWF; round once here so the
+  // balance check and the frontend both work off the same whole-unit figure.
+  const grandProfitRevenue = Math.round(subscriptionProfit + orderCommissionProfit + affiliateCommissionProfit);
+
+  // Vendor-owed amount: the order's gross total, minus the platform's own
+  // commission cut and the affiliate's commission — both already deducted at
+  // their full (not iTechPay-discounted) value, since that's the actual size
+  // of the slice that isn't the vendor's to begin with. No iTechPay charge is
+  // applied here — that discount only applies to the platform's own take-home
+  // profit streams, not to money owed out to vendors.
+  const netOrdersRevenue = Math.round(orderTotal - platformCommission - affiliateTotal);
+
+  const ordersBreakdown: OrdersBreakdown = {
+    platformFeePercent,
+    orderTotal: roundDisplay(orderTotal),
+    platformCommission: roundDisplay(platformCommission),
+    affiliateCommission: roundDisplay(affiliateTotal),
+    netOrdersRevenue,
+  };
+
+  const breakdown: ProfitBreakdown = {
+    platformFeePercent,
+    itecChargeRatePercent: ITECPAY_CHARGE_RATE * 100,
+    subscriptions: {
+      gross: roundDisplay(totalSubscriptionRevenue),
+      itecCharge: roundDisplay(subscriptionItecCharge),
+      net: roundDisplay(subscriptionProfit),
+    },
+    orderCommission: {
+      orderTotal: roundDisplay(orderTotal),
+      gross: roundDisplay(platformCommission),
+      itecCharge: roundDisplay(orderCommissionItecCharge),
+      net: roundDisplay(orderCommissionProfit),
+    },
+    affiliateCommission: {
+      affiliateTotal: roundDisplay(affiliateTotal),
+      gross: roundDisplay(affiliateCommissionCut),
+      itecCharge: roundDisplay(affiliateCommissionItecCharge),
+      net: roundDisplay(affiliateCommissionProfit),
+    },
+    grandTotalRevenue: grandProfitRevenue,
+  };
+
+  return {
+    profit: {
+      grandTotalRevenue: grandProfitRevenue,
+      totalCashedOut: totalProfitCashedOut,
+      availableBalance: grandProfitRevenue - totalProfitCashedOut,
+      breakdown,
+    },
+    orders: {
+      grandTotalRevenue: netOrdersRevenue,
+      totalCashedOut: totalOrdersCashedOut,
+      availableBalance: netOrdersRevenue - totalOrdersCashedOut,
+      breakdown: ordersBreakdown,
+    },
+  };
+}
 
 export async function adminRoutes(fastify: FastifyInstance) {
   // Add authentication and admin check to all routes in this plugin
@@ -107,17 +274,97 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete user
+  // Delete user — cascades to their store/products, social content, and
+  // marketplace activity so no orphaned data survives the account (see
+  // cascadeService.deleteUserCascade for exactly what is removed vs. kept).
   fastify.delete('/users/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const user = await User.findByIdAndDelete(id);
+      const user = await User.findById(id);
       if (!user) {
         return reply.code(404).send({ error: 'User not found' });
       }
-      await logActivity(request, 'delete_user', user._id, 'user', { email: user.email });
-      return { success: true };
+      const email = user.email;
+      const summary = await deleteUserCascade(user);
+      await logActivity(request, 'delete_user', id, 'user', { email, ...summary });
+      return { success: true, ...summary };
     } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Grant a user a plan directly — no payment involved. Used by super admins to
+  // comp a vendor a plan (promo, support goodwill, etc). Always free (amount: 0,
+  // comped: true) so it never gets counted as real revenue in the cashout/stats
+  // aggregations (see getCashoutBalance and GET /stats below, both of which
+  // filter on `comped`).
+  fastify.patch('/users/:id/subscription', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { plan, billing_cycle } = z.object({
+        plan: z.enum(['free', 'pro', 'elite']),
+        billing_cycle: z.enum(['monthly', 'annual']),
+      }).parse(request.body);
+
+      const user = await User.findById(id);
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      const admin = request.user as any;
+      const now = new Date();
+      let expiresAt: Date | undefined;
+      if (plan !== 'free') {
+        expiresAt = new Date(now);
+        if (billing_cycle === 'annual') {
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        } else {
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+        }
+      }
+
+      const store = await Store.findOne({ owner_username: user.username }).select('_id');
+
+      const grantFields = {
+        plan,
+        billing_cycle,
+        status: 'active' as const,
+        started_at: now,
+        expires_at: expiresAt,
+        amount: 0,
+        comped: true,
+        granted_by: admin.username,
+        payment_method: 'admin_grant',
+        last_payment_date: now,
+        pending_plan: null,
+        pending_billing_cycle: null,
+        pending_amount: null,
+      };
+
+      let subscription = await VendorSubscription.findOne({ vendor_username: user.username, status: 'active' });
+      if (subscription) {
+        Object.assign(subscription, grantFields);
+        await subscription.save();
+      } else {
+        subscription = await VendorSubscription.create({
+          vendor_username: user.username,
+          store_id: store?._id?.toString(),
+          ...grantFields,
+        });
+      }
+
+      await logActivity(request, 'assign_subscription_plan', subscription._id, 'vendor_subscription', {
+        target_user: user.username,
+        plan,
+        billing_cycle,
+      });
+
+      return subscription;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
       fastify.log.error(error);
       return reply.code(500).send({ error: 'Internal server error' });
     }
@@ -193,12 +440,53 @@ export async function adminRoutes(fastify: FastifyInstance) {
       const stores = await Store.find(query)
         .sort({ created_at: -1 })
         .skip(skip)
-        .limit(parseInt(limit));
+        .limit(parseInt(limit))
+        .lean();
+
+      // Enrich with the owner's account details so the admin can review the
+      // whole store — owner profile and identity verification — in one place.
+      const ownerUsernames = [...new Set(stores.map(s => s.owner_username).filter(Boolean))];
+      const owners = ownerUsernames.length > 0
+        ? await User.find({ username: { $in: ownerUsernames } })
+            .select('username email display_name bio avatar_url phone_number is_phone_verified is_verified role created_at')
+            .lean()
+        : [];
+      const ownerByUsername = new Map(owners.map(u => [u.username, u]));
+
+      // Enrich stores with product counts and income data
+      const enrichedStores = await Promise.all(stores.map(async (store) => {
+        const productCount = await Product.countDocuments({ store_id: store._id.toString() });
+
+        // Calculate total revenue from orders for this store
+        const revenueResult = await Order.aggregate([
+          { $match: {
+            store_id: store._id.toString(),
+            status: { $ne: 'cancelled' },
+            payment_status: 'paid'
+          }},
+          { $group: { _id: null, total: { $sum: '$total' } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+        // Count orders for this store
+        const ordersCount = await Order.countDocuments({
+          store_id: store._id.toString(),
+          status: { $ne: 'cancelled' }
+        });
+
+        return {
+          ...store,
+          owner: ownerByUsername.get(store.owner_username) || null,
+          products_count: productCount,
+          orders_count: ordersCount,
+          total_revenue: totalRevenue
+        };
+      }));
 
       const total = await Store.countDocuments(query);
 
       return {
-        stores,
+        stores: enrichedStores,
         pagination: {
           total,
           page: parseInt(page),
@@ -259,15 +547,19 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete store
+  // Delete store — cascades to all of its products and store-scoped records
+  // (reviews, coupons, shipping zones, subscriptions, withdrawals, affiliate
+  // links) and removes its uploaded images. See cascadeService.deleteStoreCascade.
   fastify.delete('/stores/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const store = await Store.findByIdAndDelete(id);
+      const store = await Store.findById(id);
       if (!store) {
         return reply.code(404).send({ error: 'Store not found' });
       }
-      await logActivity(request, 'delete_store', store._id, 'store', { name: store.name });
+      const { name } = store;
+      await deleteStoreCascade(store);
+      await logActivity(request, 'delete_store', id, 'store', { name });
       return { success: true };
     } catch (error) {
       fastify.log.error(error);
@@ -289,6 +581,184 @@ export async function adminRoutes(fastify: FastifyInstance) {
       await logActivity(request, is_verified ? 'verify_store' : 'unverify_store', store._id, 'store');
 
       return store;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Get store products
+  fastify.get('/stores/:id/products', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { page = 1, limit = 20, status } = request.query as any;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const query: any = { store_id: id };
+      if (status) query.status = status;
+
+      const products = await Product.find(query)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await Product.countDocuments(query);
+
+      return {
+        products,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // --- Subscription Management ---
+
+  // Get all vendor subscriptions
+  fastify.get('/subscriptions', async (request, reply) => {
+    try {
+      const { page = 1, limit = 20, status, search = '' } = request.query as any;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const query: any = {};
+      if (status) query.status = status;
+      if (search) {
+        const escaped = escapeRegex(search);
+        query.$or = [
+          { vendor_username: { $regex: escaped, $options: 'i' } },
+          { store_id: { $regex: escaped, $options: 'i' } }
+        ];
+      }
+
+      const subscriptions = await VendorSubscription.find(query)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      // Fetch user roles for each subscription
+      const vendorUsernames = [...new Set(subscriptions.map(s => s.vendor_username))];
+      const users = await User.find({ username: { $in: vendorUsernames } }).select('username role');
+      const userRoleMap = new Map(users.map(u => [u.username, u.role]));
+
+      // Fetch plan prices from Settings for amount calculation
+      const settings = await Settings.findOne();
+      const storedPlanPrices = settings?.plan_prices;
+      const DEFAULT_PLAN_PRICES = {
+        free: { monthly: 0, annual: 0 },
+        pro: { monthly: 29000, annual: 23000 },
+        elite: { monthly: 99000, annual: 79000 }
+      };
+
+      // Add user_role and calculate amounts based on current plan prices
+      const subscriptionsWithRoles = await Promise.all(subscriptions.map(async (sub) => {
+        const subObj = sub.toObject() as any;
+        subObj.user_role = userRoleMap.get(sub.vendor_username) || 'user';
+
+        // Always calculate amount from current plan prices for admin view
+        const plan = (sub.plan || 'free') as string;
+        const billingCycle = (sub.billing_cycle || 'monthly') as string;
+        const prices = (storedPlanPrices as any)?.[plan] || (DEFAULT_PLAN_PRICES as any)[plan];
+        const calculatedAmount = prices ? (billingCycle === 'annual' ? prices.annual : prices.monthly) : 0;
+        subObj.amount = calculatedAmount;
+
+        // Update DB if stored amount differs from current plan price
+        if (subObj.amount !== calculatedAmount && calculatedAmount > 0) {
+          await VendorSubscription.updateOne({ _id: sub._id }, { $set: { amount: calculatedAmount } });
+        }
+
+        return subObj;
+      }));
+
+      const total = await VendorSubscription.countDocuments(query);
+
+      return {
+        subscriptions: subscriptionsWithRoles,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Cancel subscription
+  fastify.post('/subscriptions/:id/cancel', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+
+      const subscription = await VendorSubscription.findByIdAndUpdate(
+        id,
+        { status: 'cancelled', cancelled_at: new Date() },
+        { new: true }
+      );
+
+      if (!subscription) {
+        return reply.code(404).send({ error: 'Subscription not found' });
+      }
+
+      await logActivity(request, 'cancel_subscription', subscription._id, 'vendor_subscription');
+
+      return subscription;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Get plan prices
+  fastify.get('/subscriptions/plans', async (request, reply) => {
+    try {
+      const settings = await Settings.findOne();
+      const planPrices = settings?.plan_prices || {
+        free: { monthly: 0, annual: 0 },
+        pro: { monthly: 29000, annual: 23000 },
+        elite: { monthly: 99000, annual: 79000 }
+      };
+
+      return { plans: planPrices };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Update plan prices
+  fastify.put('/subscriptions/plans', async (request, reply) => {
+    try {
+      const { plan_prices } = z.object({
+        plan_prices: z.object({
+          free: z.object({ monthly: z.number(), annual: z.number() }),
+          pro: z.object({ monthly: z.number(), annual: z.number() }),
+          elite: z.object({ monthly: z.number(), annual: z.number() })
+        })
+      }).parse(request.body);
+
+      const settings = await Settings.findOne();
+      if (settings) {
+        settings.plan_prices = plan_prices;
+        await settings.save();
+      } else {
+        await Settings.create({ plan_prices });
+      }
+
+      await logActivity(request, 'update_plan_prices', null, 'settings', { plan_prices });
+
+      return { plans: plan_prices };
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
@@ -361,6 +831,320 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // --- Cashouts (super admin sends platform revenue out to a phone number) ---
+
+  // Step-up auth gate the frontend calls before revealing the cashout panel.
+  fastify.post('/cashouts/verify-password', async (request, reply) => {
+    try {
+      const parsed = z.object({ password: z.string().min(1) }).safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ message: 'Password is required' });
+      }
+
+      const { userId } = request.user as any;
+      const user = await User.findById(userId).select('+password');
+      if (!user || !user.password) {
+        // Not 401: the frontend's global fetch wrapper treats any 401 as an
+        // expired session and force-logs-out the user, which a mistyped
+        // password should never trigger.
+        return reply.code(400).send({ message: 'Incorrect password' });
+      }
+
+      const isMatch = await bcrypt.compare(parsed.data.password, user.password);
+      if (!isMatch) {
+        return reply.code(400).send({ message: 'Incorrect password' });
+      }
+
+      return { verified: true };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // Send money to a phone number via iTechPay and, only on success, log it.
+  fastify.post('/cashouts', async (request, reply) => {
+    try {
+      const parsed = z.object({
+        type: z.enum(['profit', 'orders']),
+        amount: z.number().min(1),
+        phoneNumber: z.string().min(1),
+        provider: z.enum(['mtn', 'airtel']),
+        note: z.string().optional(),
+      }).safeParse(request.body);
+
+      if (!parsed.success) {
+        return reply.code(400).send({ message: 'Invalid type / amount / missing phone / bad provider' });
+      }
+
+      const { type, amount, phoneNumber, provider, note } = parsed.data;
+      const { userId } = request.user as any;
+
+      const balances = await getCashoutBalance();
+      const { availableBalance } = balances[type];
+      if (amount > availableBalance) {
+        return reply.code(400).send({ message: 'Amount exceeds available balance' });
+      }
+
+      let transfer;
+      try {
+        transfer = await itecPayService.transferToPhone(amount, phoneNumber, provider);
+      } catch (transferError: any) {
+        return reply.code(502).send({ message: `iTechPay declined the transfer: ${transferError.message}` });
+      }
+
+      const cashout = await Cashout.create({
+        type,
+        amount,
+        phoneNumber,
+        provider,
+        note,
+        transactionId: transfer.transactionId,
+        gatewayResponse: transfer.raw,
+        requestedBy: userId,
+      });
+
+      await logActivity(request, 'cashout_created', cashout._id, 'cashout', { type, amount, provider, phoneNumber });
+
+      return reply.code(201).send(cashout);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // List cashout log entries, most recent first. Optional ?type=profit|orders.
+  fastify.get('/cashouts', async (request, reply) => {
+    try {
+      const { type } = request.query as { type?: string };
+      const query: any = {};
+      if (type === 'profit' || type === 'orders') query.type = type;
+
+      const cashouts = await Cashout.find(query)
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .populate('requestedBy', 'display_name email');
+
+      return cashouts;
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // Remove a log entry only — does not reverse the transfer.
+  fastify.delete('/cashouts/:id', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const cashout = await Cashout.findByIdAndDelete(id);
+      if (!cashout) {
+        return reply.code(404).send({ message: 'Cashout record not found' });
+      }
+
+      await logActivity(request, 'cashout_deleted', id, 'cashout', {});
+
+      return { message: 'Cashout record deleted' };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ message: 'Internal server error' });
+    }
+  });
+
+  // --- Database Backups ---
+
+  // List backup history, most recent first.
+  fastify.get('/backups', async (request, reply) => {
+    try {
+      const { page = 1, limit = 20 } = request.query as any;
+      const parsedLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+      const parsedPage = Math.max(parseInt(page) || 1, 1);
+      const skip = (parsedPage - 1) * parsedLimit;
+
+      const [backups, total] = await Promise.all([
+        Backup.find().sort({ started_at: -1 }).skip(skip).limit(parsedLimit),
+        Backup.countDocuments(),
+      ]);
+
+      return {
+        backups,
+        pagination: {
+          total,
+          page: parsedPage,
+          limit: parsedLimit,
+          pages: Math.ceil(total / parsedLimit),
+        },
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Trigger an on-demand backup. Runs synchronously so the admin sees the
+  // final status (success/failed, size) in the response, not just "started".
+  fastify.post('/backups/run', async (request, reply) => {
+    try {
+      const { userId } = request.user as any;
+      const backup = await runBackup('manual', userId);
+      await logActivity(request, 'run_backup', backup._id, 'backup', { status: backup.status });
+      return reply.code(backup.status === 'success' ? 201 : 500).send(backup);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Download a backup archive (gzip-compressed JSON dump of every collection).
+  fastify.get('/backups/:id/download', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const backup = await Backup.findById(id);
+      if (!backup) {
+        return reply.code(404).send({ error: 'Backup not found' });
+      }
+      if (backup.status !== 'success') {
+        return reply.code(409).send({ error: 'This backup did not complete successfully' });
+      }
+
+      const stream = await getBackupStream(backup);
+      reply.header('Content-Type', 'application/gzip');
+      reply.header('Content-Disposition', `attachment; filename="${backup.filename}"`);
+      return reply.send(stream);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // --- Seller Identity Verification (KYC) ---
+
+  // List stores by verification status (defaults to pending — the review queue)
+  fastify.get('/verifications', async (request, reply) => {
+    try {
+      const { page = 1, limit = 10, status = 'pending' } = request.query as any;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const query: any = {};
+      if (status !== 'all') query.verification_status = status;
+
+      const stores = await Store.find(query)
+        .sort({ identity_submitted_at: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+      // Enrich with the applicant's account details and store performance stats
+      // so the admin can review everything about the applicant and their store in one place.
+      const ownerUsernames = [...new Set(stores.map(s => s.owner_username).filter(Boolean))];
+      const applicants = ownerUsernames.length > 0
+        ? await User.find({ username: { $in: ownerUsernames } })
+            .select('username email display_name phone_number is_phone_verified role created_at')
+            .lean()
+        : [];
+      const applicantByUsername = new Map(applicants.map(u => [u.username, u]));
+
+      const enrichedStores = await Promise.all(stores.map(async (store) => {
+        const productCount = await Product.countDocuments({ store_id: store._id.toString() });
+
+        const revenueResult = await Order.aggregate([
+          { $match: {
+            store_id: store._id.toString(),
+            status: { $ne: 'cancelled' },
+            payment_status: 'paid'
+          }},
+          { $group: { _id: null, total: { $sum: '$total' } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+        const ordersCount = await Order.countDocuments({
+          store_id: store._id.toString(),
+          status: { $ne: 'cancelled' }
+        });
+
+        return {
+          ...store,
+          applicant: applicantByUsername.get(store.owner_username) || null,
+          products_count: productCount,
+          orders_count: ordersCount,
+          total_revenue: totalRevenue,
+        };
+      }));
+
+      const total = await Store.countDocuments(query);
+
+      return {
+        stores: enrichedStores,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Approve or reject a store's identity verification
+  fastify.patch('/verifications/:storeId', async (request, reply) => {
+    try {
+      const { storeId } = request.params as { storeId: string };
+      const { action, reason } = z.object({
+        action: z.enum(['approve', 'reject']),
+        reason: z.string().optional(),
+      }).parse(request.body);
+
+      if (action === 'reject' && !reason) {
+        return reply.code(400).send({ error: 'A reason is required when rejecting a verification request.' });
+      }
+
+      const store = await Store.findById(storeId);
+      if (!store) {
+        return reply.code(404).send({ error: 'Store not found' });
+      }
+
+      if (store.verification_status !== 'pending') {
+        return reply.code(409).send({ error: 'This store has no pending verification request.' });
+      }
+
+      const admin = request.user as any;
+      store.verification_status = action === 'approve' ? 'approved' : 'rejected';
+      store.is_verified = action === 'approve';
+      store.identity_reviewed_at = new Date();
+      store.identity_reviewed_by = admin.username;
+      store.identity_rejection_reason = action === 'reject' ? reason : undefined;
+      store.updated_at = new Date();
+      await store.save();
+
+      const verificationNotification = await new Notification({
+        recipient_username: store.owner_username,
+        type: 'verification',
+        title: action === 'approve'
+          ? 'Your store has been verified'
+          : 'Your store verification was rejected',
+        body: action === 'approve'
+          ? 'You can now add products to your store.'
+          : reason,
+        link: '/MyStore',
+        sender_username: admin.username,
+      }).save();
+      fastify.io?.to(`user:${store.owner_username}`).emit('notification:new', verificationNotification);
+      NotificationService.sendPushNotification(store.owner_username, verificationNotification, fastify);
+
+      await logActivity(request, 'update_store_verification', store._id, 'store', { action, reason });
+
+      return store;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // --- Moderation (Reports) ---
 
   // Get all reports
@@ -380,8 +1164,35 @@ export async function adminRoutes(fastify: FastifyInstance) {
 
       const total = await Report.countDocuments(query);
 
+      // Attach a lightweight content preview for post/product reports so admins
+      // can see what was actually reported without leaving the moderation table.
+      const reportsWithSummary = await Promise.all(reports.map(async (r) => {
+        const report: any = r.toObject();
+        if (r.target_type === 'post') {
+          const post = await Post.findById(r.target_id).select('content author_username is_active').lean();
+          if (post) {
+            report.target_summary = {
+              title: post.content?.slice(0, 80) || '(no text)',
+              owner_username: post.author_username,
+              active: post.is_active !== false,
+            };
+          }
+        } else if (r.target_type === 'product') {
+          const product = await Product.findById(r.target_id).select('title vendor_username status images').lean();
+          if (product) {
+            report.target_summary = {
+              title: product.title,
+              owner_username: product.vendor_username,
+              active: product.status !== 'archived',
+              image: product.images?.[0],
+            };
+          }
+        }
+        return report;
+      }));
+
       return {
-        reports,
+        reports: reportsWithSummary,
         pagination: {
           total,
           page: parseInt(page),
@@ -399,24 +1210,88 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.patch('/reports/:id/resolve', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const { status, admin_notes } = z.object({
+      const { status, admin_notes, content_action } = z.object({
         status: z.enum(['resolved', 'dismissed']),
-        admin_notes: z.string().optional()
+        admin_notes: z.string().optional(),
+        content_action: z.enum(['none', 'deactivate', 'remove']).optional().default('none'),
       }).parse(request.body);
 
-      const user = request.user as any;
+      const admin = request.user as any;
       const report = await Report.findByIdAndUpdate(id, {
         status,
         admin_notes,
         resolved_at: new Date(),
-        resolved_by: user.userId || user._id,
+        resolved_by: admin.userId || admin._id,
       }, { new: true });
 
       if (!report) {
         return reply.code(404).send({ error: 'Report not found' });
       }
 
-      await logActivity(request, 'resolve_report', report._id, 'report', { status });
+      // Act on the reported content itself (if requested) and let its owner know.
+      if (status === 'resolved' && content_action !== 'none' && ['post', 'product'].includes(report.target_type)) {
+        let ownerUsername: string | undefined;
+        let contentLabel: string | undefined;
+
+        if (report.target_type === 'post') {
+          const post = content_action === 'remove'
+            ? await Post.findByIdAndDelete(report.target_id)
+            : await Post.findByIdAndUpdate(report.target_id, { is_active: false });
+          if (post) {
+            ownerUsername = post.author_username;
+            contentLabel = 'post';
+          }
+        } else if (report.target_type === 'product') {
+          let product;
+          if (content_action === 'remove') {
+            product = await Product.findById(report.target_id);
+            if (product) await deleteProductCascade(product);
+          } else {
+            product = await Product.findByIdAndUpdate(report.target_id, { status: 'archived' });
+          }
+          if (product) {
+            ownerUsername = product.vendor_username;
+            contentLabel = 'product';
+          }
+        }
+
+        if (ownerUsername) {
+          const ownerNotification = new Notification({
+            recipient_username: ownerUsername,
+            type: 'moderation',
+            title: content_action === 'remove'
+              ? `Your ${contentLabel} was removed`
+              : `Your ${contentLabel} was deactivated`,
+            body: admin_notes || 'This content did not follow our Community Guidelines.',
+            link: '/community-guidelines',
+            sender_username: admin.username,
+            metadata: { report_id: report._id, target_type: report.target_type, target_id: report.target_id, action: content_action },
+          });
+          await ownerNotification.save();
+          fastify.io?.to(`user:${ownerUsername}`).emit('notification:new', ownerNotification);
+          NotificationService.sendPushNotification(ownerUsername, ownerNotification, fastify);
+        }
+      }
+
+      // Close the loop with the reporter so they know their report was reviewed.
+      const reporter = await User.findById(report.reporter_id).select('username').lean();
+      if (reporter?.username) {
+        const reporterNotification = new Notification({
+          recipient_username: reporter.username,
+          type: 'moderation',
+          title: status === 'resolved' ? 'Your report was reviewed — action taken' : 'Your report was reviewed',
+          body: status === 'resolved'
+            ? 'Thanks for helping keep AiconX safe. We took action on the content you reported.'
+            : "We reviewed your report and didn't find a violation of our Community Guidelines.",
+          sender_username: admin.username,
+          metadata: { report_id: report._id, status },
+        });
+        await reporterNotification.save();
+        fastify.io?.to(`user:${reporter.username}`).emit('notification:new', reporterNotification);
+        NotificationService.sendPushNotification(reporter.username, reporterNotification, fastify);
+      }
+
+      await logActivity(request, 'resolve_report', report._id, 'report', { status, content_action });
 
       return report;
     } catch (error) {
@@ -464,11 +1339,12 @@ export async function adminRoutes(fastify: FastifyInstance) {
   // Get all orders
   fastify.get('/orders', async (request, reply) => {
     try {
-      const { page = 1, limit = 10, status, search = '' } = request.query as any;
+      const { page = 1, limit = 10, status, buyer_confirmation_status, search = '' } = request.query as any;
       const skip = (parseInt(page) - 1) * parseInt(limit);
 
       const query: any = {};
       if (status) query.status = status;
+      if (buyer_confirmation_status) query.buyer_confirmation_status = buyer_confirmation_status;
       if (search) {
         const escaped = escapeRegex(search);
         query.$or = [
@@ -514,6 +1390,88 @@ export async function adminRoutes(fastify: FastifyInstance) {
       }
 
       await logActivity(request, 'update_order_status', order._id, 'order', { status });
+
+      return order;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Resolve a buyer-disputed order: release funds to the seller, or refund the buyer.
+  fastify.patch('/orders/:id/resolve-dispute', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { resolution, notes } = z.object({
+        resolution: z.enum(['release', 'refund']),
+        notes: z.string().optional(),
+      }).parse(request.body);
+
+      const order = await Order.findById(id);
+      if (!order) {
+        return reply.code(404).send({ error: 'Order not found' });
+      }
+      if (order.buyer_confirmation_status !== 'disputed') {
+        return reply.code(409).send({ error: 'This order has no open dispute.' });
+      }
+
+      if (resolution === 'release') {
+        order.buyer_confirmation_status = 'confirmed';
+      } else {
+        // Reuses the same stock-restore behavior as a normal refund, so inventory and
+        // sales_count stay accurate.
+        if (!order.stock_restored) {
+          const session = await mongoose.startSession();
+          try {
+            await session.withTransaction(async () => {
+              for (const item of order.items) {
+                if (item.inventory_deducted) {
+                  await Product.findByIdAndUpdate(
+                    item.product_id,
+                    { $inc: { inventory_count: item.quantity, sales_count: -item.quantity } },
+                    { session }
+                  );
+                }
+              }
+              order.stock_restored = true;
+            });
+
+            // Refunded stock goes back on the shelf, so waitlisted shoppers
+            // are told they can buy it now.
+            for (const item of order.items) {
+              if (item.inventory_deducted) {
+                void notifyRestockedBookings(item.product_id, fastify);
+              }
+            }
+          } finally {
+            await session.endSession();
+          }
+        }
+        order.status = 'refunded';
+      }
+      order.dispute_resolved_at = new Date();
+      order.dispute_resolution = resolution === 'release' ? 'released' : 'refunded';
+      order.updated_at = new Date();
+      await order.save();
+
+      const admin = request.user as any;
+      const disputeNotification = await new Notification({
+        recipient_username: order.vendor_username,
+        type: 'order_update',
+        title: resolution === 'release'
+          ? `Dispute resolved — funds released for ${order.items?.[0]?.product_title || 'an order'}`
+          : `Dispute resolved — ${order.items?.[0]?.product_title || 'an order'} refunded to the buyer`,
+        body: notes,
+        link: '/MyStore',
+        sender_username: admin.username,
+      }).save();
+      fastify.io?.to(`user:${order.vendor_username}`).emit('notification:new', disputeNotification);
+      NotificationService.sendPushNotification(order.vendor_username, disputeNotification, fastify);
+
+      await logActivity(request, 'resolve_order_dispute', order._id, 'order', { resolution, notes });
 
       return order;
     } catch (error) {
@@ -591,16 +1549,19 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Delete product
+  // Delete product — cascades to cart/wishlist entries, reviews, affiliate
+  // links, sentiment summaries, likes/bookmarks, and its uploaded media. See
+  // cascadeService.deleteProductCascade.
   fastify.delete('/products/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const product = await Product.findByIdAndDelete(id);
+      const product = await Product.findById(id);
       if (!product) {
         return reply.code(404).send({ error: 'Product not found' });
       }
 
-      await logActivity(request, 'delete_product', product._id, 'product');
+      await deleteProductCascade(product);
+      await logActivity(request, 'delete_product', id, 'product');
 
       return { success: true };
     } catch (error) {
@@ -717,9 +1678,11 @@ export async function adminRoutes(fastify: FastifyInstance) {
         pendingWithdrawals,
         totalReports,
         pendingReports,
+        disputedOrders,
         settings,
         activeSubscriptions,
-        subscriptionRevenue
+        subscriptionRevenue,
+        cashoutSummary
       ] = await Promise.all([
         User.countDocuments(),
         Store.countDocuments(),
@@ -731,9 +1694,12 @@ export async function adminRoutes(fastify: FastifyInstance) {
         Withdrawal.countDocuments({ status: 'pending' }),
         Report.countDocuments(),
         Report.countDocuments({ status: 'pending' }),
+        Order.countDocuments({ buyer_confirmation_status: 'disputed' }),
         Settings.findOne(),
         VendorSubscription.countDocuments({ status: 'active' }),
-        VendorSubscription.find({ plan: { $ne: 'free' }, status: 'active' }).select('plan billing_cycle amount')
+        // comped (admin-granted) subscriptions are excluded from the revenue figure below.
+        VendorSubscription.find({ plan: { $ne: 'free' }, status: 'active', comped: { $ne: true } }).select('plan billing_cycle amount'),
+        getCashoutBalance()
       ]);
 
       // Calculate total sales from all orders
@@ -742,6 +1708,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]);
       const totalSales = salesResult.length > 0 ? salesResult[0].total : 0;
+      const platformFeePercent = (settings as any)?.platform_fee_percent ?? DEFAULT_PLATFORM_FEE_PERCENT;
+      const platformEarnings = totalSales * (platformFeePercent / 100);
 
       // Calculate subscription revenue using current plan prices from Settings
       const planPrices = (settings as any)?.plan_prices;
@@ -797,6 +1765,7 @@ export async function adminRoutes(fastify: FastifyInstance) {
           },
           products: totalProducts,
           orders: totalOrders,
+          disputed_orders: disputedOrders,
           withdrawals: {
             total: totalWithdrawals,
             pending: pendingWithdrawals
@@ -806,6 +1775,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
             pending: pendingReports
           },
           total_sales: totalSales,
+          platform_earnings: platformEarnings,
+          platform_fee_percent: platformFeePercent,
           subscriptions: {
             active: activeSubscriptions,
             total_revenue: totalSubscriptionRevenue
@@ -819,7 +1790,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
         charts: {
           sales: salesChart
         },
-        settings: settings || { 
+        cashoutSummary,
+        settings: settings || {
           maintenance_mode: false, 
           maintenance_message: '',
           allow_registration: true,
@@ -839,11 +1811,12 @@ export async function adminRoutes(fastify: FastifyInstance) {
   // Get all posts
   fastify.get('/posts', async (request, reply) => {
     try {
-      const { page = 1, limit = 10, search = '', visibility } = request.query as any;
+      const { page = 1, limit = 10, search = '', visibility, status } = request.query as any;
       const skip = (parseInt(page) - 1) * parseInt(limit);
 
       const query: any = {};
       if (visibility && visibility !== 'all') query.visibility = visibility;
+      if (status && status !== 'all') query.status = status;
       if (search) {
         const escaped = escapeRegex(search);
         query.$or = [
@@ -900,6 +1873,63 @@ export async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Update post status (disable / archive / restore)
+  fastify.patch('/posts/:id/status', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { status, reason } = z.object({
+        status: z.enum(['active', 'disabled', 'archived']),
+        reason: z.string().optional(),
+      }).parse(request.body);
+
+      const admin = request.user as any;
+      const post = await Post.findByIdAndUpdate(
+        id,
+        { status, is_active: status === 'active' },
+        { new: true }
+      );
+      if (!post) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+
+      await logActivity(request, 'update_post_status', post._id, 'post', { status, reason });
+
+      if (post.author_username) {
+        const titles: Record<string, string> = {
+          active: 'Your post was restored',
+          disabled: 'Your post was disabled',
+          archived: 'Your post was archived',
+        };
+        const bodies: Record<string, string> = {
+          active: 'An admin reactivated your post. It is visible again.',
+          disabled: reason || 'An admin disabled your post for review.',
+          archived: reason || 'An admin archived your post.',
+        };
+
+        const ownerNotification = new Notification({
+          recipient_username: post.author_username,
+          type: 'moderation',
+          title: titles[status],
+          body: bodies[status],
+          link: status === 'active' ? undefined : '/community-guidelines',
+          sender_username: admin.username,
+          metadata: { post_id: post._id, action: status },
+        });
+        await ownerNotification.save();
+        fastify.io?.to(`user:${post.author_username}`).emit('notification:new', ownerNotification);
+        NotificationService.sendPushNotification(post.author_username, ownerNotification, fastify);
+      }
+
+      return post;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: 'Invalid request data', details: error.errors });
+      }
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // Delete post
   fastify.delete('/posts/:id', async (request, reply) => {
     try {
@@ -910,6 +1940,22 @@ export async function adminRoutes(fastify: FastifyInstance) {
       }
 
       await logActivity(request, 'delete_post', post._id, 'post', { author: post.author_username });
+
+      if (post.author_username) {
+        const admin = request.user as any;
+        const ownerNotification = new Notification({
+          recipient_username: post.author_username,
+          type: 'moderation',
+          title: 'Your post was removed',
+          body: 'An admin removed your post for violating our Community Guidelines.',
+          link: '/community-guidelines',
+          sender_username: admin.username,
+          metadata: { post_id: post._id, action: 'remove' },
+        });
+        await ownerNotification.save();
+        fastify.io?.to(`user:${post.author_username}`).emit('notification:new', ownerNotification);
+        NotificationService.sendPushNotification(post.author_username, ownerNotification, fastify);
+      }
 
       return { success: true };
     } catch (error) {

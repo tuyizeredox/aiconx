@@ -2,10 +2,11 @@ import React, { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storesAPI, followsAPI, usersAPI } from "@/api/apiClient";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
-import { UserPlus, Store, UserMinus, User, Sparkles } from "lucide-react";
+import { createPageUrl, storeUrl } from "@/lib/utils";
+import { UserPlus, Store, User, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 export default function SuggestedUsers({ currentUser }) {
   const queryClient = useQueryClient();
@@ -57,15 +58,17 @@ export default function SuggestedUsers({ currentUser }) {
     queryFn: async () => {
       const statuses = {};
       for (const suggestion of allSuggestions) {
+        const key = `${suggestion.type}:${suggestion.username}`;
         try {
           const status = await followsAPI.check({
             follower_username: currentUser.username,
             following_username: suggestion.username,
-            follow_type: suggestion.type
+            follow_type: suggestion.type,
+            target_id: suggestion.type === 'store' ? suggestion.id : undefined
           });
-          statuses[suggestion.username] = status.is_following;
+          statuses[key] = status.is_following;
         } catch (e) {
-          statuses[suggestion.username] = false;
+          statuses[key] = false;
         }
       }
       return statuses;
@@ -76,8 +79,9 @@ export default function SuggestedUsers({ currentUser }) {
   // Filter out already followed - use useMemo to react to followStatuses changes
   const suggestions = useMemo(() => {
     return allSuggestions.filter(item => {
-      const apiSaysFollowing = followStatuses?.[item.username] === true;
-      const localSaysFollowing = localFollowedUsers.has(item.username);
+      const key = `${item.type}:${item.username}`;
+      const apiSaysFollowing = followStatuses?.[key] === true;
+      const localSaysFollowing = localFollowedUsers.has(key);
       const isFollowing = apiSaysFollowing || localSaysFollowing;
       return !isFollowing;
     }).slice(0, 5);
@@ -103,12 +107,14 @@ export default function SuggestedUsers({ currentUser }) {
       // Snapshot previous value
       const previousFollowStatuses = queryClient.getQueryData(["followStatuses", currentUser?.username]);
 
+      const key = `${variables.type}:${variables.username}`;
+
       // Optimistically update follow status
       queryClient.setQueryData(["followStatuses", currentUser?.username], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          [variables.username]: !variables.isFollowing
+          [key]: !variables.isFollowing
         };
       });
 
@@ -116,9 +122,9 @@ export default function SuggestedUsers({ currentUser }) {
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.add(variables.username);
+          newSet.add(key);
         } else {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         }
         return newSet;
       });
@@ -126,14 +132,15 @@ export default function SuggestedUsers({ currentUser }) {
       return { previousFollowStatuses };
     },
     onError: (error, variables, context) => {
+      const key = `${variables.type}:${variables.username}`;
       // Revert optimistic update on error
       queryClient.setQueryData(["followStatuses", currentUser?.username], context.previousFollowStatuses);
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         } else {
-          newSet.add(variables.username);
+          newSet.add(key);
         }
         return newSet;
       });
@@ -176,9 +183,9 @@ export default function SuggestedUsers({ currentUser }) {
       <div className="p-4">
         <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-x-auto sm:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0 scrollbar-hide">
           {suggestions.map((item, idx) => {
-            const isFollowing = followStatuses?.[item.username] || false;
+            const isFollowing = followStatuses?.[`${item.type}:${item.username}`] || false;
             const linkTo = item.type === 'store'
-              ? createPageUrl("StoreDetail") + `?id=${item.id}`
+              ? storeUrl(item)
               : createPageUrl("Profile") + `?username=${item.username}`;
 
             return (
@@ -191,13 +198,15 @@ export default function SuggestedUsers({ currentUser }) {
               >
                 <Link to={linkTo} className="flex items-center gap-3">
                   <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm group-hover:scale-105 transition-transform">
-                    {item.avatar_url ? (
-                      <img src={item.avatar_url} alt="" className="w-full h-full object-cover" />
-                    ) : item.type === 'store' ? (
-                      <Store className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                    ) : (
-                      <User className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                    )}
+                    <AvatarImg
+                      src={item.avatar_url}
+                      className="w-full h-full object-cover"
+                      fallback={item.type === 'store' ? (
+                        <Store className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                      ) : (
+                        <User className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                      )}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">

@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import { Search, TrendingUp, Sparkles, X, User, Store, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { productsAPI, communitiesAPI, usersAPI, storesAPI, followsAPI } from "@/api/apiClient";
@@ -28,10 +29,16 @@ const CATEGORIES = [
 
 export default function Explore() {
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [category, setCategory] = useState("all");
   const tab = searchParams.get("tab");
+
+  // Deep link support for #hashtag / @mention links landing here from posts
+  useEffect(() => {
+    const urlSearch = searchParams.get("search");
+    if (urlSearch) setSearch(urlSearch);
+  }, [searchParams]);
   const debouncedSearch = useDebounce(search, 500);
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
@@ -98,20 +105,22 @@ export default function Explore() {
 
       // Check users
       for (const user of suggestedUsers) {
+        const key = `user:${user.username}`;
         try {
           const status = await followsAPI.check({
             follower_username: currentUser.username,
             following_username: user.username,
             follow_type: 'user'
           });
-          statuses[user.username] = status.is_following;
+          statuses[key] = status.is_following;
         } catch (e) {
-          statuses[user.username] = false;
+          statuses[key] = false;
         }
       }
 
       // Check stores
       for (const store of suggestedStores) {
+        const key = `store:${store.owner_username}`;
         try {
           const status = await followsAPI.check({
             follower_username: currentUser.username,
@@ -119,9 +128,9 @@ export default function Explore() {
             follow_type: 'store',
             target_id: store._id
           });
-          statuses[store.owner_username] = status.is_following;
+          statuses[key] = status.is_following;
         } catch (e) {
-          statuses[store.owner_username] = false;
+          statuses[key] = false;
         }
       }
 
@@ -134,8 +143,9 @@ export default function Explore() {
   const filteredSuggestedUsers = useMemo(() => {
     if (!followStatuses) return [];
     return suggestedUsers.filter(user => {
-      const apiSaysFollowing = followStatuses[user.username] === true;
-      const localSaysFollowing = localFollowedUsers.has(user.username);
+      const key = `user:${user.username}`;
+      const apiSaysFollowing = followStatuses[key] === true;
+      const localSaysFollowing = localFollowedUsers.has(key);
       return !apiSaysFollowing && !localSaysFollowing;
     });
   }, [suggestedUsers, followStatuses, localFollowedUsers]);
@@ -143,8 +153,9 @@ export default function Explore() {
   const filteredSuggestedStores = useMemo(() => {
     if (!followStatuses) return [];
     return suggestedStores.filter(store => {
-      const apiSaysFollowing = followStatuses[store.owner_username] === true;
-      const localSaysFollowing = localFollowedUsers.has(store.owner_username);
+      const key = `store:${store.owner_username}`;
+      const apiSaysFollowing = followStatuses[key] === true;
+      const localSaysFollowing = localFollowedUsers.has(key);
       return !apiSaysFollowing && !localSaysFollowing;
     });
   }, [suggestedStores, followStatuses, localFollowedUsers]);
@@ -165,33 +176,35 @@ export default function Explore() {
     },
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ["exploreFollowStatuses", currentUser?.username] });
+      const key = `${variables.type}:${variables.username}`;
       const previousFollowStatuses = queryClient.getQueryData(["exploreFollowStatuses", currentUser?.username]);
       queryClient.setQueryData(["exploreFollowStatuses", currentUser?.username], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          [variables.username]: !variables.isFollowing
+          [key]: !variables.isFollowing
         };
       });
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.add(variables.username);
+          newSet.add(key);
         } else {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         }
         return newSet;
       });
       return { previousFollowStatuses };
     },
     onError: (error, variables, context) => {
+      const key = `${variables.type}:${variables.username}`;
       queryClient.setQueryData(["exploreFollowStatuses", currentUser?.username], context.previousFollowStatuses);
       setLocalFollowedUsers(prev => {
         const newSet = new Set(prev);
         if (!variables.isFollowing) {
-          newSet.delete(variables.username);
+          newSet.delete(key);
         } else {
-          newSet.add(variables.username);
+          newSet.add(key);
         }
         return newSet;
       });
@@ -257,20 +270,20 @@ export default function Explore() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {filteredSuggestedUsers.map((user) => {
-                const isFollowing = followStatuses?.[user.username] || false;
+                const isFollowing = followStatuses?.[`user:${user.username}`] || false;
                 return (
-                  <div key={user.username} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                    <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600">
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-6 h-6 text-slate-400" />
-                        )}
+                  <div key={user.username} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
+                        <AvatarImg
+                          src={user.avatar_url}
+                          className="w-full h-full object-cover"
+                          fallback={<User className="w-6 h-6 text-slate-400" />}
+                        />
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{user.display_name || user.username}</p>
-                        <p className="text-xs text-slate-500">@{user.username}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.display_name || user.username}</p>
+                        <p className="text-xs text-slate-500 truncate">@{user.username}</p>
                       </div>
                     </Link>
                     <button
@@ -281,7 +294,7 @@ export default function Explore() {
                         isFollowing
                       })}
                       disabled={followMutation.isPending}
-                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${
                         isFollowing
                           ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           : 'bg-orange-600 text-white hover:bg-orange-700'
@@ -293,20 +306,20 @@ export default function Explore() {
                 );
               })}
               {filteredSuggestedStores.map((store) => {
-                const isFollowing = followStatuses?.[store.owner_username] || false;
+                const isFollowing = followStatuses?.[`store:${store.owner_username}`] || false;
                 return (
-                  <div key={store._id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                    <Link to={createPageUrl("StoreDetail") + `?id=${store._id}`} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600">
+                  <div key={store._id} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <Link to={storeUrl(store)} className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <Store className="w-6 h-6 text-slate-400" />
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{store.name}</p>
-                        <p className="text-xs text-slate-500">@{store.owner_username}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{store.name}</p>
+                        <p className="text-xs text-slate-500 truncate">@{store.owner_username}</p>
                       </div>
                     </Link>
                     <button
@@ -317,7 +330,7 @@ export default function Explore() {
                         isFollowing
                       })}
                       disabled={followMutation.isPending}
-                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${
                         isFollowing
                           ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           : 'bg-orange-600 text-white hover:bg-orange-700'
@@ -353,11 +366,11 @@ export default function Explore() {
                 className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[100px] hover:shadow-md transition-shadow"
               >
                 <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-600">
-                  {u.avatar_url ? (
-                    <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-orange-600 dark:text-orange-400 font-bold text-lg">{(u.username || u.display_name)?.[0]?.toUpperCase()}</span>
-                  )}
+                  <AvatarImg
+                    src={u.avatar_url}
+                    className="w-full h-full object-cover"
+                    fallback={<span className="text-orange-600 dark:text-orange-400 font-bold text-lg">{(u.username || u.display_name)?.[0]?.toUpperCase()}</span>}
+                  />
                 </div>
                 <span className="text-xs font-semibold text-slate-900 dark:text-white truncate w-full text-center">{u.display_name || u.username}</span>
                 <span className="text-[10px] text-slate-400 truncate w-full text-center">@{u.username}</span>

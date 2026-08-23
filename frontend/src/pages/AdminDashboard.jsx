@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { formatCurrency } from '@/lib/utils';
-import { adminAPI, vendorSubscriptionsAPI } from '@/api/apiClient';
+import { adminAPI } from '@/api/apiClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/components/providers/LanguageContext';
 import { 
@@ -58,7 +59,15 @@ import {
   Archive,
   Ban,
   Plus,
-  Crown
+  Crown,
+  DollarSign,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  FileText,
+  ExternalLink,
+  DatabaseBackup
 } from 'lucide-react';
 import { 
   Dialog,
@@ -93,13 +102,15 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 
-const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpdateVerification, onDelete }) => {
+const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpdateVerification, onDelete, products, productsLoading }) => {
   const { t } = useTranslation();
   if (!store) return null;
 
+  const owner = store.owner;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             {store.name}
@@ -112,10 +123,6 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">{t('admin.storeModal.ownerInfo')}</Label>
-              <div className="mt-1 font-medium">@{store.owner_username}</div>
-            </div>
             <div>
               <Label className="text-muted-foreground">{t('admin.storeModal.status')}</Label>
               <div className="mt-1">
@@ -152,22 +159,193 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.rating')}</div>
-                  <div className="text-xl font-bold">{store.rating || 'N/A'}</div>
+                  <div className="text-xl font-bold">{store.rating_avg || 'N/A'}</div>
                 </div>
               </div>
             </div>
 
-            {store.logo && (
+            {store.logo_url && (
               <div>
                 <Label className="text-muted-foreground">{t('admin.storeModal.logo')}</Label>
-                <img 
-                  src={store.logo} 
-                  alt={store.name} 
+                <img
+                  src={store.logo_url}
+                  alt={store.name}
                   className="mt-2 w-24 h-24 object-cover rounded-md border"
                 />
               </div>
             )}
           </div>
+        </div>
+
+        {/* Owner Profile */}
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-3">{t('admin.verifications.applicantSection')}</h4>
+          <div className="flex items-start gap-4 bg-muted p-4 rounded-lg">
+            {owner?.avatar_url && (
+              <img
+                src={owner.avatar_url}
+                alt={owner.display_name || owner.username}
+                className="w-16 h-16 object-cover rounded-full border shrink-0"
+              />
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantName')}</Label>
+                <div className="mt-1 font-medium flex items-center gap-1">
+                  {owner?.display_name || '—'}
+                  {owner?.is_verified && <ShieldCheckIcon className="w-4 h-4 text-orange-500" />}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantUsername')}</Label>
+                <div className="mt-1 font-medium">@{store.owner_username}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> {t('admin.verifications.applicantEmail')}</Label>
+                <div className="mt-1">{owner?.email || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {t('admin.verifications.applicantPhone')}</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  {owner?.phone_number || '—'}
+                  {owner?.phone_number && (
+                    <Badge variant={owner.is_phone_verified ? 'success' : 'outline'} className="text-[10px]">
+                      {owner.is_phone_verified ? t('admin.verifications.phoneVerified') : t('admin.verifications.phoneUnverified')}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantRole')}</Label>
+                <div className="mt-1 capitalize">{owner?.role || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantJoined')}</Label>
+                <div className="mt-1">{owner?.created_at ? new Date(owner.created_at).toLocaleDateString() : '—'}</div>
+              </div>
+              {owner?.bio && (
+                <div className="sm:col-span-2">
+                  <Label className="text-muted-foreground">{t('admin.storeModal.description')}</Label>
+                  <div className="mt-1 text-sm">{owner.bio}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Identity Verification (KYC) */}
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4" /> {t('admin.verifications.documentSection')}</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.docType')}</Label>
+                <div className="mt-1 capitalize">{store.identity_document_type?.replace('_', ' ') || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.docNumber')}</Label>
+                <div className="mt-1">{store.identity_document_number || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.colStatus')}</Label>
+                <div className="mt-1">
+                  <Badge variant={
+                    store.verification_status === 'approved' ? 'success' :
+                    store.verification_status === 'pending' ? 'warning' :
+                    store.verification_status === 'rejected' ? 'destructive' : 'default'
+                  }>
+                    {store.verification_status || 'unverified'}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.submittedAt')}</Label>
+                <div className="mt-1">{store.identity_submitted_at ? new Date(store.identity_submitted_at).toLocaleString() : '—'}</div>
+              </div>
+              {store.identity_reviewed_at && (
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.reviewedAt')}</Label>
+                  <div className="mt-1">
+                    {new Date(store.identity_reviewed_at).toLocaleString()}
+                    {store.identity_reviewed_by && <span className="text-muted-foreground"> · @{store.identity_reviewed_by}</span>}
+                  </div>
+                </div>
+              )}
+              {store.identity_rejection_reason && (
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.rejectionReason')}</Label>
+                  <div className="mt-1 text-sm italic">{store.identity_rejection_reason}</div>
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-muted-foreground">{t('admin.verifications.colImage')}</Label>
+              {store.identity_document_image_url ? (
+                <a href={store.identity_document_image_url} target="_blank" rel="noreferrer">
+                  <img
+                    src={store.identity_document_image_url}
+                    alt=""
+                    className="mt-2 w-full max-w-xs max-h-64 object-contain rounded-md border"
+                  />
+                </a>
+              ) : (
+                <div className="mt-1 text-sm text-muted-foreground">—</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            {t('admin.storeModal.products')} ({products.length})
+          </h4>
+          {productsLoading ? (
+            <div className="text-center py-8 text-muted-foreground">{t('admin.products.loading')}</div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">{t('admin.storeModal.noProducts')}</div>
+          ) : (
+            <div className="max-h-60 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.products.colProduct')}</TableHead>
+                    <TableHead>{t('admin.products.colPrice')}</TableHead>
+                    <TableHead>{t('admin.products.colStatus')}</TableHead>
+                    <TableHead>{t('admin.products.colSales')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product._id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {product.images && product.images[0] && (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.title}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{product.title}</div>
+                            <div className="text-xs text-muted-foreground">{product.category}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatCurrency(product.price)}</TableCell>
+                      <TableCell>
+                        <Badge variant={product.status === 'active' ? 'success' : 'outline'}>
+                          {product.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{product.sales_count || 0}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2 border-t pt-4 mt-4">
@@ -208,13 +386,571 @@ const StoreDetailsModal = ({ store, isOpen, onOpenChange, onUpdateStatus, onUpda
   );
 };
 
+const VerificationDetailsModal = ({ verification, isOpen, onOpenChange, onApprove, onReject }) => {
+  const { t } = useTranslation();
+  if (!verification) return null;
+
+  const applicant = verification.applicant;
+  const address = verification.address;
+  const social = verification.social_links || {};
+  const hasPayoutInfo = verification.payment_method || verification.bank_name || verification.bank_account_number
+    || verification.paypal_email || verification.mobile_money_number;
+  const hasSocialLinks = social.facebook || social.instagram || social.twitter || social.tiktok;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            {verification.name}
+            {verification.is_verified && <ShieldCheckIcon className="w-5 h-5 text-orange-500" />}
+          </DialogTitle>
+          <DialogDescription>
+            {t('admin.verifications.detailStoreId', { id: verification._id })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-2">
+          {/* Applicant */}
+          <div>
+            <h4 className="font-semibold mb-3">{t('admin.verifications.applicantSection')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted p-4 rounded-lg">
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantName')}</Label>
+                <div className="mt-1 font-medium">{applicant?.display_name || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantUsername')}</Label>
+                <div className="mt-1 font-medium">@{verification.owner_username}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> {t('admin.verifications.applicantEmail')}</Label>
+                <div className="mt-1">{applicant?.email || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {t('admin.verifications.applicantPhone')}</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  {applicant?.phone_number || '—'}
+                  {applicant?.phone_number && (
+                    <Badge variant={applicant.is_phone_verified ? 'success' : 'outline'} className="text-[10px]">
+                      {applicant.is_phone_verified ? t('admin.verifications.phoneVerified') : t('admin.verifications.phoneUnverified')}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantRole')}</Label>
+                <div className="mt-1 capitalize">{applicant?.role || '—'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.applicantJoined')}</Label>
+                <div className="mt-1">{applicant?.created_at ? new Date(applicant.created_at).toLocaleDateString() : '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* KYC Document */}
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4" /> {t('admin.verifications.documentSection')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.docType')}</Label>
+                  <div className="mt-1 capitalize">{verification.identity_document_type?.replace('_', ' ') || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.docNumber')}</Label>
+                  <div className="mt-1">{verification.identity_document_number || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.colStatus')}</Label>
+                  <div className="mt-1">
+                    <Badge variant={
+                      verification.verification_status === 'approved' ? 'success' :
+                      verification.verification_status === 'pending' ? 'warning' :
+                      verification.verification_status === 'rejected' ? 'destructive' : 'default'
+                    }>
+                      {verification.verification_status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.submittedAt')}</Label>
+                  <div className="mt-1">{verification.identity_submitted_at ? new Date(verification.identity_submitted_at).toLocaleString() : '—'}</div>
+                </div>
+                {verification.identity_reviewed_at && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.reviewedAt')}</Label>
+                    <div className="mt-1">
+                      {new Date(verification.identity_reviewed_at).toLocaleString()}
+                      {verification.identity_reviewed_by && <span className="text-muted-foreground"> · @{verification.identity_reviewed_by}</span>}
+                    </div>
+                  </div>
+                )}
+                {verification.identity_rejection_reason && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.rejectionReason')}</Label>
+                    <div className="mt-1 text-sm italic">{verification.identity_rejection_reason}</div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <Label className="text-muted-foreground">{t('admin.verifications.colImage')}</Label>
+                {verification.identity_document_image_url ? (
+                  <a href={verification.identity_document_image_url} target="_blank" rel="noreferrer">
+                    <img
+                      src={verification.identity_document_image_url}
+                      alt=""
+                      className="mt-2 w-full max-w-xs max-h-64 object-contain rounded-md border"
+                    />
+                  </a>
+                ) : (
+                  <div className="mt-1 text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Store */}
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2"><Store className="w-4 h-4" /> {t('admin.verifications.storeSection')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.storeModal.status')}</Label>
+                  <div className="mt-1">
+                    <Badge variant={verification.status === 'active' ? 'success' : verification.status === 'pending' ? 'warning' : 'destructive'}>
+                      {verification.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.verifications.category')}</Label>
+                  <div className="mt-1">{verification.category || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.storeModal.joinedAt')}</Label>
+                  <div className="mt-1">{verification.created_at ? new Date(verification.created_at).toLocaleDateString() : '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">{t('admin.storeModal.description')}</Label>
+                  <div className="mt-1 text-sm">{verification.description || t('admin.storeModal.noDescription')}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {t('admin.verifications.storePhone')}</Label>
+                  <div className="mt-1">{verification.phone_number || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {t('admin.verifications.storeAddress')}</Label>
+                  <div className="mt-1">{address || '—'}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground flex items-center gap-1"><Globe className="w-3 h-3" /> {t('admin.verifications.storeWebsite')}</Label>
+                  <div className="mt-1 break-all">{verification.website_url || '—'}</div>
+                </div>
+                {hasSocialLinks && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.socialLinks')}</Label>
+                    <div className="mt-1 text-sm space-y-0.5 break-all">
+                      {social.facebook && <div>Facebook: {social.facebook}</div>}
+                      {social.instagram && <div>Instagram: {social.instagram}</div>}
+                      {social.twitter && <div>Twitter: {social.twitter}</div>}
+                      {social.tiktok && <div>TikTok: {social.tiktok}</div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                {verification.logo_url && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.storeModal.logo')}</Label>
+                    <img src={verification.logo_url} alt={verification.name} className="mt-2 w-24 h-24 object-cover rounded-md border" />
+                  </div>
+                )}
+                <div className="bg-muted p-4 rounded-lg">
+                  <h5 className="font-semibold mb-2 text-sm">{t('admin.storeModal.metrics')}</h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.orders')}</div>
+                      <div className="text-xl font-bold">{verification.orders_count || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.products')}</div>
+                      <div className="text-xl font-bold">{verification.products_count || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.revenue')}</div>
+                      <div className="text-xl font-bold text-success">{formatCurrency(verification.total_revenue || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase">{t('admin.storeModal.rating')}</div>
+                      <div className="text-xl font-bold">{verification.rating_avg || 'N/A'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payout Info */}
+          {hasPayoutInfo && (
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2"><Wallet className="w-4 h-4" /> {t('admin.verifications.payoutSection')}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted p-4 rounded-lg text-sm">
+                {verification.payment_method && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.paymentMethod')}</Label>
+                    <div className="mt-1 capitalize">{verification.payment_method}</div>
+                  </div>
+                )}
+                {verification.bank_name && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.bankName')}</Label>
+                    <div className="mt-1">{verification.bank_name}</div>
+                  </div>
+                )}
+                {verification.bank_account_name && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.bankAccountName')}</Label>
+                    <div className="mt-1">{verification.bank_account_name}</div>
+                  </div>
+                )}
+                {verification.bank_account_number && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.bankAccountNumber')}</Label>
+                    <div className="mt-1">{verification.bank_account_number}</div>
+                  </div>
+                )}
+                {verification.routing_number && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.routingNumber')}</Label>
+                    <div className="mt-1">{verification.routing_number}</div>
+                  </div>
+                )}
+                {verification.paypal_email && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.paypalEmail')}</Label>
+                    <div className="mt-1">{verification.paypal_email}</div>
+                  </div>
+                )}
+                {verification.mobile_money_number && (
+                  <div>
+                    <Label className="text-muted-foreground">{t('admin.verifications.mobileMoneyNumber')}</Label>
+                    <div className="mt-1">{verification.mobile_money_number}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 border-t pt-4 mt-4">
+          {verification.verification_status === 'pending' && (
+            <div className="flex-1 flex gap-2">
+              <Button
+                className="bg-success hover:bg-success/90"
+                onClick={() => onApprove(verification)}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" /> {t('admin.verifications.approve')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => onReject(verification)}
+              >
+                <AlertCircle className="w-4 h-4 mr-2" /> {t('admin.verifications.reject')}
+              </Button>
+            </div>
+          )}
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// formatCurrency rounds to whole RWF, which is right for real balances but
+// hides a 3% iTechPay charge on small breakdown amounts (e.g. 3% of RF 10 is
+// RF 0.3, invisible once rounded) — this keeps 2dp only when there's a
+// fractional part to show, so normal whole-unit figures stay unchanged.
+const formatBreakdownAmount = (amount) => {
+  if (amount === undefined || amount === null || isNaN(amount)) return formatCurrency(0);
+  if (Number.isInteger(amount)) return formatCurrency(amount);
+  return new Intl.NumberFormat('en-RW', { style: 'currency', currency: 'RWF', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+};
+
+// One independent cashout pool (profit or orders): its own balance cards,
+// send form, and history table. Rendered twice with different props so the
+// two pools never share state or get confused with each other.
+const CashoutTypeSection = ({ desc, summary, breakdown, form, onFormChange, onSubmit, submitting, cashouts, onDelete, onRefresh, loading, t }) => (
+  <div className="space-y-4">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('admin.cashouts.grandTotalRevenue')}</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(summary?.grandTotalRevenue || 0)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('admin.cashouts.totalCashedOut')}</CardTitle>
+          <Wallet className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(summary?.totalCashedOut || 0)}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('admin.cashouts.availableBalance')}</CardTitle>
+          <CreditCard className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-success">{formatCurrency(summary?.availableBalance || 0)}</div>
+        </CardContent>
+      </Card>
+    </div>
+
+    {breakdown && 'netOrdersRevenue' in breakdown && (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('admin.cashouts.breakdownTitle')}</CardTitle>
+          <CardDescription>
+            {t('admin.cashouts.ordersBreakdownDesc', { feePercent: breakdown.platformFeePercent })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm max-w-md">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('admin.cashouts.breakdownGrossOrders')}</span>
+              <span className="font-medium">{formatBreakdownAmount(breakdown.orderTotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                {t('admin.cashouts.breakdownOrderCommission')} ({breakdown.platformFeePercent}%)
+              </span>
+              <span className="text-destructive">-{formatBreakdownAmount(breakdown.platformCommission)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('admin.cashouts.breakdownAffiliateCommission')}</span>
+              <span className="text-destructive">-{formatBreakdownAmount(breakdown.affiliateCommission)}</span>
+            </div>
+            <div className="flex justify-between border-t-2 pt-2">
+              <span className="font-bold">{t('admin.cashouts.breakdownOrdersTotal')}</span>
+              <span className="font-bold text-success">{formatBreakdownAmount(breakdown.netOrdersRevenue)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    {breakdown && 'subscriptions' in breakdown && (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('admin.cashouts.breakdownTitle')}</CardTitle>
+          <CardDescription>
+            {t('admin.cashouts.breakdownDesc', { feePercent: breakdown.platformFeePercent, itecPercent: breakdown.itecChargeRatePercent })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('admin.cashouts.breakdownComponent')}</TableHead>
+                  <TableHead className="text-right">{t('admin.cashouts.breakdownGross')}</TableHead>
+                  <TableHead className="text-right">{t('admin.cashouts.breakdownItec', { percent: breakdown.itecChargeRatePercent })}</TableHead>
+                  <TableHead className="text-right">{t('admin.cashouts.breakdownNet')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">{t('admin.cashouts.breakdownOrderCommission')}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t('admin.cashouts.breakdownOrderCommissionHint', { percent: breakdown.platformFeePercent, total: formatCurrency(breakdown.orderCommission.orderTotal) })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatBreakdownAmount(breakdown.orderCommission.gross)}</TableCell>
+                  <TableCell className="text-right text-destructive">-{formatBreakdownAmount(breakdown.orderCommission.itecCharge)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatBreakdownAmount(breakdown.orderCommission.net)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">{t('admin.cashouts.breakdownAffiliateCommission')}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t('admin.cashouts.breakdownAffiliateCommissionHint', { percent: breakdown.platformFeePercent, total: formatCurrency(breakdown.affiliateCommission.affiliateTotal) })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatBreakdownAmount(breakdown.affiliateCommission.gross)}</TableCell>
+                  <TableCell className="text-right text-destructive">-{formatBreakdownAmount(breakdown.affiliateCommission.itecCharge)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatBreakdownAmount(breakdown.affiliateCommission.net)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">{t('admin.cashouts.breakdownSubscriptions')}</div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatBreakdownAmount(breakdown.subscriptions.gross)}</TableCell>
+                  <TableCell className="text-right text-destructive">-{formatBreakdownAmount(breakdown.subscriptions.itecCharge)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatBreakdownAmount(breakdown.subscriptions.net)}</TableCell>
+                </TableRow>
+                <TableRow className="border-t-2">
+                  <TableCell className="font-bold">{t('admin.cashouts.breakdownTotal')}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell className="text-right font-bold text-success">{formatBreakdownAmount(breakdown.grandTotalRevenue)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('admin.cashouts.newTitle')}</CardTitle>
+        <CardDescription>{desc}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.amount')}</Label>
+            <Input
+              type="number"
+              min="1"
+              value={form.amount}
+              onChange={(e) => onFormChange({ ...form, amount: e.target.value })}
+              placeholder="10000"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.phoneNumber')}</Label>
+            <Input
+              value={form.phoneNumber}
+              onChange={(e) => onFormChange({ ...form, phoneNumber: e.target.value })}
+              placeholder="0798760888"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.provider')}</Label>
+            <Select value={form.provider} onValueChange={(v) => onFormChange({ ...form, provider: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mtn">MTN</SelectItem>
+                <SelectItem value="airtel">Airtel</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>{t('admin.cashouts.note')}</Label>
+            <Input
+              value={form.note}
+              onChange={(e) => onFormChange({ ...form, note: e.target.value })}
+              placeholder={t('admin.cashouts.notePlaceholder')}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={onSubmit} disabled={submitting}>
+            {submitting ? t('common.loading') : t('admin.cashouts.send')}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+        <div>
+          <CardTitle>{t('admin.cashouts.historyTitle')}</CardTitle>
+          <CardDescription>{t('admin.cashouts.historyDesc')}</CardDescription>
+        </div>
+        <Button onClick={onRefresh} disabled={loading} variant="ghost" size="sm">
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          {t('common.refresh')}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('admin.cashouts.colDate')}</TableHead>
+                <TableHead>{t('admin.cashouts.colAmount')}</TableHead>
+                <TableHead>{t('admin.cashouts.colPhone')}</TableHead>
+                <TableHead>{t('admin.cashouts.colProvider')}</TableHead>
+                <TableHead>{t('admin.cashouts.colBy')}</TableHead>
+                <TableHead>{t('admin.cashouts.colNote')}</TableHead>
+                <TableHead className="text-right">{t('admin.cashouts.colActions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cashouts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    {t('admin.cashouts.empty')}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                cashouts.map((c) => (
+                  <TableRow key={c._id}>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(c.createdAt).toLocaleDateString()}<br/>
+                      {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </TableCell>
+                    <TableCell className="font-bold">{formatCurrency(c.amount)}</TableCell>
+                    <TableCell>{c.phoneNumber}</TableCell>
+                    <TableCell className="uppercase">
+                      <Badge variant="outline">{c.provider}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {c.requestedBy?.display_name || c.requestedBy?.email || '—'}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground italic max-w-[160px] truncate" title={c.note}>
+                      {c.note || '—'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10 h-8"
+                        onClick={() => onDelete(c._id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
+
+  // Sidebar links navigate here with ?tab=<name> - keep the open tab in sync
+  // so clicking a sidebar item always lands on the right admin section.
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -223,6 +959,9 @@ const AdminDashboard = () => {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [userPage, setUserPage] = useState(1);
   const [userPagination, setUserPagination] = useState(null);
+  const [planModalUser, setPlanModalUser] = useState(null);
+  const [planModalForm, setPlanModalForm] = useState({ plan: 'pro', billing_cycle: 'monthly' });
+  const [planModalSaving, setPlanModalSaving] = useState(false);
 
   // Stores State
   const [stores, setStores] = useState([]);
@@ -234,6 +973,8 @@ const AdminDashboard = () => {
   const [selectedStoreIds, setSelectedStoreIds] = useState([]);
   const [storePage, setStorePage] = useState(1);
   const [storePagination, setStorePagination] = useState(null);
+  const [storeProducts, setStoreProducts] = useState([]);
+  const [storeProductsLoading, setStoreProductsLoading] = useState(false);
 
   // Products State
   const [products, setProducts] = useState([]);
@@ -251,6 +992,11 @@ const AdminDashboard = () => {
   const [orderPage, setOrderPage] = useState(1);
   const [orderPagination, setOrderPagination] = useState(null);
 
+  // Backups State
+  const [backups, setBackups] = useState([]);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupRunning, setBackupRunning] = useState(false);
+
   // Withdrawals State
   const [withdrawals, setWithdrawals] = useState([]);
   const [withdrawalLoading, setWithdrawalLoading] = useState(false);
@@ -260,6 +1006,29 @@ const AdminDashboard = () => {
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   const [withdrawalAction, setWithdrawalAction] = useState('completed');
 
+  // Cashouts State — 'profit' and 'orders' are two independent pools with
+  // their own balance and history, so each gets its own form state.
+  const [cashoutVerified, setCashoutVerified] = useState(false);
+  const [cashoutPassword, setCashoutPassword] = useState('');
+  const [cashoutVerifying, setCashoutVerifying] = useState(false);
+  const [cashoutSubTab, setCashoutSubTab] = useState('profit');
+  const [cashouts, setCashouts] = useState([]);
+  const [cashoutsLoading, setCashoutsLoading] = useState(false);
+  const emptyCashoutForm = { amount: '', phoneNumber: '', provider: 'mtn', note: '' };
+  const [profitCashoutForm, setProfitCashoutForm] = useState(emptyCashoutForm);
+  const [ordersCashoutForm, setOrdersCashoutForm] = useState(emptyCashoutForm);
+  const [cashoutSubmitting, setCashoutSubmitting] = useState(false);
+
+  // Verifications State
+  const [verifications, setVerifications] = useState([]);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationFilter, setVerificationFilter] = useState('pending');
+  const [selectedVerification, setSelectedVerification] = useState(null);
+  const [verificationReason, setVerificationReason] = useState('');
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [verificationAction, setVerificationAction] = useState('approve');
+  const [isVerificationDetailsOpen, setIsVerificationDetailsOpen] = useState(false);
+
   // Reports State
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -268,6 +1037,8 @@ const AdminDashboard = () => {
   const [reportNotes, setReportNotes] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportAction, setReportAction] = useState('resolved');
+  const [contentAction, setContentAction] = useState('none');
+  const [isReportViewOnly, setIsReportViewOnly] = useState(false);
 
   // Activity Logs State
   const [activityLogs, setActivityLogs] = useState([]);
@@ -300,12 +1071,12 @@ const AdminDashboard = () => {
 
   const fetchPlanPrices = useCallback(async () => {
     try {
-      const data = await vendorSubscriptionsAPI.getPlans();
+      const data = await adminAPI.getSubscriptionPlans();
       if (data?.plans) {
         setPlanPrices({
-          free:  { monthly: data.plans.free?.price_monthly  ?? 0,     annual: data.plans.free?.price_annual  ?? 0 },
-          pro:   { monthly: data.plans.pro?.price_monthly   ?? 29000, annual: data.plans.pro?.price_annual   ?? 23000 },
-          elite: { monthly: data.plans.elite?.price_monthly ?? 79000, annual: data.plans.elite?.price_annual ?? 63000 },
+          free:  { monthly: data.plans.free?.monthly  ?? 0,     annual: data.plans.free?.annual  ?? 0 },
+          pro:   { monthly: data.plans.pro?.monthly   ?? 29000, annual: data.plans.pro?.annual   ?? 23000 },
+          elite: { monthly: data.plans.elite?.monthly ?? 99000, annual: data.plans.elite?.annual ?? 79000 },
         });
       }
     } catch { /* keep defaults */ }
@@ -316,7 +1087,7 @@ const AdminDashboard = () => {
   const handleSavePlanPrices = async () => {
     setPlanPricesSaving(true);
     try {
-      await vendorSubscriptionsAPI.updatePlans(planPrices);
+      await adminAPI.updateSubscriptionPlans(planPrices);
       toast({ title: t('common.success'), description: t('admin.subscriptions.pricesSaved') });
     } catch (err) {
       toast({ title: t('common.error'), description: err?.message || t('admin.subscriptions.pricesSaveFailed'), variant: 'destructive' });
@@ -329,6 +1100,7 @@ const AdminDashboard = () => {
   const [posts, setPosts] = useState([]);
   const [postSearch, setPostSearch] = useState('');
   const [postFilter, setPostFilter] = useState('all');
+  const [postStatusFilter, setPostStatusFilter] = useState('all');
   const [postLoading, setPostLoading] = useState(false);
   const [postPage, setPostPage] = useState(1);
   const [postPagination, setPostPagination] = useState(null);
@@ -408,6 +1180,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchStoreProducts = async (storeId) => {
+    try {
+      setStoreProductsLoading(true);
+      const data = await adminAPI.getStoreProducts(storeId, { limit: 50 });
+      setStoreProducts(data.products || []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('admin.products.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setStoreProductsLoading(false);
+    }
+  };
+
   const fetchProducts = async (page = productPage) => {
     try {
       setProductLoading(true);
@@ -452,6 +1240,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchBackups = async () => {
+    try {
+      setBackupLoading(true);
+      const data = await adminAPI.getBackups({});
+      setBackups(data.backups || []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('admin.backups.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
   const fetchWithdrawals = async (filter = withdrawalFilter) => {
     try {
       setWithdrawalLoading(true);
@@ -467,6 +1271,110 @@ const AdminDashboard = () => {
       });
     } finally {
       setWithdrawalLoading(false);
+    }
+  };
+
+  const fetchCashouts = async () => {
+    try {
+      setCashoutsLoading(true);
+      const data = await adminAPI.getCashouts();
+      setCashouts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCashoutsLoading(false);
+    }
+  };
+
+  const handleVerifyCashoutPassword = async () => {
+    if (!cashoutPassword) return;
+    try {
+      setCashoutVerifying(true);
+      await adminAPI.verifyCashoutPassword(cashoutPassword);
+      setCashoutVerified(true);
+      setCashoutPassword('');
+      fetchCashouts();
+      fetchStats();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.verifyFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCashoutVerifying(false);
+    }
+  };
+
+  const handleCreateCashout = async (type) => {
+    const form = type === 'profit' ? profitCashoutForm : ordersCashoutForm;
+    const setForm = type === 'profit' ? setProfitCashoutForm : setOrdersCashoutForm;
+
+    const amountNum = Number(form.amount);
+    if (!amountNum || amountNum <= 0) {
+      toast({ title: t('common.error'), description: t('admin.cashouts.invalidAmount'), variant: 'destructive' });
+      return;
+    }
+    if (!form.phoneNumber.trim()) {
+      toast({ title: t('common.error'), description: t('admin.cashouts.phoneRequired'), variant: 'destructive' });
+      return;
+    }
+    try {
+      setCashoutSubmitting(true);
+      await adminAPI.createCashout({
+        type,
+        amount: amountNum,
+        phoneNumber: form.phoneNumber.trim(),
+        provider: form.provider,
+        note: form.note.trim() || undefined,
+      });
+      toast({ title: t('common.success'), description: t('admin.cashouts.sentSuccess') });
+      setForm(emptyCashoutForm);
+      fetchCashouts();
+      fetchStats();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.sendFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCashoutSubmitting(false);
+    }
+  };
+
+  const handleDeleteCashout = async (id) => {
+    if (!window.confirm(t('admin.cashouts.confirmDelete'))) return;
+    try {
+      await adminAPI.deleteCashout(id);
+      toast({ title: t('common.success'), description: t('admin.cashouts.deletedSuccess') });
+      fetchCashouts();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.cashouts.failedDelete'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const fetchVerifications = async (filter = verificationFilter) => {
+    try {
+      setVerificationLoading(true);
+      const data = await adminAPI.getVerifications({ status: filter });
+      setVerifications(data.stores || []);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('admin.verifications.failedFetch'),
+        variant: 'destructive',
+      });
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
@@ -538,7 +1446,7 @@ const AdminDashboard = () => {
   const fetchSubscriptions = async () => {
     try {
       setSubscriptionsLoading(true);
-      const data = await vendorSubscriptionsAPI.list({ search: subscriptionSearch });
+      const data = await adminAPI.getSubscriptions({ search: subscriptionSearch });
       setSubscriptions(data.subscriptions || []);
     } catch (error) {
       toast({
@@ -557,6 +1465,7 @@ const AdminDashboard = () => {
       const data = await adminAPI.getPosts({
         search: postSearch,
         visibility: postFilter === 'all' ? undefined : postFilter,
+        status: postStatusFilter === 'all' ? undefined : postStatusFilter,
         page,
         limit: 10,
       });
@@ -576,12 +1485,15 @@ const AdminDashboard = () => {
     if (activeTab === 'products') fetchProducts();
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'withdrawals') fetchWithdrawals();
+    if (activeTab === 'cashouts' && cashoutVerified) fetchCashouts();
+    if (activeTab === 'verifications') fetchVerifications();
     if (activeTab === 'moderation') fetchReports();
     if (activeTab === 'logs') fetchActivityLogs();
+    if (activeTab === 'backups') fetchBackups();
     if (activeTab === 'subscriptions') fetchSubscriptions();
     if (activeTab === 'announcements') fetchAnnouncements();
     if (activeTab === 'posts') { setPostPage(1); fetchPosts(1); }
-  }, [activeTab, user]);
+  }, [activeTab, user, cashoutVerified]);
 
   const handleBlockUser = async (userId, isBlocked) => {
     try {
@@ -736,6 +1648,47 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleUpdatePostStatus = async (postId, status) => {
+    const confirmMessages = {
+      disabled: t('admin.posts.confirmDisable'),
+      archived: t('admin.posts.confirmArchive'),
+      active: t('admin.posts.confirmRestore'),
+    };
+    if (!window.confirm(confirmMessages[status])) return;
+    try {
+      await adminAPI.updatePostStatus(postId, status);
+      toast({ title: t('common.success'), description: t('admin.posts.statusUpdated', { status: t(`admin.posts.status_${status}`) }) });
+      fetchPosts();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.posts.failedUpdateStatus'), variant: 'destructive' });
+    }
+  };
+
+  const handleRunBackup = async () => {
+    setBackupRunning(true);
+    try {
+      const backup = await adminAPI.runBackup();
+      if (backup.status === 'success') {
+        toast({ title: t('common.success'), description: t('admin.backups.runSuccess') });
+      } else {
+        toast({ title: t('common.error'), description: backup.error_message || t('admin.backups.runFailed'), variant: 'destructive' });
+      }
+      fetchBackups();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.backups.runFailed'), variant: 'destructive' });
+    } finally {
+      setBackupRunning(false);
+    }
+  };
+
+  const handleDownloadBackup = async (backup) => {
+    try {
+      await adminAPI.downloadBackup(backup._id, backup.filename);
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.backups.failedDownload'), variant: 'destructive' });
+    }
+  };
+
   const handleWithdrawalStatus = async (id, status, notes = '') => {
     try {
       await adminAPI.updateWithdrawalStatus(id, status, notes);
@@ -755,9 +1708,28 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleResolveReport = async (id, status, notes = '') => {
+  const handleVerificationAction = async (storeId, action, reason = '') => {
     try {
-      await adminAPI.resolveReport(id, status, notes);
+      await adminAPI.updateVerification(storeId, action, reason);
+      toast({
+        title: t('common.success'),
+        description: action === 'approve' ? t('admin.verifications.approved') : t('admin.verifications.rejected'),
+      });
+      fetchVerifications();
+      setIsVerificationModalOpen(false);
+      setVerificationReason('');
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error.message || t('admin.verifications.failedUpdate'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleResolveReport = async (id, status, notes = '', action = 'none') => {
+    try {
+      await adminAPI.resolveReport(id, status, notes, action);
       toast({
         title: t('common.success'),
         description: t('admin.moderation.reportStatusUpdated', { status }),
@@ -765,6 +1737,7 @@ const AdminDashboard = () => {
       fetchReports();
       setIsReportModalOpen(false);
       setReportNotes('');
+      setContentAction('none');
     } catch (error) {
       toast({
         title: t('common.error'),
@@ -854,6 +1827,28 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleAssignPlan = async () => {
+    if (!planModalUser) return;
+    setPlanModalSaving(true);
+    try {
+      await adminAPI.assignUserSubscription(planModalUser._id, planModalForm);
+      toast({
+        title: t('common.success'),
+        description: t('admin.users.assignPlanSuccess', { plan: planModalForm.plan, user: planModalUser.username }),
+      });
+      setPlanModalUser(null);
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: error?.message || t('admin.users.assignPlanFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setPlanModalSaving(false);
+    }
+  };
+
   const handleDeleteStore = async (storeId) => {
     if (!window.confirm(t('admin.stores.confirmDelete'))) return;
     try {
@@ -876,11 +1871,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResolveDispute = async (orderId, resolution) => {
+    try {
+      await adminAPI.resolveOrderDispute(orderId, resolution);
+      toast({
+        title: t('common.success'),
+        description: resolution === 'release' ? t('admin.orders.disputeReleased') : t('admin.orders.disputeRefunded'),
+      });
+      fetchOrders();
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('admin.orders.failedResolveDispute'), variant: 'destructive' });
+    }
+  };
+
   const PaginationControls = ({ pagination, page, setPage, onFetch }) => {
     if (!pagination || pagination.pages <= 1) return null;
     return (
-      <div className="flex items-center justify-between pt-4">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+        <p className="text-sm text-muted-foreground text-center sm:text-left">
           {t('admin.pagination.showing', {
             from: ((page - 1) * pagination.limit) + 1,
             to: Math.min(page * pagination.limit, pagination.total),
@@ -935,96 +1943,118 @@ const AdminDashboard = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.users || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.platformUsers')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.activeStores')}</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.stores?.active || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.pendingApproval', { count: stats?.counts?.stores?.pending || 0 })}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.totalProducts')}</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.products || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.liveProducts')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.pendingWithdrawals')}</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.withdrawals?.pending || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.awaitingProcessing')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.pendingReports')}</CardTitle>
-            <Flag className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.counts?.reports?.pending || 0}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.reportsToReview')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('admin.subscriptionRevenue')}</CardTitle>
-            <Crown className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.subscriptions?.total_revenue ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{t('admin.activeSubscriptions', { count: stats?.counts?.subscriptions?.active || 0 })}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-4" onValueChange={setActiveTab}>
-        <TabsList className="w-full overflow-x-auto auto-rows-[auto] lg:grid lg:grid-cols-12 lg:w-auto whitespace-nowrap scrollbar-hide">
-          <TabsTrigger value="overview" className="whitespace-nowrap">{t('admin.tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="users" className="whitespace-nowrap">{t('admin.tabs.users')}</TabsTrigger>
-          <TabsTrigger value="stores" className="whitespace-nowrap">{t('admin.tabs.stores')}</TabsTrigger>
-          <TabsTrigger value="products" className="whitespace-nowrap">{t('admin.tabs.products')}</TabsTrigger>
-          <TabsTrigger value="posts" className="whitespace-nowrap">{t('admin.tabs.posts')}</TabsTrigger>
-          <TabsTrigger value="announcements" className="whitespace-nowrap">{t('admin.tabs.announcements')}</TabsTrigger>
-          <TabsTrigger value="subscriptions" className="whitespace-nowrap">{t('admin.tabs.subscriptions')}</TabsTrigger>
-          <TabsTrigger value="moderation" className="whitespace-nowrap">{t('admin.tabs.moderation')}</TabsTrigger>
-          <TabsTrigger value="orders" className="whitespace-nowrap">{t('admin.tabs.orders')}</TabsTrigger>
-          <TabsTrigger value="withdrawals" className="whitespace-nowrap">{t('admin.tabs.withdrawals')}</TabsTrigger>
-          <TabsTrigger value="logs" className="whitespace-nowrap">{t('admin.tabs.logs')}</TabsTrigger>
-          <TabsTrigger value="settings" className="whitespace-nowrap">{t('admin.tabs.settings')}</TabsTrigger>
+      <Tabs value={activeTab} className="space-y-4" onValueChange={setActiveTab}>
+        <TabsList className="w-full h-auto flex-nowrap justify-start overflow-x-auto overscroll-x-contain snap-x snap-mandatory whitespace-nowrap scrollbar-hide">
+          <TabsTrigger value="overview" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="users" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.users')}</TabsTrigger>
+          <TabsTrigger value="stores" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.stores')}</TabsTrigger>
+          <TabsTrigger value="products" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.products')}</TabsTrigger>
+          <TabsTrigger value="posts" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.posts')}</TabsTrigger>
+          <TabsTrigger value="announcements" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.announcements')}</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.subscriptions')}</TabsTrigger>
+          <TabsTrigger value="moderation" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.moderation')}</TabsTrigger>
+          <TabsTrigger value="orders" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.orders')}</TabsTrigger>
+          <TabsTrigger value="withdrawals" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.withdrawals')}</TabsTrigger>
+          <TabsTrigger value="cashouts" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.cashouts')}</TabsTrigger>
+          <TabsTrigger value="verifications" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.verifications')}</TabsTrigger>
+          <TabsTrigger value="logs" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.logs')}</TabsTrigger>
+          <TabsTrigger value="backups" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.backups')}</TabsTrigger>
+          <TabsTrigger value="settings" className="snap-start whitespace-nowrap shrink-0">{t('admin.tabs.settings')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.users || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.platformUsers')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.activeStores')}</CardTitle>
+                <Store className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.stores?.active || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.pendingApproval', { count: stats?.counts?.stores?.pending || 0 })}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalProducts')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.products || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.liveProducts')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingWithdrawals')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.withdrawals?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingProcessing')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingReports')}</CardTitle>
+                <Flag className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.reports?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.reportsToReview')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.disputedOrders')}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.disputed_orders || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingResolution')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.platformEarnings')}</CardTitle>
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.platform_earnings ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.platformEarningsSub', { fee: stats?.counts?.platform_fee_percent ?? 5 })}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.subscriptionRevenue')}</CardTitle>
+                <Crown className="h-4 w-4 text-amber-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.subscriptions?.total_revenue ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.activeSubscriptions', { count: stats?.counts?.subscriptions?.active || 0 })}</p>
+              </CardContent>
+            </Card>
+          </div>
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
@@ -1128,6 +2158,18 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.users || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.platformUsers')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1265,6 +2307,13 @@ const AdminDashboard = () => {
                                 <ShieldAlert className="mr-2 h-4 w-4" />
                                 {t('admin.users.changeRole')}
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setPlanModalForm({ plan: 'pro', billing_cycle: 'monthly' });
+                                setPlanModalUser(u);
+                              }}>
+                                <Crown className="mr-2 h-4 w-4 text-amber-500" />
+                                {t('admin.users.assignPlan')}
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
@@ -1289,9 +2338,76 @@ const AdminDashboard = () => {
               />
             </CardContent>
           </Card>
+
+          <Dialog open={!!planModalUser} onOpenChange={(open) => !open && setPlanModalUser(null)}>
+            <DialogContent className="max-w-[95vw] sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t('admin.users.assignPlanTitle')}</DialogTitle>
+                <DialogDescription>
+                  {t('admin.users.assignPlanDesc', { user: planModalUser?.username })}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label>{t('admin.users.planLabel')}</Label>
+                  <Select
+                    value={planModalForm.plan}
+                    onValueChange={(v) => setPlanModalForm((prev) => ({ ...prev, plan: v }))}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">{t('admin.users.planFree')}</SelectItem>
+                      <SelectItem value="pro">{t('admin.users.planPro')}</SelectItem>
+                      <SelectItem value="elite">{t('admin.users.planElite')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {planModalForm.plan !== 'free' && (
+                  <div className="space-y-2">
+                    <Label>{t('admin.users.billingCycleLabel')}</Label>
+                    <Select
+                      value={planModalForm.billing_cycle}
+                      onValueChange={(v) => setPlanModalForm((prev) => ({ ...prev, billing_cycle: v }))}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">{t('subscription.monthly')}</SelectItem>
+                        <SelectItem value="annual">{t('subscription.annual')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">{t('admin.users.assignPlanNote')}</p>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setPlanModalUser(null)} disabled={planModalSaving}>
+                  {t('common.cancel')}
+                </Button>
+                <Button onClick={handleAssignPlan} disabled={planModalSaving}>
+                  {planModalSaving ? t('common.loading') : t('admin.users.assignPlanConfirm')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="stores" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.activeStores')}</CardTitle>
+                <Store className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.stores?.active || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.pendingApproval', { count: stats?.counts?.stores?.pending || 0 })}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1408,6 +2524,7 @@ const AdminDashboard = () => {
                           <div className="flex flex-col text-xs">
                             <span>{t('admin.stores.productCount', { count: s.products_count || 0 })}</span>
                             <span>{t('admin.stores.orderCount', { count: s.orders_count || 0 })}</span>
+                            <span className="text-success font-medium">{formatCurrency(s.total_revenue || 0)}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -1418,6 +2535,7 @@ const AdminDashboard = () => {
                               className="h-8 w-8 p-0"
                               onClick={() => {
                                 setSelectedStore(s);
+                                fetchStoreProducts(s._id);
                                 setIsStoreModalOpen(true);
                               }}
                             >
@@ -1476,20 +2594,34 @@ const AdminDashboard = () => {
             onUpdateStatus={handleUpdateStoreStatus}
             onUpdateVerification={handleUpdateStoreVerification}
             onDelete={handleDeleteStore}
+            products={storeProducts}
+            productsLoading={storeProductsLoading}
           />
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalProducts')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.products || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.liveProducts')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle>{t('admin.products.title')}</CardTitle>
                   <CardDescription>{t('admin.products.desc')}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 mr-4">
-                    <Label htmlFor="product-status" className="text-xs">{t('admin.products.statusLabel')}</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="product-status" className="text-xs whitespace-nowrap">{t('admin.products.statusLabel')}</Label>
                     <Select value={productFilter} onValueChange={setProductFilter}>
                       <SelectTrigger id="product-status" className="w-[120px] h-9">
                         <SelectValue placeholder={t('admin.products.allStatus')} />
@@ -1503,7 +2635,7 @@ const AdminDashboard = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="relative flex-1 sm:flex-none">
+                  <div className="relative flex-1 sm:flex-none min-w-[140px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder={t('admin.products.searchPlaceholder')}
@@ -1520,7 +2652,81 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              {/* Mobile: card list */}
+              <div className="md:hidden space-y-3">
+                {products.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">{t('admin.products.empty')}</div>
+                ) : (
+                  products.map((p) => (
+                    <div key={p._id} className="border rounded-lg p-3 space-y-3">
+                      <div className="flex items-start gap-3">
+                        {p.images && p.images[0] ? (
+                          <img src={p.images[0]} alt="" className="w-12 h-12 object-cover rounded bg-muted shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center shrink-0">
+                            <Package className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{p.title}</div>
+                          <div className="text-xs text-muted-foreground truncate">{p.store_name} · @{p.vendor_username}</div>
+                          <div className="text-xs text-muted-foreground">ID: {p._id.substring(0, 8)}...</div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>{t('admin.products.menuLabel')}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => window.open(`/productdetail?id=${p._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}>
+                              <ExternalLink className="w-4 h-4 mr-2" /> {t('admin.products.viewInStore')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleUpdateProductStatus(p._id, 'active')}>
+                              <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.products.activate')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUpdateProductStatus(p._id, 'archived')}>
+                              <Archive className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.products.archive')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteProduct(p._id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> {t('admin.products.deleteProduct')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{formatCurrency(p.price)}</span>
+                          {p.compare_at_price > p.price && (
+                            <span className="text-xs text-muted-foreground line-through">{formatCurrency(p.compare_at_price)}</span>
+                          )}
+                        </div>
+                        <Badge variant={
+                          p.status === 'active' ? 'success' :
+                          p.status === 'draft' ? 'warning' :
+                          p.status === 'sold_out' ? 'destructive' : 'outline'
+                        }>
+                          {p.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{t('admin.products.salesCount', { count: p.sales_count || 0 })}</span>
+                        <span>{t('admin.products.viewsCount', { count: p.views_count || 0 })}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop / tablet: table */}
+              <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1573,8 +2779,8 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant={
-                            p.status === 'active' ? 'success' : 
-                            p.status === 'draft' ? 'warning' : 
+                            p.status === 'active' ? 'success' :
+                            p.status === 'draft' ? 'warning' :
                             p.status === 'sold_out' ? 'destructive' : 'outline'
                           }>
                             {p.status}
@@ -1588,6 +2794,15 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              title={t('admin.products.viewInStore')}
+                              onClick={() => window.open(`/productdetail?id=${p._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -1604,7 +2819,7 @@ const AdminDashboard = () => {
                                   <Archive className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.products.archive')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => handleDeleteProduct(p._id)}
                                   className="text-destructive"
                                 >
@@ -1631,14 +2846,36 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.disputedOrders')}</CardTitle>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.disputed_orders || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingResolution')}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.totalSales')}</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.total_sales ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.totalPlatformVolume')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle>{t('admin.orders.title')}</CardTitle>
                   <CardDescription>{t('admin.orders.desc')}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-muted-foreground" />
                     <Select value={orderFilter} onValueChange={(v) => { setOrderFilter(v); setOrderPage(1); }}>
@@ -1657,7 +2894,7 @@ const AdminDashboard = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="relative flex-1 sm:flex-none">
+                  <div className="relative flex-1 sm:flex-none min-w-[140px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder={t('admin.orders.searchPlaceholder')}
@@ -1720,6 +2957,9 @@ const AdminDashboard = () => {
                           }>
                             {o.status}
                           </Badge>
+                          {o.buyer_confirmation_status === 'disputed' && (
+                            <Badge variant="destructive" className="ml-1">{t('admin.orders.disputed')}</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={o.payment_status === 'paid' ? 'success' : o.payment_status === 'failed' ? 'destructive' : 'warning'} className="capitalize">
@@ -1749,6 +2989,18 @@ const AdminDashboard = () => {
                                   {s}
                                 </DropdownMenuItem>
                               ))}
+                              {o.buyer_confirmation_status === 'disputed' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuLabel>{t('admin.orders.disputeLabel')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => handleResolveDispute(o._id, 'release')} className="text-success">
+                                    {t('admin.orders.releaseFunds')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleResolveDispute(o._id, 'refund')} className="text-destructive">
+                                    {t('admin.orders.refundBuyer')}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -1769,13 +3021,25 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="withdrawals" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingWithdrawals')}</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.withdrawals?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.awaitingProcessing')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
               <div>
                 <CardTitle>{t('admin.withdrawals.title')}</CardTitle>
                 <CardDescription>{t('admin.withdrawals.desc')}</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select value={withdrawalFilter} onValueChange={(v) => { setWithdrawalFilter(v); fetchWithdrawals(v); }}>
                   <SelectTrigger className="w-[140px] h-9">
                     <SelectValue placeholder={t('admin.withdrawals.allStatus')} />
@@ -1819,7 +3083,12 @@ const AdminDashboard = () => {
                       <TableRow key={w._id}>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-sm">@{w.vendor_username}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-sm">@{w.vendor_username}</span>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
+                                {w.payee_type === 'affiliate' ? t('admin.withdrawals.affiliate') : t('admin.withdrawals.vendor')}
+                              </Badge>
+                            </div>
                             {w.notes && (
                               <span className="text-xs text-muted-foreground italic truncate max-w-[200px]" title={w.notes}>
                                 {t('admin.withdrawals.noteLabel', { note: w.notes })}
@@ -1920,7 +3189,281 @@ const AdminDashboard = () => {
           </Dialog>
         </TabsContent>
 
+        <TabsContent value="cashouts" className="space-y-4">
+          {!cashoutVerified ? (
+            <Card className="max-w-md mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><ShieldAlert className="w-5 h-5" /> {t('admin.cashouts.gateTitle')}</CardTitle>
+                <CardDescription>{t('admin.cashouts.gateDesc')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cashout-password">{t('admin.cashouts.yourPassword')}</Label>
+                  <Input
+                    id="cashout-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={cashoutPassword}
+                    onChange={(e) => setCashoutPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyCashoutPassword(); }}
+                    placeholder={t('admin.cashouts.passwordPlaceholder')}
+                  />
+                </div>
+                <Button className="w-full" onClick={handleVerifyCashoutPassword} disabled={cashoutVerifying || !cashoutPassword}>
+                  {cashoutVerifying ? t('common.loading') : t('admin.cashouts.unlock')}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Tabs value={cashoutSubTab} onValueChange={setCashoutSubTab} className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="profit">{t('admin.cashouts.profitTab')}</TabsTrigger>
+                <TabsTrigger value="orders">{t('admin.cashouts.ordersTab')}</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="profit" className="space-y-4">
+                <CashoutTypeSection
+                  desc={t('admin.cashouts.profitDesc')}
+                  summary={stats?.cashoutSummary?.profit}
+                  breakdown={stats?.cashoutSummary?.profit?.breakdown}
+                  form={profitCashoutForm}
+                  onFormChange={setProfitCashoutForm}
+                  onSubmit={() => handleCreateCashout('profit')}
+                  submitting={cashoutSubmitting}
+                  cashouts={cashouts.filter((c) => c.type === 'profit')}
+                  onDelete={handleDeleteCashout}
+                  onRefresh={fetchCashouts}
+                  loading={cashoutsLoading}
+                  t={t}
+                />
+              </TabsContent>
+
+              <TabsContent value="orders" className="space-y-4">
+                <CashoutTypeSection
+                  desc={t('admin.cashouts.ordersDesc')}
+                  summary={stats?.cashoutSummary?.orders}
+                  breakdown={stats?.cashoutSummary?.orders?.breakdown}
+                  form={ordersCashoutForm}
+                  onFormChange={setOrdersCashoutForm}
+                  onSubmit={() => handleCreateCashout('orders')}
+                  submitting={cashoutSubmitting}
+                  cashouts={cashouts.filter((c) => c.type === 'orders')}
+                  onDelete={handleDeleteCashout}
+                  onRefresh={fetchCashouts}
+                  loading={cashoutsLoading}
+                  t={t}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
+        </TabsContent>
+
+        <TabsContent value="verifications" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle>{t('admin.verifications.title')}</CardTitle>
+                <CardDescription>{t('admin.verifications.desc')}</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={verificationFilter} onValueChange={(v) => { setVerificationFilter(v); fetchVerifications(v); }}>
+                  <SelectTrigger className="w-[140px] h-9">
+                    <SelectValue placeholder={t('admin.verifications.allStatus')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('admin.verifications.allStatus')}</SelectItem>
+                    <SelectItem value="pending">{t('admin.verifications.pending')}</SelectItem>
+                    <SelectItem value="approved">{t('admin.verifications.approved')}</SelectItem>
+                    <SelectItem value="rejected">{t('admin.verifications.rejected')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => fetchVerifications(verificationFilter)} disabled={verificationLoading} variant="ghost" size="sm">
+                  <RefreshCw className={`h-4 w-4 mr-2 ${verificationLoading ? 'animate-spin' : ''}`} />
+                  {t('common.refresh')}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.verifications.colStore')}</TableHead>
+                    <TableHead>{t('admin.verifications.colDocument')}</TableHead>
+                    <TableHead>{t('admin.verifications.colImage')}</TableHead>
+                    <TableHead>{t('admin.verifications.colStatus')}</TableHead>
+                    <TableHead>{t('admin.verifications.colDate')}</TableHead>
+                    <TableHead className="text-right">{t('admin.verifications.colActions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {verifications.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {t('admin.verifications.empty')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    verifications.map((v) => (
+                      <TableRow key={v._id}>
+                        <TableCell>
+                          <button
+                            type="button"
+                            className="flex flex-col text-left hover:underline"
+                            onClick={() => { setSelectedVerification(v); setIsVerificationDetailsOpen(true); }}
+                          >
+                            <span className="font-medium text-sm">{v.name}</span>
+                            <span className="text-xs text-muted-foreground">@{v.owner_username}</span>
+                          </button>
+                        </TableCell>
+                        <TableCell className="capitalize text-sm">
+                          {v.identity_document_type?.replace('_', ' ') || '—'}
+                          <div className="text-xs text-muted-foreground">{v.identity_document_number}</div>
+                        </TableCell>
+                        <TableCell>
+                          {v.identity_document_image_url ? (
+                            <a href={v.identity_document_image_url} target="_blank" rel="noreferrer">
+                              <img src={v.identity_document_image_url} alt="" className="w-12 h-12 object-cover rounded-lg border" />
+                            </a>
+                          ) : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            v.verification_status === 'approved' ? 'success' :
+                            v.verification_status === 'pending' ? 'warning' :
+                            v.verification_status === 'rejected' ? 'destructive' : 'default'
+                          }>
+                            {v.verification_status}
+                          </Badge>
+                          {v.verification_status === 'rejected' && v.identity_rejection_reason && (
+                            <div className="text-xs text-muted-foreground italic mt-1 max-w-[160px] truncate" title={v.identity_rejection_reason}>
+                              {v.identity_rejection_reason}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {v.identity_submitted_at ? new Date(v.identity_submitted_at).toLocaleDateString() : '—'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8"
+                              onClick={() => { setSelectedVerification(v); setIsVerificationDetailsOpen(true); }}
+                            >
+                              <Eye className="w-4 h-4 mr-1" /> {t('admin.verifications.viewDetails')}
+                            </Button>
+                            {v.verification_status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-success border-success/20 hover:bg-success/10 h-8"
+                                  onClick={() => {
+                                    setSelectedVerification(v);
+                                    setVerificationAction('approve');
+                                    setVerificationReason('');
+                                    setIsVerificationModalOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.approve')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive border-destructive/20 hover:bg-destructive/10 h-8"
+                                  onClick={() => {
+                                    setSelectedVerification(v);
+                                    setVerificationAction('reject');
+                                    setVerificationReason('');
+                                    setIsVerificationModalOpen(true);
+                                  }}
+                                >
+                                  <AlertCircle className="w-4 h-4 mr-1" /> {t('admin.verifications.reject')}
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Dialog open={isVerificationModalOpen} onOpenChange={setIsVerificationModalOpen}>
+            <DialogContent className="max-w-[95vw] sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{verificationAction === 'approve' ? t('admin.verifications.approveTitle') : t('admin.verifications.rejectTitle')}</DialogTitle>
+                <DialogDescription>
+                  {t('admin.verifications.reviewDesc', { store: selectedVerification?.name, owner: selectedVerification?.owner_username })}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="verification-reason">
+                    {verificationAction === 'approve' ? t('admin.verifications.adminNotes') : t('admin.verifications.rejectionReason')}
+                  </Label>
+                  <Textarea
+                    id="verification-reason"
+                    placeholder={verificationAction === 'approve' ? t('admin.verifications.approvedPlaceholder') : t('admin.verifications.rejectedPlaceholder')}
+                    value={verificationReason}
+                    onChange={(e) => setVerificationReason(e.target.value)}
+                    className="h-24"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsVerificationModalOpen(false)}>{t('common.cancel')}</Button>
+                <Button
+                  variant={verificationAction === 'approve' ? 'success' : 'destructive'}
+                  disabled={verificationAction === 'reject' && !verificationReason.trim()}
+                  onClick={() => handleVerificationAction(selectedVerification?._id, verificationAction, verificationReason)}
+                >
+                  {verificationAction === 'approve' ? t('admin.verifications.confirmApproval') : t('admin.verifications.confirmRejection')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <VerificationDetailsModal
+            verification={selectedVerification}
+            isOpen={isVerificationDetailsOpen}
+            onOpenChange={setIsVerificationDetailsOpen}
+            onApprove={(v) => {
+              setSelectedVerification(v);
+              setVerificationAction('approve');
+              setVerificationReason('');
+              setIsVerificationDetailsOpen(false);
+              setIsVerificationModalOpen(true);
+            }}
+            onReject={(v) => {
+              setSelectedVerification(v);
+              setVerificationAction('reject');
+              setVerificationReason('');
+              setIsVerificationDetailsOpen(false);
+              setIsVerificationModalOpen(true);
+            }}
+          />
+        </TabsContent>
+
         <TabsContent value="subscriptions" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.subscriptionRevenue')}</CardTitle>
+                <Crown className="h-4 w-4 text-amber-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.counts?.subscriptions?.total_revenue ?? 0)}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.activeSubscriptions', { count: stats?.counts?.subscriptions?.active || 0 })}</p>
+              </CardContent>
+            </Card>
+          </div>
           {/* Plan Pricing Editor */}
           <Card>
             <CardHeader>
@@ -2053,7 +3596,7 @@ const AdminDashboard = () => {
                               <DropdownMenuLabel>{t('admin.subscriptions.menuLabel')}</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => {
                                 if (confirm(t('admin.subscriptions.cancelConfirm'))) {
-                                  vendorSubscriptionsAPI.cancel(sub._id).then(() => {
+                                  adminAPI.cancelSubscription(sub._id).then(() => {
                                     toast({ title: t('common.success'), description: t('admin.subscriptions.cancelledSuccess') });
                                     fetchSubscriptions();
                                   });
@@ -2075,13 +3618,25 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="moderation" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.pendingReports')}</CardTitle>
+                <Flag className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.counts?.reports?.pending || 0}</div>
+                <p className="text-xs text-muted-foreground">{t('admin.reportsToReview')}</p>
+              </CardContent>
+            </Card>
+          </div>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
               <div>
                 <CardTitle>{t('admin.moderation.title')}</CardTitle>
                 <CardDescription>{t('admin.moderation.desc')}</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select value={reportFilter} onValueChange={(v) => { setReportFilter(v); fetchReports(v); }}>
                   <SelectTrigger className="w-[140px] h-9">
                     <SelectValue placeholder={t('admin.moderation.allReports')} />
@@ -2106,6 +3661,7 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead>{t('admin.moderation.colType')}</TableHead>
                     <TableHead>{t('admin.moderation.colReason')}</TableHead>
+                    <TableHead>{t('admin.moderation.colContent')}</TableHead>
                     <TableHead>{t('admin.moderation.colReporter')}</TableHead>
                     <TableHead>{t('admin.moderation.colStatus')}</TableHead>
                     <TableHead>{t('admin.moderation.colDate')}</TableHead>
@@ -2115,7 +3671,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {reports.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         {t('admin.moderation.empty')}
                       </TableCell>
                     </TableRow>
@@ -2127,15 +3683,42 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium truncate max-w-[200px]" title={r.description}>
+                            <span className="font-medium truncate max-w-[200px]">
                               {r.reason}
                             </span>
+                            {r.description && (
+                              <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={r.description}>
+                                {r.description}
+                              </span>
+                            )}
                             {r.admin_notes && (
                               <span className="text-xs text-muted-foreground italic truncate max-w-[200px]">
                                 {t('admin.moderation.adminNoteLabel', { notes: r.admin_notes })}
                               </span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {r.target_summary ? (
+                            <div className="flex flex-col gap-0.5 max-w-[180px]">
+                              <a
+                                href={r.target_type === 'post' ? `/postdetail?id=${r.target_id}` : `/productdetail?id=${r.target_id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="truncate hover:underline"
+                                title={r.target_summary.title}
+                              >
+                                {r.target_summary.title}
+                              </a>
+                              {!r.target_summary.active && (
+                                <Badge variant="secondary" className="w-fit text-[10px]">
+                                  {t('admin.moderation.contentInactive')}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm">
                           {r.reporter_id?.display_name || t('admin.moderation.system')}
@@ -2152,34 +3735,52 @@ const AdminDashboard = () => {
                           {new Date(r.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          {r.status === 'pending' && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>{t('admin.moderation.menuLabel')}</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedReport(r);
-                                  setReportAction('resolved');
-                                  setReportNotes('');
-                                  setIsReportModalOpen(true);
-                                }}>
-                                  <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.moderation.resolve')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedReport(r);
-                                  setReportAction('dismissed');
-                                  setReportNotes('');
-                                  setIsReportModalOpen(true);
-                                }}>
-                                  <AlertCircle className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.moderation.dismiss')}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setIsReportViewOnly(true);
+                                setIsReportModalOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {r.status === 'pending' && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>{t('admin.moderation.menuLabel')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedReport(r);
+                                    setReportAction('resolved');
+                                    setReportNotes('');
+                                    setContentAction('none');
+                                    setIsReportViewOnly(false);
+                                    setIsReportModalOpen(true);
+                                  }}>
+                                    <CheckCircle className="w-4 h-4 mr-2 text-success" /> {t('admin.moderation.resolve')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedReport(r);
+                                    setReportAction('dismissed');
+                                    setReportNotes('');
+                                    setContentAction('none');
+                                    setIsReportViewOnly(false);
+                                    setIsReportModalOpen(true);
+                                  }}>
+                                    <AlertCircle className="w-4 h-4 mr-2 text-muted-foreground" /> {t('admin.moderation.dismiss')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -2190,40 +3791,122 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+          <Dialog
+            open={isReportModalOpen}
+            onOpenChange={(open) => {
+              setIsReportModalOpen(open);
+              if (!open) setIsReportViewOnly(false);
+            }}
+          >
             <DialogContent className="max-w-[95vw] sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{reportAction === 'resolved' ? t('admin.moderation.resolveTitle') : t('admin.moderation.dismissTitle')}</DialogTitle>
+                <DialogTitle>
+                  {isReportViewOnly
+                    ? t('admin.moderation.viewTitle')
+                    : reportAction === 'resolved' ? t('admin.moderation.resolveTitle') : t('admin.moderation.dismissTitle')}
+                </DialogTitle>
                 <DialogDescription>
-                  {reportAction === 'resolved'
-                    ? t('admin.moderation.resolveDesc', { type: selectedReport?.target_type })
-                    : t('admin.moderation.dismissDesc', { type: selectedReport?.target_type })}
+                  {isReportViewOnly
+                    ? t('admin.moderation.viewDesc', { type: selectedReport?.target_type })
+                    : reportAction === 'resolved'
+                      ? t('admin.moderation.resolveDesc', { type: selectedReport?.target_type })
+                      : t('admin.moderation.dismissDesc', { type: selectedReport?.target_type })}
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div className="p-3 bg-muted rounded-md text-sm">
-                  <div className="font-semibold">{selectedReport?.reason}</div>
-                  <div className="mt-1 text-muted-foreground">{selectedReport?.description}</div>
+              <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
+                <div className="p-3 bg-muted rounded-md text-sm space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline" className="capitalize">{selectedReport?.target_type}</Badge>
+                    <Badge variant={
+                      selectedReport?.status === 'resolved' ? 'success' :
+                      selectedReport?.status === 'dismissed' ? 'secondary' : 'warning'
+                    }>
+                      {selectedReport?.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <div className="font-semibold">{selectedReport?.reason}</div>
+                    {selectedReport?.description && (
+                      <div className="mt-1 text-muted-foreground whitespace-pre-wrap break-words">
+                        {selectedReport.description}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground pt-1 border-t">
+                    {t('admin.moderation.reporterLabel')}: {selectedReport?.reporter_id?.display_name || t('admin.moderation.system')}
+                    {selectedReport?.reporter_id?.email && ` (${selectedReport.reporter_id.email})`}
+                  </div>
+                  {selectedReport?.target_summary && (
+                    <div className="pt-2 border-t">
+                      <div className="text-xs text-muted-foreground mb-1">{t('admin.moderation.reportedContentLabel')}</div>
+                      <a
+                        href={selectedReport.target_type === 'post' ? `/postdetail?id=${selectedReport.target_id}` : `/productdetail?id=${selectedReport.target_id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2 hover:underline"
+                      >
+                        {selectedReport.target_summary.image && (
+                          <img src={selectedReport.target_summary.image} alt="" className="w-10 h-10 object-cover rounded shrink-0" />
+                        )}
+                        <span className="truncate">{selectedReport.target_summary.title}</span>
+                      </a>
+                      {!selectedReport.target_summary.active && (
+                        <Badge variant="secondary" className="mt-1 w-fit text-[10px]">
+                          {t('admin.moderation.contentInactive')}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  {selectedReport?.admin_notes && (
+                    <div className="pt-2 border-t text-xs text-muted-foreground">
+                      {t('admin.moderation.adminNoteLabel', { notes: selectedReport.admin_notes })}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="report-notes">{t('admin.moderation.adminNotes')}</Label>
-                  <Textarea
-                    id="report-notes"
-                    placeholder={t('admin.moderation.notesPlaceholder')}
-                    value={reportNotes}
-                    onChange={(e) => setReportNotes(e.target.value)}
-                    className="h-24"
-                  />
-                </div>
+                {!isReportViewOnly && (
+                  <>
+                    {reportAction === 'resolved' && ['post', 'product'].includes(selectedReport?.target_type) && (
+                      <div className="space-y-2">
+                        <Label htmlFor="content-action">{t('admin.moderation.contentAction')}</Label>
+                        <Select value={contentAction} onValueChange={setContentAction}>
+                          <SelectTrigger id="content-action">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t('admin.moderation.contentActionNone')}</SelectItem>
+                            <SelectItem value="deactivate">{t('admin.moderation.contentActionDeactivate')}</SelectItem>
+                            <SelectItem value="remove">{t('admin.moderation.contentActionRemove')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="report-notes">{t('admin.moderation.adminNotes')}</Label>
+                      <Textarea
+                        id="report-notes"
+                        placeholder={t('admin.moderation.notesPlaceholder')}
+                        value={reportNotes}
+                        onChange={(e) => setReportNotes(e.target.value)}
+                        className="h-24"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.cancel')}</Button>
-                <Button 
-                  variant={reportAction === 'resolved' ? 'success' : 'secondary'}
-                  onClick={() => handleResolveReport(selectedReport?._id, reportAction, reportNotes)}
-                >
-                  {reportAction === 'resolved' ? t('admin.moderation.confirmResolution') : t('admin.moderation.confirmDismissal')}
-                </Button>
+                {isReportViewOnly ? (
+                  <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.close')}</Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" onClick={() => setIsReportModalOpen(false)}>{t('common.cancel')}</Button>
+                    <Button
+                      variant={reportAction === 'resolved' ? 'success' : 'secondary'}
+                      onClick={() => handleResolveReport(selectedReport?._id, reportAction, reportNotes, contentAction)}
+                    >
+                      {reportAction === 'resolved' ? t('admin.moderation.confirmResolution') : t('admin.moderation.confirmDismissal')}
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -2239,8 +3922,8 @@ const AdminDashboard = () => {
               <CardDescription>{t('admin.posts.desc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 mb-4">
-                <div className="relative flex-1">
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className="relative flex-1 min-w-[160px]">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t('admin.posts.searchPlaceholder')}
@@ -2261,11 +3944,100 @@ const AdminDashboard = () => {
                     <SelectItem value="community">{t('admin.posts.community')}</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={postStatusFilter} onValueChange={(v) => { setPostStatusFilter(v); setPostPage(1); }}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder={t('admin.posts.allStatuses')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('admin.posts.allStatuses')}</SelectItem>
+                    <SelectItem value="active">{t('admin.posts.status_active')}</SelectItem>
+                    <SelectItem value="disabled">{t('admin.posts.status_disabled')}</SelectItem>
+                    <SelectItem value="archived">{t('admin.posts.status_archived')}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button variant="outline" onClick={() => { setPostPage(1); fetchPosts(1); }} disabled={postLoading}>
                   <Search className="w-4 h-4 mr-1" /> {t('common.search')}
                 </Button>
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile: card list */}
+              <div className="md:hidden space-y-3">
+                {postLoading ? (
+                  <div className="text-center py-8">{t('common.loading')}</div>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">{t('admin.posts.empty')}</div>
+                ) : posts.map((post) => (
+                  <div key={post._id} className="border rounded-lg p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">@{post.author_username}</div>
+                        {post.author_name && <div className="text-xs text-muted-foreground truncate">{post.author_name}</div>}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0"><MoreVertical className="w-4 h-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>{t('admin.posts.menuLabel')}</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => window.open(`/postdetail?id=${post._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}>
+                            <ExternalLink className="w-4 h-4 mr-2" /> {t('admin.posts.viewPost')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'public')}>
+                            {t('admin.posts.setPublic')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'followers')}>
+                            {t('admin.posts.setFollowers')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
+                            {t('admin.posts.setCommunity')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {post.status !== 'active' && (
+                            <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'active')}>
+                              <UserCheck className="w-4 h-4 mr-2" /> {t('admin.posts.restorePost')}
+                            </DropdownMenuItem>
+                          )}
+                          {post.status !== 'disabled' && (
+                            <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'disabled')}>
+                              <Ban className="w-4 h-4 mr-2" /> {t('admin.posts.disablePost')}
+                            </DropdownMenuItem>
+                          )}
+                          {post.status !== 'archived' && (
+                            <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'archived')}>
+                              <Archive className="w-4 h-4 mr-2" /> {t('admin.posts.archivePost')}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
+                            <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <p className="text-sm">{post.content || <span className="text-muted-foreground italic">{t('admin.posts.noText')}</span>}</p>
+                    {post.media_urls?.length > 0 && (
+                      <span className="text-xs text-muted-foreground">{t('admin.posts.mediaFiles', { count: post.media_urls.length })}</span>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="capitalize">{post.media_type}</Badge>
+                      <Badge variant={post.visibility === 'public' ? 'default' : post.visibility === 'followers' ? 'secondary' : 'outline'} className="capitalize">
+                        {post.visibility}
+                      </Badge>
+                      <Badge variant={post.status === 'disabled' ? 'destructive' : post.status === 'archived' ? 'secondary' : 'outline'} className="capitalize">
+                        {t(`admin.posts.status_${post.status || 'active'}`)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{t('admin.posts.colLikes')}: {post.likes_count} · {t('admin.posts.colComments')}: {post.comments_count}</span>
+                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / tablet: table */}
+              <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -2273,6 +4045,7 @@ const AdminDashboard = () => {
                     <TableHead>{t('admin.posts.colContent')}</TableHead>
                     <TableHead>{t('admin.posts.colType')}</TableHead>
                     <TableHead>{t('admin.posts.colVisibility')}</TableHead>
+                    <TableHead>{t('admin.posts.colStatus')}</TableHead>
                     <TableHead>{t('admin.posts.colLikes')}</TableHead>
                     <TableHead>{t('admin.posts.colComments')}</TableHead>
                     <TableHead>{t('admin.posts.colDate')}</TableHead>
@@ -2281,9 +4054,9 @@ const AdminDashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {postLoading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-8">{t('common.loading')}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-8">{t('common.loading')}</TableCell></TableRow>
                   ) : posts.length === 0 ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('admin.posts.empty')}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('admin.posts.empty')}</TableCell></TableRow>
                   ) : posts.map((post) => (
                     <TableRow key={post._id}>
                       <TableCell>
@@ -2304,34 +4077,66 @@ const AdminDashboard = () => {
                           {post.visibility}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={post.status === 'disabled' ? 'destructive' : post.status === 'archived' ? 'secondary' : 'outline'} className="capitalize">
+                          {t(`admin.posts.status_${post.status || 'active'}`)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{post.likes_count}</TableCell>
                       <TableCell>{post.comments_count}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(post.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm"><MoreVertical className="w-4 h-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>{t('admin.posts.menuLabel')}</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'public')}>
-                              {t('admin.posts.setPublic')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'followers')}>
-                              {t('admin.posts.setFollowers')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
-                              {t('admin.posts.setCommunity')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
-                              <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title={t('admin.posts.viewPost')}
+                            onClick={() => window.open(`/postdetail?id=${post._id}&adminPreview=1`, '_blank', 'noopener,noreferrer')}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreVertical className="w-4 h-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>{t('admin.posts.menuLabel')}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'public')}>
+                                {t('admin.posts.setPublic')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'followers')}>
+                                {t('admin.posts.setFollowers')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdatePostVisibility(post._id, 'community')}>
+                                {t('admin.posts.setCommunity')}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {post.status !== 'active' && (
+                                <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'active')}>
+                                  <UserCheck className="w-4 h-4 mr-2" /> {t('admin.posts.restorePost')}
+                                </DropdownMenuItem>
+                              )}
+                              {post.status !== 'disabled' && (
+                                <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'disabled')}>
+                                  <Ban className="w-4 h-4 mr-2" /> {t('admin.posts.disablePost')}
+                                </DropdownMenuItem>
+                              )}
+                              {post.status !== 'archived' && (
+                                <DropdownMenuItem onClick={() => handleUpdatePostStatus(post._id, 'archived')}>
+                                  <Archive className="w-4 h-4 mr-2" /> {t('admin.posts.archivePost')}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post._id)}>
+                                <Trash2 className="w-4 h-4 mr-2" /> {t('admin.posts.deletePost')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -2357,7 +4162,7 @@ const AdminDashboard = () => {
         <TabsContent value="announcements" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle>{t('admin.announcements.title')}</CardTitle>
                   <CardDescription>{t('admin.announcements.desc')}</CardDescription>
@@ -2373,7 +4178,7 @@ const AdminDashboard = () => {
                     expires_at: ''
                   });
                   setIsAnnouncementModalOpen(true);
-                }} size="sm" className="flex items-center gap-2">
+                }} size="sm" className="shrink-0 flex items-center gap-2">
                   <Plus className="w-4 h-4" /> {t('admin.announcements.newButton')}
                 </Button>
               </div>
@@ -2616,6 +4421,94 @@ const AdminDashboard = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="backups" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle>{t('admin.backups.title')}</CardTitle>
+                <CardDescription>{t('admin.backups.desc')}</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={() => fetchBackups()} disabled={backupLoading} variant="ghost" size="sm">
+                  <RefreshCw className={`h-4 w-4 mr-2 ${backupLoading ? 'animate-spin' : ''}`} />
+                  {t('common.refresh')}
+                </Button>
+                <Button onClick={handleRunBackup} disabled={backupRunning} size="sm">
+                  <DatabaseBackup className={`h-4 w-4 mr-2 ${backupRunning ? 'animate-spin' : ''}`} />
+                  {backupRunning ? t('admin.backups.running') : t('admin.backups.runNow')}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.backups.colDate')}</TableHead>
+                    <TableHead>{t('admin.backups.colStatus')}</TableHead>
+                    <TableHead>{t('admin.backups.colSize')}</TableHead>
+                    <TableHead>{t('admin.backups.colCollections')}</TableHead>
+                    <TableHead>{t('admin.backups.colTrigger')}</TableHead>
+                    <TableHead className="text-right">{t('admin.backups.colActions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {backups.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {backupLoading ? t('admin.backups.loading') : t('admin.backups.empty')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    backups.map((b) => (
+                      <TableRow key={b._id}>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(b.started_at).toLocaleDateString()}<br/>
+                          {new Date(b.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            b.status === 'success' ? 'success' :
+                            b.status === 'running' ? 'warning' : 'destructive'
+                          }>
+                            {t(`admin.backups.status.${b.status}`)}
+                          </Badge>
+                          {b.status === 'failed' && b.error_message && (
+                            <div className="text-[10px] text-destructive mt-1 max-w-[220px] truncate" title={b.error_message}>
+                              {b.error_message}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {b.size_bytes ? `${(b.size_bytes / (1024 * 1024)).toFixed(2)} MB` : '-'}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {b.collections_count ?? '-'} {t('admin.backups.collectionsUnit')} · {b.documents_count ?? '-'} {t('admin.backups.documentsUnit')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">{b.triggered_by}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {b.status === 'success' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownloadBackup(b)}
+                            >
+                              {t('admin.backups.download')}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
@@ -2628,10 +4521,10 @@ const AdminDashboard = () => {
             <CardContent className="space-y-8">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">{t('admin.settings.securityTitle')}</h3>
-                <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50">
-                  <div className="flex flex-col space-y-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50">
+                  <div className="flex flex-col space-y-1 min-w-0">
                     <Label htmlFor="maintenance-mode" className="text-base flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-orange-500" />
+                      <ShieldAlert className="w-4 h-4 text-orange-500 shrink-0" />
                       {t('admin.settings.maintenanceLabel')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -2643,6 +4536,7 @@ const AdminDashboard = () => {
                     checked={settings.maintenance_mode}
                     onCheckedChange={(checked) => handleUpdateSettings({ maintenance_mode: checked })}
                     disabled={settingsLoading}
+                    className="shrink-0"
                   />
                 </div>
 
@@ -2667,10 +4561,10 @@ const AdminDashboard = () => {
 
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-semibold">{t('admin.settings.subscriptionTitle')}</h3>
-                <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50">
-                  <div className="flex flex-col space-y-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
+                  <div className="flex flex-col space-y-1 min-w-0">
                     <Label htmlFor="subscription-mode" className="text-base flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-yellow-500" />
+                      <Crown className="w-4 h-4 text-yellow-500 shrink-0" />
                       {t('admin.settings.subscriptionModeLabel')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -2684,10 +4578,11 @@ const AdminDashboard = () => {
                     checked={settings.subscription_mode ?? false}
                     onCheckedChange={(checked) => handleUpdateSettings({ subscription_mode: checked })}
                     disabled={settingsLoading}
+                    className="shrink-0"
                   />
                 </div>
                 {!settings.subscription_mode && (
-                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
                     {t('admin.settings.subscriptionWarning')}
                   </p>
                 )}
@@ -2696,8 +4591,8 @@ const AdminDashboard = () => {
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-semibold">{t('admin.settings.policiesTitle')}</h3>
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div className="flex items-center justify-between space-x-2 border p-4 rounded-lg bg-slate-50/50">
-                    <div className="flex flex-col space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50">
+                    <div className="flex flex-col space-y-1 min-w-0">
                       <Label htmlFor="allow-reg" className="text-base">{t('admin.settings.registrationLabel')}</Label>
                       <p className="text-xs text-muted-foreground">{t('admin.settings.registrationDesc')}</p>
                     </div>
@@ -2706,6 +4601,7 @@ const AdminDashboard = () => {
                       checked={settings.allow_registration}
                       onCheckedChange={(checked) => handleUpdateSettings({ allow_registration: checked })}
                       disabled={settingsLoading}
+                      className="shrink-0"
                     />
                   </div>
 

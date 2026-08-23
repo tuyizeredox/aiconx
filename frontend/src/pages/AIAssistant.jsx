@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPageUrl } from "@/lib/utils";
@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Sparkles, Send, Star, ChevronRight,
-  Loader2, Bot, User, RefreshCw, Mic, MicOff, Plus
+  Loader2, Bot, User, RefreshCw, Mic, MicOff, Plus, ArrowLeft
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,11 @@ import { authAPI, aiAPI, cartAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
 import OrderStatusCard from "@/components/chat/OrderStatusCard";
 import SmartActionChips from "@/components/chat/SmartActionChips";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 
-const CHAT_STORAGE_KEY = "aicon_chat_history";
+// Bumped to v2 to drop stale cached histories from before the assistant stopped
+// auto-attaching "Recommended for you" products to every reply.
+const CHAT_STORAGE_KEY = "aicon_chat_history_v2";
 
 const getWelcomeMessage = (t) => ({
   id: "welcome",
@@ -183,15 +186,22 @@ function TypingIndicator() {
   );
 }
 
-export default function AIAssistant() {
+export default function AIAssistant({ embedded = false }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState(() => loadChatHistory(t));
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef(null);
-  const recognitionRef = useRef(null);
   const queryClient = useQueryClient();
+
+  const handleVoiceResult = useCallback((transcript) => {
+    setInput(prev => prev + (prev ? " " : "") + transcript);
+  }, []);
+
+  const { isSupported: isVoiceSupported, isListening, toggleListening } = useVoiceInput({
+    language: i18n.language,
+    onResult: handleVoiceResult,
+  });
 
   useEffect(() => {
     saveChatHistory(messages);
@@ -210,54 +220,6 @@ export default function AIAssistant() {
 
   const handleAddToCart = (product) => {
     addToCartMutation.mutate(product);
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = i18n.language || "en-US";
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(prev => prev + (prev ? " " : "") + transcript);
-        setIsListening(false);
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Speech Recognition Error:", event.error);
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current = recognition;
-
-      return () => {
-        recognition.onresult = null;
-        recognition.onerror = null;
-        recognition.onend = null;
-        try {
-          recognition.abort();
-        } catch (e) {
-          // ignore error on abort if already stopped
-        }
-      };
-    }
-  }, [i18n.language]);
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) return;
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      setIsListening(true);
-      recognitionRef.current.start();
-    }
   };
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -345,10 +307,19 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px)] lg:h-screen">
+    <div className={
+      embedded
+        ? "flex flex-col h-[70vh] min-h-[420px] rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
+        : "max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px-5rem)] lg:h-screen"
+    }>
       {/* Header */}
       <div className="px-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
+          {!embedded && (
+            <Link to={createPageUrl("Home")} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0" aria-label={t("common.backTo", { page: t("nav.home") })}>
+              <ArrowLeft className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            </Link>
+          )}
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-200">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
@@ -396,13 +367,16 @@ export default function AIAssistant() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
             placeholder={t("ai.placeholder")}
-            className="rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 text-sm dark:text-slate-200 dark:placeholder:text-slate-500"
+            className="flex-1 min-w-0 rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 text-sm dark:text-slate-200 dark:placeholder:text-slate-500"
             disabled={isLoading}
           />
           <Button
             onClick={toggleListening}
+            disabled={isLoading || !isVoiceSupported}
             variant="outline"
-            className={`w-10 h-10 rounded-2xl p-0 shrink-0 transition-all ${
+            title={isVoiceSupported ? undefined : t("ai.voiceUnsupported")}
+            aria-label={isListening ? t("ai.stopListening") : t("ai.startListening")}
+            className={`w-10 h-10 rounded-2xl p-0 shrink-0 transition-all disabled:opacity-40 ${
               isListening ? "bg-red-50 dark:bg-red-950 text-red-600 border-red-200 dark:border-red-800" : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >

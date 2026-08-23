@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authAPI } from '@/api/apiClient';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import { setupPushNotifications, removePushNotifications } from '@/lib/pushNotifications';
+import { mergeGuestCartToServer } from '@/lib/guestCart';
 
 const AuthContext = createContext();
 
@@ -16,12 +17,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Just clear auth state — React Router (mounted below AuthProvider) already
+    // re-renders to the login/landing route once isAuthenticated flips to false.
+    // A hard window.location redirect here caused a full page reload every time
+    // any background poll (e.g. Chat's message polling) hit a 401.
     const handleUnauthorized = () => {
       setUser(null);
       setIsAuthenticated(false);
-      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-        window.location.href = '/';
-      }
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
@@ -81,6 +83,7 @@ export const AuthProvider = ({ children }) => {
       }
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -92,6 +95,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.googleLogin(idToken);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -103,6 +107,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.verify2FALogin(twoFactorToken, token);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -114,6 +119,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.register(userData);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       throw error;
@@ -123,7 +129,7 @@ export const AuthProvider = ({ children }) => {
   const registerBiometrics = async () => {
     try {
       const options = await authAPI.getWebAuthnRegisterOptions();
-      const attResp = await startRegistration(options);
+      const attResp = await startRegistration({ optionsJSON: options });
       const verification = await authAPI.verifyWebAuthnRegister(attResp);
       
       if (verification.verified) {
@@ -140,10 +146,11 @@ export const AuthProvider = ({ children }) => {
   const loginBiometrics = async (email) => {
     try {
       const options = await authAPI.getWebAuthnLoginOptions(email);
-      const asseResp = await startAuthentication(options);
+      const asseResp = await startAuthentication({ optionsJSON: options });
       const data = await authAPI.verifyWebAuthnLogin(email, asseResp);
       setUser(data.user);
       setIsAuthenticated(true);
+      await mergeGuestCartToServer();
       return data;
     } catch (error) {
       console.error('Biometric login failed:', error);

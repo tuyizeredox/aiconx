@@ -5,9 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Search, Send, ArrowLeft, MoreVertical, X, Phone, Video,
-  ShoppingBag, Star, Package, Loader2, Reply, PenSquare, CheckCheck,
-  History
+  Search, Send, ArrowLeft, MoreVertical, X,
+  ShoppingBag, Star, Package, Loader2, Reply, PenSquare, CheckCheck, Trash2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,7 @@ function ProductSharePicker({ onShare, onClose, currentUser }) {
   const { data: myProducts = [] } = useQuery({
     queryKey: ["myQuickProducts", currentUser?.username],
     queryFn: async () => {
-      const res = await productsAPI.list({ vendor_username: currentUser.username, status: "active", sort: "-created_date", limit: 30 });
+      const res = await productsAPI.list({ vendor_username: currentUser.username, status: "active", sort: "-created_at", limit: 30 });
       return res.data || [];
     },
     enabled: !!currentUser?.username,
@@ -135,6 +134,7 @@ export default function Chat() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [forwardMsg, setForwardMsg] = useState(null);
   const [forwardToUsername, setForwardToUsername] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [pendingImageUrl, setPendingImageUrl] = useState(null);
   const [composing, setComposing] = useState(false);
   const [userSearch, setUserSearch] = useState("");
@@ -342,7 +342,7 @@ export default function Chat() {
       if (!recipient || !currentUser?.username || !conversationId) return;
       await queryClient.cancelQueries({ queryKey: ["conversationMessages", conversationId] });
       const previousMessages = queryClient.getQueryData(["conversationMessages", conversationId]) || [];
-      const tempId = `temp-${Date.now()}`;
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const optimisticMessage = {
         _id: tempId,
         id: tempId,
@@ -371,11 +371,11 @@ export default function Chat() {
       if (context?.previousMessages) {
         queryClient.setQueryData(["conversationMessages", conversationId], context.previousMessages);
       }
-      toast.error(t("chat.failedToSend"));
+      setNewMessage((prev) => prev || msgData.content || "");
+      if (msgData.image_url) setPendingImageUrl(msgData.image_url);
+      toast.error(err?.message || t("chat.failedToSend"));
     },
     onSuccess: (data) => {
-      setNewMessage("");
-      setPendingImageUrl(null);
       queryClient.setQueryData(["conversationMessages", conversationId], (old = []) => {
         const list = old.filter(m => !m.pending);
         const exists = list.some(m => (m._id || m.id) === (data?._id || data?.id));
@@ -388,6 +388,42 @@ export default function Chat() {
       queryClient.invalidateQueries({ queryKey: ["unreadMessages"] });
     },
   });
+
+  const deleteConversationMutation = useMutation({
+    mutationFn: (username) => {
+      const parts = [currentUser.username, username].sort();
+      return messagesAPI.deleteConversation(`chat_${parts[0]}_${parts[1]}`);
+    },
+    onMutate: async (username) => {
+      await queryClient.cancelQueries({ queryKey: ["unreadMessages"] });
+      const previousConversations = queryClient.getQueryData(["unreadMessages", currentUser?.email]) || [];
+      queryClient.setQueryData(
+        ["unreadMessages", currentUser?.email],
+        previousConversations.filter(c => c.other_user_username !== username)
+      );
+      return { previousConversations };
+    },
+    onError: (err, username, context) => {
+      if (context?.previousConversations) {
+        queryClient.setQueryData(["unreadMessages", currentUser?.email], context.previousConversations);
+      }
+      toast.error(t("chat.failedToDeleteConversation"));
+    },
+    onSuccess: (data, username) => {
+      const parts = [currentUser.username, username].sort();
+      const cId = `chat_${parts[0]}_${parts[1]}`;
+      queryClient.removeQueries({ queryKey: ["conversationMessages", cId] });
+      if (selectedConvo === username) setSelectedConvo(null);
+      toast.success(t("chat.conversationDeleted"));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["unreadMessages"] });
+    },
+  });
+
+  const confirmDeleteConversation = (username, name) => {
+    setDeleteConfirm({ username, name: name || username });
+  };
 
   const formatLastSeen = (dateString) => {
     if (!dateString) return t("chat.offline");
@@ -451,14 +487,21 @@ export default function Chat() {
     } : {};
 
     const baseMsg = { recipient_username: selectedConvo, ...extra };
+    const content = newMessage;
+    const imageUrl = pendingImageUrl;
 
-    if (pendingImageUrl) {
-      sendMutation.mutate({ ...baseMsg, content: newMessage || "📷 Image", message_type: "image", image_url: pendingImageUrl });
-    } else {
-      sendMutation.mutate({ ...baseMsg, content: newMessage, message_type: "text" });
-    }
+    // Clear the composer immediately so sending feels instant; the optimistic
+    // bubble (added in sendMutation.onMutate) shows the message right away.
+    setNewMessage("");
+    setPendingImageUrl(null);
     setReplyingTo(null);
     stopTyping();
+
+    if (imageUrl) {
+      sendMutation.mutate({ ...baseMsg, content: content || "📷 Image", message_type: "image", image_url: imageUrl });
+    } else {
+      sendMutation.mutate({ ...baseMsg, content, message_type: "text" });
+    }
   };
 
   const handleForward = (msg) => {
@@ -516,6 +559,8 @@ export default function Chat() {
           total: amount,
           status: "pending",
           payment_status: "pending",
+          affiliate_ref: localStorage.getItem('iqon_ref') || undefined,
+          affiliate_time: localStorage.getItem('iqon_ref_time') || undefined,
         });
         orderId = order.id;
       }
@@ -524,7 +569,7 @@ export default function Chat() {
         content: `💰 Offer: ${formatCurrency(amount)}${productData ? ` for "${productData.title}"` : ""}`,
         message_type: "offer",
         offer_amount: amount,
-        order_id: orderId,
+        ...(orderId ? { order_id: orderId } : {}),
       });
     } catch (error) {
       toast.error(t("chat.failedToCreateOffer"));
@@ -614,7 +659,7 @@ export default function Chat() {
   const unreadTotal = conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0);
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex bg-white dark:bg-slate-900">
+    <div className="h-[calc(100vh-3.5rem-env(safe-area-inset-bottom))] lg:h-screen flex bg-white dark:bg-slate-900">
       {/* Sidebar */}
       <div className={`w-full lg:w-80 border-r border-slate-100 dark:border-slate-700 flex flex-col ${selectedConvo ? "hidden lg:flex" : "flex"}`}>
         <div className="p-4 border-b border-slate-100 dark:border-slate-700">
@@ -649,7 +694,7 @@ export default function Chat() {
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     placeholder={t("chat.searchByName")}
-                    className="pl-8 h-9 rounded-xl text-sm bg-orange-50 border-orange-100 focus:border-orange-300"
+                    className="pl-8 h-9 rounded-xl text-sm bg-orange-50 dark:bg-orange-950 border-orange-100 dark:border-orange-800 focus:border-orange-300 dark:text-white"
                   />
                 </div>
                 {userSearch.trim().length >= 2 && (
@@ -709,10 +754,13 @@ export default function Chat() {
             conversations
               .filter(c => !search || c.other_user_name?.toLowerCase().includes(search.toLowerCase()) || c.other_user_username?.toLowerCase().includes(search.toLowerCase()))
               .map(convo => (
-                <button
+                <div
                   key={convo.other_user_username}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedConvo(convo.other_user_username)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 ${selectedConvo === convo.other_user_username ? "bg-orange-50 dark:bg-orange-900/30" : ""}`}
+                  onKeyDown={e => e.key === "Enter" && setSelectedConvo(convo.other_user_username)}
+                  className={`group w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 cursor-pointer ${selectedConvo === convo.other_user_username ? "bg-orange-50 dark:bg-orange-900/30" : ""}`}
                 >
                   <div className="relative shrink-0">
                     <Avatar name={convo.other_user_name} size={11} />
@@ -729,11 +777,19 @@ export default function Chat() {
                     </p>
                   </div>
                   {convo.unread_count > 0 && (
-                    <div className="bg-orange-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-bold">
+                    <div className="bg-orange-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-bold shrink-0">
                       {convo.unread_count > 9 ? "9+" : convo.unread_count}
                     </div>
                   )}
-                </button>
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); confirmDeleteConversation(convo.other_user_username, convo.other_user_name); }}
+                    title={t("chat.deleteConversation")}
+                    className="shrink-0 p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               ))
           )}
         </div>
@@ -744,18 +800,18 @@ export default function Chat() {
         {selectedConvo ? (
           <>
             {/* Header */}
-            <div className="h-16 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between px-4 bg-white dark:bg-slate-800 shadow-sm">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setSelectedConvo(null)} className="lg:hidden p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <div className="h-16 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between px-4 bg-white dark:bg-slate-800 shadow-sm gap-2">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <button onClick={() => setSelectedConvo(null)} className="lg:hidden p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0">
                   <ArrowLeft className="w-5 h-5 dark:text-slate-300" />
                 </button>
-                <div className="relative">
+                <div className="relative shrink-0">
                   <Avatar name={selectedConvoName} size={9} />
                   <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white dark:border-slate-800 rounded-full ${userStatus.is_online ? "bg-green-400" : "bg-slate-400"}`} />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedConvoName}</p>
-                  <p className={`text-xs font-medium ${userStatus.is_online ? "text-green-500" : "text-slate-400"}`}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{selectedConvoName}</p>
+                  <p className={`text-xs font-medium truncate ${userStatus.is_online ? "text-green-500" : "text-slate-400"}`}>
                     {userStatus.is_online
                       ? t("chat.online")
                       : userStatus.last_seen_at
@@ -764,7 +820,7 @@ export default function Chat() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 relative">
+              <div className="flex items-center gap-1 relative shrink-0">
                 <button
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
                   onClick={() => setShowActionMenu(v => !v)}
@@ -796,21 +852,11 @@ export default function Chat() {
                         <button
                           onClick={() => {
                             setShowActionMenu(false);
-                            toast("Clear this conversation?", {
-                              action: {
-                                label: "Clear",
-                                onClick: () => {
-                                  queryClient.cancelQueries({ queryKey: ["conversationMessages", conversationId] });
-                                  queryClient.removeQueries({ queryKey: ["conversationMessages", conversationId] });
-                                  toast.success("Chat cleared");
-                                },
-                              },
-                              cancel: { label: "Cancel" },
-                            });
+                            confirmDeleteConversation(selectedConvo, selectedConvoName);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
                         >
-                          <span className="text-base">🗑️</span> Clear Chat
+                          <span className="text-base">🗑️</span> {t("chat.deleteConversation")}
                         </button>
                         <div className="h-px bg-slate-100 dark:bg-slate-700 mx-3" />
                         <button
@@ -891,7 +937,7 @@ export default function Chat() {
                 )}
               </AnimatePresence>
 
-              <div className="p-3 relative">
+              <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] relative">
                 <AnimatePresence>
                   {showProductPicker && <ProductSharePicker onShare={sendProduct} onClose={() => setShowProductPicker(false)} currentUser={currentUser} />}
                   {showOfferModal && <OfferModal onSend={sendOffer} onClose={() => setShowOfferModal(false)} />}
@@ -900,7 +946,7 @@ export default function Chat() {
                 {/* New modern input design */}
                 <div className="flex items-end gap-2">
                   {/* Left action buttons */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => { setShowProductPicker(v => !v); setShowOfferModal(false); }}
@@ -946,7 +992,7 @@ export default function Chat() {
                   <button
                     type="button"
                     onClick={sendText}
-                    disabled={(!newMessage.trim() && !pendingImageUrl) || sendMutation.isPending}
+                    disabled={!newMessage.trim() && !pendingImageUrl}
                     className="w-9 h-9 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 transition-colors"
                   >
                     <Send className="w-5 h-5 text-white" />
@@ -1046,6 +1092,52 @@ export default function Chat() {
             onEndCall={handleCallEnded}
             onCallEnded={handleCallEnded}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Delete Conversation Confirmation */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+            onClick={e => e.target === e.currentTarget && setDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              className="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{t("chat.deleteConversation")}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                {t("chat.deleteConversationConfirm", { name: deleteConfirm.name })}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setDeleteConfirm(null)}
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  size="sm"
+                  disabled={deleteConversationMutation.isPending}
+                >
+                  {t("chat.cancel")}
+                </Button>
+                <Button
+                  onClick={() => {
+                    deleteConversationMutation.mutate(deleteConfirm.username);
+                    setDeleteConfirm(null);
+                  }}
+                  className="flex-1 bg-red-600 hover:bg-red-700 rounded-xl"
+                  size="sm"
+                  disabled={deleteConversationMutation.isPending}
+                >
+                  {deleteConversationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t("chat.delete")}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

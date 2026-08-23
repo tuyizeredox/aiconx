@@ -126,7 +126,7 @@ export default function AdminPanel({ community, posts, members }) {
         <div className="space-y-5 mt-2">
           {/* Community Description */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Type className="w-4 h-4" /> Description
             </h4>
             <Textarea
@@ -146,14 +146,14 @@ export default function AdminPanel({ community, posts, members }) {
 
           {/* Cover Image (Banner) */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Image className="w-4 h-4" /> Cover Image (Banner)
             </h4>
             <div className="space-y-2">
               <Label htmlFor="cover-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-orange-400 transition-colors">
+                <div className="flex items-center gap-2 p-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:border-orange-400 transition-colors">
                   <Upload className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {uploadingCover ? "Uploading..." : "Click to upload cover image"}
                   </span>
                   {uploadingCover && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -183,14 +183,14 @@ export default function AdminPanel({ community, posts, members }) {
 
           {/* Profile Icon */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Image className="w-4 h-4" /> Profile Icon
             </h4>
             <div className="space-y-2">
               <Label htmlFor="icon-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-orange-400 transition-colors">
+                <div className="flex items-center gap-2 p-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:border-orange-400 transition-colors">
                   <Upload className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {uploadingIcon ? "Uploading..." : "Click to upload icon"}
                   </span>
                   {uploadingIcon && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -220,7 +220,7 @@ export default function AdminPanel({ community, posts, members }) {
 
           {/* Category */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Settings className="w-4 h-4" /> Category
             </h4>
             <Select value={category} onValueChange={setCategory}>
@@ -244,12 +244,12 @@ export default function AdminPanel({ community, posts, members }) {
 
           {/* Visibility */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               {isPublic ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />} Visibility
             </h4>
             <div className="flex items-center gap-2">
               <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-              <span className="text-sm text-slate-600">{isPublic ? "Public" : "Private"}</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">{isPublic ? "Public" : "Private"}</span>
             </div>
             <Button
               size="sm"
@@ -262,7 +262,7 @@ export default function AdminPanel({ community, posts, members }) {
 
           {/* Community Rules */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Settings className="w-4 h-4" /> Community Rules
             </h4>
             <Textarea
@@ -282,7 +282,7 @@ export default function AdminPanel({ community, posts, members }) {
 
           {/* Pin Posts */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Pin className="w-4 h-4" /> Pin / Remove Posts
             </h4>
             <div className="space-y-2 max-h-44 overflow-y-auto">
@@ -290,18 +290,18 @@ export default function AdminPanel({ community, posts, members }) {
                 const postId = post._id || post.id;
                 const isPinned = (community?.pinned_post_ids || []).includes(postId);
                 return (
-                  <div key={postId} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
-                    <p className="flex-1 text-xs text-slate-700 line-clamp-1">{post.content}</p>
+                  <div key={postId} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-700 rounded-xl">
+                    <p className="flex-1 min-w-0 text-xs text-slate-700 dark:text-slate-300 line-clamp-1">{post.content}</p>
                     <button
                       onClick={() => pinPostMutation.mutate({ post, pin: !isPinned })}
-                      className={`shrink-0 p-1.5 rounded-lg text-xs font-medium transition-colors ${isPinned ? "bg-amber-100 text-amber-700 hover:bg-amber-200" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                      className={`shrink-0 p-1.5 rounded-lg text-xs font-medium transition-colors ${isPinned ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900" : "bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500"}`}
                       title={isPinned ? "Unpin" : "Pin"}
                     >
                       {isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
                     </button>
                     <button
                       onClick={() => deletePostMutation.mutate(postId)}
-                      className="shrink-0 p-1.5 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
+                      className="shrink-0 p-1.5 rounded-lg bg-red-50 dark:bg-red-950 text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
                       title="Delete post"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -309,28 +309,28 @@ export default function AdminPanel({ community, posts, members }) {
                   </div>
                 );
               })}
-              {posts.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No posts yet</p>}
+              {posts.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">No posts yet</p>}
             </div>
           </div>
 
           {/* Members */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
               <Users className="w-4 h-4" /> Members ({members.length})
             </h4>
             <div className="space-y-1.5 max-h-44 overflow-y-auto">
               {members.map(m => {
                 const memberId = m._id || m.id;
                 return (
-                  <div key={memberId} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
+                  <div key={memberId} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-700 rounded-xl">
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                       {m.member_username?.[0]?.toUpperCase()}
                     </div>
-                    <p className="flex-1 text-xs text-slate-700 truncate">@{m.member_username}</p>
-                    <Badge className="text-[10px] bg-slate-100 text-slate-600 border-0 capitalize">{m.role}</Badge>
+                    <p className="flex-1 text-xs text-slate-700 dark:text-slate-300 truncate">@{m.member_username}</p>
+                    <Badge className="text-[10px] bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 border-0 capitalize">{m.role}</Badge>
                     <button
                       onClick={() => removeMemberMutation.mutate(memberId)}
-                      className="shrink-0 p-1.5 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
+                      className="shrink-0 p-1.5 rounded-lg bg-red-50 dark:bg-red-950 text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
                       title="Remove member"
                     >
                       <UserX className="w-3.5 h-3.5" />
@@ -338,7 +338,7 @@ export default function AdminPanel({ community, posts, members }) {
                   </div>
                 );
               })}
-              {members.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No members yet</p>}
+              {members.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">No members yet</p>}
             </div>
           </div>
         </div>

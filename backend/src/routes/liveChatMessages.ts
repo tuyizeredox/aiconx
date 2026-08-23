@@ -74,7 +74,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
 
       const total = await LiveChatMessage.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         messages,
         pagination: {
           total,
@@ -85,7 +85,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -108,7 +108,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
         reply_to: body.reply_to
       });
 
-      reply.code(201).send(message);
+      return reply.code(201).send(message);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: error.errors });
@@ -126,9 +126,9 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       const { id } = request.params as { id: string };
       const user = request.user as any;
       const message = await LiveChatService.likeMessage(id, user.username);
-      reply.send(message);
+      return reply.send(message);
     } catch (error: any) {
-      reply.code(400).send({ error: error.message });
+      return reply.code(400).send({ error: error.message });
     }
   });
 
@@ -142,7 +142,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       const user = request.user as any;
       
       const message = await LiveChatService.togglePinMessage(id, user.username, pin);
-      reply.send(message);
+      return reply.send(message);
     } catch (error: any) {
       reply.code(error.message.includes('Unauthorized') ? 403 : 400).send({ error: error.message });
     }
@@ -157,7 +157,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       const user = request.user as any;
       
       const message = await LiveChatService.deleteMessage(id, user.username);
-      reply.send({ message: 'Message deleted successfully', data: message });
+      return reply.send({ message: 'Message deleted successfully', data: message });
     } catch (error: any) {
       reply.code(error.message.includes('Unauthorized') ? 403 : 400).send({ error: error.message });
     }
@@ -173,12 +173,12 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       const user = request.user as any;
 
       const report = await LiveChatService.reportMessage(id, user._id || user.userId, body.reason, body.description);
-      reply.code(201).send(report);
+      return reply.code(201).send(report);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: error.errors });
       }
-      reply.code(400).send({ error: error.message });
+      return reply.code(400).send({ error: error.message });
     }
   });
 
@@ -192,7 +192,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       const isBan = body.ban ?? true;
 
       await LiveChatService.toggleBanUser(body.session_id, user.username, body.target_username, isBan);
-      reply.send({ message: `User ${body.target_username} ${isBan ? 'banned' : 'unbanned'} successfully` });
+      return reply.send({ message: `User ${body.target_username} ${isBan ? 'banned' : 'unbanned'} successfully` });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return reply.code(400).send({ error: error.errors });
@@ -219,7 +219,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       const totalMessages = await LiveChatMessage.countDocuments({ session_id: sessionId, is_deleted: false });
       const uniqueUsers = await LiveChatMessage.distinct('user_username', { session_id: sessionId, is_deleted: false });
 
-      reply.send({
+      return reply.send({
         session_id: sessionId,
         total_messages: totalMessages,
         unique_users: uniqueUsers.length,
@@ -230,7 +230,7 @@ export async function liveChatMessageRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Internal server error' });
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 }

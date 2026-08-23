@@ -1,13 +1,22 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { createPageUrl, storeUrl } from "@/lib/utils";
 import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
-import { ArrowLeft, Users, Package, CheckCircle, MessageCircle, UserPlus, UserCheck } from "lucide-react";
+import {
+  ArrowLeft, Users, Package, CheckCircle, MessageCircle, UserPlus, UserCheck,
+  Search, TrendingUp, X, SlidersHorizontal
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import StoreReviewSection from "@/components/store/StoreReviewSection";
+import StoreHeaderBar from "@/components/store/StoreHeaderBar";
+import StorefrontRenderer from "@/components/store/storefront/StorefrontRenderer";
 import StarRating from "@/components/reviews/StarRating";
 import { storesAPI, productsAPI, reviewsAPI, followsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -16,29 +25,57 @@ import toast from "react-hot-toast";
 
 export default function StoreDetail() {
   const { t } = useTranslation();
-  const params = new URLSearchParams(window.location.search);
-  const storeId = params.get("id");
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Two ways in: the shareable /store/:slug URL, and the legacy
+  // /storedetail?id=<ObjectId> one still carried by older links. The API
+  // resolves either, so the page just passes through whichever it got.
+  const { slug } = useParams();
+  const params = new URLSearchParams(location.search);
+  const idParam = params.get("id");
+  const identifier = slug || idParam;
+  const view = params.get("view");
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
 
-  const isValidId = !!storeId && storeId !== "undefined" && storeId !== "null" && storeId.length >= 8;
+  const [search, setSearch] = React.useState("");
+  const [category, setCategory] = React.useState("all");
+  const [sort, setSort] = React.useState("-created_at");
+
+  const isValidId = !!identifier && identifier !== "undefined" && identifier !== "null" && identifier.length >= 3;
 
   const { data: store, error: storeError, isLoading: storeLoading } = useQuery({
-    queryKey: ["storeDetail", storeId],
+    queryKey: ["storeDetail", identifier],
     queryFn: async () => {
       if (!isValidId) throw new Error("Invalid Store ID");
-      return storesAPI.get(storeId);
+      return storesAPI.get(identifier);
     },
     enabled: isValidId,
     retry: false,
   });
 
+  // Everything below (products, reviews, follows) keys off the real ObjectId.
+  // With ?id= we have it up front; with a slug it arrives once the store loads.
+  const storeId = store?.id || store?._id || (slug ? null : idParam);
+
+  // Land on an id URL (or a handle the vendor has since renamed away from) and
+  // the address bar is rewritten to the store's current /store/:slug, so what
+  // visitors copy and share is always the readable, canonical link.
+  React.useEffect(() => {
+    if (!store?.slug || store.slug === slug) return;
+    // ?id= is what the slug replaces; anything else (view, adminPreview) rides along.
+    const nextParams = new URLSearchParams(location.search);
+    nextParams.delete("id");
+    const search = nextParams.toString();
+    navigate({ pathname: `/store/${store.slug}`, search: search ? `?${search}` : "" }, { replace: true });
+  }, [store?.slug, slug, location.search, navigate]);
+
   const { data: followStatus = { is_following: false, is_followed_by: false } } = useQuery({
     queryKey: ["followStatus", currentUser?.username, storeId],
     queryFn: async () => {
       if (!currentUser?.username || !storeId) return { is_following: false, is_followed_by: false };
-      const res = await followsAPI.check({ 
-        follower_username: currentUser.username, 
+      const res = await followsAPI.check({
+        follower_username: currentUser.username,
         target_id: storeId,
         follow_type: 'store'
       });
@@ -47,7 +84,7 @@ export default function StoreDetail() {
         is_followed_by: !!res.is_followed_by
       };
     },
-    enabled: !!currentUser?.username && !!storeId && isValidId,
+    enabled: !!currentUser?.username && !!storeId,
   });
 
   const isFollowing = followStatus.is_following;
@@ -58,8 +95,8 @@ export default function StoreDetail() {
       if (!currentUser) throw new Error("Please login to follow");
       const followingUsername = store.owner_username || store.name?.toLowerCase().replace(/\s+/g, '_');
       if (isFollowing) {
-        await followsAPI.unfollow({ 
-          follower_username: currentUser.username, 
+        await followsAPI.unfollow({
+          follower_username: currentUser.username,
           following_username: followingUsername,
           target_id: storeId,
           follow_type: 'store'
@@ -70,7 +107,7 @@ export default function StoreDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["followStatus", currentUser?.username, storeId] });
-      queryClient.invalidateQueries({ queryKey: ["storeDetail", storeId] });
+      queryClient.invalidateQueries({ queryKey: ["storeDetail", identifier] });
       toast.success(isFollowing ? t("storeDetail.unfollowedStore") : t("storeDetail.followingStore"));
     },
     onError: (error) => {
@@ -79,26 +116,58 @@ export default function StoreDetail() {
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["storeProducts", storeId],
+    queryKey: ["storeProducts", storeId, category, sort],
     queryFn: async () => {
-      if (!isValidId) return [];
-      const res = await productsAPI.list({ store_id: storeId, status: "active", sort: "-created_date", limit: 50 });
-      return res.data || res || [];
+      if (!storeId) return { list: [], total: 0 };
+      const filters = { store_id: storeId, status: "active", sort, limit: 50 };
+      if (category !== "all") filters.category = category;
+      const res = await productsAPI.list(filters);
+      const list = res.data || (Array.isArray(res) ? res : []);
+      return { list, total: typeof res.total === "number" ? res.total : list.length };
     },
-    enabled: isValidId,
+    enabled: !!storeId,
     retry: false,
   });
 
-  const products = Array.isArray(productsData) ? productsData : (productsData?.data || []);
+  const products = productsData?.list || [];
+  const storeProductsTotal = store?.product_count ?? productsData?.total ?? products.length;
+  const filteredProducts = search
+    ? products.filter(p => p.title?.toLowerCase().includes(search.toLowerCase()))
+    : products;
+
+  const hasActiveFilters = !!search || category !== "all" || sort !== "-created_at";
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("all");
+    setSort("-created_at");
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: store?.name, url });
+        return;
+      } catch (err) {
+        if (err?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(t("storeDetail.linkCopied"));
+    } catch {
+      toast.error(t("errors.somethingWrong"));
+    }
+  };
 
   const { data: storeReviewsData } = useQuery({
     queryKey: ["storeReviews", storeId],
     queryFn: async () => {
-      if (!isValidId) return [];
-      const res = await reviewsAPI.list({ store_id: storeId, sort: "-created_date", limit: 100 });
+      if (!storeId) return [];
+      const res = await reviewsAPI.list({ store_id: storeId, sort: "-created_at", limit: 100 });
       return res.data || res || [];
     },
-    enabled: isValidId,
+    enabled: !!storeId,
     retry: false,
   });
 
@@ -147,19 +216,48 @@ export default function StoreDetail() {
     );
   }
 
+  // Pro/Elite vendors can publish a fully custom storefront layout. `storefront_active`
+  // is computed server-side (plan check + enabled flag) so a plan downgrade reverts to
+  // the fixed template below without ever touching the vendor's saved config.
+  // `?view=shop` forces the fixed template's full searchable/filterable catalog even
+  // when a custom storefront is active — the "view all products" sub-page linked from
+  // StorefrontRenderer's header.
+  const hasCustomStorefront = store.storefront_active && store.storefront_config?.blocks?.length > 0;
+  if (hasCustomStorefront && view !== "shop") {
+    return (
+      <StorefrontRenderer
+        store={store}
+        products={products}
+        currentUser={currentUser}
+        isFollowing={isFollowing}
+        isFollowedBy={isFollowedBy}
+        onFollowToggle={() => followMutation.mutate()}
+        followPending={followMutation.isPending}
+        onShare={handleShare}
+      />
+    );
+  }
+
+  const cameFromStorefront = hasCustomStorefront && view === "shop";
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-4 lg:py-6">
-      <Link to={createPageUrl("Marketplace")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4">
-        <ArrowLeft className="w-4 h-4" /> {t("storeDetail.marketplace")}
-      </Link>
+    <div>
+      <StoreHeaderBar
+        store={store}
+        onShare={handleShare}
+        backTo={cameFromStorefront ? storeUrl(store) : createPageUrl("Marketplace")}
+        backLabel={cameFromStorefront ? store.name : t("storeDetail.marketplace")}
+      />
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 pb-4 lg:pb-6">
 
       {/* Store Banner */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6">
-        <div className="h-32 lg:h-48 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 relative">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
+        <div className="h-36 lg:h-56 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 relative">
           {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0" />
         </div>
-        <div className="p-6 -mt-10 relative">
-          <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 shadow-lg border-4 border-white dark:border-slate-700 flex items-center justify-center text-2xl font-bold overflow-hidden">
+        <div className="p-5 lg:p-6 -mt-12 relative">
+          <div className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-700 flex items-center justify-center text-2xl font-bold overflow-hidden">
             {store.logo_url ? (
               <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -168,33 +266,49 @@ export default function StoreDetail() {
               </span>
             )}
           </div>
-          <div className="mt-3">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{store.name}</h1>
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{store.name}</h1>
               {store.is_verified && (
                 <Badge className="bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 border-0"><CheckCircle className="w-3 h-3 mr-1" />{t("common.verified")}</Badge>
               )}
+              {store.category && (
+                <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize">
+                  {store.category}
+                </Badge>
+              )}
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{store.description}</p>
-            <div className="flex items-center flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1"><Package className="w-4 h-4" /> {t("storeDetail.productsCount", { count: products.length })}</span>
-              <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {t("storeDetail.followersCount", { count: store.follower_count || 0 })}</span>
+            {store.description && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-2xl leading-relaxed">{store.description}</p>
+            )}
+            <div className="flex items-center flex-wrap gap-2 text-sm">
+              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <Package className="w-3.5 h-3.5 text-orange-500" /> {t("storeDetail.productsCount", { count: storeProductsTotal })}
+              </span>
+              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <Users className="w-3.5 h-3.5 text-orange-500" /> {t("storeDetail.followersCount", { count: store.follower_count || 0 })}
+              </span>
+              {store.total_sales > 0 && (
+                <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                  <TrendingUp className="w-3.5 h-3.5 text-orange-500" /> {t("storeDetail.salesCount", { count: store.total_sales })}
+                </span>
+              )}
               {avgRating > 0 && (
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-full px-3 py-1.5">
                   <StarRating value={Math.round(avgRating)} readonly size={4} />
-                  <span className="text-amber-600 font-semibold">{avgRating.toFixed(1)}</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-bold">{avgRating.toFixed(1)}</span>
                   <span className="text-slate-400 dark:text-slate-500">{t("storeDetail.reviewsCount", { count: storeReviews.length })}</span>
                 </span>
               )}
             </div>
             {currentUser && currentUser.username !== store.owner_username && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2">
                 <Button
                   onClick={() => followMutation.mutate()}
                   disabled={followMutation.isPending}
                   className={`rounded-xl gap-2 font-semibold transition-all ${
-                    isFollowing 
-                      ? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600" 
+                    isFollowing
+                      ? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
                       : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100"
                   }`}
                   size="sm"
@@ -221,17 +335,84 @@ export default function StoreDetail() {
       </div>
 
       {/* Products */}
-      <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t("storeDetail.allProducts")}</h2>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          {t("storeDetail.allProducts")}
+          {!isLoading && (
+            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5">
+              {filteredProducts.length}
+            </span>
+          )}
+        </h2>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" /> {t("storeDetail.clearFilters")}
+          </button>
+        )}
+      </div>
+
+      {/* Search & Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder={t("storeDetail.searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 h-10 rounded-xl"
+          />
+        </div>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger className="w-full sm:w-44 h-10 rounded-xl gap-2">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <SelectValue placeholder={t("shop.category")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("shop.allCategories")}</SelectItem>
+            <SelectItem value="fashion">{t("shop.categoryFashion")}</SelectItem>
+            <SelectItem value="electronics">{t("shop.categoryElectronics")}</SelectItem>
+            <SelectItem value="home">{t("shop.categoryHome")}</SelectItem>
+            <SelectItem value="beauty">{t("shop.categoryBeauty")}</SelectItem>
+            <SelectItem value="sports">{t("shop.categorySports")}</SelectItem>
+            <SelectItem value="art">{t("shop.categoryArt")}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={setSort}>
+          <SelectTrigger className="w-full sm:w-44 h-10 rounded-xl">
+            <SelectValue placeholder={t("shop.sortBy")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="-created_at">{t("shop.newest")}</SelectItem>
+            <SelectItem value="-sales_count">{t("shop.bestSelling")}</SelectItem>
+            <SelectItem value="price">{t("shop.priceLowHigh")}</SelectItem>
+            <SelectItem value="-price">{t("shop.priceHighLow")}</SelectItem>
+            <SelectItem value="-rating_avg">{t("shop.topRated")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         {isLoading
           ? Array(8).fill(0).map((_, i) => <ProductSkeleton key={`p-skeleton-${i}`} />)
-          : products.map((p, idx) => <ProductCard key={p.id || p._id || `p-${idx}`} product={p} />)}
+          : filteredProducts.map((p, idx) => <ProductCard key={p.id || p._id || `p-${idx}`} product={p} />)}
       </div>
       {!isLoading && products.length === 0 && (
         <div className="text-center py-16 text-slate-400 dark:text-slate-500">{t("storeDetail.noProductsYet")}</div>
       )}
+      {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-slate-400 dark:text-slate-500 mb-3">{t("storeDetail.noResultsFilter")}</p>
+          <button onClick={clearFilters} className="text-sm font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300">
+            {t("storeDetail.clearFilters")}
+          </button>
+        </div>
+      )}
 
       <StoreReviewSection store={store} currentUser={currentUser} />
+      </div>
     </div>
   );
 }

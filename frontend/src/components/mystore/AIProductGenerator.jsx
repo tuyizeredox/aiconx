@@ -61,7 +61,7 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
   const generating = generateMutation.isPending;
 
   return (
-    <div className="border border-orange-200 bg-gradient-to-r from-orange-50 to-orange-50 rounded-2xl overflow-hidden">
+    <div className="border border-orange-200 dark:border-orange-900 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center gap-3 p-4 text-left"
@@ -71,10 +71,10 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-purple-900">{t("aiProduct.title")}</p>
+            <p className="text-sm font-bold text-purple-900 dark:text-purple-300">{t("aiProduct.title")}</p>
             {isFree && <Lock className="w-3 h-3 text-purple-400" />}
           </div>
-          <p className="text-xs text-purple-600">{t("aiProduct.subtitle")}</p>
+          <p className="text-xs text-purple-600 dark:text-purple-400">{t("aiProduct.subtitle")}</p>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-purple-500" /> : <ChevronDown className="w-4 h-4 text-purple-500" />}
       </button>
@@ -87,14 +87,14 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-3 border-t border-purple-100">
+            <div className="px-4 pb-4 space-y-3 border-t border-purple-100 dark:border-purple-900">
               {isFree ? (
                 <div className="pt-6 pb-2 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-3">
-                    <Star className="w-6 h-6 text-purple-600" />
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950 flex items-center justify-center mx-auto mb-3">
+                    <Star className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-900 mb-1">{t("aiProduct.featuresRestricted")}</h4>
-                  <p className="text-xs text-slate-500 mb-4 max-w-[240px] mx-auto">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{t("aiProduct.featuresRestricted")}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-[240px] mx-auto">
                     {t("aiProduct.featuresRestrictedDesc")}
                   </p>
                   <Button 
@@ -111,9 +111,9 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
               ) : (
                 <>
                   <div className="pt-3">
-                    <label className="text-xs font-medium text-slate-600 block mb-1">{t("aiProduct.productCategory")}</label>
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1">{t("aiProduct.productCategory")}</label>
                     <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="rounded-xl text-sm bg-white">
+                      <SelectTrigger className="rounded-xl text-sm bg-white dark:bg-slate-800">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -125,14 +125,14 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-slate-600 block mb-1">
-                      {t("aiProduct.keyFeatures")} <span className="text-slate-400">{t("aiProduct.keyFeaturesHint")}</span>
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1">
+                      {t("aiProduct.keyFeatures")} <span className="text-slate-400 dark:text-slate-500">{t("aiProduct.keyFeaturesHint")}</span>
                     </label>
                     <Textarea
                       value={keyFeatures}
                       onChange={e => setKeyFeatures(e.target.value)}
                       placeholder={t("aiProduct.keyFeaturesPlaceholder")}
-                      className="rounded-xl text-sm bg-white min-h-[80px]"
+                      className="rounded-xl text-sm bg-white dark:bg-slate-800 min-h-[80px]"
                     />
                   </div>
 
@@ -149,26 +149,26 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
                   </Button>
 
                   {result && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 bg-white rounded-xl border border-purple-100 p-4">
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 bg-white dark:bg-slate-800 rounded-xl border border-purple-100 dark:border-purple-900 p-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-purple-800 uppercase tracking-wide">{t("aiProduct.aiGeneratedContent")}</p>
-                        <button onClick={generate} className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800">
+                        <p className="text-xs font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wide">{t("aiProduct.aiGeneratedContent")}</p>
+                        <button onClick={generate} className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300">
                           <RefreshCw className="w-3 h-3" /> {t("aiProduct.regenerate")}
                         </button>
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">{t("aiProduct.resultTitle")}</p>
-                        <p className="text-sm font-semibold text-slate-800">{result.title}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">{t("aiProduct.resultTitle")}</p>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{result.title}</p>
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">{t("aiProduct.resultDescription")}</p>
-                        <p className="text-xs text-slate-600 leading-relaxed line-clamp-4">{result.description}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">{t("aiProduct.resultDescription")}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-4">{result.description}</p>
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1.5">{t("aiProduct.seoTags")}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1.5">{t("aiProduct.seoTags")}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {result.tags?.map((tag, i) => (
                             <Badge key={i} variant="secondary" className="text-[10px] px-2 py-0.5">{tag}</Badge>
@@ -177,9 +177,9 @@ export default function AIProductGenerator({ onApply, plan = 'free', onUpgrade }
                       </div>
 
                       {result.seo_title && (
-                        <div className="bg-slate-50 rounded-lg p-2.5">
-                          <p className="text-[10px] font-semibold text-slate-400 uppercase mb-0.5">{t("aiProduct.seoMetaTitle")}</p>
-                          <p className="text-xs text-slate-700">{result.seo_title}</p>
+                        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2.5">
+                          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-0.5">{t("aiProduct.seoMetaTitle")}</p>
+                          <p className="text-xs text-slate-700 dark:text-slate-300">{result.seo_title}</p>
                         </div>
                       )}
 

@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import EmptyState from "@/components/shared/EmptyState";
-import { Minus, Plus, Trash2, ArrowLeft, CreditCard, Loader2, ShoppingBag, Tag, X, CheckCircle2, Zap
+import ShopHeaderBar from "@/components/shop/ShopHeaderBar";
+import { Minus, Plus, Trash2, CreditCard, Loader2, ShoppingBag, Tag, X, CheckCircle2, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,9 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
-import { authAPI, cartAPI, couponsAPI } from "@/api/apiClient";
+import { cartAPI, couponsAPI } from "@/api/apiClient";
+import { useAuth } from "@/lib/AuthContext";
+import { getGuestCart, updateGuestCartQty, removeFromGuestCart, clearGuestCart } from "@/lib/guestCart";
 
 export default function Cart() {
   const { t } = useTranslation();
@@ -19,15 +22,13 @@ export default function Cart() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState("");
   const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [guestCartItems, setGuestCartItems] = useState(() => getGuestCart());
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: currentUser } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => authAPI.me(),
-  });
+  const { user: currentUser } = useAuth();
 
-  const { data: cartResponse = {}, isLoading } = useQuery({
+  const { data: cartResponse = {}, isLoading: cartLoading } = useQuery({
     queryKey: ["cart", currentUser?.username],
     queryFn: async () => {
       const res = await cartAPI.get();
@@ -35,26 +36,52 @@ export default function Cart() {
     },
     enabled: !!currentUser?.username,
   });
-  
-  const cartItems = Array.isArray(cartResponse?.items) ? cartResponse.items : [];
+
+  const isLoading = !!currentUser && cartLoading;
+
+  const serverCartItems = Array.isArray(cartResponse?.items) ? cartResponse.items : [];
+  const cartItems = currentUser
+    ? serverCartItems
+    : guestCartItems.map((item) => ({ ...item, id: item.product_id }));
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
+      if (!currentUser) {
+        setGuestCartItems(quantity <= 0 ? removeFromGuestCart(id) : updateGuestCartQty(id, quantity));
+        return Promise.resolve();
+      }
       if (quantity <= 0) return cartAPI.remove(id);
       return cartAPI.update(id, { quantity });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
+    onSuccess: () => {
+      if (currentUser) queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: (id) => cartAPI.remove(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
+    mutationFn: (id) => {
+      if (!currentUser) {
+        setGuestCartItems(removeFromGuestCart(id));
+        return Promise.resolve();
+      }
+      return cartAPI.remove(id);
+    },
+    onSuccess: () => {
+      if (currentUser) queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
   });
 
   const clearCartMutation = useMutation({
-    mutationFn: () => cartAPI.clear(),
+    mutationFn: () => {
+      if (!currentUser) {
+        clearGuestCart();
+        setGuestCartItems([]);
+        return Promise.resolve();
+      }
+      return cartAPI.clear();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      if (currentUser) queryClient.invalidateQueries({ queryKey: ["cart"] });
       toast.success(t("cart.cleared"));
     },
     onError: () => {
@@ -105,15 +132,17 @@ export default function Cart() {
   const total = discountedSubtotal + shipping;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <Link
-        to={createPageUrl("Marketplace")}
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 sm:mb-6 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> {t("common.continueShopping")}
-      </Link>
+    // Renders outside the app sidebar layout (see App.jsx) — the cart owns its
+    // full-width canvas and its own top chrome.
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
+      <ShopHeaderBar
+        backTo={createPageUrl("Marketplace")}
+        backLabel={t("common.continueShopping")}
+        showCart={false}
+      />
 
-      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 mb-6 sm:mb-8 tracking-tight">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 mb-5 sm:mb-8 tracking-tight">
         {t("cart.title")} ({cartItems.length})
       </h1>
 
@@ -141,60 +170,74 @@ export default function Cart() {
           }
         />
       ) : (
-        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             <AnimatePresence>
               {cartItems.map((item) => (
                 <motion.div
                   key={item._id || item.id}
                   layout
                   exit={{ opacity: 0, x: -100 }}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4 flex gap-3 sm:gap-4 transition-colors"
+                  className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors"
                 >
-                  <Link
-                    to={createPageUrl("ProductDetail") + `?id=${item.product_id}`}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0"
+                  <button
+                    onClick={() => removeItemMutation.mutate(item._id || item.id)}
+                    className="absolute top-3 right-3 sm:static sm:order-3 sm:shrink-0 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 transition-colors"
                   >
-                    {item.product_image && (
-                      <img src={item.product_image} alt="" className="w-full h-full object-cover" />
-                    )}
-                  </Link>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
-                      {item.product_title}
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{item.store_name}</p>
-                    <p className="text-base font-bold text-orange-600 dark:text-orange-400">
-                      {formatCurrency(item.product_price)}
-                    </p>
+                  <div className="flex gap-3 sm:gap-4 min-w-0">
+                    <Link
+                      to={createPageUrl("ProductDetail") + `?id=${item.product_id}`}
+                      className="w-20 h-20 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0"
+                    >
+                      {item.product_image && (
+                        <img src={item.product_image} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </Link>
+
+                    <div className="flex-1 min-w-0 pr-8 sm:pr-0 flex flex-col justify-center">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {item.product_title}
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{item.store_name}</p>
+                      {(item.selected_color || item.selected_size || item.selected_options?.length > 0) && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 flex flex-wrap gap-x-3">
+                          {item.selected_color && (
+                            <span>{t("product.color")}: <span className="font-medium text-slate-700 dark:text-slate-300">{item.selected_color}</span></span>
+                          )}
+                          {item.selected_size && (
+                            <span>{t("product.size")}: <span className="font-medium text-slate-700 dark:text-slate-300">{item.selected_size}</span></span>
+                          )}
+                          {item.selected_options?.map((opt) => (
+                            <span key={opt.name}>{opt.name}: <span className="font-medium text-slate-700 dark:text-slate-300">{opt.value}</span></span>
+                          ))}
+                        </p>
+                      )}
+                      <p className="text-base font-bold text-orange-600 dark:text-orange-400">
+                        {formatCurrency(item.product_price)}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-end justify-between">
+                  <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden self-start sm:self-auto sm:shrink-0">
                     <button
-                      onClick={() => removeItemMutation.mutate(item._id || item.id)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 transition-colors"
+                      onClick={() => updateQuantityMutation.mutate({ id: item._id || item.id, quantity: (item.quantity || 1) - 1 })}
+                      className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Minus className="w-3 h-3" />
                     </button>
-                    <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => updateQuantityMutation.mutate({ id: item._id || item.id, quantity: (item.quantity || 1) - 1 })}
-                        className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-medium text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900">
-                        {item.quantity || 1}
-                      </span>
-                      <button
-                        onClick={() => updateQuantityMutation.mutate({ id: item._id || item.id, quantity: (item.quantity || 1) + 1 })}
-                        className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <span className="w-8 text-center text-sm font-medium text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900">
+                      {item.quantity || 1}
+                    </span>
+                    <button
+                      onClick={() => updateQuantityMutation.mutate({ id: item._id || item.id, quantity: (item.quantity || 1) + 1 })}
+                      className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
                   </div>
                 </motion.div>
               ))}
@@ -203,12 +246,12 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-6 sticky top-6 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-6 lg:sticky lg:top-[4.5rem] transition-colors">
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">
                 {t("cart.orderSummary")}
               </h3>
 
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-5">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500 dark:text-slate-400">{t("cart.subtotal")}</span>
                   <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(subtotal)}</span>
@@ -237,7 +280,7 @@ export default function Cart() {
               </div>
 
               {/* Coupon */}
-              <div className="mb-4">
+              <div className="space-y-3 mb-5">
                 {cartItems.length > 0 && (
                   <Button
                     variant="outline"
@@ -321,6 +364,7 @@ export default function Cart() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

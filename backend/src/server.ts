@@ -6,9 +6,12 @@ import compress from '@fastify/compress';
 import rateLimit from '@fastify/rate-limit';
 import mongoose from 'mongoose';
 import { connectDB } from './config/database';
+import { backfillStoreSlugs } from './models/Store';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { productRoutes } from './routes/products';
+import { productQuestionRoutes } from './routes/productQuestions';
+import { productBookingRoutes } from './routes/productBookings';
 import { orderRoutes } from './routes/orders';
 import { messageRoutes } from './routes/messages';
 import { notificationRoutes } from './routes/notifications';
@@ -41,7 +44,10 @@ import { reportRoutes } from './routes/reports';
 import { callRoutes } from './routes/calls';
 import { checkoutRoutes } from './routes/checkout';
 import { adminRoutes } from './routes/admin';
+import { publicSettingsRoutes } from './routes/publicSettings';
 import { setupWebSocket, io } from './websocket/socket';
+import './services/orderCleanupService';
+import './services/backupService';
 import { authenticate, authenticateOptional, checkMaintenance, extractLanguage } from './middleware/auth';
 
 const fastify = Fastify({
@@ -85,12 +91,17 @@ fastify.register(cors, {
     const allowedOrigins = [
       // Production frontend — hardcoded as fallback in case env var is missing on Render
       'https://aiconx.vercel.app',
+      'https://aiconx.net',
+      'https://www.aiconx.net',
       process.env.FRONTEND_URL,
       // Local development
       'http://localhost:5173',
       'http://localhost:3000',
       'http://127.0.0.1:5173',
       'http://localhost:4000',
+      // Capacitor Android/iOS WebView origin (no port)
+      'http://localhost',
+      'capacitor://localhost',
       ...extraOrigins,
     ].filter(Boolean);
 
@@ -176,6 +187,7 @@ fastify.register(async (authScope) => {
 // Register routes
 fastify.register(userRoutes, { prefix: '/api/users' });
 fastify.register(productRoutes, { prefix: '/api/products' });
+ 
 fastify.register(orderRoutes, { prefix: '/api/orders' });
 fastify.register(messageRoutes, { prefix: '/api/messages' });
 fastify.register(notificationRoutes, { prefix: '/api/notifications' });
@@ -208,6 +220,7 @@ fastify.register(reportRoutes, { prefix: '/api' });
 fastify.register(callRoutes, { prefix: '/api/calls' });
 fastify.register(checkoutRoutes, { prefix: '/api/checkout' });
 fastify.register(adminRoutes, { prefix: '/api/admin' });
+fastify.register(publicSettingsRoutes, { prefix: '/api/settings' });
 
 // Error handling for uncaught exceptions — always exit; let process manager restart
 process.on('uncaughtException', (error) => {
@@ -242,10 +255,19 @@ const start = async () => {
   try {
     // Try to connect to database but don't block server startup if it's not ready
     // This allows the server to at least start so the proxy doesn't fail with 500/504
-    connectDB().catch(err => {
+    connectDB().then(async () => {
+      // Stores predating slug-based URLs (/store/:slug) have no handle yet — give
+      // them one so their pretty link resolves. No-op once every store has a slug.
+      try {
+        const filled = await backfillStoreSlugs();
+        if (filled > 0) console.log(`🔗 Backfilled slugs for ${filled} store(s)`);
+      } catch (err: any) {
+        console.error('⚠️  Store slug backfill failed:', err.message);
+      }
+    }).catch(err => {
       console.error('❌ Delayed MongoDB connection failed:', err.message);
     });
-    
+
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     

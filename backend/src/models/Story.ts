@@ -12,6 +12,7 @@ export interface IStory extends Document {
   bg_color: string;
   views_count: number;
   likes_count: number;
+  reply_count: number;
   expires_at: Date;
   is_active: boolean;
   created_at: Date;
@@ -63,6 +64,11 @@ const StorySchema = new Schema<IStory>({
     min: 0,
   },
   likes_count: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  reply_count: {
     type: Number,
     default: 0,
     min: 0,

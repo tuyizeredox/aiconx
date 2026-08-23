@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/AuthContext';
 import { getRedirectPath } from '@/lib/utils';
 import { Mail, Lock, Loader2, ShieldCheck, ArrowRight, ArrowLeft, Eye, EyeOff, Fingerprint, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleLogin } from '@react-oauth/google';
+import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
+import Seo from '@/components/shared/Seo';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
 import {
   InputOTP,
   InputOTPGroup,
@@ -51,7 +53,9 @@ const Login = () => {
   const { login, googleLogin, verify2FA, loginBiometrics } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { resolvedTheme, setTheme } = useTheme();
+  const redirectAfterLogin = (user) => navigate(location.state?.from || getRedirectPath(user));
 
   useEffect(() => {
     return () => {
@@ -63,21 +67,21 @@ const Login = () => {
 
   const handleBiometricLogin = async () => {
     if (!identifier) {
-      setError('Please enter your email or username first to use biometric login');
-      toast({ title: "Identity required", description: "Enter your email or username before using biometric login.", variant: "destructive" });
+      setError(t("auth.identifierRequiredForBiometric"));
+      toast({ title: t("auth.identityRequiredTitle"), description: t("auth.identityRequiredDesc"), variant: "destructive" });
       return;
     }
     setIsLoading(true);
     setError('');
     try {
       const res = await loginBiometrics(identifier);
-      toast({ title: "Biometric verified!", description: "Welcome back. Redirecting you now.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      toast({ title: t("auth.biometricVerifiedTitle"), description: t("auth.biometricVerifiedDesc"), variant: "success" });
+      redirectAfterLogin(res.user);
     } catch (err) {
       console.error(err);
-      const msg = err.message || 'Biometric login failed. Make sure you have registered biometrics for this account.';
+      const msg = err.message || t("auth.biometricLoginFailed");
       setError(msg);
-      toast({ title: "Biometric failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.biometricFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -85,20 +89,20 @@ const Login = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
-      setError('Google login failed: no credential received. Please try again.');
-      toast({ title: "Google sign-in failed", description: "No credential received. Please try again.", variant: "destructive" });
+      setError(t("auth.googleNoCredential"));
+      toast({ title: t("auth.googleSignInFailedTitle"), description: t("auth.noCredentialDesc"), variant: "destructive" });
       return;
     }
     setIsGoogleLoading(true);
     setError('');
     try {
       const res = await googleLogin(credentialResponse.credential);
-      toast({ title: "Signed in!", description: "Welcome back. Google authentication successful.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      toast({ title: t("auth.signedInTitle"), description: t("auth.googleAuthSuccessDesc"), variant: "success" });
+      redirectAfterLogin(res.user);
     } catch (err) {
-      const msg = err.message || 'Google login failed. Please try again.';
+      const msg = err.message || t("auth.googleLoginFailed");
       setError(msg);
-      toast({ title: "Google sign-in failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.googleSignInFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -106,9 +110,19 @@ const Login = () => {
 
   const handleGoogleError = (err) => {
     console.error('Google OAuth error:', err);
-    const msg = 'Google login failed. Make sure pop-ups are not blocked and try again.';
+
+    const isNative = typeof window !== 'undefined' && window?.Capacitor?.isNativePlatform?.()
+      ? true
+      : false;
+
+    // In Capacitor native builds, the web oauth flow can produce misleading
+    // “pop-ups blocked” messages. Show a native-appropriate message.
+    const msg = isNative
+      ? (err?.message || t("auth.googleLoginFailedNative"))
+      : t("auth.googleLoginFailedPopup");
+
     setError(msg);
-    toast({ title: "Google sign-in failed", description: msg, variant: "destructive" });
+    toast({ title: t("auth.googleSignInFailedTitle"), description: msg, variant: "destructive" });
   };
 
   const handleSubmit = async (e) => {
@@ -120,15 +134,15 @@ const Login = () => {
       if (res.two_factor_required) {
         setTwoFactorToken(res.two_factor_token);
         setShow2FA(true);
-        toast({ title: "Verification required", description: "Enter your 6-digit authentication code to continue." });
+        toast({ title: t("auth.verificationRequiredTitle"), description: t("auth.verificationRequiredDesc") });
       } else {
-        toast({ title: "Welcome back!", description: "You've been signed in successfully.", variant: "success" });
-        navigate(getRedirectPath(res.user));
+        toast({ title: t("auth.welcomeBackTitle"), description: t("auth.signedInSuccessDesc"), variant: "success" });
+        redirectAfterLogin(res.user);
       }
     } catch (err) {
-      const msg = err.message || 'Failed to login. Please check your credentials.';
+      const msg = err.message || t("auth.loginFailedGeneric");
       setError(msg);
-      toast({ title: "Sign in failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.signInFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -140,12 +154,12 @@ const Login = () => {
     setIsLoading(true);
     try {
       const res = await verify2FA(twoFactorToken, otpToken);
-      toast({ title: "Access granted!", description: "Two-factor authentication successful.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      toast({ title: t("auth.accessGrantedTitle"), description: t("auth.twoFASuccessDesc"), variant: "success" });
+      redirectAfterLogin(res.user);
     } catch (err) {
-      const msg = err.message || 'Invalid verification code.';
+      const msg = err.message || t("auth.invalidVerificationCode");
       setError(msg);
-      toast({ title: "Verification failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.verificationFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +168,8 @@ const Login = () => {
   const anyLoading = isLoading || isGoogleLoading;
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-4 lg:pt-0">
+    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-[max(1rem,env(safe-area-inset-top))] lg:pt-0">
+      <Seo path="/login" title="Sign In" description="Sign in to your Aicon X account to shop, sell, and connect with communities." />
       <MemoizedBackground />
 
       <div className="flex lg:hidden items-center justify-between w-full max-w-md mx-auto px-4 sm:px-6 mb-4 relative z-20">
@@ -162,21 +177,24 @@ const Login = () => {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => navigate('/welcome')}
+          onClick={() => navigate('/')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <div className="hidden lg:flex absolute top-4 inset-x-4 z-20 items-center justify-between">
@@ -184,21 +202,24 @@ const Login = () => {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => navigate('/welcome')}
+          onClick={() => navigate('/')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <div className="container relative z-10 flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-24 px-4 sm:px-6 max-w-7xl mx-auto py-6 lg:py-10">
@@ -218,11 +239,11 @@ const Login = () => {
               <Logo size="lg" showText={false} className="!gap-0" />
             </motion.div>
             <h1 className="text-5xl xl:text-6xl font-black dark:text-white text-slate-900 tracking-tighter leading-[0.9]">
-              BEYOND <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">COMMERCE.</span>
+              {t("auth.loginHeroLine1")} <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">{t("auth.loginHeroLine2")}</span>
             </h1>
             <p className="text-base xl:text-lg dark:text-slate-400 text-slate-600 leading-relaxed max-w-sm">
-              Welcome to the elite social commerce network. Connect, showcase, and grow your digital empire.
+              {t("auth.loginHeroSubtitle")}
             </p>
           </div>
         </motion.div>
@@ -250,7 +271,7 @@ const Login = () => {
                     <Logo
                       size="md"
                       className="flex-col !gap-4 mx-auto"
-                      subtext="Premium Social Commerce"
+                      subtext={t("auth.premiumSocialCommerce")}
                       showDecoration={true}
                     />
                   </div>
@@ -368,14 +389,9 @@ const Login = () => {
                     <div className="flex flex-col items-center gap-2">
                       <div className="relative">
                         <div className={`hover:scale-110 transition-transform duration-300 ${isGoogleLoading ? 'pointer-events-none' : ''}`}>
-                          <GoogleLogin
+                          <GoogleSignInButton
                             onSuccess={handleGoogleSuccess}
                             onError={handleGoogleError}
-                            type="icon"
-                            text="signin_with"
-                            theme="filled_blue"
-                            shape="circle"
-                            size="large"
                           />
                         </div>
                         <AnimatePresence>
@@ -407,14 +423,14 @@ const Login = () => {
                       >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-5 w-5" />}
                       </Button>
-                      <span className="text-[9px] font-black dark:text-slate-600 text-slate-500 uppercase tracking-[0.15em] group-hover:text-orange-400 transition-colors">Biometric</span>
+                      <span className="text-[9px] font-black dark:text-slate-600 text-slate-500 uppercase tracking-[0.15em] group-hover:text-orange-400 transition-colors">{t("auth.biometricLabel")}</span>
                     </div>
                   </div>
 
                   <div className="text-center">
                     <p className="dark:text-slate-500 text-slate-500 text-sm">
                       {t("auth.newHere")}{' '}
-                      <Link to="/register" className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
+                      <Link to="/register" state={location.state} className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
                         {t("auth.joinNetwork")}
                         <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-orange-500 scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
                       </Link>
@@ -439,9 +455,9 @@ const Login = () => {
                       <ShieldCheck className="h-10 w-10" />
                     </motion.div>
                     <div className="space-y-2">
-                      <h1 className="text-3xl font-black dark:text-white text-slate-900 tracking-tighter uppercase">Vault</h1>
+                      <h1 className="text-3xl font-black dark:text-white text-slate-900 tracking-tighter uppercase">{t("auth.vaultTitle")}</h1>
                       <p className="dark:text-slate-500 text-slate-500 font-semibold text-xs tracking-[0.2em] uppercase">
-                        Identity Verification
+                        {t("auth.identityVerification")}
                       </p>
                     </div>
                   </div>
@@ -492,7 +508,7 @@ const Login = () => {
                           <Loader2 className="h-5 w-5 animate-spin text-white" />
                         ) : (
                           <span className="flex items-center gap-3">
-                            Authorize Entry <ShieldCheck className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+                            {t("auth.authorizeEntry")} <ShieldCheck className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                           </span>
                         )}
                       </Button>
@@ -502,7 +518,7 @@ const Login = () => {
                         onClick={() => setShow2FA(false)}
                         className="w-full dark:text-slate-600 text-slate-500 dark:hover:text-white hover:text-slate-900 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                       >
-                        <ArrowRight className="h-3 w-3 rotate-180" /> Back to Authentication
+                        <ArrowRight className="h-3 w-3 rotate-180" /> {t("auth.backToAuthentication")}
                       </button>
                     </div>
                   </form>
@@ -530,9 +546,13 @@ const Login = () => {
             <Link to="/terms" className="text-orange-500 hover:text-orange-400 font-medium transition-colors">
               {t("common.terms")}
             </Link>
-            {' '}{t("common.and")}{' '}
+            {', '}
             <Link to="/privacy" className="text-orange-500 hover:text-orange-400 font-medium transition-colors">
               {t("common.privacy")}
+            </Link>
+            {' '}{t("common.and")}{' '}
+            <Link to="/community-guidelines" className="text-orange-500 hover:text-orange-400 font-medium transition-colors">
+              {t("common.communityGuidelines")}
             </Link>
             .
           </motion.p>

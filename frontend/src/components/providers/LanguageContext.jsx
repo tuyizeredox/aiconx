@@ -4,19 +4,11 @@ import { useAuth } from "@/lib/AuthContext";
 import i18n, { SUPPORTED_LANG_CODES } from "@/lib/i18n";
 export { useTranslation } from "react-i18next";
 
-const RTL_LANGS = ["ar"];
+const RTL_LANGS = [];
 
 const LANG_META = [
   { code: "en", label: "English", flag: "🇺🇸" },
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "de", label: "Deutsch", flag: "🇩🇪" },
-  { code: "ar", label: "العربية", flag: "🇸🇦" },
-  { code: "zh", label: "中文", flag: "🇨🇳" },
-  { code: "pt", label: "Português", flag: "🇧🇷" },
-  { code: "ja", label: "日本語", flag: "🇯🇵" },
   { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
-  { code: "sw", label: "Kiswahili", flag: "🇰🇪" },
 ];
 
 export const SUPPORTED_LANGS = LANG_META.filter(l => SUPPORTED_LANG_CODES.includes(l.code));
@@ -36,15 +28,10 @@ function addToCache(key, value) {
   translationCache[key] = value;
 }
 
-function detectBrowserLang() {
-  const lang = navigator.language?.split("-")[0] || "en";
-  return SUPPORTED_LANGS.find(l => l.code === lang) ? lang : "en";
-}
-
 export function LanguageProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
   const [lang, setLangState] = useState(() => {
-    const stored = localStorage.getItem("iqon_lang") || detectBrowserLang();
+    const stored = localStorage.getItem("iqon_lang") || "en";
     if (i18n.language !== stored) {
       i18n.changeLanguage(stored);
     }

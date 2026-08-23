@@ -31,8 +31,16 @@ async function seedAdmin() {
     } else {
       console.log('Creating new super_admin user...');
       const hashedPassword = await bcrypt.hash(password, 12);
+      const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '') || 'admin';
+      let username = baseUsername;
+      let suffix = 0;
+      while (await User.findOne({ username })) {
+        suffix += 1;
+        username = `${baseUsername}${suffix}`;
+      }
       user = new User({
         email,
+        username,
         password: hashedPassword,
         display_name: 'Super Admin',
         role,
@@ -40,7 +48,7 @@ async function seedAdmin() {
         is_blocked: false,
       });
       await user.save();
-      console.log('Admin user created successfully.');
+      console.log(`Admin user created successfully (username: ${username}).`);
     }
 
     process.exit(0);

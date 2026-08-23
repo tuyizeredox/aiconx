@@ -17,7 +17,7 @@ export interface IUser extends Document {
     notif_live: boolean;
   };
   preferences?: {
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'system';
     language: string;
   };
   is_2fa_enabled: boolean;
@@ -39,6 +39,13 @@ export interface IUser extends Document {
   is_online: boolean;
   last_seen_at: Date;
   push_tokens?: string[];
+  push_subscriptions?: Array<{
+    endpoint: string;
+    keys: {
+      p256dh: string;
+      auth: string;
+    };
+  }>;
   saved_addresses?: Array<{
     label?: string;
     street: string;
@@ -118,8 +125,8 @@ const UserSchema = new Schema<IUser>({
     notif_live: { type: Boolean, default: false },
   },
   preferences: {
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' },
-    language: { type: String, default: 'en' },
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+    language: { type: String, enum: ['en', 'rw'], default: 'en' },
   },
   is_2fa_enabled: {
     type: Boolean,
@@ -197,13 +204,20 @@ const UserSchema = new Schema<IUser>({
     type: String,
     trim: true,
   }],
+  push_subscriptions: [{
+    endpoint: { type: String, required: true },
+    keys: {
+      p256dh: { type: String, required: true },
+      auth: { type: String, required: true },
+    },
+  }],
   saved_addresses: [{
     label: { type: String, trim: true, default: 'Default' },
     street: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },
     zip: { type: String, required: true, trim: true },
-    country: { type: String, required: true, trim: true, default: 'NG' },
+    country: { type: String, required: true, trim: true, default: 'RW' },
     phone: { type: String, trim: true },
     is_default: { type: Boolean, default: false },
   }],

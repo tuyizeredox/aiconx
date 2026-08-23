@@ -38,7 +38,7 @@ import React, { useState } from "react";
      queryFn: async () => {
        if (!currentUser?.email) return [];
        const res = await communityMembersAPI.list({ member_username: currentUser.username, limit: 100 });
-       return res.data || [];
+       return res.members || [];
      },
      enabled: !!currentUser?.email,
    });

@@ -29,7 +29,7 @@ export async function bookmarkRoutes(fastify: FastifyInstance) {
 
       const total = await Bookmark.countDocuments(filter);
 
-      reply.send({
+      return reply.send({
         data: bookmarks,
         total,
         limit: parseInt(limit),
@@ -66,7 +66,7 @@ export async function bookmarkRoutes(fastify: FastifyInstance) {
         target_id
       });
 
-      reply.send({ is_bookmarked: !!bookmark });
+      return reply.send({ is_bookmarked: !!bookmark });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -111,7 +111,7 @@ export async function bookmarkRoutes(fastify: FastifyInstance) {
       });
 
       await bookmark.save();
-      reply.code(201).send(bookmark);
+      return reply.code(201).send(bookmark);
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 
@@ -147,7 +147,7 @@ export async function bookmarkRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Bookmark not found' });
       }
 
-      reply.send({ message: 'Bookmark removed' });
+      return reply.send({ message: 'Bookmark removed' });
     } catch (error: any) {
       fastify.log.error(error);
       return reply.code(500).send({ 

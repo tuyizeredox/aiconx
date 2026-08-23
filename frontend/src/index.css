@@ -90,3 +90,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Horizontal rails (categories, product carousels, story rows) scroll by
+     swipe on touch and by trackpad on desktop — the native bar adds a grey
+     slab under every rail and gives away nothing a swipe does not. Defined
+     here rather than in globals.css, which nothing imports. */
+  .hide-scrollbar,
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* Softens the cut where a rail runs off the right edge, so a row that
+     continues reads as continuing instead of as clipped. */
+  .fade-edge-r {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+  }
+  .fade-edge-none {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}

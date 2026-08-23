@@ -10,6 +10,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import { wishlistAPI, cartAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
+import BackLink from "@/components/shared/BackLink";
 
 export default function Wishlist() {
   const { t } = useTranslation();
@@ -19,7 +20,7 @@ export default function Wishlist() {
   const { data: wishlistItems = [], isLoading } = useQuery({
     queryKey: ["wishlist", currentUser?.username],
     queryFn: async () => {
-      const res = await wishlistAPI.list({ user_username: currentUser?.username, sort: "-created_date", limit: 100 });
+      const res = await wishlistAPI.list({ user_username: currentUser?.username, sort: "-created_at", limit: 100 });
       return res.data || [];
     },
     enabled: !!currentUser?.username,
@@ -69,10 +70,11 @@ export default function Wishlist() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <BackLink to="Settings" label={t("common.backTo", { page: t("nav.settings") })} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Heart className="w-6 h-6 fill-red-500 text-red-500" />
+            <Heart className="w-6 h-6 fill-red-500 text-red-500 shrink-0" />
             {t("common.wishlist")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{t("wishlist.savedItems_other", { count: wishlistItems.length })}</p>
@@ -80,7 +82,7 @@ export default function Wishlist() {
         {wishlistItems.length > 0 && (
           <Button
             onClick={moveAllToCart}
-            className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5"
+            className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-1.5 shrink-0 w-full sm:w-auto"
           >
             <ShoppingCart className="w-4 h-4" /> {t("wishlist.addAllToCart")}
           </Button>

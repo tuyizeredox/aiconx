@@ -2,26 +2,39 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
-import { Star, Heart, Share2 } from "lucide-react";
+import { Star, Heart, Share2, Flag } from "lucide-react";
 import { motion } from "framer-motion";
 import { wishlistAPI } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import ReportModal from "./ReportModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
+import { recordSignal } from "@/lib/personalization";
+import { estimateEarnings } from "@/lib/affiliate";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import EarnBadge from "./EarnBadge";
 
 export default function ProductCard({ product, compact = false, currentUser }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
   const nativeShare = useNativeShare({ product, onFallback: () => setIsShareModalOpen(true) });
   const productId = product?.id || product?._id;
+  const isOwner = currentUser?.username && currentUser.username === product?.vendor_username;
+  const { isSubscriptionEnforced } = usePlatformSettings();
+  // Estimated from the product itself — no request per card.
+  const earnings = estimateEarnings(product, {
+    subscriptionEnforced: isSubscriptionEnforced,
+    viewerUsername: currentUser?.username,
+  });
 
   // Only fetch wishlist for authenticated users with username
   const { data: wishlistItems = [] } = useQuery({
     queryKey: ["wishlist", currentUser?.username],
     queryFn: async () => {
-      const res = await wishlistAPI.list({ sort: "-created_date", limit: 200 });
+      const res = await wishlistAPI.list({ sort: "-created_at", limit: 200 });
       return res.items || res.data || (Array.isArray(res) ? res : []);
     },
     staleTime: 60000,
@@ -40,6 +53,13 @@ export default function ProductCard({ product, compact = false, currentUser }) {
         if (!vendorUsername) {
           console.error("Missing vendor username for product", product);
         }
+
+        recordSignal("save", {
+          id: productId,
+          category: product.category,
+          price: product.price,
+          store_id: product.store_id,
+        });
 
         await wishlistAPI.add({
           product_id: productId,
@@ -69,7 +89,15 @@ export default function ProductCard({ product, compact = false, currentUser }) {
 
   return (
     <>
-      <Link to={createPageUrl("ProductDetail") + `?id=${productId}`}>
+      <Link
+        to={createPageUrl("ProductDetail") + `?id=${productId}`}
+        onClick={() => recordSignal("view", {
+          id: productId,
+          category: product.category,
+          price: product.price,
+          store_id: product.store_id,
+        })}
+      >
         <motion.div
           whileHover={{ y: -4 }}
           className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300 group"
@@ -117,6 +145,19 @@ export default function ProductCard({ product, compact = false, currentUser }) {
               >
                 <Share2 className="w-4 h-4 text-slate-600 dark:text-slate-300" />
               </motion.button>
+              {currentUser && !isOwner && (
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsReportModalOpen(true);
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
+                >
+                  <Flag className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </motion.button>
+              )}
             </div>
           </div>
           <div className={compact ? "p-2" : "p-3"}>
@@ -128,6 +169,11 @@ export default function ProductCard({ product, compact = false, currentUser }) {
                 <span className="text-xs text-slate-400 dark:text-slate-500 line-through">{formatCurrency(product.compare_at_price)}</span>
               )}
             </div>
+            {earnings && (
+              <div className="mt-1.5">
+                <EarnBadge amount={earnings.amount} />
+              </div>
+            )}
             {product.rating_avg > 0 && (
               <div className="flex items-center gap-1 mt-1.5">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -143,6 +189,12 @@ export default function ProductCard({ product, compact = false, currentUser }) {
         onOpenChange={setIsShareModalOpen}
         product={product}
         currentUser={currentUser}
+      />
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onOpenChange={setIsReportModalOpen}
+        targetId={productId}
+        targetType="product"
       />
     </>
   );

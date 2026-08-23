@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
 import PostCard from "@/components/shared/PostCard";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { ArrowLeft, Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { postsAPI, commentsAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/AuthContext";
 import { useSocket } from "@/lib/SocketContext";
+import { toast } from "sonner";
 
 function ReplyItem({ reply, currentUser }) {
   const queryClient = useQueryClient();
@@ -39,11 +41,11 @@ function ReplyItem({ reply, currentUser }) {
   }, [replyId, currentUser?.username, on]);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      return isLiked ? await commentsAPI.unlike(replyId) : await commentsAPI.like(replyId);
+    mutationFn: async (wasLiked) => {
+      return wasLiked ? await commentsAPI.unlike(replyId) : await commentsAPI.like(replyId);
     },
-    onMutate: () => {
-      const next = !isLiked;
+    onMutate: (wasLiked) => {
+      const next = !wasLiked;
       setIsLiked(next);
       setLikesCount(prev => next ? prev + 1 : Math.max(0, prev - 1));
     },
@@ -61,7 +63,18 @@ function ReplyItem({ reply, currentUser }) {
         return old;
       });
     },
-    onError: () => {
+    onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["postComments"] });
+        return;
+      }
+      if (error?.status === 404) {
+        toast.error("This reply is no longer available");
+      } else {
+        toast.error("Failed to update like. Please try again.");
+      }
       setIsLiked(!!reply.is_liked);
       setLikesCount(reply.likes_count || 0);
     },
@@ -75,30 +88,31 @@ function ReplyItem({ reply, currentUser }) {
     >
       <Link to={replyAuthorProfile} className="shrink-0">
         <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold shrink-0 overflow-hidden border border-white dark:border-slate-800 shadow-sm hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
-          {reply.author_avatar ? (
-            <img src={reply.author_avatar} alt="" className="w-full h-full object-cover" />
-          ) : (
-            reply.author_name?.[0]?.toUpperCase() || "U"
-          )}
+          <AvatarImg
+            src={reply.author_avatar}
+            className="w-full h-full object-cover"
+            fallback={reply.author_name?.[0]?.toUpperCase() || "U"}
+          />
         </div>
       </Link>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm px-3.5 py-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Link to={replyAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">{reply.author_name || "User"}</span>
-              <span className="text-[10px] text-slate-400">@{reply.author_username || "anonymous"}</span>
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+            <Link to={replyAuthorProfile} className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity">
+              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{reply.author_name || "User"}</span>
+              <span className="text-[10px] text-slate-400 truncate">@{reply.author_username || "anonymous"}</span>
             </Link>
-            <span className="text-[10px] text-slate-300">·</span>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-300 shrink-0">·</span>
+            <span className="text-[10px] text-slate-400 shrink-0">
               {new Date(reply.created_at || reply.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{reply.content}</p>
         </div>
         <button
-          onClick={() => currentUser && likeMutation.mutate()}
-          className={`flex items-center gap-1 text-[10px] font-bold mt-1.5 ml-1 transition-colors ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+          onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
+          disabled={likeMutation.isPending}
+          className={`flex items-center gap-1 text-[10px] font-bold mt-1.5 ml-1 transition-colors disabled:opacity-60 ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
         >
           <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
           {likesCount > 0 && likesCount} {isLiked ? "Liked" : "Like"}
@@ -146,11 +160,11 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
   }, [commentId, currentUser?.username, on]);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      return isLiked ? await commentsAPI.unlike(commentId) : await commentsAPI.like(commentId);
+    mutationFn: async (wasLiked) => {
+      return wasLiked ? await commentsAPI.unlike(commentId) : await commentsAPI.like(commentId);
     },
-    onMutate: () => {
-      const next = !isLiked;
+    onMutate: (wasLiked) => {
+      const next = !wasLiked;
       setIsLiked(next);
       setLikesCount(prev => next ? prev + 1 : Math.max(0, prev - 1));
     },
@@ -168,7 +182,18 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
         return old;
       });
     },
-    onError: () => {
+    onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["postComments"] });
+        return;
+      }
+      if (error?.status === 404) {
+        toast.error("This comment is no longer available");
+      } else {
+        toast.error("Failed to update like. Please try again.");
+      }
       setIsLiked(!!comment.is_liked);
       setLikesCount(comment.likes_count || 0);
     },
@@ -202,23 +227,23 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
     >
       <Link to={commentAuthorProfile} className="shrink-0">
         <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold shrink-0 border border-white dark:border-slate-800 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
-          {comment.author_avatar ? (
-            <img src={comment.author_avatar} alt="" className="w-full h-full rounded-full object-cover" />
-          ) : (
-            comment.author_name?.[0]?.toUpperCase() || "U"
-          )}
+          <AvatarImg
+            src={comment.author_avatar}
+            className="w-full h-full rounded-full object-cover"
+            fallback={comment.author_name?.[0]?.toUpperCase() || "U"}
+          />
         </div>
       </Link>
       <div className="flex-1 min-w-0">
         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 hover:shadow-md hover:shadow-slate-100 dark:hover:shadow-slate-700/50 transition-all">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <Link to={commentAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{comment.author_name || "User"}</span>
-                <span className="text-[10px] text-slate-400 font-medium">@{comment.author_username || "anonymous"}</span>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Link to={commentAuthorProfile} className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity">
+                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{comment.author_name || "User"}</span>
+                <span className="text-[10px] text-slate-400 font-medium truncate shrink-0">@{comment.author_username || "anonymous"}</span>
               </Link>
             </div>
-            <span className="text-[10px] font-medium text-slate-400">
+            <span className="text-[10px] font-medium text-slate-400 shrink-0">
               {new Date(comment.created_at || comment.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           </div>
@@ -226,8 +251,9 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => currentUser && likeMutation.mutate()}
-              className={`flex items-center gap-1 text-[10px] font-bold transition-colors ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+              onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
+              disabled={likeMutation.isPending}
+              className={`flex items-center gap-1 text-[10px] font-bold transition-colors disabled:opacity-60 ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
             >
               <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
               {likesCount > 0 && likesCount} {isLiked ? "Liked" : "Like"}

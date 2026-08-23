@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/AuthContext';
 import { getRedirectPath } from '@/lib/utils';
 import { Mail, Lock, User, Loader2, ArrowRight, ArrowLeft, Eye, EyeOff, Sun, Moon, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleLogin } from '@react-oauth/google';
+import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
+import Seo from '@/components/shared/Seo';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
 import { useTheme } from 'next-themes';
 import { toast } from '@/components/ui/use-toast';
 
@@ -30,11 +32,11 @@ const MemoizedBackground = React.memo(() => (
   </div>
 ));
 
-const PasswordStrength = ({ password }) => {
+const PasswordStrength = ({ password, t }) => {
   const checks = [
-    { label: '6+ characters', pass: password.length >= 6 },
-    { label: 'Uppercase', pass: /[A-Z]/.test(password) },
-    { label: 'Number', pass: /\d/.test(password) },
+    { label: t("auth.passwordStrength6Chars"), pass: password.length >= 6 },
+    { label: t("auth.passwordStrengthUppercase"), pass: /[A-Z]/.test(password) },
+    { label: t("auth.passwordStrengthNumber"), pass: /\d/.test(password) },
   ];
   if (!password) return null;
   const passed = checks.filter(c => c.pass).length;
@@ -77,7 +79,9 @@ const Register = () => {
   const { register, googleLogin } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { resolvedTheme, setTheme } = useTheme();
+  const redirectAfterAuth = (user) => navigate(location.state?.from || getRedirectPath(user));
 
   useEffect(() => {
     return () => {
@@ -89,20 +93,20 @@ const Register = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
-      setError('Google sign-up failed: no credential received. Please try again.');
-      toast({ title: "Google sign-up failed", description: "No credential received. Please try again.", variant: "destructive" });
+      setError(t("auth.googleSignUpNoCredential"));
+      toast({ title: t("auth.googleSignUpFailedTitle"), description: t("auth.noCredentialDesc"), variant: "destructive" });
       return;
     }
     setIsGoogleLoading(true);
     setError('');
     try {
       const res = await googleLogin(credentialResponse.credential);
-      toast({ title: "Account created!", description: "Welcome aboard. Google sign-up successful.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      toast({ title: t("auth.accountCreatedTitle"), description: t("auth.googleSignUpSuccessDesc"), variant: "success" });
+      redirectAfterAuth(res.user);
     } catch (err) {
-      const msg = err.message || 'Google sign-up failed. Please try again.';
+      const msg = err.message || t("auth.googleSignUpFailed");
       setError(msg);
-      toast({ title: "Google sign-up failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.googleSignUpFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -110,9 +114,9 @@ const Register = () => {
 
   const handleGoogleError = (err) => {
     console.error('Google OAuth error:', err);
-    const msg = 'Google sign-up failed. Make sure pop-ups are not blocked and try again.';
+    const msg = t("auth.googleSignUpFailedPopup");
     setError(msg);
-    toast({ title: "Google sign-up failed", description: msg, variant: "destructive" });
+    toast({ title: t("auth.googleSignUpFailedTitle"), description: msg, variant: "destructive" });
   };
 
   const handleChange = (e) => {
@@ -124,16 +128,16 @@ const Register = () => {
     setError('');
 
     if (formData.password !== formData.confirm_password) {
-      const msg = 'Passwords do not match';
+      const msg = t("auth.passwordMismatch");
       setError(msg);
-      toast({ title: "Passwords don't match", description: "Please make sure both password fields are identical.", variant: "destructive" });
+      toast({ title: t("auth.passwordsDontMatchTitle"), description: t("auth.passwordsDontMatchDesc"), variant: "destructive" });
       return;
     }
 
     if (!formData.username || formData.username.length < 3) {
-      const msg = 'Username must be at least 3 characters';
+      const msg = t("auth.usernameTooShort");
       setError(msg);
-      toast({ title: "Username too short", description: "Your handle must be at least 3 characters long.", variant: "destructive" });
+      toast({ title: t("auth.usernameTooShortTitle"), description: t("auth.usernameTooShortDesc"), variant: "destructive" });
       return;
     }
 
@@ -145,12 +149,12 @@ const Register = () => {
         password: formData.password,
         display_name: formData.display_name
       });
-      toast({ title: "Welcome aboard!", description: "Your account has been created successfully.", variant: "success" });
-      navigate(getRedirectPath(res.user));
+      toast({ title: t("auth.welcomeAboardTitle"), description: t("auth.accountCreatedDesc"), variant: "success" });
+      redirectAfterAuth(res.user);
     } catch (err) {
-      const msg = err.message || 'Failed to create account. Please try again.';
+      const msg = err.message || t("auth.createAccountFailedGeneric");
       setError(msg);
-      toast({ title: "Registration failed", description: msg, variant: "destructive" });
+      toast({ title: t("auth.registrationFailedTitle"), description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -161,45 +165,52 @@ const Register = () => {
   const labelClass = "text-xs font-semibold dark:text-slate-400 text-slate-600 ml-0.5";
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-4 pb-8 sm:px-6 lg:py-8">
+    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8 sm:px-6 lg:py-8">
+      <Seo path="/register" title="Create Account" description="Create your free Aicon X account to start shopping, selling, and connecting with communities today." />
       <MemoizedBackground />
 
       <div className="flex lg:hidden items-center justify-between w-full max-w-md mx-auto mb-4 relative z-20">
         <button
           type="button"
-          onClick={() => navigate('/welcome')}
+          onClick={() => navigate('/')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Toggle theme"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <button
+            type="button"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+            aria-label={t("auth.toggleTheme")}
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <div className="hidden lg:flex absolute top-4 inset-x-4 z-20 items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate('/welcome')}
+          onClick={() => navigate('/')}
           className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Go back"
+          aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
-          aria-label="Toggle theme"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguagePicker compact />
+          <button
+            type="button"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+            aria-label={t("auth.toggleTheme")}
+          >
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <div className="w-full relative z-10 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 max-w-6xl mx-auto lg:flex-1">
@@ -218,11 +229,11 @@ const Register = () => {
               <Logo size="lg" showText={false} className="!gap-0" />
             </motion.div>
             <h1 className="text-5xl xl:text-6xl font-black dark:text-white text-slate-900 tracking-tighter leading-[0.9]">
-              JOIN THE <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">EVOLUTION.</span>
+              {t("auth.registerHeroLine1")} <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">{t("auth.registerHeroLine2")}</span>
             </h1>
             <p className="text-base xl:text-lg dark:text-slate-400 text-slate-600 leading-relaxed max-w-sm">
-              Create your account and start building your presence in social commerce.
+              {t("auth.registerHeroSubtitle")}
             </p>
           </div>
         </motion.div>
@@ -239,7 +250,7 @@ const Register = () => {
                 <Logo
                   size="md"
                   className="flex-col !gap-4 mx-auto"
-                  subtext="Join the Network"
+                  subtext={t("auth.joinTheNetwork")}
                   showDecoration={true}
                 />
               </div>
@@ -350,7 +361,7 @@ const Register = () => {
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
-                      <PasswordStrength password={formData.password} />
+                      <PasswordStrength password={formData.password} t={t} />
                     </div>
 
                     <div className="space-y-1.5">
@@ -419,14 +430,9 @@ const Register = () => {
                 <div className="flex flex-col items-center gap-2">
                   <div className="relative">
                     <div className={`hover:scale-105 transition-transform duration-300 ${isGoogleLoading ? 'pointer-events-none' : ''}`}>
-                      <GoogleLogin
+                      <GoogleSignInButton
                         onSuccess={handleGoogleSuccess}
                         onError={handleGoogleError}
-                        type="icon"
-                        text="signup_with"
-                        theme="filled_blue"
-                        shape="circle"
-                        size="large"
                       />
                     </div>
                     <AnimatePresence>
@@ -452,7 +458,7 @@ const Register = () => {
               <div className="text-center">
                 <p className="dark:text-slate-500 text-slate-500 text-sm">
                   {t("auth.haveAccount")}{' '}
-                  <Link to="/login" className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
+                  <Link to="/login" state={location.state} className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
                     {t("auth.signInLink")}
                     <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-orange-500 scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
                   </Link>
@@ -480,9 +486,13 @@ const Register = () => {
             <Link to="/terms" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">
               {t("common.terms")}
             </Link>
-            {' '}{t("common.and")}{' '}
+            {', '}
             <Link to="/privacy" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">
               {t("common.privacy")}
+            </Link>
+            {' '}{t("common.and")}{' '}
+            <Link to="/community-guidelines" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">
+              {t("common.communityGuidelines")}
             </Link>
             .
           </motion.p>

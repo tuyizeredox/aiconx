@@ -1,16 +1,24 @@
 // Remove unused imports
-import React, { useState, useEffect, memo, useRef } from "react";
+import React, { useState, useEffect, useMemo, memo } from "react";
 import { useTranslation } from "react-i18next";
-import { postsAPI, bookmarksAPI, followsAPI } from "@/api/apiClient";
-import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, Link2, UserPlus, UserMinus, Flag, Copy } from "lucide-react";
+import { postsAPI, bookmarksAPI, followsAPI, affiliateLinksAPI, productsAPI, likesAPI } from "@/api/apiClient";
+import { Heart, MessageCircle, Share2, ShoppingBag, MoreHorizontal, Bookmark, ChevronLeft, ChevronRight, Edit, Trash2, UserPlus, UserMinus, Flag, Copy, Repeat2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, isVideoUrl, isVideoPost } from "@/lib/utils";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ShareModal from "./ShareModal";
+import ReportModal from "./ReportModal";
 import PostDetailModal from "./PostDetailModal";
+import CommentsSheet from "./CommentsSheet";
+import PostContent from "./PostContent";
+import FeedVideoPlayer from "./FeedVideoPlayer";
+import ReelsPlayer from "./ReelsPlayer";
+import AvatarImg from "./AvatarImg";
+import ShopThisLook from "@/components/home/ShopThisLook";
 import { useNativeShare } from "@/hooks/useNativeShare";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDistanceToNow } from "date-fns";
 import useEmblaCarousel from 'embla-carousel-react';
 import {
@@ -19,28 +27,51 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
-const PostCard = memo(function PostCard({ post, currentUser, fullView = false }) {
+const PostCard = memo(function PostCard({ post, currentUser, fullView = false, feedPosts }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // A repost wraps another post: interactions (like/comment/share/bookmark)
+  // and the header/media/tags shown all act on the original content, with a
+  // small "Reposted by X" banner layered on top.
+  const isRepost = !!post?.repost_of;
+  const displayPost = isRepost && post?.original_post ? post.original_post : post;
+
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const nativeShare = useNativeShare({ post, onFallback: () => setIsShareModalOpen(true) });
-  const [showFullContent, setShowFullContent] = useState(fullView);
+  const [isShopSheetOpen, setIsShopSheetOpen] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [reelsIndex, setReelsIndex] = useState(null);
+  const nativeShare = useNativeShare({ post: displayPost, onFallback: () => setIsShareModalOpen(true) });
+
+  // Reading comments should never cost the reader their place in the feed.
+  // On a phone that means sliding the thread up over the post they are
+  // already looking at; on a desktop there is room to show the post and its
+  // comments side by side, so the full view still earns its place there.
+  // `fullView` (the post's own page) already shows the thread inline.
+  const isMobile = useIsMobile();
+  const openComments = () => {
+    if (isMobile) setIsCommentsOpen(true);
+    else setIsDetailModalOpen(true);
+  };
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
-  const videoRefs = useRef({});
 
-  const postId = (post?.id || post?._id)?.toString();
-  const authorUsername = post?.author_username;
-  const isLiked = !!post?.is_liked;
+  const postId = (displayPost?.id || displayPost?._id)?.toString();
+  const authorUsername = displayPost?.author_username;
+  const isLiked = !!displayPost?.is_liked;
   const isOwner = currentUser?.username === authorUsername;
   const [optimisticLiked, setOptimisticLiked] = useState(isLiked);
-  const [optimisticCount, setOptimisticCount] = useState(post?.likes_count || 0);
+  const [optimisticCount, setOptimisticCount] = useState(displayPost?.likes_count || 0);
+  const isReposted = !!displayPost?.is_reposted;
+  const [optimisticReposted, setOptimisticReposted] = useState(isReposted);
+  const [optimisticRepostsCount, setOptimisticRepostsCount] = useState(displayPost?.reposts_count || 0);
+  const isRepostOwner = isRepost && currentUser?.username === post?.author_username;
 
   // Follow status check
   const { data: followStatus } = useQuery({
@@ -54,13 +85,88 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
 
   const isFollowing = followStatus?.is_following || false;
 
+  // Who among the people I follow also liked this post
+  const { data: knownLikers } = useQuery({
+    queryKey: ["knownLikers", "post", postId, currentUser?.username],
+    queryFn: () => likesAPI.getKnownLikers("post", postId, 3),
+    enabled: !!currentUser?.username && !!postId && (displayPost?.likes_count || 0) > 0,
+    staleTime: 60000,
+  });
+
+  const firstAffiliateLinkId = displayPost?.affiliate_links?.[0];
+  const { data: postAffiliateLink } = useQuery({
+    queryKey: ["postAffiliateLink", firstAffiliateLinkId],
+    queryFn: () => affiliateLinksAPI.get(firstAffiliateLinkId),
+    enabled: !!firstAffiliateLinkId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // The affiliate link only caches a title/price snapshot from when it was
+  // created — pull the live product so the embed can show a real image and
+  // current price instead of a bare text link.
+  const { data: affiliateProduct } = useQuery({
+    queryKey: ["postAffiliateProduct", postAffiliateLink?.product_id],
+    queryFn: async () => {
+      const res = await productsAPI.get(postAffiliateLink.product_id);
+      return res?.data || res;
+    },
+    enabled: !!postAffiliateLink?.product_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const taggedProductIds = displayPost?.tagged_products;
+  const { data: taggedProducts } = useQuery({
+    queryKey: ["postTaggedProducts", taggedProductIds],
+    queryFn: async () => {
+      const results = await Promise.all((taggedProductIds || []).map(async (id) => {
+        try {
+          const res = await productsAPI.get(id);
+          return res?.data || res;
+        } catch {
+          return null;
+        }
+      }));
+      return results.filter(Boolean);
+    },
+    enabled: !!taggedProductIds?.length,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Everything shoppable in this post, as one list. Tagged products and an
+  // affiliate product are the same thing to a shopper — something worn in the
+  // photo that they can buy — so they get one entry point instead of two
+  // competing blocks. Attribution rides along as `refCode`, never as UI.
+  const shoppableProducts = useMemo(() => {
+    const items = [...(taggedProducts || [])];
+    if (affiliateProduct) {
+      const affiliateId = String(affiliateProduct.id || affiliateProduct._id);
+      if (!items.some(p => String(p.id || p._id) === affiliateId)) items.unshift(affiliateProduct);
+    }
+    return items;
+  }, [taggedProducts, affiliateProduct]);
+
+  // Tagged products are stored as bare ids, so until they resolve we still
+  // know how many there are — the button can appear immediately instead of
+  // popping in after a round trip.
+  const shoppableCount = shoppableProducts.length
+    || (taggedProductIds?.length || 0)
+    || (postAffiliateLink ? 1 : 0);
+
   useEffect(() => {
     setOptimisticLiked(isLiked);
   }, [isLiked]);
 
   useEffect(() => {
-    setOptimisticCount(post?.likes_count || 0);
-  }, [post?.likes_count]);
+    setOptimisticCount(displayPost?.likes_count || 0);
+  }, [displayPost?.likes_count]);
+
+  useEffect(() => {
+    setOptimisticReposted(isReposted);
+  }, [isReposted]);
+
+  useEffect(() => {
+    setOptimisticRepostsCount(displayPost?.reposts_count || 0);
+  }, [displayPost?.reposts_count]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -74,45 +180,20 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
     onSelect();
   }, [emblaApi]);
 
-  // Autoplay video logic - only observe videos that exist
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: 0.6 }
-    );
-
-    const videos = Object.values(videoRefs.current).filter(Boolean);
-    videos.forEach(video => observer.observe(video));
-
-    return () => {
-      videos.forEach(video => observer.unobserve(video));
-      observer.disconnect();
-    };
-  }, [post?.media_urls]);
-
   // Follow state - lazy loaded only when needed (profile page optimization)
   const [showFollowButton, setShowFollowButton] = useState(false);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      if (optimisticLiked) {
+    mutationFn: async (wasLiked) => {
+      if (wasLiked) {
         return await postsAPI.unlike(postId);
       } else {
         return await postsAPI.like(postId);
       }
     },
-    onMutate: () => {
-      setOptimisticLiked(!optimisticLiked);
-      setOptimisticCount(prev => optimisticLiked ? Math.max(0, prev - 1) : prev + 1);
+    onMutate: (wasLiked) => {
+      setOptimisticLiked(!wasLiked);
+      setOptimisticCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
     },
     onSuccess: (data) => {
       if (data && data.likes_count !== undefined) {
@@ -157,6 +238,12 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
       );
     },
     onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["posts"] });
+        return;
+      }
       if (error.status === 404) {
         toast.error("This post is no longer available");
         queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -164,7 +251,33 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
         toast.error("Failed to update like");
       }
       setOptimisticLiked(isLiked);
-      setOptimisticCount(post?.likes_count || 0);
+      setOptimisticCount(displayPost?.likes_count || 0);
+    },
+  });
+
+  const repostMutation = useMutation({
+    mutationFn: async (wasReposted) => {
+      if (wasReposted) {
+        return await postsAPI.unrepost(postId);
+      } else {
+        return await postsAPI.repost(postId, {});
+      }
+    },
+    onMutate: (wasReposted) => {
+      setOptimisticReposted(!wasReposted);
+      setOptimisticRepostsCount((prev) => (wasReposted ? Math.max(0, prev - 1) : prev + 1));
+    },
+    onSuccess: (data) => {
+      if (data?.reposts_count !== undefined) setOptimisticRepostsCount(data.reposts_count);
+      if (data?.is_reposted !== undefined) setOptimisticReposted(data.is_reposted);
+      toast.success(data?.is_reposted === false ? (t("common.repostRemoved") || "Repost removed") : (t("common.repostedSuccess") || "Reposted to your feed"));
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+    onError: (error) => {
+      toast.error(error?.message || (t("common.repostFailed") || "Failed to update repost"));
+      setOptimisticReposted(isReposted);
+      setOptimisticRepostsCount(displayPost?.reposts_count || 0);
     },
   });
 
@@ -199,6 +312,21 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
     },
   });
 
+  // Undo just this repost (removes the repost card, leaves the original untouched)
+  const removeRepostMutation = useMutation({
+    mutationFn: async () => {
+      await postsAPI.unrepost(postId);
+    },
+    onSuccess: () => {
+      toast.success(t("common.repostRemoved") || "Repost removed");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+    onError: (error) => {
+      toast.error(error?.message || (t("common.repostFailed") || "Failed to remove repost"));
+    },
+  });
+
   const followMutation = useMutation({
     mutationFn: async () => {
       if (isFollowing) {
@@ -222,11 +350,61 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
 
   if (!post) return null;
 
-  const isVideoUrl = (url) => {
-    if (!url) return false;
-    const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".m4v", ".avi", ".mkv", ".flv", ".wmv", ".3gp"];
-    return videoExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes("video/upload");
+  // Posts with a video, in feed order, so the fullscreen player can swipe
+  // between them the way Reels/TikTok do. Falls back to just this post when
+  // the caller didn't supply the surrounding feed (e.g. a single-post page).
+  // Reposts are resolved to the original post they wrap, matching what's
+  // actually rendered (and playable) in each card.
+  const resolveDisplayPost = (p) => (p?.repost_of && p?.original_post) ? p.original_post : p;
+  const feedDisplayPosts = (Array.isArray(feedPosts) && feedPosts.length > 0 ? feedPosts : [post]).map(resolveDisplayPost);
+  const videoQueue = feedDisplayPosts.filter(isVideoPost);
+  if (videoQueue.length === 0 && isVideoPost(displayPost)) videoQueue.push(displayPost);
+
+  const triggerLike = () => {
+    if (currentUser && !optimisticLiked && !likeMutation.isPending) {
+      likeMutation.mutate(optimisticLiked);
+      setShowHeartAnimation(true);
+      setTimeout(() => setShowHeartAnimation(false), 1000);
+    }
   };
+
+  // "Liked by @a, @b and N others" when people I follow liked this post,
+  // falling back to a plain like count. Names link to their profile; my own
+  // like reads as "You" instead of my own name, and isn't a link.
+  const knownLikerUsers = knownLikers?.users || [];
+  const knownLikerTotal = knownLikers?.total || 0;
+  const withCommas = (nodes) => nodes.flatMap((n, i) => (i === 0 ? [n] : [", ", n]));
+  let likedByNode = null;
+  if (optimisticCount > 0) {
+    if (knownLikerTotal > 0) {
+      const nameNodes = knownLikerUsers.map((u) => {
+        const isSelf = currentUser && u.username === currentUser.username;
+        const label = isSelf ? "You" : (u.display_name || u.username);
+        return isSelf ? (
+          <span key={u.username}>{label}</span>
+        ) : (
+          <Link
+            key={u.username}
+            to={createPageUrl("Profile") + `?username=${u.username}`}
+            className="hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {label}
+          </Link>
+        );
+      });
+      const othersCount = optimisticCount - knownLikerUsers.length;
+      if (nameNodes.length === 1 && othersCount <= 0) {
+        likedByNode = <>Liked by {nameNodes[0]}</>;
+      } else if (nameNodes.length >= 2 && othersCount <= 0) {
+        likedByNode = <>Liked by {withCommas(nameNodes.slice(0, -1))} and {nameNodes[nameNodes.length - 1]}</>;
+      } else {
+        likedByNode = <>Liked by {withCommas(nameNodes)} and {othersCount.toLocaleString()} other{othersCount === 1 ? "" : "s"}</>;
+      }
+    } else {
+      likedByNode = `${optimisticCount.toLocaleString()} ${optimisticCount === 1 ? (t("common.like") || "like") : (t("common.likes") || "likes")}`;
+    }
+  }
 
   return (
     <>
@@ -236,35 +414,54 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
         viewport={{ once: true, margin: "-50px" }}
         className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300"
       >
-        <ShareModal 
-          isOpen={isShareModalOpen} 
-          onOpenChange={setIsShareModalOpen} 
-          post={post} 
-          currentUser={currentUser} 
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          post={displayPost}
+          currentUser={currentUser}
         />
 
+      {isRepost && (
+        <Link
+          to={createPageUrl("Profile") + `?username=${post.author_username}`}
+          className="flex items-center gap-2 px-4 pt-3 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+        >
+          <Repeat2 className="w-3.5 h-3.5" />
+          <span>{t("common.repostedBy", { name: post.author_name || post.author_username }) || `Reposted by ${post.author_name || post.author_username}`}</span>
+        </Link>
+      )}
+
+      {isRepost && post.content && (
+        <div className="px-4 pt-2">
+          <PostContent content={post.content} clamp={!fullView} />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between p-4">
-        <Link to={createPageUrl("Profile") + `?username=${authorUsername}`} className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm">
-            {post.author_avatar ? (
-              <img src={post.author_avatar} alt={post.author_name} className="w-full h-full object-cover" loading="lazy" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
-                {post.author_name?.[0]?.toUpperCase() || "U"}
-              </div>
-            )}
+      <div className="flex items-center justify-between gap-2 p-4">
+        <Link to={createPageUrl("Profile") + `?username=${authorUsername}`} className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm shrink-0">
+            <AvatarImg
+              src={displayPost.author_avatar}
+              alt={displayPost.author_name}
+              className="w-full h-full object-cover"
+              fallback={
+                <div className="w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
+                  {displayPost.author_name?.[0]?.toUpperCase() || "U"}
+                </div>
+              }
+            />
           </div>
-          <div className="flex flex-col">
-            <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors">{post.author_name || "User"}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">@{authorUsername}</p>
-              <span className="text-[10px] text-slate-300 dark:text-slate-600">•</span>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                {formatDistanceToNow(new Date(post.created_at || post.created_date), { addSuffix: true })}
+          <div className="flex flex-col min-w-0">
+            <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors truncate">{displayPost.author_name || "User"}</p>
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">@{authorUsername}</p>
+              <span className="text-[10px] text-slate-300 dark:text-slate-600 shrink-0">•</span>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+                {formatDistanceToNow(new Date(displayPost.created_at || displayPost.created_date), { addSuffix: true })}
               </p>
-              {post.is_sponsored && (
-                <span className="ml-1 px-1.5 py-0 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 rounded text-[9px] font-bold uppercase tracking-wider">Sponsored</span>
+              {displayPost.is_sponsored && (
+                <span className="ml-1 px-1.5 py-0 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 rounded text-[9px] font-bold uppercase tracking-wider shrink-0">Sponsored</span>
               )}
             </div>
           </div>
@@ -292,6 +489,15 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
                     <span>Follow</span>
                   </>
                 )}
+              </DropdownMenuItem>
+            )}
+            {isRepostOwner && (
+              <DropdownMenuItem
+                onClick={() => removeRepostMutation.mutate()}
+                className="flex items-center gap-2 cursor-pointer text-red-600"
+              >
+                <Repeat2 className="w-4 h-4" />
+                <span>{t("common.removeRepost") || "Remove repost"}</span>
               </DropdownMenuItem>
             )}
             {isOwner && (
@@ -334,11 +540,9 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
               <Copy className="w-4 h-4" />
               <span>Copy link</span>
             </DropdownMenuItem>
-            {!isOwner && (
+            {!isOwner && currentUser && (
               <DropdownMenuItem
-                onClick={() => {
-                  toast.info("Report feature coming soon");
-                }}
+                onClick={() => setIsReportModalOpen(true)}
                 className="flex items-center gap-2 cursor-pointer text-red-600"
               >
                 <Flag className="w-4 h-4" />
@@ -349,58 +553,52 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
         </DropdownMenu>
       </div>
 
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onOpenChange={setIsReportModalOpen}
+        targetId={postId}
+        targetType="post"
+      />
+
       {/* Content */}
-      {post.content && (
+      {displayPost.content && (
         <div className="px-4 py-2">
-          <p className={`text-[14px] text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap ${!showFullContent && "line-clamp-3"}`}>
-            {post.content}
-          </p>
-          {!fullView && post.content.length > 150 && (
-            <button
-              onClick={() => setShowFullContent(!showFullContent)}
-              className="text-xs font-semibold text-orange-600 dark:text-orange-400 mt-1 hover:text-orange-700 dark:hover:text-orange-300"
-            >
-              {showFullContent ? t("common.seeLess") : t("common.seeMore")}
-            </button>
-          )}
+          <PostContent content={displayPost.content} clamp={!fullView} />
         </div>
       )}
 
       {/* Media */}
-      {post.media_urls?.length > 0 && (
+      {displayPost.media_urls?.length > 0 && (
         <div className="mt-2 relative group select-none bg-slate-50 dark:bg-slate-950 overflow-hidden">
-          <div 
-            className="overflow-hidden cursor-pointer" 
+          <div
+            className="overflow-hidden cursor-pointer"
             ref={emblaRef}
             onClick={() => !fullView && setIsDetailModalOpen(true)}
-            onDoubleClick={() => {
-              if (currentUser && !optimisticLiked) {
-                likeMutation.mutate();
-                setShowHeartAnimation(true);
-                setTimeout(() => setShowHeartAnimation(false), 1000);
-              }
-            }}
+            onDoubleClick={triggerLike}
           >
             <div className="flex">
-              {post.media_urls.map((url, i) => {
-                const isVid = post.media_type === "video" || isVideoUrl(url);
+              {displayPost.media_urls.map((url, i) => {
+                const isVid = displayPost.media_type === "video" || isVideoUrl(url);
                 return (
                   <div key={`${url}-${i}`} className="flex-[0_0_100%] min-w-0 relative">
                     {isVid ? (
-                      <video 
-                        ref={el => videoRefs.current[i] = el}
-                        src={url} 
-                        className="w-full h-auto max-h-[600px] object-contain" 
-                        controls 
-                        playsInline 
-                        preload="metadata"
+                      <FeedVideoPlayer
+                        src={url}
+                        poster={displayPost.thumbnail_urls?.[i]}
+                        onDoubleTap={triggerLike}
+                        suspended={reelsIndex !== null}
+                        onExpand={!fullView ? () => {
+                          const queueIndex = videoQueue.findIndex(p => ((p.id || p._id)?.toString()) === postId);
+                          setReelsIndex({ queueIndex: queueIndex >= 0 ? queueIndex : 0, mediaIndex: i });
+                        } : undefined}
                       />
                     ) : (
-                      <img 
-                        src={url} 
-                        alt="" 
-                        className="w-full h-auto max-h-[600px] object-contain" 
+                      <img
+                        src={url}
+                        alt=""
+                        className="w-full h-auto max-h-[600px] object-contain"
                         loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           e.target.src = "https://placehold.co/600x600/f8fafc/64748b?text=Image+Not+Found";
                         }}
@@ -413,10 +611,10 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
           </div>
           
           {/* Pagination Indicators */}
-          {post.media_urls.length > 1 && (
+          {displayPost.media_urls.length > 1 && (
             <>
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-10 pointer-events-none">
-                {post.media_urls.map((_, i) => (
+                {displayPost.media_urls.map((_, i) => (
                   <div 
                     key={i} 
                     className={`w-1.5 h-1.5 rounded-full shadow-sm transition-all duration-300 ${
@@ -470,43 +668,51 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
         </div>
       )}
 
-      {/* Tagged Products */}
-      {post.tagged_products?.length > 0 && (
-        <div className="px-4 py-3">
-          <Link
-            to={createPageUrl("ProductDetail") + `?id=${post.tagged_products[0]}`}
-            className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+      {/* Shop this look — one primary action for everything worn or used in
+          the post. The list itself opens in a sheet so the feed keeps
+          scrolling as a feed, not as a catalogue. */}
+      {shoppableCount > 0 && (
+        <div className="px-4 pt-3">
+          <button
+            onClick={() => setIsShopSheetOpen(true)}
+            className="flex items-center gap-3 w-full h-12 pl-3 pr-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity"
           >
-            <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
-              <ShoppingBag className="w-4 h-4" />
-            </div>
-            <span className="flex-1">View tagged product</span>
-            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-          </Link>
-        </div>
-      )}
-
-      {/* Affiliate Links */}
-      {post.affiliate_links?.length > 0 && (
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3 px-4 py-2.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 font-semibold">
-            <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
-              <Link2 className="w-4 h-4" />
-            </div>
-            <span className="flex-1">Affiliate link attached</span>
-            <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">Earn commission</span>
-          </div>
+            <span className="flex items-center -space-x-2 shrink-0">
+              {shoppableProducts.slice(0, 3).map((p, i) => (
+                <span
+                  key={p.id || p._id || i}
+                  className="w-8 h-8 rounded-lg overflow-hidden bg-slate-700 dark:bg-slate-200 ring-2 ring-slate-900 dark:ring-white flex items-center justify-center"
+                >
+                  {p.images?.[0]
+                    ? <img src={p.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
+                    : <ShoppingBag className="w-3.5 h-3.5 text-white dark:text-slate-900" />}
+                </span>
+              ))}
+              {shoppableProducts.length === 0 && (
+                <span className="w-8 h-8 rounded-lg bg-slate-700 dark:bg-slate-200 flex items-center justify-center">
+                  <ShoppingBag className="w-3.5 h-3.5 text-white dark:text-slate-900" />
+                </span>
+              )}
+            </span>
+            <span className="flex-1 text-left text-[15px] font-bold truncate">{t("home.shopThisLook")}</span>
+            <span className="shrink-0 text-[13px] font-semibold opacity-70">
+              {t("home.itemsCount", { count: shoppableCount })}
+            </span>
+          </button>
         </div>
       )}
 
       {/* Actions */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 dark:border-slate-800/50">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-5">
           <button
-            onClick={() => currentUser && likeMutation.mutate()}
-            className="flex items-center gap-1.5 group outline-none"
+            onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(optimisticLiked)}
+            disabled={likeMutation.isPending}
+            title={optimisticCount > 0 ? `${optimisticCount.toLocaleString()} ${t("common.like")}` : t("common.like")}
+            aria-label={t("common.like")}
+            className="flex items-center outline-none group disabled:opacity-60"
           >
-            <motion.div 
+            <motion.div
               whileTap={{ scale: 1.4 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
@@ -516,29 +722,58 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
                 }`}
               />
             </motion.div>
-            <span className={`text-[13px] font-semibold transition-colors ${optimisticLiked ? "text-red-500" : "text-slate-500 dark:text-slate-400"}`}>
-              {optimisticCount > 0 ? optimisticCount.toLocaleString() : t("common.like")}
-            </span>
+            {optimisticCount > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {optimisticCount.toLocaleString()}
+              </span>
+            )}
           </button>
 
-          <button 
-            onClick={() => setIsDetailModalOpen(true)}
-            className="flex items-center gap-1.5 group outline-none"
+          <button
+            onClick={openComments}
+            title={displayPost.comments_count > 0 ? `${displayPost.comments_count.toLocaleString()} ${t("common.comment")}` : t("common.comment")}
+            aria-label={t("common.comment")}
+            className="flex items-center outline-none group"
           >
             <MessageCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
-            <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
-              {post.comments_count > 0 ? post.comments_count.toLocaleString() : t("common.comment")}
-            </span>
+            {displayPost.comments_count > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {displayPost.comments_count.toLocaleString()}
+              </span>
+            )}
           </button>
 
-          <button 
+          <button
+            onClick={() => currentUser && !isOwner && !repostMutation.isPending && repostMutation.mutate(optimisticReposted)}
+            disabled={repostMutation.isPending || isOwner}
+            title={isOwner ? (t("common.cannotRepostOwn") || "You can't repost your own post") : (optimisticRepostsCount > 0 ? `${optimisticRepostsCount.toLocaleString()} ${t("common.repost") || "Repost"}` : (t("common.repost") || "Repost"))}
+            aria-label={t("common.repost") || "Repost"}
+            className="flex items-center outline-none group disabled:opacity-40"
+          >
+            <Repeat2
+              className={`w-5 h-5 transition-colors duration-200 ${
+                optimisticReposted ? "text-green-500" : "text-slate-500 dark:text-slate-400 group-hover:text-green-500"
+              }`}
+            />
+            {optimisticRepostsCount > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {optimisticRepostsCount.toLocaleString()}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => currentUser && nativeShare()}
-            className="flex items-center gap-1.5 group outline-none"
+            title={displayPost.shares_count > 0 ? `${displayPost.shares_count.toLocaleString()} ${t("common.share")}` : t("common.share")}
+            aria-label={t("common.share")}
+            className="flex items-center outline-none group"
           >
             <Share2 className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
-            <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
-              {post.shares_count > 0 ? post.shares_count.toLocaleString() : t("common.share")}
-            </span>
+            {displayPost.shares_count > 0 && (
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {displayPost.shares_count.toLocaleString()}
+              </span>
+            )}
           </button>
         </div>
 
@@ -553,14 +788,53 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false })
           <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
         </button>
       </div>
+
+      {likedByNode && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={openComments}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openComments(); }}
+          className="w-full text-left px-4 pb-3 -mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:underline cursor-pointer"
+        >
+          {likedByNode}
+        </div>
+      )}
       </motion.div>
 
-      <PostDetailModal 
-        isOpen={isDetailModalOpen} 
-        onOpenChange={setIsDetailModalOpen} 
-        post={post} 
-        currentUser={currentUser} 
+      <PostDetailModal
+        isOpen={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        post={displayPost}
+        currentUser={currentUser}
       />
+
+      <CommentsSheet
+        open={isCommentsOpen}
+        onOpenChange={setIsCommentsOpen}
+        post={displayPost}
+        currentUser={currentUser}
+      />
+
+      <ShopThisLook
+        open={isShopSheetOpen}
+        onOpenChange={setIsShopSheetOpen}
+        products={shoppableProducts}
+        refCode={postAffiliateLink?.ref_code}
+        creatorName={displayPost.author_name}
+      />
+
+      <AnimatePresence>
+        {reelsIndex !== null && (
+          <ReelsPlayer
+            queue={videoQueue}
+            startIndex={reelsIndex.queueIndex}
+            startMediaIndex={reelsIndex.mediaIndex}
+            currentUser={currentUser}
+            onClose={() => setReelsIndex(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 });

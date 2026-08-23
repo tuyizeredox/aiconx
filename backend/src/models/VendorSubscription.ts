@@ -8,6 +8,7 @@ export interface IVendorSubscription extends Document {
   billing_cycle: 'monthly' | 'annual';
   pending_plan?: 'pro' | 'elite';
   pending_billing_cycle?: 'monthly' | 'annual';
+  pending_amount?: number;
   started_at: Date;
   expires_at?: Date;
   custom_domain?: string;
@@ -15,6 +16,8 @@ export interface IVendorSubscription extends Document {
   payment_reference?: string;
   last_payment_date?: Date;
   amount?: number;
+  comped?: boolean;
+  granted_by?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -55,6 +58,9 @@ const VendorSubscriptionSchema = new Schema<IVendorSubscription>({
     enum: ['monthly', 'annual'],
     default: null
   },
+  pending_amount: {
+    type: Number
+  },
   started_at: {
     type: Date,
     default: Date.now
@@ -81,6 +87,17 @@ const VendorSubscriptionSchema = new Schema<IVendorSubscription>({
   amount: {
     type: Number,
     default: 0
+  },
+  // Set when a super admin manually grants a plan via /admin/users/:id/subscription
+  // instead of the vendor paying for it. Revenue/cashout aggregations must exclude
+  // these — no money actually changed hands — even though `amount` may later get
+  // synced to the plan's list price for display purposes (see GET /admin/subscriptions).
+  comped: {
+    type: Boolean,
+    default: false
+  },
+  granted_by: {
+    type: String
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

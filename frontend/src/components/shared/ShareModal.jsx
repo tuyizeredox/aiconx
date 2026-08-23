@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -8,12 +8,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Send, Check, Copy, User, Store, Loader2, Link2, Mail } from "lucide-react";
+import { Search, Send, Check, Copy, User, Store, Loader2, Link2, Mail, Coins } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { usersAPI, storesAPI, messagesAPI, postsAPI } from "@/api/apiClient";
 import { toast } from "sonner";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
+import AvatarImg from "@/components/shared/AvatarImg";
 import { useTranslation } from "react-i18next";
+import { useAffiliateLink } from "@/hooks/useAffiliateLink";
 
 const ExternalPlatforms = ({ url, title }) => {
   const encodedUrl = encodeURIComponent(url);
@@ -89,7 +91,7 @@ const ExternalPlatforms = ({ url, title }) => {
   );
 };
 
-export default function ShareModal({ isOpen, onOpenChange, post, product, currentUser }) {
+export default function ShareModal({ isOpen, onOpenChange, post, product, currentUser, contentClassName = "" }) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState(null);
@@ -99,8 +101,29 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
   const item = product || post;
   const itemId = item?.id || item?._id;
   const itemTitle = isProduct ? product?.title : (post?.content?.slice(0, 80) || "Check this out");
-  const itemUrl = window.location.origin + createPageUrl(isProduct ? "ProductDetail" : "PostDetail") + `?id=${itemId}`;
+  const plainUrl = window.location.origin + createPageUrl(isProduct ? "ProductDetail" : "PostDetail") + `?id=${itemId}`;
   const itemImage = isProduct ? product?.images?.[0] : post?.media_urls?.[0];
+
+  // Sharing a product *is* the affiliate flow. There is no programme to join
+  // and no link to generate by hand: opening this dialog mints the sharer's
+  // link (once, reused forever after) and every URL below carries it.
+  const affiliate = useAffiliateLink(product, currentUser, { authoritative: isProduct });
+  const [affiliateUrl, setAffiliateUrl] = useState(null);
+  const canEarn = isProduct && !!currentUser && affiliate.eligible && affiliate.amount > 0;
+
+  useEffect(() => {
+    if (!isOpen || !canEarn) return;
+    let cancelled = false;
+    affiliate.ensureLink().then((url) => {
+      if (!cancelled && url) setAffiliateUrl(url);
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, canEarn, affiliate.ensureLink]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Falls back to the plain URL while the link is in flight, so the dialog is
+  // never blocked on it — a share that goes out unattributed beats one that
+  // doesn't go out.
+  const itemUrl = affiliateUrl || plainUrl;
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ["searchUsers", searchQuery],
@@ -168,7 +191,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-md sm:max-w-lg rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl">
+      <DialogContent className={`w-[calc(100vw-2rem)] max-w-md sm:max-w-lg rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl ${contentClassName}`}>
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
@@ -198,6 +221,23 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                     {formatCurrency(product.price)}
                   </p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* What the sharer gets out of it. One sentence, one number. */}
+          {canEarn && (
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <Coins className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                  {t("affiliate.youEarnPerSale", { amount: formatCurrency(affiliate.amount) })}
+                </p>
+                <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/70 leading-snug">
+                  {t("affiliate.shareEarnExplainer")}
+                </p>
               </div>
             </div>
           )}
@@ -280,13 +320,15 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                       }`}
                     >
                       <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                        {recipient.avatar_url || recipient.logo_url ? (
-                          <img src={recipient.avatar_url || recipient.logo_url} alt="" className="w-full h-full object-cover" />
-                        ) : recipient.type === 'vendor' ? (
-                          <Store className="w-4 h-4 text-orange-500" />
-                        ) : (
-                          <User className="w-4 h-4 text-slate-400" />
-                        )}
+                        <AvatarImg
+                          src={recipient.avatar_url || recipient.logo_url}
+                          className="w-full h-full object-cover"
+                          fallback={recipient.type === 'vendor' ? (
+                            <Store className="w-4 h-4 text-orange-500" />
+                          ) : (
+                            <User className="w-4 h-4 text-slate-400" />
+                          )}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">

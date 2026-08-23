@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, Send, Volume2, VolumeX, BarChart3, Trash2 } from "lucide-react";
+import { X, Heart, Send, Volume2, VolumeX, BarChart3, Trash2, Video } from "lucide-react";
 import { storiesAPI } from "@/api/apiClient";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { authAPI } from "@/api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import AvatarImg from "@/components/shared/AvatarImg";
 
 export default function StoryViewer({ stories = [], startIndex = 0, onClose, onNext, onPrev, guestMode = false }) {
   const [current, setCurrent] = useState(startIndex >= stories.length ? 0 : startIndex);
@@ -16,6 +17,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const inputRef = useRef(null);
   const videoRef = useRef(null);
   const navigate = useNavigate();
@@ -56,6 +58,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   useEffect(() => {
     setProgress(0);
     setLiked(false);
+    setVideoLoaded(false);
   }, [current, story?._id, story?.id]);
 
   // Handle auto-progress timer
@@ -163,13 +166,15 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
         {/* Header */}
         <div className="absolute top-8 left-0 right-0 px-4 flex items-center gap-3 z-30">
           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center relative overflow-hidden ring-2 ring-white/50 shadow-lg">
-            {story.author_avatar ? (
-              <img src={story.author_avatar} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold">
-                {story.author_name?.[0]?.toUpperCase() || story.author_username?.[0]?.toUpperCase() || "U"}
-              </div>
-            )}
+            <AvatarImg
+              src={story.author_avatar}
+              className="w-full h-full object-cover"
+              fallback={
+                <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold">
+                  {story.author_name?.[0]?.toUpperCase() || story.author_username?.[0]?.toUpperCase() || "U"}
+                </div>
+              }
+            />
           </div>
           <div>
             <p className="text-white text-sm font-bold drop-shadow-md">{story.author_name || `@${story.author_username}`}</p>
@@ -199,14 +204,21 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
             >
               {(story.media_type === "image" || story.media_type === "video") && story.media_url ? (
                 story.media_type === "video" ? (
-                  <video
+                  <>
+                    {!videoLoaded && (
+                      <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${gradClass}`}>
+                        <Video className="w-12 h-12 text-white/70" />
+                      </div>
+                    )}
+                    <video
                     ref={videoRef}
                     src={story.media_url}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover transition-opacity duration-200 ${videoLoaded ? "opacity-100" : "opacity-0"}`}
                     autoPlay
                     playsInline
                     muted={isMuted}
                     controls={false}
+                    onLoadedData={() => setVideoLoaded(true)}
                     onPlay={() => setIsPaused(false)}
                     onEnded={() => {
                       setProgress(100);
@@ -218,7 +230,8 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
                         else onClose();
                       }
                     }}
-                  />
+                    />
+                  </>
                 ) : (
                   <img src={story.media_url} alt="" className="w-full h-full object-cover" />
                 )
@@ -265,11 +278,11 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Views</span>
-                  <span className="text-2xl font-bold text-orange-600">{story.view_count || 0}</span>
+                  <span className="text-2xl font-bold text-orange-600">{story.views_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Likes</span>
-                  <span className="text-2xl font-bold text-red-500">{story.like_count || 0}</span>
+                  <span className="text-2xl font-bold text-red-500">{story.likes_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Replies</span>
@@ -302,7 +315,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
         )}
 
         {/* Bottom actions */}
-        <div className="absolute bottom-6 left-0 right-0 px-4 flex items-center gap-3 z-30">
+        <div className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-0 right-0 px-4 flex items-center gap-3 z-30">
           {(guestMode || (!isOwner && !isLoadingUser)) ? (
             <form onSubmit={handleReply} className="flex-1 flex items-center gap-2">
               <input

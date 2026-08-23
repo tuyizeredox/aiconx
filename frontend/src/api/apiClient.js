@@ -1,11 +1,30 @@
 /// <reference types="vite/client" />
 
+import { Capacitor } from '@capacitor/core';
+
 /**
  * API Client for Aicon X Backend
  * Replaces Base44 SDK with direct API calls
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+function resolveApiBaseUrl() {
+  // Prefer explicit API url from env; fallback to production backend.
+  const configured =
+    import.meta.env.VITE_API_URL ||
+    'https://aiconxbackend.onrender.com/api';
+
+
+  // On a native Android build, "localhost" refers to the device itself, not
+  // the machine running the dev backend. The Android emulator maps 10.0.2.2
+  // to the host machine's localhost, so redirect there when running native.
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    return configured.replace(/^(https?:\/\/)localhost/, '$110.0.2.2');
+  }
+
+  return configured;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 class APIClient {
   constructor() {
@@ -46,7 +65,7 @@ class APIClient {
   }
 
   // Generic fetch wrapper
-  async request(endpoint, options = {}) {
+  async request(endpoint, options = {}, retryCount = 0) {
     // Prevent common bugs by checking for 'undefined' or 'null' in the URL
     // We check for both string and actual values
     if (typeof endpoint !== 'string' || endpoint.includes('undefined') || endpoint.includes('null')) {
@@ -95,9 +114,23 @@ class APIClient {
 
       let data;
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType?.includes('application/json')) {
         const text = await response.text();
+        if (!text && response.ok) {
+          // Server sent 200 with an empty body instead of JSON (e.g. the dev
+          // server restarted mid-response, or a transient network blip cut the
+          // connection). This is safe to retry for idempotent GET requests.
+          const method = (options.method || 'GET').toUpperCase();
+          if (method === 'GET' && retryCount < 3) {
+            await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+            return this.request(endpoint, options, retryCount + 1);
+          }
+          console.error(`API Error [${endpoint}]: server returned an empty response body`);
+          const emptyBodyError = new Error('Empty server response');
+          emptyBodyError.status = response.status;
+          throw emptyBodyError;
+        }
         try {
           data = text ? JSON.parse(text) : {};
         } catch (e) {
@@ -111,7 +144,16 @@ class APIClient {
       const error = new Error(data?.message || data?.error || `API Error: ${response.status}`);
       error.status = response.status;
       error.details = data?.details; // Save validation details
-      
+
+      // The site-wide maintenance gate (checkMaintenance on the backend) returns
+      // 503 with { maintenance: true } for every blocked request. Surface it as a
+      // global event so a single listener can show one full-screen notice instead
+      // of every individual API caller showing its own "failed to load" toast.
+      if (response.status === 503 && data?.maintenance) {
+        error.maintenance = true;
+        window.dispatchEvent(new CustomEvent('maintenance:active', { detail: { message: error.message } }));
+      }
+
       if (!response.ok) {
         // Detailed validation error logging
         if (data?.details && Array.isArray(data.details)) {
@@ -302,6 +344,10 @@ export const productsAPI = {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/products?${query}`);
   },
+  facets: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/products/facets?${query}`);
+  },
   get: (id) => apiClient.get(`/products/${id}`),
   create: (data) => apiClient.post('/products', data),
   update: (id, data) => apiClient.patch(`/products/${id}`, data),
@@ -309,7 +355,29 @@ export const productsAPI = {
   search: (query) => apiClient.get(`/products/search?q=${encodeURIComponent(query)}`),
   getTopSelling: (limit = 10) => apiClient.get(`/products/top-selling?limit=${limit}`),
   getRelated: (id, limit = 10) => apiClient.get(`/products/related/${id}?limit=${limit}`),
+  getBoughtTogether: (id, limit = 3) => apiClient.get(`/products/${id}/bought-together?limit=${limit}`),
   getRecommendations: (limit = 10) => apiClient.get(`/products/recommendations?limit=${limit}`),
+};
+
+export const productQuestionsAPI = {
+  listForProduct: (productId, filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/product-questions/product/${productId}?${query}`);
+  },
+  ask: (data) => apiClient.post('/product-questions', data),
+  answer: (id, answer) => apiClient.post(`/product-questions/${id}/answer`, { answer }),
+  delete: (id) => apiClient.delete(`/product-questions/${id}`),
+};
+
+export const productBookingsAPI = {
+  waitingCount: (productId) => apiClient.get(`/product-bookings/product/${productId}`),
+  listForMe: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/product-bookings/me?${query}`);
+  },
+  listForVendor: () => apiClient.get('/product-bookings/vendor/me'),
+  book: (data) => apiClient.post('/product-bookings', data),
+  cancel: (id) => apiClient.delete(`/product-bookings/${id}`),
 };
 
 export const ordersAPI = {
@@ -320,7 +388,9 @@ export const ordersAPI = {
   get: (id) => apiClient.get(`/orders/${id}`),
   create: (data) => apiClient.post('/orders', data),
   updateStatus: (id, status) => apiClient.patch(`/orders/${id}/status`, { status }),
-  cancelOrder: (id) => apiClient.patch(`/orders/${id}/status`, { status: 'cancelled' })
+  cancelOrder: (id) => apiClient.patch(`/orders/${id}/status`, { status: 'cancelled' }),
+  confirmDelivery: (id) => apiClient.patch(`/orders/${id}/confirm-delivery`, { action: 'confirm' }),
+  disputeDelivery: (id, reason) => apiClient.patch(`/orders/${id}/confirm-delivery`, { action: 'dispute', reason }),
 };
 
 export const cartAPI = {
@@ -334,6 +404,7 @@ export const cartAPI = {
 export const checkoutAPI = {
   process: (data) => apiClient.post('/checkout', data),
   verifyPayment: (orderId, reference) => apiClient.post(`/checkout/${orderId}/verify-payment`, { reference }),
+  verifyPayments: (orderIds, reference) => apiClient.post('/checkout/verify-payment', { order_ids: orderIds, reference }),
 };
 
 export const couponsAPI = {
@@ -390,6 +461,8 @@ export const postsAPI = {
   like: (id) => likesAPI.like('post', id),
   unlike: (id) => likesAPI.unlike('post', id),
   share: (id) => apiClient.patch(`/posts/${id}`, { $inc: { shares_count: 1 } }), // Direct increment for simplicity
+  repost: (id, data = {}) => apiClient.post(`/posts/${id}/repost`, data),
+  unrepost: (id) => apiClient.delete(`/posts/${id}/repost`),
 };
 
 export const bookmarksAPI = {
@@ -428,7 +501,9 @@ export const likesAPI = {
   getUserLikes: (filters) => {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/likes/user?${query}`);
-  }
+  },
+  getKnownLikers: (targetType, targetId, limit = 3) =>
+    apiClient.get(`/likes/known-likers?target_type=${targetType}&target_id=${targetId}&limit=${limit}`),
 };
 
 export const withdrawalsAPI = {
@@ -488,10 +563,15 @@ export const adminAPI = {
   updateUserRole: (id, role) => apiClient.patch(`/admin/users/${id}/role`, { role }),
   updateUserVerification: (id, is_verified) => apiClient.patch(`/admin/users/${id}/verify`, { is_verified }),
   deleteUser: (id) => apiClient.delete(`/admin/users/${id}`),
+  assignUserSubscription: (id, data) => apiClient.patch(`/admin/users/${id}/subscription`, data),
   // Stores
   getStores: (params) => {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/admin/stores?${query}`);
+  },
+  getStoreProducts: (storeId, params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/stores/${storeId}/products?${query}`);
   },
   updateStoreStatus: (id, status) => apiClient.patch(`/admin/stores/${id}/status`, { status }),
   bulkUpdateStoreStatus: (storeIds, status) => apiClient.patch('/admin/stores/bulk-status', { storeIds, status }),
@@ -510,12 +590,19 @@ export const adminAPI = {
     return apiClient.get(`/admin/orders?${query}`);
   },
   updateOrderStatus: (id, status) => apiClient.patch(`/admin/orders/${id}/status`, { status }),
+  resolveOrderDispute: (id, resolution, notes) => apiClient.patch(`/admin/orders/${id}/resolve-dispute`, { resolution, notes }),
   // Withdrawals
   getWithdrawals: (params) => {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/admin/withdrawals?${query}`);
   },
   updateWithdrawalStatus: (id, status, notes) => apiClient.patch(`/admin/withdrawals/${id}/status`, { status, notes }),
+  // Seller identity verification (KYC)
+  getVerifications: (params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/verifications?${query}`);
+  },
+  updateVerification: (storeId, action, reason) => apiClient.patch(`/admin/verifications/${storeId}`, { action, reason }),
   // Settings
   updateSettings: (data) => apiClient.patch('/admin/settings', data),
   // Reports
@@ -523,7 +610,7 @@ export const adminAPI = {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/admin/reports?${query}`);
   },
-  resolveReport: (id, status, admin_notes) => apiClient.patch(`/admin/reports/${id}/resolve`, { status, admin_notes }),
+  resolveReport: (id, status, admin_notes, content_action) => apiClient.patch(`/admin/reports/${id}/resolve`, { status, admin_notes, content_action }),
   // Activity Logs
   getActivityLogs: (params) => {
     const query = apiClient.buildQueryString(params);
@@ -540,7 +627,48 @@ export const adminAPI = {
     return apiClient.get(`/admin/posts?${query}`);
   },
   updatePostVisibility: (id, visibility) => apiClient.patch(`/admin/posts/${id}/visibility`, { visibility }),
+  updatePostStatus: (id, status, reason) => apiClient.patch(`/admin/posts/${id}/status`, { status, reason }),
   deletePost: (id) => apiClient.delete(`/admin/posts/${id}`),
+  // Subscriptions
+  getSubscriptions: (params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/subscriptions?${query}`);
+  },
+  cancelSubscription: (id) => apiClient.post(`/admin/subscriptions/${id}/cancel`, {}),
+  getSubscriptionPlans: () => apiClient.get('/admin/subscriptions/plans'),
+  updateSubscriptionPlans: (planPrices) => apiClient.put('/admin/subscriptions/plans', { plan_prices: planPrices }),
+  // Cashouts
+  verifyCashoutPassword: (password) => apiClient.post('/admin/cashouts/verify-password', { password }),
+  getCashouts: () => apiClient.get('/admin/cashouts'),
+  createCashout: (data) => apiClient.post('/admin/cashouts', data),
+  deleteCashout: (id) => apiClient.delete(`/admin/cashouts/${id}`),
+  // Backups
+  getBackups: (params) => {
+    const query = apiClient.buildQueryString(params);
+    return apiClient.get(`/admin/backups?${query}`);
+  },
+  runBackup: () => apiClient.post('/admin/backups/run', {}),
+  downloadBackup: async (id, filename) => {
+    const response = await fetch(`${apiClient.baseURL}/admin/backups/${id}/download`, {
+      headers: apiClient.getHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to download backup');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || 'backup.json.gz';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+};
+
+export const settingsAPI = {
+  // Unauthenticated. Blocked (503) while maintenance mode is on — see
+  // MaintenanceGate, which polls this to detect when maintenance ends.
+  getPublic: () => apiClient.get('/settings/public'),
 };
 
 export const announcementsAPI = {
@@ -552,11 +680,16 @@ export const storesAPI = {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/stores?${query}`);
   },
+  nearby: (filters) => {
+    const query = apiClient.buildQueryString(filters);
+    return apiClient.get(`/stores/nearby?${query}`);
+  },
   get: (id) => apiClient.get(`/stores/${id}`),
   create: (data) => apiClient.post('/stores', data),
   update: (id, data) => apiClient.patch(`/stores/${id}`, data),
   getByOwner: (username) => apiClient.get(`/stores/owner/${username}`),
-  getByOwnerUsername: (username) => apiClient.get(`/stores/owner/username/${username}`)
+  getByOwnerUsername: (username) => apiClient.get(`/stores/owner/username/${username}`),
+  submitVerification: (data) => apiClient.post('/stores/verification', data),
 };
 
 export const usersAPI = {
@@ -568,7 +701,10 @@ export const usersAPI = {
     return apiClient.get(`/users/suggested?${query}`);
   },
   registerPushToken: (token) => apiClient.post('/users/push-token', { token }),
-  unregisterPushToken: (token) => apiClient.delete('/users/push-token', { token })
+  unregisterPushToken: (token) => apiClient.delete('/users/push-token', { token }),
+  getPushVapidPublicKey: () => apiClient.get('/users/push/vapid-public-key'),
+  subscribeToPush: (subscription) => apiClient.post('/users/push-subscription', subscription),
+  unsubscribeFromPush: (endpoint) => apiClient.delete('/users/push-subscription', { endpoint })
 };
 
 export const communitiesAPI = {
@@ -617,6 +753,7 @@ export const messagesAPI = {
   delete: (id) => apiClient.delete(`/messages/${id}`),
   markAsRead: (id) => apiClient.patch(`/messages/${id}/read`, {}),
   markConversationAsRead: (conversationId) => apiClient.patch(`/messages/conversation/${conversationId}/read`, {}),
+  deleteConversation: (conversationId) => apiClient.delete(`/messages/conversation/${conversationId}`),
 };
 
 export const callsAPI = {
@@ -706,26 +843,6 @@ export const storiesAPI = {
   reply: (id, text) => apiClient.post(`/stories/${id}/reply`, { text }),
   delete: (id) => apiClient.delete(`/stories/${id}`),
   cleanup: () => apiClient.post('/stories/cleanup', {})
-};
-
-export const liveSessionsAPI = {
-  list: (filters) => {
-    const query = apiClient.buildQueryString(filters);
-    return apiClient.get(`/live-sessions?${query}`);
-  },
-  get: (id) => apiClient.get(`/live-sessions/${id}`),
-  create: (data) => apiClient.post('/live-sessions', data),
-  update: (id, data) => apiClient.put(`/live-sessions/${id}`, data),
-  start: (id) => apiClient.post(`/live-sessions/${id}/start`, {}),
-  end: (id) => apiClient.post(`/live-sessions/${id}/end`, {}),
-  updateViewers: (id, count) => apiClient.post(`/live-sessions/${id}/viewers`, { count }),
-  like: (id) => likesAPI.like('live_session', id),
-  unlike: (id) => likesAPI.unlike('live_session', id),
-  delete: (id) => apiClient.delete(`/live-sessions/${id}`),
-  listForMe: (status = null) => {
-    const query = apiClient.buildQueryString({ status });
-    return apiClient.get(`/live-sessions/user/me?${query}`);
-  }
 };
 
 export const filesAPI = {
@@ -868,7 +985,6 @@ export const affiliateLinksAPI = {
   update: (id, data) => apiClient.put(`/affiliate-links/${id}`, data),
   delete: (id) => apiClient.delete(`/affiliate-links/${id}`),
   trackClick: (refCode) => apiClient.post(`/affiliate-links/ref/${refCode}/click`, {}),
-  trackConversion: (refCode, data) => apiClient.post(`/affiliate-links/ref/${refCode}/convert`, data),
   listForMe: (filters = {}) => {
     const query = apiClient.buildQueryString(filters);
     return apiClient.get(`/affiliate-links/influencer/me?${query}`);
@@ -881,6 +997,11 @@ export const affiliateLinksAPI = {
     const query = apiClient.buildQueryString(params);
     return apiClient.get(`/affiliate-links/leaderboard?${query}`);
   },
+  // Whether the caller can earn on a product and how much — safe to call for
+  // signed-out visitors, and returns their existing ref code if they have one.
+  getProductEligibility: (productId) => apiClient.get(`/affiliate-links/product/${productId}/eligibility`),
+  // Idempotent: the caller's link for this product, created on first use.
+  ensureMyLink: (productId) => apiClient.post(`/affiliate-links/product/${productId}/my-link`, {}),
 };
 
 export const aiAPI = {
@@ -890,6 +1011,7 @@ export const aiAPI = {
   assistant: (message, history = [], init = false, language = 'en') => apiClient.post('/ai/assistant', { message, history, init, language }),
   generateProductDescription: (data) => apiClient.post('/ai/generate-product-description', data),
   generateProductContent: (data) => apiClient.post('/ai/generate-product-content', data),
+  generateStorefront: (data) => apiClient.post('/ai/generate-storefront', data),
   generateSentimentSummary: (data) => apiClient.post('/ai/generate-sentiment-summary', data),
   translate: (data) => apiClient.post('/ai/translate', data),
 };
@@ -905,17 +1027,6 @@ export const sentimentAPI = {
   update: (id, data) => apiClient.put(`/sentiment-summaries/${id}`, data),
   delete: (id) => apiClient.delete(`/sentiment-summaries/${id}`),
   getStats: () => apiClient.get('/sentiment-summaries/stats/overview'),
-};
-
-export const liveChatMessagesAPI = {
-  list: (sessionId, filters) => {
-    const query = apiClient.buildQueryString({ ...filters, session_id: sessionId });
-    return apiClient.get(`/live-chat-messages?${query}`);
-  },
-  send: (data) => apiClient.post('/live-chat-messages', data),
-  sendSystem: (data) => apiClient.post('/live-chat-messages/system', data),
-  getStats: (sessionId) => apiClient.get(`/live-chat-messages/stats/${sessionId}`),
-  delete: (id) => apiClient.delete(`/live-chat-messages/${id}`),
 };
 
 export default apiClient;

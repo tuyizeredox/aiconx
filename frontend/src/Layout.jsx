@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { createPageUrl } from "@/lib/utils";
 import { notificationsAPI, messagesAPI, cartAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -16,33 +17,50 @@ import {
   Store,
   Users,
   Package,
-  Radio,
   Sparkles,
-  Heart,
-  Bookmark,
   Settings as SettingsIcon,
-  MapPin,
-  DollarSign,
-  Link2,
   Bell,
   Shield,
-  CreditCard,
   Menu,
+  Compass,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  LayoutGrid,
+  DollarSign,
+  Link2,
+  Heart,
+  Bookmark,
+  MapPin,
+  LifeBuoy,
+  BarChart3,
+  FileText,
+  Megaphone,
+  CreditCard,
+  Flag,
+  Wallet,
+  ShieldCheck,
+  History
 } from "lucide-react";
 import NotificationBell from "@/components/layout/NotificationBell";
 import GlobalSearch from "@/components/layout/GlobalSearch";
 import CreateActionModal from "@/components/layout/CreateActionModal";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Logo from "@/components/layout/Logo";
+import LanguagePicker from "@/components/layout/LanguagePicker";
+import { getGuestCartCount } from "@/lib/guestCart";
 
+// Five destinations, one per intention: discover, find, create, check what I
+// bought, manage my account. Affiliate, wallet, loyalty, communities and the
+// store dashboard are all reachable from the menu and from the screens they
+// belong to — none of them is a reason someone opens the app, so none of them
+// earns a permanent slot here. The cart lives in the top bar instead, beside
+// the notification bell, where shoppers look for it.
 const NAV_ITEMS = [
   { name: "Home", tKey: "nav.home", icon: Home, page: "Home" },
-  { name: "Explore", tKey: "nav.explore", icon: Search, page: "Explore" },
+  { name: "Discover", tKey: "nav.discover", icon: Compass, page: "Explore" },
   { name: "Create", icon: Plus, action: "create", accent: true },
-  { name: "Cart", tKey: "nav.cart", icon: ShoppingBag, page: "Cart" },
+  { name: "Orders", tKey: "nav.orders", icon: Package, page: "Orders" },
   { name: "Profile", tKey: "nav.profile", icon: User, page: "Profile" },
 ];
 
@@ -54,7 +72,27 @@ const ADMIN_NAV_ITEMS = [
   { name: "Profile", tKey: "nav.profile", icon: User, page: "Profile" },
 ];
 
-const ALLOWED_ADMIN_SIDEBAR_NAMES = ["Admin", "Profile", "Messages", "Notifications", "Settings"];
+// Full admin panel navigation - one entry per AdminDashboard tab, plus the
+// account shortcuts admins still need, so every admin page is one click away.
+const ADMIN_SIDEBAR_ITEMS = [
+  { name: "Overview", tKey: "admin.tabs.overview", icon: BarChart3, page: "AdminDashboard", href: "/admin-dashboard?tab=overview" },
+  { name: "Users", tKey: "admin.tabs.users", icon: Users, page: "AdminDashboard", href: "/admin-dashboard?tab=users" },
+  { name: "Stores", tKey: "admin.tabs.stores", icon: Store, page: "AdminDashboard", href: "/admin-dashboard?tab=stores" },
+  { name: "Products", tKey: "admin.tabs.products", icon: Package, page: "AdminDashboard", href: "/admin-dashboard?tab=products" },
+  { name: "Posts", tKey: "admin.tabs.posts", icon: FileText, page: "AdminDashboard", href: "/admin-dashboard?tab=posts" },
+  { name: "Announcements", tKey: "admin.tabs.announcements", icon: Megaphone, page: "AdminDashboard", href: "/admin-dashboard?tab=announcements" },
+  { name: "Subscriptions", tKey: "admin.tabs.subscriptions", icon: CreditCard, page: "AdminDashboard", href: "/admin-dashboard?tab=subscriptions" },
+  { name: "Moderation", tKey: "admin.tabs.moderation", icon: Flag, page: "AdminDashboard", href: "/admin-dashboard?tab=moderation" },
+  { name: "Orders", tKey: "admin.tabs.orders", icon: ShoppingBag, page: "AdminDashboard", href: "/admin-dashboard?tab=orders" },
+  { name: "Withdrawals", tKey: "admin.tabs.withdrawals", icon: Wallet, page: "AdminDashboard", href: "/admin-dashboard?tab=withdrawals" },
+  { name: "Cashouts", tKey: "admin.tabs.cashouts", icon: DollarSign, page: "AdminDashboard", href: "/admin-dashboard?tab=cashouts" },
+  { name: "Verifications", tKey: "admin.tabs.verifications", icon: ShieldCheck, page: "AdminDashboard", href: "/admin-dashboard?tab=verifications" },
+  { name: "Logs", tKey: "admin.tabs.logs", icon: History, page: "AdminDashboard", href: "/admin-dashboard?tab=logs" },
+  { name: "Settings", tKey: "admin.tabs.settings", icon: SettingsIcon, page: "AdminDashboard", href: "/admin-dashboard?tab=settings" },
+  { name: "Messages", tKey: "nav.messages", icon: MessageCircle, page: "Chat" },
+  { name: "Notifications", tKey: "nav.notifications", icon: Bell, page: "Notifications" },
+  { name: "Profile", tKey: "nav.profile", icon: User, page: "Profile" },
+];
 
 const SIDEBAR_ITEMS = [
   { name: "Feed", tKey: "nav.home", icon: Home, page: "Home" },
@@ -62,21 +100,24 @@ const SIDEBAR_ITEMS = [
   { name: "Explore", tKey: "nav.explore", icon: Search, page: "Explore" },
   { name: "Marketplace", tKey: "nav.shop", icon: ShoppingBag, page: "Marketplace" },
   { name: "Cart", tKey: "nav.cart", icon: ShoppingBag, page: "Cart" },
-  { name: "Live Shopping", tKey: "nav.live", icon: Radio, page: "Live" },
   { name: "Communities", tKey: "nav.communities", icon: Users, page: "Communities" },
   { name: "Messages", tKey: "nav.messages", icon: MessageCircle, page: "Chat" },
   { name: "AI Assistant", tKey: "nav.aiAssistant", icon: Sparkles, page: "AIAssistant" },
+  { name: "Orders", tKey: "nav.orders", icon: Package, page: "Orders" },
+  { name: "My Store", tKey: "nav.myStore", icon: Store, page: "MyStore" },
+  { name: "Notifications", tKey: "nav.notifications", icon: Bell, page: "Notifications" },
+  { name: "Admin", icon: Shield, page: "AdminDashboard", href: "/admin-dashboard", adminOnly: true },
+];
+
+// Shortcuts otherwise buried in Settings > Quick Links - surfaced in the
+// sidebar so users don't have to dig through Settings to reach them.
+const QUICK_LINK_ITEMS = [
+  { name: "Finance", tKey: "nav.finance", icon: DollarSign, page: "VendorFinance" },
+  { name: "Affiliate", tKey: "nav.affiliate", icon: Link2, page: "Affiliate" },
   { name: "Wishlist", tKey: "nav.wishlist", icon: Heart, page: "Wishlist" },
   { name: "Bookmarks", tKey: "nav.bookmarks", icon: Bookmark, page: "Bookmarks" },
-  { name: "Orders", tKey: "nav.orders", icon: Package, page: "Orders" },
   { name: "Track Order", tKey: "nav.trackOrder", icon: MapPin, page: "OrderTracking" },
-  { name: "My Store", tKey: "nav.myStore", icon: Store, page: "MyStore" },
-  { name: "Finance", tKey: "nav.finance", icon: DollarSign, page: "VendorFinance" },
-  { name: "Account Plans", tKey: "nav.accountPlans", icon: CreditCard, page: "Settings", params: "?section=subscription" },
-  { name: "Affiliate", tKey: "nav.affiliate", icon: Link2, page: "Affiliate" },
-  { name: "Notifications", tKey: "nav.notifications", icon: Bell, page: "Notifications" },
-  { name: "Settings", tKey: "nav.settings", icon: SettingsIcon, page: "Settings" },
-  { name: "Admin", icon: Shield, page: "AdminDashboard", href: "/admin-dashboard", adminOnly: true },
+  { name: "Support", tKey: "nav.support", icon: LifeBuoy, page: "Support" },
 ];
 
 const HIDE_LAYOUT_PAGES = [];
@@ -88,16 +129,76 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);
   const [showAllItems, setShowAllItems] = useState(false);
+  const [quickLinksOpen, setQuickLinksOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const hoverTimerRef = useRef(null);
+  const [guestCartCount, setGuestCartCount] = useState(() => getGuestCartCount());
+  const [topBarHidden, setTopBarHidden] = useState(false);
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
     if (window.innerWidth >= 1024) {
       setSidebarOpen(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (currentUser) return;
+    const refresh = () => setGuestCartCount(getGuestCartCount());
+    refresh();
+    window.addEventListener('guestcart:updated', refresh);
+    return () => window.removeEventListener('guestcart:updated', refresh);
+  }, [currentUser]);
+
+  // Auto-hide the mobile top bar on scroll-down and reveal it on scroll-up,
+  // matching the feel of modern feed apps (YouTube, Instagram, etc).
+  //
+  // Pages that pin their own header under this one (the feed's search bar and
+  // category row) read --app-bar-offset so they ride up and down with it
+  // instead of leaving a floating gap where the bar used to be.
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (isMobileRaw === false) {
+      root.style.setProperty('--app-bar-offset', '0px');
+      return; // desktop doesn't use the mobile top bar
+    }
+
+    root.style.setProperty('--app-bar-offset', '3.5rem');
+    lastScrollYRef.current = window.scrollY;
+    let ticking = false;
+
+    const setHidden = (hidden) => {
+      setTopBarHidden(hidden);
+      root.style.setProperty('--app-bar-offset', hidden ? '0px' : '3.5rem');
+    };
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollYRef.current;
+        if (currentY < 60) {
+          setHidden(false);
+        } else if (delta > 8) {
+          setHidden(true);
+        } else if (delta < -8) {
+          setHidden(false);
+        }
+        lastScrollYRef.current = currentY;
+        ticking = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      root.style.removeProperty('--app-bar-offset');
+    };
+  }, [isMobileRaw]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -145,10 +246,12 @@ export default function Layout({ children, currentPageName }) {
 
   const unreadCount = unreadNotifs.length;
   const unreadMsgCount = unreadMessages.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
-  const cartItemCount = Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0;
+  const cartItemCount = currentUser
+    ? (Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0)
+    : guestCartCount;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] transition-colors duration-300">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-[#0a0a0c] transition-colors duration-300">
       {/* Mobile Sidebar Overlay */}
       {!isDesktop && sidebarOpen && (
         <div 
@@ -167,7 +270,7 @@ export default function Layout({ children, currentPageName }) {
             : `z-30 ${isDesktopExpanded ? "w-64" : "w-[72px]"}`
           }`}
       >
-        <div className="p-4 flex flex-col gap-4">
+        <div className="pt-[max(1rem,env(safe-area-inset-top))] px-4 pb-4 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <Link 
               to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"} 
@@ -180,25 +283,25 @@ export default function Layout({ children, currentPageName }) {
                 className={!isDesktopExpanded && isDesktop ? "justify-center w-full !gap-0" : ""}
               />
             </Link>
-            {(!isDesktop || isDesktopExpanded) && (
-              <button
-                onClick={toggleSidebar}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                {!isDesktop ? <X className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {(!isDesktop || isDesktopExpanded) && (
+                <button
+                  onClick={toggleSidebar}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {!isDesktop ? <X className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                </button>
+              )}
+            </div>
           </div>
           {(isDesktopExpanded || !isDesktop) && currentUser?.role !== 'super_admin' && <GlobalSearch />}
         </div>
 
-        <nav className="flex-1 px-2 space-y-0.5 overflow-hidden">
+        <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
           {(() => {
-            const visibleItems = SIDEBAR_ITEMS.filter((item) => {
-              if (item.adminOnly && currentUser?.role !== 'super_admin') return false;
-              if (currentUser?.role === 'super_admin' && !ALLOWED_ADMIN_SIDEBAR_NAMES.includes(item.name)) return false;
-              return true;
-            });
+            const visibleItems = currentUser?.role === 'super_admin'
+              ? ADMIN_SIDEBAR_ITEMS
+              : SIDEBAR_ITEMS.filter((item) => !item.adminOnly);
             const COLLAPSED_LIMIT = 7;
             const isCollapsed = !isDesktopExpanded && isDesktop;
             const itemsToShow = isCollapsed && !showAllItems
@@ -211,8 +314,9 @@ export default function Layout({ children, currentPageName }) {
                 {itemsToShow.map((item) => {
                   const queryParams = new URLSearchParams(window.location.search);
                   const currentTab = queryParams.get("tab");
-                  const itemTab = item.params ? new URLSearchParams(item.params).get("tab") : null;
-                  const isActive = currentPageName === item.page && (itemTab ? currentTab === itemTab : !currentTab);
+                  const itemQuery = item.href ? (item.href.split("?")[1] || "") : (item.params || "");
+                  const itemTab = new URLSearchParams(itemQuery).get("tab");
+                  const isActive = currentPageName === item.page && currentTab === itemTab;
                   return (
                     <Link
                       key={item.name}
@@ -265,12 +369,61 @@ export default function Layout({ children, currentPageName }) {
                     <ChevronRight className={`w-5 h-5 transition-transform ${showAllItems ? "rotate-90" : ""}`} />
                   </button>
                 )}
+
+                {/* Quick Links - shortcuts to Finance, Affiliate, Wishlist, Bookmarks,
+                    Track Order and Support without having to open Settings */}
+                {currentUser?.role !== 'super_admin' && (
+                  isCollapsed ? (
+                    <Link
+                      to={createPageUrl("Settings") + "?section=quickLinks"}
+                      onClick={() => !isDesktop && setSidebarOpen(false)}
+                      title={t("settings.quickLinks")}
+                      className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                    >
+                      <LayoutGrid className="w-6 h-6 shrink-0" />
+                    </Link>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setQuickLinksOpen(prev => !prev)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                      >
+                        <LayoutGrid className="w-6 h-6 shrink-0" />
+                        <span className="truncate flex-1 text-left">{t("settings.quickLinks")}</span>
+                        <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${quickLinksOpen ? "rotate-90" : ""}`} />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {quickLinksOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden pl-3 space-y-0.5"
+                          >
+                            {QUICK_LINK_ITEMS.map((link) => (
+                              <Link
+                                key={link.name}
+                                to={createPageUrl(link.page)}
+                                onClick={() => !isDesktop && setSidebarOpen(false)}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                              >
+                                <link.icon className="w-4 h-4 shrink-0" />
+                                <span className="truncate">{t(link.tKey)}</span>
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  )
+                )}
               </>
             );
           })()}
         </nav>
 
-        <div className={`p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
+        <div className={`p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
+          <LanguagePicker compact={!isDesktopExpanded && isDesktop} openUp />
           {currentUser?.role !== 'super_admin' && (
             <button
               onClick={() => {
@@ -287,47 +440,58 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Mobile Top Bar */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between px-4 z-50">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 -ml-2 text-slate-600 dark:text-slate-400"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <Link to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"} className="flex items-center gap-2.5">
-            <Logo size="sm" showText={true} />
-          </Link>
-        </div>
-        <div className="flex items-center gap-1">
-          {currentUser?.role !== 'super_admin' && (
-            <Link to={createPageUrl("chat")} className="relative p-2">
-              <MessageCircle className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+      <header
+        className={`lg:hidden fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 z-50 transition-transform duration-300 ease-out ${
+          topBarHidden ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
+        {/* Logo, then the two things a shopper looks for at the top of a
+            shopping app: what happened, and what's in my basket. Messages and
+            language live in the menu, which carries a dot when something is
+            unread there — four icons in a row is how a top bar starts feeling
+            like a toolbar. */}
+        <div className="h-14 flex items-center justify-between px-4">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label={t("nav.menu")}
+              className="relative p-2 -ml-2 text-slate-600 dark:text-slate-400"
+            >
+              <Menu className="w-5 h-5" />
               {unreadMsgCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-orange-500 text-white text-[10px] rounded-full flex items-center justify-center">
-                  {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
-                </span>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-500 border-2 border-white dark:border-slate-900" />
               )}
+            </button>
+            <Link to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"} className="flex items-center min-w-0">
+              <Logo size="sm" showText={true} />
             </Link>
-          )}
-          <NotificationBell userEmail={currentUser?.email} />
-          {currentUser?.role !== 'super_admin' && (
-            <Link to={createPageUrl("cart")} className="p-2">
-              <ShoppingBag className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            </Link>
-          )}
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <NotificationBell userEmail={currentUser?.email} />
+            {currentUser?.role !== 'super_admin' && (
+              <Link to={createPageUrl("cart")} aria-label={t("nav.cart")} className="relative p-2">
+                <ShoppingBag className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                {cartItemCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-orange-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white dark:border-slate-900">
+                    {cartItemCount > 9 ? "9+" : cartItemCount}
+                  </span>
+                )}
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className={`pt-14 lg:pt-0 ${currentPageName === "Chat" ? "pb-0" : "pb-20"} lg:pb-0 min-h-screen dark:text-slate-100 transition-all duration-300 ${isDesktop && (sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]")}`}>
+      <main className={`pt-[calc(env(safe-area-inset-top)+3.5rem)] lg:pt-0 ${currentPageName === "Chat" ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"} lg:pb-0 min-h-screen dark:text-slate-100 transition-all duration-300 ${isDesktop && (sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]")}`}>
         <AnnouncementBanner />
         {children}
       </main>
 
       {/* Mobile Bottom Nav */}
       {currentPageName !== "Chat" && (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 z-50">
         <div className="flex items-center justify-around h-16 px-2">
           {(currentUser?.role === 'super_admin' ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
             const isActive = currentPageName === item.page;
@@ -353,11 +517,6 @@ export default function Layout({ children, currentPageName }) {
                     isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-slate-500"
                   }`}
                 />
-                {item.name === "Cart" && cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">
-                    {cartItemCount}
-                  </span>
-                )}
                 <span
                   className={`text-[10px] font-medium ${
                     isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-slate-500"

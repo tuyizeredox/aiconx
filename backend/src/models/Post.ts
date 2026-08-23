@@ -8,15 +8,21 @@ export interface IPost extends Document {
   author_avatar?: string;
   content: string;
   media_urls: string[];
+  thumbnail_urls: string[];
   media_type: 'image' | 'video' | 'text' | 'product_review';
   tagged_products: string[];
+  tagged_users: string[];
   affiliate_links: string[];
   likes_count: number;
   comments_count: number;
   shares_count: number;
+  reposts_count: number;
+  repost_of?: string;
   community_id?: string;
   is_sponsored: boolean;
   visibility: 'public' | 'followers' | 'community';
+  is_active: boolean;
+  status: 'active' | 'disabled' | 'archived';
   created_at: Date;
   updated_at: Date;
 }
@@ -48,6 +54,9 @@ const PostSchema = new Schema<IPost>({
   media_urls: [{
     type: String,
   }],
+  thumbnail_urls: [{
+    type: String,
+  }],
   media_type: {
     type: String,
     enum: ['image', 'video', 'text', 'product_review'],
@@ -55,6 +64,10 @@ const PostSchema = new Schema<IPost>({
   },
   tagged_products: [{
     type: String,
+  }],
+  tagged_users: [{
+    type: String,
+    lowercase: true,
   }],
   affiliate_links: [{
     type: String,
@@ -74,6 +87,15 @@ const PostSchema = new Schema<IPost>({
     default: 0,
     min: 0,
   },
+  reposts_count: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  repost_of: {
+    type: String,
+    default: null,
+  },
   community_id: {
     type: String,
   },
@@ -85,6 +107,15 @@ const PostSchema = new Schema<IPost>({
     type: String,
     enum: ['public', 'followers', 'community'],
     default: 'public',
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
+  status: {
+    type: String,
+    enum: ['active', 'disabled', 'archived'],
+    default: 'active',
   },
 }, {
   timestamps: {
@@ -104,8 +135,12 @@ PostSchema.virtual('id').get(function() {
 PostSchema.index({ author_username: 1, created_at: -1 });
 PostSchema.index({ community_id: 1, created_at: -1 });
 PostSchema.index({ visibility: 1, created_at: -1 });
+PostSchema.index({ is_active: 1, created_at: -1 });
+PostSchema.index({ status: 1, created_at: -1 });
 PostSchema.index({ is_sponsored: 1, created_at: -1 });
 PostSchema.index({ tagged_products: 1 });
+PostSchema.index({ tagged_users: 1 });
+PostSchema.index({ repost_of: 1 });
 PostSchema.index({ likes_count: -1 });
 PostSchema.index({ created_at: -1 });
 PostSchema.index({ content: 'text' }); // For text search

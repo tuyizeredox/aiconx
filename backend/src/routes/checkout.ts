@@ -8,6 +8,7 @@ import { CartItem } from '../models/CartItem';
 import { ShippingZone } from '../models/ShippingZone';
 import { AffiliateLink } from '../models/AffiliateLink';
 import { itecPayService } from '../services/itecPayService';
+import { creditAffiliateConversions } from '../services/affiliateService';
 import { Coupon } from '../models/Coupon';
 
 const checkoutSchema = z.object({
@@ -51,7 +52,11 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
            cartItemsToProcess.push({
              product_id: item.product_id,
              quantity: item.quantity,
-             affiliate_username: ci?.affiliate_username
+             affiliate_username: ci?.affiliate_username,
+             selected_color: ci?.selected_color,
+             selected_size: ci?.selected_size,
+             selected_options: ci?.selected_options,
+             selected_image: ci?.selected_image,
            });
         }
       } else {
@@ -62,7 +67,11 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
         cartItemsToProcess = cartItems.map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
-          affiliate_username: item.affiliate_username
+          affiliate_username: item.affiliate_username,
+          selected_color: item.selected_color,
+          selected_size: item.selected_size,
+          selected_options: item.selected_options,
+          selected_image: item.selected_image,
         }));
       }
 
@@ -118,6 +127,16 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
             ref_code: body.affiliate_ref.toUpperCase(),
             status: 'active'
           });
+
+          // Never pay someone commission for selling to themselves. Sharing a
+          // product now mints an affiliate link automatically, so a shopper can
+          // land back on their own link without ever intending to game
+          // anything — buying through it would quietly bill the vendor a
+          // commission on a sale they'd have made anyway. The order still goes
+          // through; it just carries no attribution.
+          if (globalAffLink && globalAffLink.influencer_username === user.username) {
+            globalAffLink = null;
+          }
         }
       }
 
@@ -141,17 +160,19 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
         let subtotal = 0;
         let affiliate_commission = 0;
         let affiliate_username: string | undefined = undefined;
+        let affiliate_link_id: string | undefined = undefined;
 
         const orderItems = groupItems.map((gi: any) => {
           const price = gi.product.price;
           subtotal += price * gi.quantity;
-          
+
           let itemAffiliate = gi.affiliate_username;
           let itemCommissionPct = 0;
 
           if (globalAffLink && globalAffLink.product_id.toString() === gi.product_id.toString()) {
             itemAffiliate = globalAffLink.influencer_username;
             itemCommissionPct = globalAffLink.commission_pct;
+            affiliate_link_id = globalAffLink._id.toString();
           }
 
           if (itemAffiliate) {
@@ -161,12 +182,21 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
              }
           }
 
+          const itemImage = gi.selected_image && gi.product.images.includes(gi.selected_image)
+            ? gi.selected_image
+            : gi.product.images[0];
+
           return {
             product_id: gi.product_id,
             product_title: gi.product.title,
-            product_image: gi.product.images[0],
+            product_image: itemImage,
             quantity: gi.quantity,
             price: price,
+            selected_color: gi.selected_color || undefined,
+            selected_size: gi.selected_size || undefined,
+            selected_options: gi.selected_options && gi.selected_options.length > 0 ? gi.selected_options : undefined,
+            selected_image: gi.selected_image && gi.product.images.includes(gi.selected_image) ? gi.selected_image : undefined,
+            inventory_deducted: gi.product.inventory_count > 0,
           };
         });
 
@@ -308,8 +338,7 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
           payment_method: body.payment_method,
           affiliate_username,
           affiliate_commission,
-          affiliate_ref: body.affiliate_ref,
-          affiliate_time: body.affiliate_time,
+          affiliate_link_id,
         });
 
         // Inventory check and reduction
@@ -342,15 +371,6 @@ export async function checkoutRoutes(fastify: FastifyInstance) {
 
         await order.save({ session });
         orders.push(order);
-
-        if (globalAffLink) {
-           await AffiliateLink.findByIdAndUpdate(globalAffLink._id, {
-             $inc: { 
-               conversions: 1,
-               total_commission_earned: affiliate_commission 
-             }
-           }, { session });
-        }
       }
 
       // 5.5 Increment coupon usage count if used
@@ -391,6 +411,19 @@ paymentData = await itecPayService.initializeTransaction(
 
       await session.commitTransaction();
 
+      // Notify affiliates of the new (unpaid) referral in real time.
+      // Conversion counts only increment once payment is confirmed (see creditAffiliateConversions).
+      for (const o of orders) {
+        if (o.affiliate_username) {
+          fastify.io?.to(`user:${o.affiliate_username}`).emit('affiliate:new_referral', {
+            order_id: o._id,
+            product_title: o.items?.[0]?.product_title,
+            amount: o.total,
+            status: 'pending_payment',
+          });
+        }
+      }
+
       return {
         message: 'Checkout successful',
         orders: orders.map(o => o._id),
@@ -411,7 +444,83 @@ paymentData = await itecPayService.initializeTransaction(
     }
   });
 
-  // Verify payment endpoint
+  // Verify payment for one or more orders from the same checkout (a multi-vendor
+  // cart produces one Order per store, all paid together under one reference).
+  // This is the single gate that flips payment_status to 'paid' from the client
+  // side, so it must confirm: the caller owns every order, the gateway actually
+  // confirms success, the amount paid covers the orders' combined total, and the
+  // reference hasn't already been consumed by a different order.
+  async function verifyAndMarkOrdersPaid(orderIds: string[], reference: string, username: string, io?: any) {
+    const orders = await Order.find({ _id: { $in: orderIds } });
+    if (orders.length !== new Set(orderIds).size) {
+      throw Object.assign(new Error('One or more orders not found'), { statusCode: 404 });
+    }
+
+    for (const o of orders) {
+      if (o.buyer_username !== username) {
+        throw Object.assign(new Error('You can only verify your own orders'), { statusCode: 403 });
+      }
+    }
+
+    if (orders.every(o => o.payment_status === 'paid' && o.payment_reference === reference)) {
+      return orders;
+    }
+
+    const conflicting = await Order.findOne({ payment_reference: reference, _id: { $nin: orders.map(o => o._id) } });
+    if (conflicting) {
+      throw Object.assign(new Error('This payment reference has already been used for a different order'), { statusCode: 409 });
+    }
+
+    const method = orders[0].payment_method;
+    const provider: 'mtn' | 'airtel' | 'spenn' | 'card' =
+      method === 'airtel' ? 'airtel' : method === 'spenn' ? 'spenn' : method === 'mtn' || method === 'mobile_money' ? 'mtn' : 'card';
+
+    const verificationResult = await itecPayService.verifyPayment(reference, provider);
+    const status = String(verificationResult.data?.status || '').toLowerCase();
+    const successfulStatuses = ['completed', 'success', 'successful', 'paid', 'approved'];
+    if (!successfulStatuses.includes(status)) {
+      throw Object.assign(new Error(`Payment not completed yet (status: ${status || 'unknown'})`), { statusCode: 400 });
+    }
+
+    const paidAmount = Number(verificationResult.data?.amount || 0);
+    const expectedTotal = orders.reduce((sum, o) => sum + o.total, 0);
+    const TOLERANCE = 1; // guard against gateway float rounding, not a discount
+    if (paidAmount + TOLERANCE < expectedTotal) {
+      throw Object.assign(new Error('Payment amount does not cover the order total'), { statusCode: 402 });
+    }
+
+    for (const o of orders) {
+      o.payment_status = 'paid';
+      o.status = 'confirmed';
+      o.payment_reference = reference;
+      await o.save();
+    }
+
+    await creditAffiliateConversions(orders.map(o => o._id.toString()), io);
+    return orders;
+  }
+
+  // Verify payment for every order created in one checkout (multi-vendor cart)
+  fastify.post('/verify-payment', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { order_ids, reference } = request.body as { order_ids: string[]; reference: string };
+      const user = request.user as any;
+
+      if (!Array.isArray(order_ids) || order_ids.length === 0 || !reference) {
+        return reply.code(400).send({ error: 'Missing order_ids or reference' });
+      }
+
+      const orders = await verifyAndMarkOrdersPaid(order_ids, reference, user.username, fastify.io);
+      return { message: 'Payment verified successfully', orders: orders.map(o => o._id), status: 'paid' };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(error.statusCode || 400).send({ error: 'Payment verification failed', message: error.message });
+    }
+  });
+
+  // Verify payment for a single order (back-compat)
   fastify.post('/:orderId/verify-payment', {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
@@ -420,45 +529,15 @@ paymentData = await itecPayService.initializeTransaction(
       const { reference } = request.body as { reference: string };
       const user = request.user as any;
 
-      // Find the order
-      const order = await Order.findOne({ _id: orderId });
-      if (!order) {
-        return reply.code(404).send({ error: 'Order not found' });
+      if (!reference) {
+        return reply.code(400).send({ error: 'Missing payment reference' });
       }
 
-      // Verify the payment with ITEC Pay
-      const verificationResult = await itecPayService.verifyPayment(reference, 'mtn');
-
-      if (verificationResult.data?.status === 'completed' || 
-          verificationResult.data?.status === 'success' || 
-          verificationResult.data?.status === 'successful' ||
-          verificationResult.data?.status === 'paid' ||
-          verificationResult.data?.status === 'approved') {
-        
-        // Update order payment status
-        order.payment_status = 'paid';
-        order.status = 'confirmed';
-        order.payment_reference = reference;
-        await order.save();
-
-        return {
-          message: 'Payment verified successfully',
-          order: order._id,
-          status: 'paid'
-        };
-      } else {
-        return reply.code(400).send({ 
-          error: 'Payment verification failed', 
-          message: 'Payment not completed yet',
-          status: verificationResult.data?.status 
-        });
-      }
+      const orders = await verifyAndMarkOrdersPaid([orderId], reference, user.username, fastify.io);
+      return { message: 'Payment verified successfully', order: orders[0]._id, status: 'paid' };
     } catch (error: any) {
       fastify.log.error(error);
-      return reply.code(400).send({ 
-        error: 'Payment verification failed', 
-        message: error.message 
-      });
+      return reply.code(error.statusCode || 400).send({ error: 'Payment verification failed', message: error.message });
     }
   });
 }

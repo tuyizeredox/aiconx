@@ -6,6 +6,11 @@ export interface IOrderItem {
   product_image?: string;
   quantity: number;
   price: number;
+  selected_color?: string;
+  selected_size?: string;
+  selected_options?: { name: string; value: string }[];
+  selected_image?: string;
+  inventory_deducted?: boolean;
 }
 
 export interface IOrder extends Document {
@@ -31,12 +36,21 @@ export interface IOrder extends Document {
   pickup_instructions?: string;
   tracking_number?: string;
   order_note?: string;
+  delivered_at?: Date;
+  buyer_confirmation_status: 'pending' | 'confirmed' | 'disputed';
+  buyer_confirmed_at?: Date;
+  dispute_reason?: string;
+  dispute_resolved_at?: Date;
+  dispute_resolution?: 'released' | 'refunded';
    affiliate_username?: string;
    affiliate_commission: number;
+   affiliate_link_id?: string;
+   affiliate_commission_credited: boolean;
    payment_method: 'card' | 'paypal' | 'crypto' | 'bank_transfer' | 'mobile_money' | 'itecpay' | 'mtn' | 'airtel' | 'spenn';
    payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
    payment_reference?: string;
    payment_provider?: 'stripe' | 'itecpay';
+  stock_restored: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -62,6 +76,26 @@ const OrderItemSchema = new Schema<IOrderItem>({
     type: Number,
     required: true,
     min: 0,
+  },
+  selected_color: {
+    type: String,
+    trim: true,
+  },
+  selected_size: {
+    type: String,
+    trim: true,
+  },
+  selected_options: [{
+    name: { type: String, trim: true },
+    value: { type: String, trim: true },
+    _id: false,
+  }],
+  selected_image: {
+    type: String,
+  },
+  inventory_deducted: {
+    type: Boolean,
+    default: false,
   },
 }, { _id: false });
 
@@ -157,6 +191,28 @@ const OrderSchema = new Schema<IOrder>({
     type: String,
     trim: true,
   },
+  delivered_at: {
+    type: Date,
+  },
+  buyer_confirmation_status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'disputed'],
+    default: 'pending',
+  },
+  buyer_confirmed_at: {
+    type: Date,
+  },
+  dispute_reason: {
+    type: String,
+    trim: true,
+  },
+  dispute_resolved_at: {
+    type: Date,
+  },
+  dispute_resolution: {
+    type: String,
+    enum: ['released', 'refunded'],
+  },
   affiliate_username: {
     type: String,
     lowercase: true,
@@ -166,6 +222,13 @@ const OrderSchema = new Schema<IOrder>({
     type: Number,
     default: 0,
     min: 0,
+  },
+  affiliate_link_id: {
+    type: String,
+  },
+  affiliate_commission_credited: {
+    type: Boolean,
+    default: false,
   },
    payment_method: {
      type: String,
@@ -186,6 +249,10 @@ const OrderSchema = new Schema<IOrder>({
      enum: ['stripe', 'itecpay'],
      default: 'itecpay',
    },
+  stock_restored: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: {
     createdAt: 'created_at',
@@ -199,6 +266,7 @@ OrderSchema.index({ vendor_username: 1, created_at: -1 });
 OrderSchema.index({ store_id: 1, created_at: -1 });
 OrderSchema.index({ status: 1, created_at: -1 });
 OrderSchema.index({ payment_status: 1 });
+OrderSchema.index({ buyer_confirmation_status: 1 });
 OrderSchema.index({ affiliate_username: 1 });
 
 export const Order = mongoose.model<IOrder>('Order', OrderSchema);

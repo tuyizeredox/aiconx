@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { authAPI } from "@/api/apiClient";
 import { uploadAvatar } from "@/lib/storage";
+import { createPageUrl } from "@/lib/utils";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
+import AvatarImg from "@/components/shared/AvatarImg";
+import BackLink from "@/components/shared/BackLink";
 import { useAuth } from "@/lib/AuthContext";
-import { 
-  User, Lock, Bell, Camera, Loader2, 
+import {
+  User, Lock, Bell, Camera, Loader2,
   ChevronRight, LogOut, Shield, Smartphone,
-  Globe, Moon, Mail, CreditCard
+  Globe, Moon, Mail, CreditCard, LayoutGrid,
+  DollarSign, Link2, Heart, Bookmark, MapPin, LifeBuoy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -294,7 +298,7 @@ export default function Settings() {
       }
     } catch (err) {
       console.error(err);
-      toast.error(err.message || t("settings.biometricsRegisteredSuccess"));
+      toast.error(err.message || t("settings.biometricsRegisteredError"));
     } finally {
       setIsRegisteringBiometrics(false);
     }
@@ -328,6 +332,7 @@ export default function Settings() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">{t("settings.title")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.appearanceDesc")}</p>
@@ -365,13 +370,15 @@ export default function Settings() {
             <div className="flex flex-col items-center -mt-12 relative z-10">
               <div className="relative group">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 shadow-lg">
-                  {profileData.avatar_url ? (
-                    <img src={profileData.avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30 text-orange-500 font-bold text-2xl">
-                      {profileData.display_name?.[0]?.toUpperCase() || "U"}
-                    </div>
-                  )}
+                  <AvatarImg
+                    src={profileData.avatar_url}
+                    className="w-full h-full object-cover"
+                    fallback={
+                      <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30 text-orange-500 font-bold text-2xl">
+                        {profileData.display_name?.[0]?.toUpperCase() || "U"}
+                      </div>
+                    }
+                  />
                   {uploading.avatar && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <Loader2 className="w-6 h-6 text-white animate-spin" />
@@ -442,37 +449,37 @@ export default function Settings() {
         onClick={() => setActiveSection(activeSection === "account" ? "" : "account")}
       >
         <div className="space-y-4">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-            <div>
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.emailAddress")}</p>
-                <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">{t("settings.private")}</span>
+                <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600 shrink-0">{t("settings.private")}</span>
               </div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{currentUser?.email}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentUser?.email}</p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 shrink-0"
               onClick={() => setShowEmailModal(true)}
             >
               {t("settings.change")}
             </Button>
           </div>
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-            <div>
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.phoneNumber")}</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                 {currentUser?.phone_number || t("settings.notSet")}
                 {currentUser?.is_phone_verified && (
-                  <span className="ml-2 text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full border border-green-100">{t("common.verified")}</span>
+                  <span className="ml-2 text-[10px] bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full border border-green-100 dark:border-green-900">{t("common.verified")}</span>
                 )}
               </p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-orange-600 dark:text-orange-400 font-bold text-xs h-8 px-3 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 shrink-0"
               onClick={() => setShowPhoneModal(true)}
             >
               {currentUser?.phone_number ? t("settings.change") : t("settings.add")}
@@ -635,66 +642,122 @@ export default function Settings() {
         </div>
       </SettingSection>
 
-      {/* Preferences */}
-      <SettingSection 
-        icon={Globe} 
+      {/* Quick Links */}
+      {currentUser?.role !== 'super_admin' && (
+        <SettingSection
+          icon={LayoutGrid}
+          title={t("settings.quickLinks")}
+          description={t("settings.quickLinksDesc")}
+          active={activeSection === "quickLinks"}
+          onClick={() => setActiveSection(activeSection === "quickLinks" ? "" : "quickLinks")}
+        >
+          <div className="space-y-2">
+            {[
+              { label: t("nav.finance"), icon: DollarSign, page: "VendorFinance" },
+              { label: t("nav.affiliate"), icon: Link2, page: "Affiliate" },
+              { label: t("nav.wishlist"), icon: Heart, page: "Wishlist" },
+              { label: t("nav.bookmarks"), icon: Bookmark, page: "Bookmarks" },
+              { label: t("nav.trackOrder"), icon: MapPin, page: "OrderTracking" },
+              { label: t("nav.support"), icon: LifeBuoy, page: "Support" },
+            ].map((item) => (
+              <Link
+                key={item.page}
+                to={createPageUrl(item.page)}
+                className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                    <item.icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </Link>
+            ))}
+          </div>
+        </SettingSection>
+      )}
+
+      {/* Appearance */}
+      <SettingSection
+        icon={Moon}
+        title={t("settings.appearance")}
+        description={t("settings.appearanceDesc")}
+        active={activeSection === "appearance"}
+        onClick={() => setActiveSection(activeSection === "appearance" ? "" : "appearance")}
+      >
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-3 mb-3">
+            <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.theme")}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: "light", label: t("common.lightMode") },
+              { value: "dark", label: t("common.darkMode") },
+              { value: "system", label: t("common.systemMode") },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  setTheme(opt.value);
+                  if (currentUser) {
+                    updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: opt.value } });
+                  }
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                  theme === opt.value
+                    ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
+                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </SettingSection>
+
+      {/* Language */}
+      <SettingSection
+        icon={Globe}
         title={t("settings.language")}
         description={t("settings.languageDesc")}
         active={activeSection === "preferences"}
         onClick={() => setActiveSection(activeSection === "preferences" ? "" : "preferences")}
       >
-        <div className="space-y-3">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.language")}</span>
-              </div>
-              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
-                {currentLangInfo?.flag} {currentLangInfo?.label}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {SUPPORTED_LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => handleLanguageChange(l.code)}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
-                    selectedLang === l.code 
-                      ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100" 
-                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
-                  }`}
-                >
-                  {l.flag} {l.label}
-                </button>
-              ))}
-            </div>
-            <Button 
-              onClick={handleSaveLanguage}
-              disabled={selectedLang === currentLang || langSaving}
-              className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
-            >
-              {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
-            </Button>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.darkMode")}</span>
+              <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.language")}</span>
             </div>
-            <div 
-              onClick={() => {
-                const newTheme = theme === "dark" ? "light" : "dark";
-                setTheme(newTheme);
-                if (currentUser) {
-                  updateMutation.mutate({ preferences: { ...currentUser.preferences, theme: newTheme } });
-                }
-              }}
-              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${theme === "dark" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
-            >
-              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${theme === "dark" ? "right-0.5" : "left-0.5"}`} />
-            </div>
+            <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+              {currentLangInfo?.flag} {currentLangInfo?.label}
+            </span>
           </div>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {SUPPORTED_LANGS.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => handleLanguageChange(l.code)}
+                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                  selectedLang === l.code
+                    ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
+                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                }`}
+              >
+                {l.flag} {l.label}
+              </button>
+            ))}
+          </div>
+          <Button
+            onClick={handleSaveLanguage}
+            disabled={selectedLang === currentLang || langSaving}
+            className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
+          >
+            {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
+          </Button>
         </div>
       </SettingSection>
 
@@ -735,12 +798,12 @@ export default function Settings() {
           </DialogHeader>
           <div className="flex flex-col items-center space-y-6 py-4">
             {twoFactorData.qrCode && (
-              <div className="p-4 bg-white rounded-2xl border-4 border-slate-50 shadow-inner">
+              <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl border-4 border-slate-50 dark:border-slate-700 shadow-inner">
                 <img src={twoFactorData.qrCode} alt="QR Code" className="w-48 h-48" />
               </div>
             )}
             <div className="space-y-2 text-center">
-              <p className="text-xs font-bold text-slate-500 uppercase">{t("settings.verificationCode")}</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{t("settings.verificationCode")}</p>
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otpToken} onChange={setOtpToken}>
                   <InputOTPGroup>
@@ -846,15 +909,15 @@ export default function Settings() {
           <DialogHeader><DialogTitle>{t("settings.updatePhone")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase ml-1">{t("settings.newPhoneWhatsapp")}</label>
-              <Input 
-                type="tel" 
-                placeholder="+1234567890" 
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">{t("settings.newPhoneWhatsapp")}</label>
+              <Input
+                type="tel"
+                placeholder="+1234567890"
                 value={phoneForm.newPhone}
                 onChange={e => setPhoneForm({...phoneForm, newPhone: e.target.value})}
                 className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900"
               />
-              <p className="text-[10px] text-slate-400 ml-1">{t("settings.phoneHint")}</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">{t("settings.phoneHint")}</p>
             </div>
             <Button 
               className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-orange-600 dark:hover:bg-orange-700 rounded-xl h-11 font-bold"

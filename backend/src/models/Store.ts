@@ -1,8 +1,16 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { slugify } from '../utils/slug';
 
 export interface IStore extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
+  // URL handle derived from `name` — what /store/:slug resolves against, so
+  // shared links read as /store/kigali-coffee instead of /storedetail?id=<oid>.
+  // Auto-maintained by the pre-save hook below; never set it by hand.
+  slug: string;
+  // Slugs this store used before it was renamed. Old links keep resolving
+  // (and redirect to the current slug) instead of 404-ing.
+  previous_slugs?: string[];
   description?: string;
   owner_username: string;
   owner_name?: string;
@@ -11,6 +19,14 @@ export interface IStore extends Document {
   category: string;
   status: 'active' | 'pending' | 'suspended';
   is_verified: boolean;
+  verification_status: 'unverified' | 'pending' | 'approved' | 'rejected';
+  identity_document_type?: 'national_id' | 'passport';
+  identity_document_number?: string;
+  identity_document_image_url?: string;
+  identity_submitted_at?: Date;
+  identity_reviewed_at?: Date;
+  identity_reviewed_by?: string;
+  identity_rejection_reason?: string;
   follower_count: number;
   product_count: number;
   total_sales: number;
@@ -41,6 +57,16 @@ export interface IStore extends Document {
   // Additional Store Info
   phone_number?: string;
   address?: string;
+  // Physical location, used by the marketplace's "near me" search. Kept as
+  // plain lat/lng (not a GeoJSON point) because distance is computed in the
+  // application layer — see routes/stores.ts's /nearby — which lets stores
+  // that only filled in a city still be matched by name.
+  location?: {
+    lat?: number;
+    lng?: number;
+    city?: string;
+    country?: string;
+  };
   website_url?: string;
   custom_domain?: string;
   social_links?: {
@@ -49,7 +75,31 @@ export interface IStore extends Document {
     twitter?: string;
     tiktok?: string;
   };
-  
+
+  // Storefront Builder (Pro/Elite) — freeform block-based custom storefront.
+  // Stored as Mixed since blocks are polymorphic (each block type has a different
+  // `data` shape); real shape/bounds validation happens at the zod layer in
+  // routes/stores.ts, not here. `enabled` can stay true after a plan downgrade —
+  // whether it actually renders is a read-time computation (see storefront_active
+  // in routes/stores.ts), so a vendor's work is never lost on downgrade.
+  storefront_config?: {
+    enabled: boolean;
+    theme?: { primary_color?: string; accent_color?: string };
+    blocks: any[];
+  };
+
+  // Unpublished working copy of the above. The builder auto-saves here (on AI
+  // generation and on every edit) so a vendor can navigate away and come back
+  // to work in progress without touching what visitors currently see.
+  // Publishing copies it into storefront_config and clears this. Owner-only:
+  // it is stripped from every store response the owner didn't request.
+  storefront_draft?: {
+    theme?: { primary_color?: string; accent_color?: string };
+    blocks: any[];
+    generated_by_ai?: boolean;
+    updated_at?: Date;
+  };
+
   created_at: Date;
   updated_at: Date;
 }
@@ -59,6 +109,15 @@ const StoreSchema = new Schema<IStore>({
     type: String,
     required: true,
     trim: true,
+  },
+  slug: {
+    type: String,
+    trim: true,
+    lowercase: true,
+  },
+  previous_slugs: {
+    type: [String],
+    default: undefined,
   },
   description: {
     type: String,
@@ -91,6 +150,36 @@ const StoreSchema = new Schema<IStore>({
   is_verified: {
     type: Boolean,
     default: false,
+  },
+  verification_status: {
+    type: String,
+    enum: ['unverified', 'pending', 'approved', 'rejected'],
+    default: 'unverified',
+  },
+  identity_document_type: {
+    type: String,
+    enum: ['national_id', 'passport'],
+  },
+  identity_document_number: {
+    type: String,
+    trim: true,
+  },
+  identity_document_image_url: {
+    type: String,
+  },
+  identity_submitted_at: {
+    type: Date,
+  },
+  identity_reviewed_at: {
+    type: Date,
+  },
+  identity_reviewed_by: {
+    type: String,
+    trim: true,
+  },
+  identity_rejection_reason: {
+    type: String,
+    trim: true,
   },
   follower_count: {
     type: Number,
@@ -143,6 +232,12 @@ const StoreSchema = new Schema<IStore>({
   // Additional Store Info
   phone_number: { type: String },
   address: { type: String },
+  location: {
+    lat: { type: Number, min: -90, max: 90 },
+    lng: { type: Number, min: -180, max: 180 },
+    city: { type: String, trim: true },
+    country: { type: String, trim: true },
+  },
   website_url: { type: String },
   custom_domain: { type: String, unique: true, sparse: true },
   social_links: {
@@ -151,6 +246,9 @@ const StoreSchema = new Schema<IStore>({
     twitter: { type: String },
     tiktok: { type: String },
   },
+
+  storefront_config: { type: Schema.Types.Mixed },
+  storefront_draft: { type: Schema.Types.Mixed },
 }, {
   timestamps: {
     createdAt: 'created_at',
@@ -159,11 +257,84 @@ const StoreSchema = new Schema<IStore>({
 });
 
 // Indexes for performance
-StoreSchema.index({ owner_username: 1 });
+// unique: every plan currently caps a vendor at 1 store (see PLAN_LIMITS.stores in
+// middleware/subscription.ts); drop this constraint if multi-store plans are introduced.
+StoreSchema.index({ owner_username: 1 }, { unique: true });
 StoreSchema.index({ status: 1 });
+StoreSchema.index({ verification_status: 1 });
 StoreSchema.index({ category: 1, status: 1 });
 StoreSchema.index({ follower_count: -1 });
 StoreSchema.index({ rating_avg: -1 });
+// Narrows the "near me" scan to stores that actually published coordinates.
+StoreSchema.index({ status: 1, 'location.lat': 1, 'location.lng': 1 });
+StoreSchema.index({ 'location.city': 1 });
 StoreSchema.index({ name: 'text' }); // For text search
+// sparse: stores created before slugs existed have none until the backfill runs
+// (see backfillStoreSlugs), and a plain unique index would collide on those nulls.
+StoreSchema.index({ slug: 1 }, { unique: true, sparse: true });
+StoreSchema.index({ previous_slugs: 1 });
+
+// Keeps `slug` in step with `name`: filled on create, regenerated on rename.
+// Renaming pushes the old handle onto previous_slugs so links already shared
+// keep working (routes/stores.ts resolves those too).
+StoreSchema.pre('save', async function (next) {
+  if (this.slug && !this.isModified('name')) return next();
+  try {
+    const nextSlug = await generateStoreSlug(this.name, this._id);
+    if (nextSlug !== this.slug) {
+      if (this.slug) {
+        const history = (this.previous_slugs || []).filter(s => s !== nextSlug);
+        history.push(this.slug);
+        // Bounded so a vendor renaming repeatedly can't grow the doc forever.
+        this.previous_slugs = history.slice(-10);
+      }
+      this.slug = nextSlug;
+    }
+    next();
+  } catch (error: any) {
+    next(error);
+  }
+});
 
 export const Store = mongoose.model<IStore>('Store', StoreSchema);
+
+// Slugs that would shadow a route or read as an app page rather than a store.
+const RESERVED_STORE_SLUGS = new Set(['new', 'edit', 'admin', 'api', 'store', 'stores', 'undefined', 'null']);
+
+/**
+ * A URL handle for `name` that no other store is using (as its current slug or
+ * a previous one). Collisions get a numeric suffix: kigali-coffee-2, -3, …
+ * `excludeId` keeps a store from colliding with itself on rename.
+ */
+export async function generateStoreSlug(name: string, excludeId?: mongoose.Types.ObjectId | string): Promise<string> {
+  // Names with no Latin characters at all (e.g. fully non-Latin scripts) slugify
+  // to '' — fall back to a generic base so the suffix loop still yields a handle.
+  const slugified = slugify(name);
+  const base = !slugified || RESERVED_STORE_SLUGS.has(slugified) ? `${slugified || 'store'}-shop` : slugified;
+
+  for (let attempt = 0; attempt < 25; attempt++) {
+    const candidate = attempt === 0 ? base : `${base}-${attempt + 1}`;
+    const filter: any = { $or: [{ slug: candidate }, { previous_slugs: candidate }] };
+    if (excludeId) filter._id = { $ne: excludeId };
+    if (!(await Store.exists(filter))) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
+/**
+ * Gives stores created before slugs existed a handle, so their /store/:slug URL
+ * works without anyone re-saving them. Runs once at boot; a no-op after that.
+ */
+export async function backfillStoreSlugs(): Promise<number> {
+  const stores = await Store.find({ $or: [{ slug: { $exists: false } }, { slug: null }, { slug: '' }] })
+    .select('_id name')
+    .lean();
+
+  let updated = 0;
+  for (const store of stores) {
+    const slug = await generateStoreSlug(store.name, store._id);
+    await Store.updateOne({ _id: store._id }, { $set: { slug } });
+    updated++;
+  }
+  return updated;
+}

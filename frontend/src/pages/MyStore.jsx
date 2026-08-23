@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { createPageUrl, formatCurrency } from "@/lib/utils";
+import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
 import {
-  Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, BarChart3, Eye,
-  X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag
+  Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, Eye,
+  X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
+  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle, Megaphone, LayoutTemplate, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +23,17 @@ import AdvancedAnalytics from "@/components/mystore/AdvancedAnalytics";
 import CouponManager from "@/components/mystore/CouponManager";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
 import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
+import StorefrontBuilder from "@/components/mystore/StorefrontBuilder";
+import BackLink from "@/components/shared/BackLink";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
+import ColorInput from "@/components/product/ColorInput";
+import SizeInput from "@/components/product/SizeInput";
+import CustomOptionsInput from "@/components/product/CustomOptionsInput";
+import HighlightsInput from "@/components/product/HighlightsInput";
+import SpecificationsInput from "@/components/product/SpecificationsInput";
 import VendorFinance from "./VendorFinance";
 import OrderDetailModal from "@/components/orders/OrderDetailModal";
-import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI } from "@/api/apiClient";
+import { storesAPI, productsAPI, ordersAPI, vendorSubscriptionsAPI, filesAPI } from "@/api/apiClient";
 import { uploadImage } from "@/lib/storage";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -42,7 +50,7 @@ const PLAN_LIMITS = {
 export default function MyStore() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "products";
+  const defaultTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [orderSearch, setOrderSearch] = useState("");
   const [orderTab, setOrderTab] = useState("all");
@@ -87,6 +95,9 @@ export default function MyStore() {
     // Additional Info
     phone_number: "",
     address: "",
+    // Powers the marketplace "near me" filter — a city alone already makes the
+    // store findable; the pin makes it sortable by real distance.
+    location: { lat: null, lng: null, city: "", country: "" },
     website_url: "",
     social_links: {
       facebook: "",
@@ -95,11 +106,19 @@ export default function MyStore() {
       tiktok: "",
     }
   });
-  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "" });
+  const [productForm, setProductForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
   const [productImages, setProductImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadingAssets, setUploadingAssets] = useState({ logo: false, banner: false });
+  const [editingStockId, setEditingStockId] = useState(null);
+  const [stockValue, setStockValue] = useState("");
+  const [showVerifyStore, setShowVerifyStore] = useState(false);
+  const [verificationForm, setVerificationForm] = useState({ document_type: "national_id", document_number: "", document_image_url: "" });
+  const [uploadingVerificationDoc, setUploadingVerificationDoc] = useState(false);
+  const [showEditProduct, setShowEditProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
   const queryClient = useQueryClient();
 
   const handleFileChange = (e) => {
@@ -172,6 +191,28 @@ export default function MyStore() {
     }
   };
 
+  const handleVerificationDocUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("store.imageFileOnly"));
+      return;
+    }
+
+    setUploadingVerificationDoc(true);
+    try {
+      const res = await uploadImage(file, { folder: "verification" });
+      if (res.url) {
+        setVerificationForm(prev => ({ ...prev, document_image_url: res.url }));
+        toast.success(t("store.verificationDocUploaded"));
+      }
+    } catch (err) {
+      toast.error(t("store.verificationDocUploadFailed"));
+    } finally {
+      setUploadingVerificationDoc(false);
+    }
+  };
+
   const { user: currentUser } = useAuth();
 
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -230,7 +271,7 @@ export default function MyStore() {
     mutationFn: () => storesAPI.create({
       ...storeForm,
       owner_username: currentUser.username,
-      owner_name: currentUser.full_name,
+      owner_name: currentUser.display_name || currentUser.username,
       status: "active",
     }),
     onSuccess: () => {
@@ -240,12 +281,58 @@ export default function MyStore() {
     },
   });
 
+  // Drops a map pin on the vendor's current position so shoppers using the
+  // marketplace's "near me" filter can find this store by real distance.
+  const [locating, setLocating] = useState(false);
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error(t("store.locationUnsupported"));
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setStoreForm(p => ({
+          ...p,
+          location: {
+            ...p.location,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+        }));
+        setLocating(false);
+        toast.success(t("store.locationCaptured"));
+      },
+      (error) => {
+        setLocating(false);
+        toast.error(
+          error.code === error.PERMISSION_DENIED
+            ? t("store.locationDenied")
+            : t("store.locationFailed")
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   const updateStoreMutation = useMutation({
     mutationFn: (data) => storesAPI.update(store.id || store._id, data),
     onSuccess: () => {
       toast.success(t("store.storeUpdated"));
       setShowEditStore(false);
       queryClient.invalidateQueries({ queryKey: ["myStore"] });
+    },
+  });
+
+  const submitVerificationMutation = useMutation({
+    mutationFn: () => storesAPI.submitVerification(verificationForm),
+    onSuccess: () => {
+      toast.success(t("store.verificationSubmitted"));
+      setShowVerifyStore(false);
+      queryClient.invalidateQueries({ queryKey: ["myStore"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.verificationDocUploadFailed"));
     },
   });
 
@@ -281,6 +368,10 @@ export default function MyStore() {
         price: parseFloat(productForm.price),
         compare_at_price: productForm.compare_at_price ? parseFloat(productForm.compare_at_price) : undefined,
         inventory_count: parseInt(productForm.inventory_count) || 0,
+        ...(currentPlan === 'elite' ? {
+          affiliate_enabled: productForm.affiliate_enabled,
+          affiliate_commission_pct: Math.min(100, Math.max(0, parseFloat(productForm.affiliate_commission_pct) || 0)),
+        } : { affiliate_enabled: undefined, affiliate_commission_pct: undefined }),
         store_id: storeId,
         store_name: store.name,
         vendor_username: currentUser.username,
@@ -290,14 +381,18 @@ export default function MyStore() {
     onSuccess: () => {
       toast.success("Product added!");
       setShowAddProduct(false);
-      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "" });
+      setProductForm({ title: "", description: "", price: "", compare_at_price: "", category: "other", inventory_count: "", affiliate_enabled: true, affiliate_commission_pct: "10", colors: [], sizes: [], custom_options: [], highlights: [], specifications: [] });
       setProductImages([]);
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews([]);
       queryClient.invalidateQueries({ queryKey: ["myProducts"] });
     },
     onError: (err) => {
-      if (err.status === 403 || err.message?.toLowerCase().includes("limit")) {
+      if (err.message?.toLowerCase().includes("not verified")) {
+        setShowAddProduct(false);
+        setShowVerifyStore(true);
+        toast.error(t("store.verificationRequiredToast"));
+      } else if (err.status === 403 || err.message?.toLowerCase().includes("limit")) {
         setShowAddProduct(false);
         setActiveTab("subscription");
         toast.error(`Subscription limit reached! Your ${currentPlan} plan allows up to ${limits.products === Infinity ? 'unlimited' : limits.products} products.`);
@@ -314,7 +409,74 @@ export default function MyStore() {
       queryClient.invalidateQueries({ queryKey: ["myProducts"] });
     },
   });
-  
+
+  const updateStockMutation = useMutation({
+    mutationFn: ({ id, inventory_count }) => productsAPI.update(id, { inventory_count }),
+    onSuccess: () => {
+      toast.success(t("store.stockUpdated"));
+      setEditingStockId(null);
+      queryClient.invalidateQueries({ queryKey: ["myProducts"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.failedToUpdateStock"));
+    }
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }) => productsAPI.update(id, data),
+    onSuccess: () => {
+      toast.success(t("store.productUpdated"));
+      setShowEditProduct(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: ["myProducts"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || t("store.failedToUpdateProduct"));
+    }
+  });
+
+  const openEditProduct = (product) => {
+    setEditingProduct(product);
+    setEditForm({
+      title: product.title || "",
+      description: product.description || "",
+      price: String(product.price ?? ""),
+      compare_at_price: product.compare_at_price != null ? String(product.compare_at_price) : "",
+      category: product.category || "other",
+      inventory_count: String(product.inventory_count ?? 0),
+      affiliate_enabled: product.affiliate_enabled !== false,
+      affiliate_commission_pct: String(product.affiliate_commission_pct ?? 10),
+      colors: product.colors || [],
+      sizes: product.sizes || [],
+      custom_options: product.custom_options || [],
+      highlights: product.highlights || [],
+      specifications: product.specifications || [],
+    });
+    setShowEditProduct(true);
+  };
+
+  const submitEditProduct = () => {
+    const productId = editingProduct.id || editingProduct._id;
+    const payload = {
+      title: editForm.title,
+      description: editForm.description,
+      price: parseFloat(editForm.price),
+      compare_at_price: editForm.compare_at_price ? parseFloat(editForm.compare_at_price) : undefined,
+      category: editForm.category,
+      inventory_count: Math.max(0, parseInt(editForm.inventory_count) || 0),
+      colors: editForm.colors,
+      sizes: editForm.sizes,
+      custom_options: editForm.custom_options,
+      highlights: editForm.highlights,
+      specifications: editForm.specifications,
+      ...(currentPlan === 'elite' ? {
+        affiliate_enabled: editForm.affiliate_enabled,
+        affiliate_commission_pct: Math.min(100, Math.max(0, parseFloat(editForm.affiliate_commission_pct) || 0)),
+      } : {}),
+    };
+    updateProductMutation.mutate({ id: productId, data: payload });
+  };
+
   const updateOrderStatusMutation = useMutation({
     mutationFn: ({ id, status }) => ordersAPI.updateStatus(id, status),
     onSuccess: () => {
@@ -326,8 +488,13 @@ export default function MyStore() {
     }
   });
 
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-  const pendingOrders = orders.filter(o => o.status === "pending" || o.status === "confirmed").length;
+  const activeProductsCount = products.filter(p => p.status === "active").length;
+  const paidOrders = orders.filter(o => o.payment_status === "paid");
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const avgOrderValue = paidOrders.length ? totalRevenue / paidOrders.length : 0;
+  const actionNeededOrders = orders.filter(o => ["pending", "confirmed", "processing"].includes(o.status)).length;
+  const outOfStockCount = products.filter(p => (p.inventory_count ?? 0) === 0).length;
+  const lowStockCount = products.filter(p => (p.inventory_count ?? 0) > 0 && (p.inventory_count ?? 0) <= 5).length;
 
   if (storeLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>;
@@ -336,6 +503,7 @@ export default function MyStore() {
   if (!store) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} className="mb-8" />
         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-100 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center mx-auto mb-6">
           <Store className="w-9 h-9 text-orange-500" />
         </div>
@@ -352,9 +520,9 @@ export default function MyStore() {
             <DialogHeader><DialogTitle>{t("store.createStoreTitle")}</DialogTitle></DialogHeader>
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="grid grid-cols-3 mb-4">
-                <TabsTrigger value="general">{t("store.basicInfo")}</TabsTrigger>
-                <TabsTrigger value="payment">{t("store.payouts")}</TabsTrigger>
-                <TabsTrigger value="delivery">{t("store.delivery")}</TabsTrigger>
+                <TabsTrigger value="general" className="px-1 sm:px-3 text-[11px] sm:text-sm">{t("store.basicInfo")}</TabsTrigger>
+                <TabsTrigger value="payment" className="px-1 sm:px-3 text-[11px] sm:text-sm">{t("store.payouts")}</TabsTrigger>
+                <TabsTrigger value="delivery" className="px-1 sm:px-3 text-[11px] sm:text-sm">{t("store.delivery")}</TabsTrigger>
               </TabsList>
 
               <div className="max-h-[60vh] overflow-y-auto pr-2">
@@ -362,22 +530,22 @@ export default function MyStore() {
                   <Input placeholder={t("store.storeNamePlaceholder")} value={storeForm.name} onChange={(e) => setStoreForm(p => ({ ...p, name: e.target.value }))} />
                   <Textarea placeholder={t("store.describeStorePlaceholder")} value={storeForm.description} onChange={(e) => setStoreForm(p => ({ ...p, description: e.target.value }))} />
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 block mb-1">{t("store.storeLogo")}</label>
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">{t("store.storeLogo")}</label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
                           {storeForm.logo_url ? (
                             <img src={storeForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                           ) : (
-                            <Upload className="w-5 h-5 text-slate-300" />
+                            <Upload className="w-5 h-5 text-slate-300 dark:text-slate-500" />
                           )}
                         </div>
                         <div className="relative flex-1">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
                             onChange={(e) => handleAssetUpload(e, 'logo')}
                             disabled={uploadingAssets.logo}
                           />
@@ -390,20 +558,20 @@ export default function MyStore() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 block mb-1">{t("store.storeBanner")}</label>
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">{t("store.storeBanner")}</label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
                           {storeForm.banner_url ? (
                             <img src={storeForm.banner_url} alt="Banner" className="w-full h-full object-cover" />
                           ) : (
-                            <Upload className="w-5 h-5 text-slate-300" />
+                            <Upload className="w-5 h-5 text-slate-300 dark:text-slate-500" />
                           )}
                         </div>
                         <div className="relative flex-1">
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
                             onChange={(e) => handleAssetUpload(e, 'banner')}
                             disabled={uploadingAssets.banner}
                           />
@@ -436,10 +604,10 @@ export default function MyStore() {
                   </Select>
 
                   {storeForm.payment_method === 'bank_transfer' && (
-                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input placeholder={t("store.bankName")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
                       <Input placeholder={t("store.accountHolderName")} value={storeForm.bank_account_name} onChange={e => setStoreForm(p => ({ ...p, bank_account_name: e.target.value }))} />
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Input placeholder={t("store.accountNumber")} value={storeForm.bank_account_number} onChange={e => setStoreForm(p => ({ ...p, bank_account_number: e.target.value }))} />
                         <Input placeholder={t("store.routingNumber")} value={storeForm.routing_number} onChange={e => setStoreForm(p => ({ ...p, routing_number: e.target.value }))} />
                       </div>
@@ -447,25 +615,25 @@ export default function MyStore() {
                   )}
 
                   {storeForm.payment_method === 'paypal' && (
-                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input type="email" placeholder={t("store.paypalEmail")} value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                     </div>
                   )}
 
                   {storeForm.payment_method === 'mobile_money' && (
-                    <div className="space-y-3 border-l-2 border-orange-100 pl-4">
+                    <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input placeholder={t("store.mobileMoneyNumber")} value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
-                      <p className="text-[10px] text-slate-400">{t("store.mobileMoneyHint")}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("store.mobileMoneyHint")}</p>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="delivery" className="space-y-6 pt-2">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.shipping")}</Label>
-                        <p className="text-xs text-slate-500">{t("store.shippingDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.shippingDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.shipping_enabled} 
@@ -473,10 +641,10 @@ export default function MyStore() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.localDelivery")}</Label>
-                        <p className="text-xs text-slate-500">{t("store.localDeliveryDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.localDeliveryDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.delivery_enabled} 
@@ -485,7 +653,7 @@ export default function MyStore() {
                     </div>
 
                     {storeForm.delivery_settings.delivery_enabled && (
-                      <div className="space-y-3 border-l-2 border-orange-100 pl-4 py-1">
+                      <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-xs">{t("store.deliveryFee")}</Label>
@@ -533,10 +701,10 @@ export default function MyStore() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.storePickup")}</Label>
-                        <p className="text-xs text-slate-500">{t("store.storePickupDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.storePickupDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.pickup_enabled} 
@@ -545,7 +713,7 @@ export default function MyStore() {
                     </div>
 
                     {storeForm.delivery_settings.pickup_enabled && (
-                      <div className="space-y-1.5 border-l-2 border-orange-100 pl-4 py-1">
+                      <div className="space-y-1.5 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
                         <Label className="text-xs">{t("store.pickupInstructions")}</Label>
                         <Textarea 
                           placeholder={t("store.pickupInstructionsPlaceholder")} 
@@ -571,26 +739,49 @@ export default function MyStore() {
     );
   }
 
+  const isStoreVerified = store.verification_status === "approved";
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       {/* Store Header */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
-              {store.name?.[0]?.toUpperCase()}
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{store.name}</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{store.description || t("store.noDescription")}</p>
-            </div>
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
+        {/* Banner */}
+        <div className="h-20 sm:h-32 lg:h-40 relative bg-gradient-to-r from-orange-500 via-orange-600 to-purple-600">
+          {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+          <div className="absolute top-3 right-3">
+            <Badge className={`border-0 text-[10px] font-semibold px-2.5 py-1 backdrop-blur-md capitalize ${
+              store.status === "active" ? "bg-green-500/90 text-white" :
+              store.status === "pending" ? "bg-amber-500/90 text-white" :
+              "bg-red-500/90 text-white"
+            }`}>
+              {store.status || "active"}
+            </Badge>
           </div>
-          <div className="flex items-center gap-2">
+        </div>
+
+        <div className="p-4 sm:p-6">
+        {/* Avatar overlaps the banner on its own — never shares a row with text,
+            so a long store name can never visually collide with the banner.
+            -mt-14/-mt-16 gives a clearly-intentional ~55-60% overlap into the
+            banner (not just a few px) so it reads as deliberate at any zoom. */}
+        <div className="flex items-start justify-between gap-4 -mt-8 sm:-mt-16">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
+            {store.logo_url ? (
+              <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="bg-gradient-to-br from-orange-400 to-purple-500 w-full h-full flex items-center justify-center text-2xl">
+                {store.name?.[0]?.toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center flex-wrap gap-2 justify-end pt-8 sm:pt-16">
             <Dialog open={showEditStore} onOpenChange={setShowEditStore}>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="rounded-xl"
                   onClick={() => setStoreForm({
                     name: store.name,
@@ -618,6 +809,12 @@ export default function MyStore() {
                     },
                     phone_number: store.phone_number || "",
                     address: store.address || "",
+                    location: {
+                      lat: Number.isFinite(store.location?.lat) ? store.location.lat : null,
+                      lng: Number.isFinite(store.location?.lng) ? store.location.lng : null,
+                      city: store.location?.city || "",
+                      country: store.location?.country || "",
+                    },
                     website_url: store.website_url || "",
                     social_links: {
                       facebook: store.social_links?.facebook || "",
@@ -634,10 +831,10 @@ export default function MyStore() {
                 <DialogHeader><DialogTitle>{t("store.editStoreDetails")}</DialogTitle></DialogHeader>
                 <Tabs defaultValue="general" className="w-full">
                   <TabsList className="grid grid-cols-4 mb-4">
-                    <TabsTrigger value="general">{t("store.general")}</TabsTrigger>
-                    <TabsTrigger value="payment">{t("store.payment")}</TabsTrigger>
-                    <TabsTrigger value="delivery">{t("store.delivery")}</TabsTrigger>
-                    <TabsTrigger value="additional">{t("store.additional")}</TabsTrigger>
+                    <TabsTrigger value="general" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.general")}</TabsTrigger>
+                    <TabsTrigger value="payment" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.payment")}</TabsTrigger>
+                    <TabsTrigger value="delivery" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.delivery")}</TabsTrigger>
+                    <TabsTrigger value="additional" className="px-1 sm:px-3 text-[10px] sm:text-sm">{t("store.additional")}</TabsTrigger>
                   </TabsList>
                   
                   <div className="max-h-[60vh] overflow-y-auto pr-2">
@@ -650,11 +847,11 @@ export default function MyStore() {
                         <label className="text-sm font-medium">{t("store.description")}</label>
                         <Textarea placeholder={t("store.describeStorePlaceholder")} value={storeForm.description} onChange={(e) => setStoreForm(p => ({ ...p, description: e.target.value }))} />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.storeLogo")}</label>
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                               {storeForm.logo_url ? (
                                 <img src={storeForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                               ) : (
@@ -662,10 +859,10 @@ export default function MyStore() {
                               )}
                             </div>
                             <div className="relative flex-1">
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="absolute inset-0 opacity-0 cursor-pointer" 
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
                                 onChange={(e) => handleAssetUpload(e, 'logo')}
                                 disabled={uploadingAssets.logo}
                               />
@@ -680,7 +877,7 @@ export default function MyStore() {
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.storeBanner")}</label>
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                               {storeForm.banner_url ? (
                                 <img src={storeForm.banner_url} alt="Banner" className="w-full h-full object-cover" />
                               ) : (
@@ -688,10 +885,10 @@ export default function MyStore() {
                               )}
                             </div>
                             <div className="relative flex-1">
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="absolute inset-0 opacity-0 cursor-pointer" 
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
                                 onChange={(e) => handleAssetUpload(e, 'banner')}
                                 disabled={uploadingAssets.banner}
                               />
@@ -729,22 +926,22 @@ export default function MyStore() {
                       </div>
 
                       {storeForm.payment_method === 'bank_transfer' && (
-                        <div className="space-y-4 border-l-2 border-orange-100 pl-4 py-1 mt-4">
+                        <div className="space-y-4 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-600">{t("store.bankName")}</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.bankName")}</label>
                             <Input placeholder={t("store.bankNamePlaceholder")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-600">{t("store.accountHolderName")}</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.accountHolderName")}</label>
                             <Input placeholder={t("store.accountHolderNamePlaceholder")} value={storeForm.bank_account_name} onChange={e => setStoreForm(p => ({ ...p, bank_account_name: e.target.value }))} />
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-600">{t("store.accountNumber")}</label>
+                              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.accountNumber")}</label>
                               <Input placeholder={t("store.accountNumber")} value={storeForm.bank_account_number} onChange={e => setStoreForm(p => ({ ...p, bank_account_number: e.target.value }))} />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-600">{t("store.routingNumber")}</label>
+                              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.routingNumber")}</label>
                               <Input placeholder={t("store.routingNumber")} value={storeForm.routing_number} onChange={e => setStoreForm(p => ({ ...p, routing_number: e.target.value }))} />
                             </div>
                           </div>
@@ -752,15 +949,15 @@ export default function MyStore() {
                       )}
 
                       {storeForm.payment_method === 'paypal' && (
-                        <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1 mt-4">
-                          <label className="text-sm font-medium text-slate-600">{t("store.paypalEmail")}</label>
+                        <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
+                          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.paypalEmail")}</label>
                           <Input type="email" placeholder="email@example.com" value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                         </div>
                       )}
 
                       {storeForm.payment_method === 'mobile_money' && (
-                        <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1 mt-4">
-                          <label className="text-sm font-medium text-slate-600">{t("store.mobileMoneyNumber")}</label>
+                        <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
+                          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.mobileMoneyNumber")}</label>
                           <Input placeholder="07XXXXXXXX" value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
                         </div>
                       )}
@@ -768,10 +965,10 @@ export default function MyStore() {
 
                     <TabsContent value="delivery" className="space-y-6 pt-2">
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.shipping")}</Label>
-                            <p className="text-xs text-slate-500">{t("store.shippingDesc")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.shippingDesc")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.shipping_enabled} 
@@ -779,10 +976,10 @@ export default function MyStore() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.localDelivery")}</Label>
-                            <p className="text-xs text-slate-500">{t("store.localDeliveryDesc")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.localDeliveryDesc")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.delivery_enabled} 
@@ -791,49 +988,49 @@ export default function MyStore() {
                         </div>
 
                         {storeForm.delivery_settings.delivery_enabled && (
-                          <div className="space-y-4 border-l-2 border-orange-100 pl-4 py-1">
-                            <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-4 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.deliveryFee")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.deliveryFee")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="0.00"
-                                  value={storeForm.delivery_settings.delivery_fee} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_fee: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.delivery_fee}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_fee: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.deliveryRadiusKm")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.deliveryRadiusKm")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="10"
-                                  value={storeForm.delivery_settings.delivery_radius_km} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_radius_km: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.delivery_radius_km}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, delivery_radius_km: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.minOrderForDelivery")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.minOrderForDelivery")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="0.00"
-                                  value={storeForm.delivery_settings.min_order_for_delivery} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, min_order_for_delivery: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.min_order_for_delivery}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, min_order_for_delivery: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600">{t("store.freeDeliveryAbove")}</Label>
-                                <Input 
-                                  type="number" 
+                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.freeDeliveryAbove")}</Label>
+                                <Input
+                                  type="number"
                                   placeholder="0.00"
-                                  value={storeForm.delivery_settings.free_delivery_above} 
-                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, free_delivery_above: parseFloat(e.target.value) || 0 } }))} 
+                                  value={storeForm.delivery_settings.free_delivery_above}
+                                  onChange={e => setStoreForm(p => ({ ...p, delivery_settings: { ...p.delivery_settings, free_delivery_above: parseFloat(e.target.value) || 0 } }))}
                                 />
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium text-slate-600">{t("store.estDeliveryTime")}</Label>
+                              <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.estDeliveryTime")}</Label>
                               <Input 
                                 placeholder={t("store.estDeliveryTimePlaceholder2")} 
                                 value={storeForm.delivery_settings.delivery_time_est} 
@@ -843,10 +1040,10 @@ export default function MyStore() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.storePickup")}</Label>
-                            <p className="text-xs text-slate-500">{t("store.storePickupDesc2")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.storePickupDesc2")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.pickup_enabled} 
@@ -855,8 +1052,8 @@ export default function MyStore() {
                         </div>
 
                         {storeForm.delivery_settings.pickup_enabled && (
-                          <div className="space-y-2 border-l-2 border-orange-100 pl-4 py-1">
-                            <Label className="text-sm font-medium text-slate-600">{t("store.pickupInstructions")}</Label>
+                          <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
+                            <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.pickupInstructions")}</Label>
                             <Textarea 
                               placeholder={t("store.pickupInstructionsPlaceholder2")} 
                               className="min-h-[100px]"
@@ -869,7 +1066,7 @@ export default function MyStore() {
                     </TabsContent>
 
                     <TabsContent value="additional" className="space-y-4 pt-2">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.phoneNumber")}</label>
                           <Input placeholder="+1 234 567 890" value={storeForm.phone_number} onChange={(e) => setStoreForm(p => ({ ...p, phone_number: e.target.value }))} />
@@ -883,13 +1080,77 @@ export default function MyStore() {
                         <label className="text-sm font-medium">{t("store.storeAddress")}</label>
                         <Input placeholder={t("store.storeAddressPlaceholder")} value={storeForm.address} onChange={(e) => setStoreForm(p => ({ ...p, address: e.target.value }))} />
                       </div>
-                      <div className="space-y-3 pt-2">
-                        <label className="text-sm font-bold text-slate-800">{t("store.socialMediaHandles")}</label>
+
+                      <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-start gap-2 pt-3">
+                          <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <label className="text-sm font-bold text-slate-800 dark:text-slate-200 block">{t("store.locationTitle")}</label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.locationHelp")}</p>
+                          </div>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Instagram</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">{t("store.city")}</label>
+                            <Input
+                              placeholder={t("store.cityPlaceholder")}
+                              value={storeForm.location.city}
+                              onChange={(e) => setStoreForm(p => ({ ...p, location: { ...p.location, city: e.target.value } }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">{t("store.country")}</label>
+                            <Input
+                              placeholder={t("store.countryPlaceholder")}
+                              value={storeForm.location.country}
+                              onChange={(e) => setStoreForm(p => ({ ...p, location: { ...p.location, country: e.target.value } }))}
+                            />
+                          </div>
+                        </div>
+                        {storeForm.location.lat !== null && storeForm.location.lng !== null ? (
+                          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-900 rounded-xl px-3 py-2">
+                            <MapPin className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                            <p className="text-xs text-green-800 dark:text-green-400 font-medium flex-1 min-w-0 truncate">
+                              {/* "lon" not "lng": i18next reserves `lng` for the
+                                  target language, so passing it here would make
+                                  the lookup miss and print the raw key. */}
+                              {t("store.pinnedAt", {
+                                lat: storeForm.location.lat.toFixed(4),
+                                lon: storeForm.location.lng.toFixed(4),
+                              })}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setStoreForm(p => ({ ...p, location: { ...p.location, lat: null, lng: null } }))}
+                              className="text-green-700 dark:text-green-500 hover:text-red-600 transition-colors shrink-0"
+                              aria-label={t("store.removePin")}
+                              title={t("store.removePin")}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={locating}
+                            onClick={handleUseCurrentLocation}
+                            className="rounded-xl gap-1.5 w-full sm:w-auto"
+                          >
+                            {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+                            {t("store.useCurrentLocation")}
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <label className="text-sm font-bold text-slate-800 dark:text-slate-200">{t("store.socialMediaHandles")}</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Instagram</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -899,9 +1160,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">TikTok</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">TikTok</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -911,9 +1172,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Twitter / X</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Twitter / X</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -923,9 +1184,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Facebook</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Facebook</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-medium">fb.com/</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 font-medium">fb.com/</span>
                               <Input 
                                 className="pl-14 h-10 text-xs rounded-xl" 
                                 placeholder="page-handle" 
@@ -948,13 +1209,117 @@ export default function MyStore() {
                 </Tabs>
               </DialogContent>
             </Dialog>
-            <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`}>
+            <Link to={storeUrl(store)}>
               <Button variant="outline" size="sm" className="rounded-xl">
                 <Eye className="w-4 h-4 mr-1.5" /> {t("store.viewStore")}
               </Button>
             </Link>
           </div>
         </div>
+
+        {/* Name, badges, description — normal flow, always clear of the banner */}
+        <div className="min-w-0 mt-3 sm:mt-4 mb-5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{store.name}</h1>
+            {isStoreVerified && (
+              <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border-0 gap-1 shrink-0">
+                <ShieldCheck className="w-3 h-3" /> {t("common.verified")}
+              </Badge>
+            )}
+            {store.category && (
+              <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize shrink-0">
+                {store.category}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mt-0.5">{store.description || t("store.noDescription")}</p>
+        </div>
+
+        {/* Verification Banner */}
+        {store.verification_status === "unverified" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <ShieldAlert className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-300">{t("store.verifyStoreDesc")}</p>
+            </div>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-xl shrink-0" onClick={() => setShowVerifyStore(true)}>
+              {t("store.verifyNow")}
+            </Button>
+          </div>
+        )}
+        {store.verification_status === "pending" && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-100 dark:border-amber-900 flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-300">{t("store.verificationPendingBanner")}</p>
+          </div>
+        )}
+        {store.verification_status === "rejected" && (
+          <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/30 rounded-2xl border border-rose-100 dark:border-rose-900 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
+              <p className="text-sm font-medium text-rose-900 dark:text-rose-300">
+                {t("store.verificationRejectedBanner", { reason: store.identity_rejection_reason || "" })}
+              </p>
+            </div>
+            <Button size="sm" className="bg-rose-600 hover:bg-rose-700 rounded-xl shrink-0" onClick={() => setShowVerifyStore(true)}>
+              {t("store.resubmitVerification")}
+            </Button>
+          </div>
+        )}
+
+        <Dialog open={showVerifyStore} onOpenChange={setShowVerifyStore}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>{t("store.verifyStoreTitle")}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("store.documentType")}</Label>
+                <Select value={verificationForm.document_type} onValueChange={(v) => setVerificationForm(p => ({ ...p, document_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="national_id">{t("store.nationalId")}</SelectItem>
+                    <SelectItem value="passport">{t("store.passport")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("store.documentNumber")}</Label>
+                <Input
+                  placeholder={t("store.documentNumberPlaceholder")}
+                  value={verificationForm.document_number}
+                  onChange={(e) => setVerificationForm(p => ({ ...p, document_number: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("store.documentImage")}</Label>
+                {verificationForm.document_image_url ? (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
+                    <img src={verificationForm.document_image_url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setVerificationForm(p => ({ ...p, document_image_url: "" }))}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 cursor-pointer text-slate-400 hover:border-blue-300 transition-colors">
+                    {uploadingVerificationDoc ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleVerificationDocUpload} disabled={uploadingVerificationDoc} />
+                  </label>
+                )}
+              </div>
+              <Button
+                onClick={() => submitVerificationMutation.mutate()}
+                disabled={!verificationForm.document_number.trim() || !verificationForm.document_image_url || submitVerificationMutation.isPending}
+                className="w-full bg-blue-600 hover:bg-blue-700 h-11"
+              >
+                {submitVerificationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                {submitVerificationMutation.isPending ? t("store.submittingVerification") : t("store.submitVerification")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Onboarding Checklist */}
         {(!store.logo_url || !store.description || products.length === 0 || !store.payment_method) && (
@@ -963,7 +1328,7 @@ export default function MyStore() {
               <h3 className="text-sm font-bold text-orange-900 dark:text-orange-300 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" /> {t("store.setupProgress")}
               </h3>
-              <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {Math.round(
                   ((store.logo_url ? 1 : 0) + 
                   (store.description ? 1 : 0) + 
@@ -980,7 +1345,7 @@ export default function MyStore() {
                 { label: t("store.setupPayoutMethod"), done: !!store.payment_method },
               ].map((step, i) => (
                 <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-orange-100 dark:border-orange-900 text-orange-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
-                  {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200" />}
+                  {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200 dark:border-slate-600" />}
                   <span className="text-xs font-medium">{step.label}</span>
                 </div>
               ))}
@@ -988,29 +1353,14 @@ export default function MyStore() {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { label: t("store.products"), value: products.length, icon: Package, color: "text-orange-500 bg-orange-50 dark:bg-orange-950" },
-            { label: t("store.orders"), value: orders.length, icon: ShoppingCart, color: "text-purple-500 bg-purple-50 dark:bg-purple-950" },
-            { label: t("store.revenue"), value: formatCurrency(totalRevenue), icon: DollarSign, color: "text-green-500 bg-green-50 dark:bg-green-950" },
-            { label: t("store.pending"), value: pendingOrders, icon: BarChart3, color: "text-amber-500 bg-amber-50 dark:bg-amber-950" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-              <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
-                <stat.icon className="w-4 h-4" />
-              </div>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
-            </div>
-          ))}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between mb-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 w-full sm:w-auto">
+          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full sm:w-auto h-auto flex-wrap justify-start gap-1.5 p-1.5">
+            <TabsTrigger value="overview">{t("store.overview")}</TabsTrigger>
             <TabsTrigger value="products">{t("store.products")}</TabsTrigger>
             <TabsTrigger value="orders">{t("store.orders")}</TabsTrigger>
             <TabsTrigger value="coupons">{t("store.coupons")}</TabsTrigger>
@@ -1020,7 +1370,11 @@ export default function MyStore() {
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-1.5">
               {t("store.shipping")}
-              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 text-slate-400 border-0">Pro+</Badge>}
+              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="storefront" className="gap-1.5">
+              {t("store.storefrontBuilder")}
+              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="subscription">{t("store.plan")}</TabsTrigger>
             <TabsTrigger value="finance">{t("store.finance")}</TabsTrigger>
@@ -1029,8 +1383,18 @@ export default function MyStore() {
 
         {activeTab === "products" && (
           <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
-            {products.length >= limits.products ? (
-              <Button 
+            {!isStoreVerified ? (
+              <Button
+                onClick={() => {
+                  setShowVerifyStore(true);
+                  toast.error(t("store.verificationRequiredToast"));
+                }}
+                className="bg-orange-600 hover:bg-orange-700 rounded-xl"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> {t("store.addProduct")}
+              </Button>
+            ) : products.length >= limits.products ? (
+              <Button
                 onClick={() => {
                   setActiveTab("subscription");
                   toast.error(t("store.subscriptionLimitReached", { plan: currentPlan, limit: limits.products === Infinity ? t("store.unlimited") : limits.products }));
@@ -1066,16 +1430,16 @@ export default function MyStore() {
                 
                 {/* Image Upload */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5" /> {t("store.productMedia", { limit: limits.images === Infinity ? t("store.unlimited") : limits.images })}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {imagePreviews.map((url, i) => {
                       const isVideo = productImages[i]?.type?.startsWith("video/");
                       return (
-                        <div key={`preview-${i}-${url}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 group">
+                        <div key={`preview-${i}-${url}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 group">
                           {isVideo ? (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                            <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
                               <video src={url} className="w-full h-full object-cover" />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                 <Play className="w-6 h-6 text-white fill-white" />
@@ -1094,7 +1458,7 @@ export default function MyStore() {
                       );
                     })}
                     {(limits.images === Infinity || productImages.length < limits.images) && (
-                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition-all text-slate-400">
+                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 dark:hover:border-orange-600 hover:bg-orange-50/30 dark:hover:bg-orange-950/30 transition-all text-slate-400 dark:text-slate-500">
                         <Upload className="w-5 h-5" />
                         <span className="text-[10px] mt-1 font-medium">{t("store.upload")}</span>
                         <input type="file" accept={limits.videos === 0 ? "image/*" : "image/*,video/*"} multiple className="hidden" onChange={handleFileChange} />
@@ -1116,20 +1480,150 @@ export default function MyStore() {
                   </Select>
                   <Input type="number" placeholder={t("store.inventoryCount")} value={productForm.inventory_count} onChange={(e) => setProductForm(p => ({ ...p, inventory_count: e.target.value }))} />
                 </div>
-                <Button 
-                  onClick={() => addProductMutation.mutate()} 
+
+                <ColorInput colors={productForm.colors} onChange={(colors) => setProductForm(p => ({ ...p, colors }))} />
+                <SizeInput sizes={productForm.sizes} onChange={(sizes) => setProductForm(p => ({ ...p, sizes }))} />
+                <CustomOptionsInput options={productForm.custom_options} onChange={(custom_options) => setProductForm(p => ({ ...p, custom_options }))} />
+                <HighlightsInput highlights={productForm.highlights} onChange={(highlights) => setProductForm(p => ({ ...p, highlights }))} />
+                <SpecificationsInput specifications={productForm.specifications} onChange={(specifications) => setProductForm(p => ({ ...p, specifications }))} />
+
+                {/* Affiliate Marketing Settings */}
+                <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link2 className="w-4 h-4 text-orange-500 shrink-0" />
+                      <div className="min-w-0">
+                        <Label className="text-sm">{t("store.allowAffiliate")}</Label>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.allowAffiliateDesc")}</p>
+                      </div>
+                    </div>
+                    {currentPlan === 'elite' ? (
+                      <Switch
+                        checked={productForm.affiliate_enabled}
+                        onCheckedChange={(v) => setProductForm(p => ({ ...p, affiliate_enabled: v }))}
+                      />
+                    ) : (
+                      <Badge className="px-1.5 py-0.5 text-[9px] bg-amber-100 text-amber-600 border-0 shrink-0">{t("store.eliteFeature")}</Badge>
+                    )}
+                  </div>
+                  {currentPlan === 'elite' && productForm.affiliate_enabled && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("store.commissionRate")}</Label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={productForm.affiliate_commission_pct}
+                          onChange={(e) => setProductForm(p => ({ ...p, affiliate_commission_pct: e.target.value }))}
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                      </div>
+                    </div>
+                  )}
+                  {currentPlan !== 'elite' && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-500">{t("store.affiliateEliteOnlyDesc")}</p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => addProductMutation.mutate()}
                   disabled={!productForm.title.trim() || !productForm.price || addProductMutation.isPending || uploading} 
                   className="w-full bg-orange-600 hover:bg-orange-700 h-11 rounded-xl font-bold"
                 >
                   {addProductMutation.isPending || uploading ? (
                     <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {uploading ? t("store.uploadingMedia") : t("store.addingProduct")}</>
-                  ) : t("store.addProduct")}
+                  ) : t("store.publishProduct")}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         )}
       </div>
+
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 p-4 sm:p-6">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">{t("store.overview")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                label: t("store.products"),
+                value: `${activeProductsCount}/${products.length}`,
+                sub: t("store.activeCount", { count: activeProductsCount }),
+                icon: Package,
+                color: "text-orange-500 bg-orange-50 dark:bg-orange-950",
+                onClick: () => setActiveTab("products"),
+              },
+              {
+                label: t("store.orders"),
+                value: orders.length,
+                sub: actionNeededOrders > 0 ? t("store.pendingActionSub", { count: actionNeededOrders }) : undefined,
+                icon: ShoppingCart,
+                color: "text-purple-500 bg-purple-50 dark:bg-purple-950",
+                onClick: () => setActiveTab("orders"),
+              },
+              {
+                label: t("store.revenue"),
+                value: formatCurrency(totalRevenue),
+                sub: t("store.fromPaidOrders"),
+                icon: DollarSign,
+                color: "text-green-500 bg-green-50 dark:bg-green-950",
+              },
+              {
+                label: t("store.avgOrderValue"),
+                value: formatCurrency(avgOrderValue),
+                icon: TrendingUp,
+                color: "text-blue-500 bg-blue-50 dark:bg-blue-950",
+              },
+              {
+                label: t("store.needsAction"),
+                value: actionNeededOrders,
+                sub: t("store.needsActionSub"),
+                icon: Clock,
+                color: actionNeededOrders > 0 ? "text-amber-600 bg-amber-100 dark:bg-amber-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+                onClick: () => setActiveTab("orders"),
+              },
+              {
+                label: t("store.lowStockShort"),
+                value: lowStockCount + outOfStockCount,
+                sub: outOfStockCount > 0 ? t("store.outOfStockCount", { count: outOfStockCount }) : undefined,
+                icon: AlertTriangle,
+                color: (lowStockCount + outOfStockCount) > 0 ? "text-rose-600 bg-rose-100 dark:bg-rose-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+                onClick: () => setActiveTab("products"),
+              },
+              {
+                label: t("store.followers"),
+                value: store.follower_count || 0,
+                icon: Users,
+                color: "text-pink-500 bg-pink-50 dark:bg-pink-950",
+              },
+              {
+                label: t("store.rating"),
+                value: store.rating_avg ? store.rating_avg.toFixed(1) : "—",
+                sub: !store.rating_avg ? t("store.notRatedYet") : undefined,
+                icon: Star,
+                color: "text-amber-500 bg-amber-50 dark:bg-amber-950",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                onClick={stat.onClick}
+                role={stat.onClick ? "button" : undefined}
+                className={`bg-slate-50 dark:bg-slate-800 rounded-xl p-3 ${stat.onClick ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" : ""}`}
+              >
+                <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
+                  <stat.icon className="w-4 h-4" />
+                </div>
+                <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
+                {stat.sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{stat.sub}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Products Tab */}
       {activeTab === "products" && (
@@ -1149,9 +1643,55 @@ export default function MyStore() {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-sm font-bold text-orange-600">{formatCurrency(product.price)}</span>
                       <Badge variant="secondary" className="text-[10px]">{product.status}</Badge>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">{t("store.stock")}: {product.inventory_count || 0}</span>
+                      {editingStockId === productId ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            autoFocus
+                            value={stockValue}
+                            onChange={(e) => setStockValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                updateStockMutation.mutate({ id: productId, inventory_count: Math.max(0, parseInt(stockValue) || 0) });
+                              } else if (e.key === "Escape") {
+                                setEditingStockId(null);
+                              }
+                            }}
+                            className="h-6 w-16 text-xs px-1.5"
+                          />
+                          <button
+                            onClick={() => updateStockMutation.mutate({ id: productId, inventory_count: Math.max(0, parseInt(stockValue) || 0) })}
+                            disabled={updateStockMutation.isPending}
+                            className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-950 text-slate-400 hover:text-green-600"
+                          >
+                            {updateStockMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={() => setEditingStockId(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setEditingStockId(productId); setStockValue(String(product.inventory_count || 0)); }}
+                          className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                        >
+                          {t("store.stock")}: {product.inventory_count || 0}
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
+                  <button
+                    onClick={() => navigate(createPageUrl("CreatePost") + `?tag_product=${productId}`)}
+                    title={t("store.postAboutThis")}
+                    className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors"
+                  >
+                    <Megaphone className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => openEditProduct(product)} className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors">
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   <button onClick={() => deleteProductMutation.mutate(productId)} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1161,6 +1701,87 @@ export default function MyStore() {
           )}
         </div>
       )}
+
+      {/* Edit Product Dialog */}
+      <Dialog open={showEditProduct} onOpenChange={(open) => { setShowEditProduct(open); if (!open) setEditingProduct(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{t("store.editProduct")}</DialogTitle></DialogHeader>
+          <div className="space-y-3 max-h-[80vh] overflow-y-auto pr-1">
+            <Input placeholder={t("store.productTitle")} value={editForm.title} onChange={(e) => setEditForm(p => ({ ...p, title: e.target.value }))} />
+            <Textarea placeholder={t("store.productDescription")} value={editForm.description} onChange={(e) => setEditForm(p => ({ ...p, description: e.target.value }))} />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input type="number" placeholder={t("store.productPrice")} value={editForm.price} onChange={(e) => setEditForm(p => ({ ...p, price: e.target.value }))} />
+              <Input type="number" placeholder={t("store.compareAtPrice")} value={editForm.compare_at_price} onChange={(e) => setEditForm(p => ({ ...p, compare_at_price: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Select value={editForm.category} onValueChange={(v) => setEditForm(p => ({ ...p, category: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => <SelectItem key={c} value={c}>{t(`explore.cat.${c}`)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input type="number" placeholder={t("store.inventoryCount")} value={editForm.inventory_count} onChange={(e) => setEditForm(p => ({ ...p, inventory_count: e.target.value }))} />
+            </div>
+
+            <ColorInput colors={editForm.colors} onChange={(colors) => setEditForm(p => ({ ...p, colors }))} />
+            <SizeInput sizes={editForm.sizes} onChange={(sizes) => setEditForm(p => ({ ...p, sizes }))} />
+            <CustomOptionsInput options={editForm.custom_options} onChange={(custom_options) => setEditForm(p => ({ ...p, custom_options }))} />
+            <HighlightsInput highlights={editForm.highlights} onChange={(highlights) => setEditForm(p => ({ ...p, highlights }))} />
+            <SpecificationsInput specifications={editForm.specifications} onChange={(specifications) => setEditForm(p => ({ ...p, specifications }))} />
+
+            {/* Affiliate Marketing Settings */}
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Link2 className="w-4 h-4 text-orange-500 shrink-0" />
+                  <div className="min-w-0">
+                    <Label className="text-sm">{t("store.allowAffiliate")}</Label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.allowAffiliateDesc")}</p>
+                  </div>
+                </div>
+                {currentPlan === 'elite' ? (
+                  <Switch
+                    checked={editForm.affiliate_enabled}
+                    onCheckedChange={(v) => setEditForm(p => ({ ...p, affiliate_enabled: v }))}
+                  />
+                ) : (
+                  <Badge className="px-1.5 py-0.5 text-[9px] bg-amber-100 text-amber-600 border-0 shrink-0">{t("store.eliteFeature")}</Badge>
+                )}
+              </div>
+              {currentPlan === 'elite' && editForm.affiliate_enabled && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("store.commissionRate")}</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.affiliate_commission_pct}
+                      onChange={(e) => setEditForm(p => ({ ...p, affiliate_commission_pct: e.target.value }))}
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+              )}
+              {currentPlan !== 'elite' && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-500">{t("store.affiliateEliteOnlyDesc")}</p>
+              )}
+            </div>
+
+            <Button
+              onClick={submitEditProduct}
+              disabled={!editForm.title.trim() || !editForm.price || updateProductMutation.isPending}
+              className="w-full bg-orange-600 hover:bg-orange-700 h-11 rounded-xl font-bold"
+            >
+              {updateProductMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {t("store.savingChanges")}</>
+              ) : t("store.saveChanges")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Shipping Tab */}
       {activeTab === "shipping" && (
@@ -1185,7 +1806,7 @@ export default function MyStore() {
 
       {/* Finance Tab */}
       {activeTab === "finance" && (
-        <VendorFinance />
+        <VendorFinance embedded />
       )}
 
       {/* Coupons Tab */}
@@ -1204,6 +1825,22 @@ export default function MyStore() {
         )
       )}
 
+      {/* Storefront Builder Tab */}
+      {activeTab === "storefront" && (
+        currentPlan === 'free' ? (
+          <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
+             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+               <LayoutTemplate className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+             </div>
+             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.storefrontBuilderRestricted")}</h3>
+             <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.storefrontBuilderRestrictedDesc")}</p>
+             <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
+          </div>
+        ) : (
+          <StorefrontBuilder store={store} products={products} vendorUsername={currentUser?.username} />
+        )
+      )}
+
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         currentPlan === 'elite' || currentPlan === 'pro' ? (
@@ -1218,7 +1855,7 @@ export default function MyStore() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 mb-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
               <Input 
                 placeholder={t("store.searchOrders")}
                 value={orderSearch}
@@ -1251,7 +1888,7 @@ export default function MyStore() {
             });
 
             if (filtered.length === 0) {
-              return <div className="text-center py-16 text-slate-400">{t("store.noOrdersFound")}</div>;
+              return <div className="text-center py-16 text-slate-400 dark:text-slate-500">{t("store.noOrdersFound")}</div>;
             }
 
             return (
@@ -1269,25 +1906,25 @@ export default function MyStore() {
                       className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 hover:shadow-md transition-all cursor-pointer group"
                       onClick={() => setSelectedOrder(order)}
                     >
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                             {t("store.orderRef", { id: orderId?.slice(-8) })}
                           </p>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors truncate">
                             {order.buyer_name || `@${order.buyer_username}`}
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                             {new Date(order.created_at || order.created_date).toLocaleDateString()} · {t("store.itemsCount", { count: order.items?.length || 0 })}
                           </p>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col items-end gap-2 shrink-0">
                           <div className="flex items-center gap-1.5">
                             {order.delivery_method && (
                               <Badge className={`border-0 text-[9px] px-1.5 py-0.5 h-5 font-semibold flex items-center gap-1 ${
                                 order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
                                 order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
-                                "bg-slate-100 text-slate-500"
+                                "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
                               }`}>
                                 {order.delivery_method === "pickup" ? <Package className="w-2.5 h-2.5" /> :
                                  order.delivery_method === "delivery" ? <Navigation className="w-2.5 h-2.5" /> :
@@ -1326,7 +1963,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-slate-500"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-slate-500 dark:text-slate-400"
                             onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
                           >
                             <Info className="w-3 h-3" />
@@ -1335,7 +1972,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               navigate(createPageUrl("Chat") + `?to=${order.buyer_username}`);

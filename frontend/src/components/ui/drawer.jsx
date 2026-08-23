@@ -27,13 +27,17 @@ const DrawerOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 
-const DrawerContent = React.forwardRef(({ className, children, ...props }, ref) => (
+// `overlayClassName` exists so a caller can lift the whole drawer — scrim
+// included — above content painted higher than z-50, e.g. the fullscreen
+// reels player. Without it the scrim lands behind that content and taps meant
+// to dismiss the drawer fall through to whatever is underneath.
+const DrawerContent = React.forwardRef(({ className, overlayClassName, children, ...props }, ref) => (
   <DrawerPortal>
-    <DrawerOverlay />
+    <DrawerOverlay className={overlayClassName} />
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background pb-[env(safe-area-inset-bottom)]",
         className
       )}
       {...props}>

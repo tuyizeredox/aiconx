@@ -49,28 +49,30 @@ function ProgressBar({ events }) {
   const currentStep = STEP_ORDER.indexOf(latestStatus);
 
   return (
-    <div className="flex items-center gap-0 mb-5 px-1">
-      {STEP_ORDER.map((step, i) => {
-        const cfg = EVENT_CONFIG[step];
-        const Icon = cfg.icon;
-        const done = i <= currentStep;
-        const isLast = i === STEP_ORDER.length - 1;
-        return (
-          <React.Fragment key={step}>
-            <div className="flex flex-col items-center gap-1">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${done ? cfg.color : "bg-slate-100 dark:bg-slate-700"}`}>
-                <Icon className={`w-3.5 h-3.5 ${done ? "text-white" : "text-slate-300 dark:text-slate-500"}`} />
+    <div className="mb-5 -mx-1 px-1 overflow-x-auto">
+      <div className="flex items-center gap-0 w-max min-w-full">
+        {STEP_ORDER.map((step, i) => {
+          const cfg = EVENT_CONFIG[step];
+          const Icon = cfg.icon;
+          const done = i <= currentStep;
+          const isLast = i === STEP_ORDER.length - 1;
+          return (
+            <React.Fragment key={step}>
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${done ? cfg.color : "bg-slate-100 dark:bg-slate-700"}`}>
+                  <Icon className={`w-3.5 h-3.5 ${done ? "text-white" : "text-slate-300 dark:text-slate-500"}`} />
+                </div>
+                <span className={`text-[9px] text-center leading-tight w-12 ${done ? "text-slate-700 dark:text-slate-300 font-medium" : "text-slate-300 dark:text-slate-600"}`}>
+                  {cfg.label}
+                </span>
               </div>
-              <span className={`text-[9px] text-center leading-tight w-12 ${done ? "text-slate-700 dark:text-slate-300 font-medium" : "text-slate-300 dark:text-slate-600"}`}>
-                {cfg.label}
-              </span>
-            </div>
-            {!isLast && (
-              <div className={`flex-1 h-0.5 -mt-4 transition-all ${i < currentStep ? "bg-orange-500" : "bg-slate-100 dark:bg-slate-700"}`} />
-            )}
-          </React.Fragment>
-        );
-      })}
+              {!isLast && (
+                <div className={`w-6 h-0.5 -mt-4 shrink-0 transition-all ${i < currentStep ? "bg-orange-500" : "bg-slate-100 dark:bg-slate-700"}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { itecPayService } from '../services/itecPayService';
 import { Order } from '../models/Order';
 import { VendorSubscription } from '../models/VendorSubscription';
+import { getPlanPrice } from '../utils/planPricing';
 
 const initializePaymentSchema = z.object({
   amount: z.number().min(1).optional(),
@@ -19,7 +20,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
     try {
-      const { amount: clientAmount, email, phone, order_id, currency, payment_method } = initializePaymentSchema.parse(request.body);
+      const { email, phone, order_id, currency, payment_method } = initializePaymentSchema.parse(request.body);
+      const user = request.user as any;
 
       let totalAmount: number;
 
@@ -27,17 +29,50 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       const isSubscriptionPayment = order_id.split(',').every(id => id.trim().startsWith('SUB-'));
 
       if (isSubscriptionPayment) {
-        if (!clientAmount || clientAmount <= 0) {
-          return reply.code(400).send({ error: 'Amount is required for subscription payments' });
+        // The amount charged for a subscription upgrade must come from the server's
+        // own record of what that plan costs — never from client input. Otherwise a
+        // caller could initialize a real payment flow for a trivial amount and still
+        // have the full plan activated once the (genuinely successful, just tiny)
+        // payment clears.
+        const subIds = order_id.split(',').map(id => id.trim().replace(/^SUB-/, ''));
+        const subscriptions = await VendorSubscription.find({ _id: { $in: subIds } });
+
+        if (subscriptions.length !== subIds.length) {
+          return reply.code(404).send({ error: 'Subscription not found' });
         }
-        totalAmount = clientAmount;
+
+        totalAmount = 0;
+        for (const sub of subscriptions) {
+          if (sub.vendor_username !== user.username) {
+            return reply.code(403).send({ error: 'You can only pay for your own subscription' });
+          }
+          if (!sub.pending_plan) {
+            return reply.code(400).send({ error: 'Subscription has no pending upgrade awaiting payment' });
+          }
+          totalAmount += sub.pending_amount ?? await getPlanPrice(
+            sub.pending_plan,
+            (sub.pending_billing_cycle || sub.billing_cycle) as 'monthly' | 'annual'
+          );
+        }
+
+        if (totalAmount <= 0) {
+          return reply.code(400).send({ error: 'Invalid subscription amount' });
+        }
       } else {
-        // Calculate total from all orders (comma-separated IDs)
-        const orderIds = order_id.split(',').map(id => id.trim());
+        // Calculate total from all orders (comma-separated IDs). Order ids sent from
+        // the client may carry the "ORD-" tag (used elsewhere as an ITEC Pay reference
+        // prefix) — strip it before looking up the real Order documents.
+        const orderIds = order_id.split(',').map(id => id.trim().replace(/^ORD-/, ''));
         const orders = await Order.find({ _id: { $in: orderIds } });
 
-        if (orders.length === 0) {
+        if (orders.length !== new Set(orderIds).size) {
           return reply.code(404).send({ error: 'Orders not found' });
+        }
+
+        for (const order of orders) {
+          if (order.buyer_username !== user.username) {
+            return reply.code(403).send({ error: 'You can only pay for your own orders' });
+          }
         }
 
         totalAmount = orders.reduce((sum, order) => sum + order.total, 0);
@@ -63,11 +98,19 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         phone
       );
 
-      // Persist payment_method on subscription so verify-payment can use the right provider
+      // Persist payment_method so verify-payment later checks the right gateway
+      // provider — this matters most on retry, where the buyer may pick a different
+      // method than the one originally stored on the order/subscription.
       if (isSubscriptionPayment) {
         const subIds = order_id.split(',').map(id => id.trim().replace(/^SUB-/, ''));
         await VendorSubscription.updateMany(
           { _id: { $in: subIds } },
+          { $set: { payment_method: provider } }
+        );
+      } else {
+        const orderIds = order_id.split(',').map(id => id.trim().replace(/^ORD-/, ''));
+        await Order.updateMany(
+          { _id: { $in: orderIds } },
           { $set: { payment_method: provider } }
         );
       }
@@ -115,9 +158,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       const transactionId = body.transaction_id || body.transID || body.PCODE;
       const amount = body.amount;
       const status = body.status;
-     
+
      // For Pesapal card payments, we also receive the order reference
      const orderReference = body.reference || body.order_id;
+     const reqRef = body.req_ref || body.reqRef || orderReference;
 
      if (!transactionId || !amount) {
        return reply.code(400).send({
@@ -126,25 +170,47 @@ export async function paymentRoutes(fastify: FastifyInstance) {
        });
      }
 
-     const callbackData = {
-       transaction_id: transactionId,
-       amount: String(amount),
-       status: status || 'completed'
-     };
+     // A callback with no status must never be treated as a successful payment —
+     // that previously defaulted to 'completed' and approved cancelled/incomplete
+     // transactions. If the gateway didn't tell us the outcome, we don't assume one.
+     if (!status) {
+       fastify.log.warn(`ITEC Pay Callback: Missing status for transaction ${transactionId} — not approving without confirmation`);
 
-     // Verify the callback data
-     const isValid = itecPayService.verifyCallback(callbackData, EXPECTED_SECRET_KEY);
+       if (!reqRef) {
+         return reply.code(400).send({ error: 'Invalid callback data', details: 'Missing status and no reference available to verify' });
+       }
 
-     if (!isValid) {
-       return reply.code(400).send({ error: 'Invalid callback data format' });
+       // Fall back to asking ITEC Pay directly for the authoritative transaction status
+       // rather than trusting an unstated outcome.
+       try {
+         const provider: 'mtn' | 'airtel' | 'spenn' | 'card' = body.PCODE ? 'card' : (body.provider || 'mtn');
+         await itecPayService.verifyPayment(reqRef, provider);
+         // verifyPayment throws unless the gateway confirms success, so reaching here means it's genuinely paid.
+       } catch (verifyErr: any) {
+         fastify.log.warn(`ITEC Pay Callback: Could not confirm success for transaction ${transactionId}: ${verifyErr.message}`);
+         return reply.code(200).send({ status: 'ignored', message: 'Payment not confirmed successful' });
+       }
+     } else {
+       const callbackData = {
+         transaction_id: transactionId,
+         amount: String(amount),
+         status
+       };
+
+       // Verify the callback data - rejects cancelled/failed/unknown statuses
+       const isValid = itecPayService.verifyCallback(callbackData, EXPECTED_SECRET_KEY);
+
+       if (!isValid) {
+         return reply.code(200).send({ status: 'ignored', message: 'Payment not successful' });
+       }
      }
 
      try {
        // Use order reference if available, otherwise use transaction ID
        const orderRefForUpdate = orderReference || transactionId;
-       
+
        // Process successful payment
-       await itecPayService.handleSuccessfulPayment(orderRefForUpdate, transactionId, String(amount));
+       await itecPayService.handleSuccessfulPayment(orderRefForUpdate, transactionId, String(amount), fastify.io);
 
        console.log(`ITEC Pay Callback: Payment processed - transaction_id: ${transactionId}, amount: ${amount}`);
 
@@ -155,7 +221,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
      }
    });
 
-  // Verify payment status endpoint
+  // Poll payment status endpoint. Unlike /itecpay/verify-and-activate flows,
+  // this must NOT throw for a 'pending' status — the customer may simply not
+  // have approved the prompt yet — so the frontend can tell "still waiting"
+  // apart from "genuinely failed" and show the right thing immediately.
   fastify.post('/itecpay/verify', {
     preHandler: [fastify.authenticate],
   }, async (request, reply) => {
@@ -168,9 +237,9 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       }
 
       const providerValue = provider as 'mtn' | 'airtel' | 'spenn' | 'card';
-      const result = await itecPayService.verifyPayment(req_ref, providerValue);
+      const { status, amount } = await itecPayService.checkPaymentStatus(req_ref, providerValue);
 
-      return result;
+      return { status: true, data: { status: status || 'pending', amount } };
     } catch (error: any) {
       fastify.log.error(error);
       const statusCode = error.statusCode || 500;

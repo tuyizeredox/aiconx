@@ -32,7 +32,7 @@ const SettingsSchema = new Schema<ISettings>({
   },
   min_withdrawal_amount: {
     type: Number,
-    default: 10,
+    default: 20,
   },
   platform_fee_percent: {
     type: Number,

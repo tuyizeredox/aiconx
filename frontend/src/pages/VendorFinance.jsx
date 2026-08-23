@@ -16,6 +16,9 @@ import { storesAPI, ordersAPI, withdrawalsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { formatCurrency } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { isOrderWithdrawable } from "@/lib/orderConfirmation";
+import BackLink from "@/components/shared/BackLink";
 
 function StatCard({ icon: Icon, label, value, sub, color }) {
   // Icon is a component, rendered as <Icon />
@@ -31,10 +34,9 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
   );
 }
 
-const PAYOUT_RATE = 0.9; // 90% after platform fee
-
-export default function VendorFinance() {
+export default function VendorFinance({ embedded = false }) {
   const { t } = useTranslation();
+  const { payoutRate, platformFeePercent, minWithdrawalAmount } = usePlatformSettings();
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawForm, setWithdrawForm] = useState({
     amount: "", 
@@ -116,20 +118,27 @@ export default function VendorFinance() {
     },
   });
 
-  // Financial calculations
-  const paidOrders = orders.filter(o => o.payment_status === "paid" || o.status === "delivered" || o.status === "shipped");
-  const pendingOrders = orders.filter(o => o.status === "pending" || o.status === "confirmed" || o.status === "processing");
-  const totalGross = paidOrders.reduce((s, o) => s + (o.total || 0), 0);
-  const totalEarned = totalGross * PAYOUT_RATE;
+  // Financial calculations. A paid order only counts toward earned/withdrawable balance
+  // once the buyer confirms receipt (or the auto-release window passes) — mirrors the
+  // backend gate in withdrawals.ts exactly, so this display never promises more than a
+  // withdrawal request will actually be allowed to take.
+  const paidOrders = orders.filter(o => o.payment_status === "paid");
+  const disputedOrders = paidOrders.filter(o => o.buyer_confirmation_status === "disputed");
+  const withdrawableOrders = paidOrders.filter(o => o.buyer_confirmation_status !== "disputed" && isOrderWithdrawable(o));
+  const inHoldOrders = paidOrders.filter(o => o.buyer_confirmation_status !== "disputed" && !isOrderWithdrawable(o));
+  const totalGross = withdrawableOrders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalEarned = totalGross * payoutRate;
   const totalWithdrawn = withdrawals.filter(w => w.status === "completed").reduce((s, w) => s + (w.amount || 0), 0);
   const pendingWithdrawals = withdrawals.filter(w => w.status === "pending" || w.status === "processing").reduce((s, w) => s + (w.amount || 0), 0);
   const availableBalance = Math.max(0, totalEarned - totalWithdrawn - pendingWithdrawals);
-  const pendingEarnings = pendingOrders.reduce((s, o) => s + (o.total || 0), 0) * PAYOUT_RATE;
+  // "Pending" now means paid-but-still-in-the-confirmation-hold, not "unpaid" — unpaid
+  // orders contribute nothing here since they're excluded by the payment_status filter.
+  const pendingEarnings = inHoldOrders.reduce((s, o) => s + (o.total || 0), 0) * payoutRate;
 
   // Group orders by month for chart
-  const monthlyData = orders.reduce((acc, o) => {
+  const monthlyData = withdrawableOrders.reduce((acc, o) => {
     const month = new Date(o.created_at || o.created_date).toLocaleString("default", { month: "short", year: "2-digit" });
-    acc[month] = (acc[month] || 0) + (o.total || 0) * PAYOUT_RATE;
+    acc[month] = (acc[month] || 0) + (o.total || 0) * payoutRate;
     return acc;
   }, {});
   const chartData = Object.entries(monthlyData).slice(-6);
@@ -151,7 +160,7 @@ export default function VendorFinance() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text(`Aicon X Marketplace`, 150, 12);
-    doc.text(`Platform Fee: 10%`, 150, 18);
+    doc.text(`Platform Fee: ${platformFeePercent}%`, 150, 18);
 
     // Invoice meta
     doc.setTextColor(50, 50, 50);
@@ -216,7 +225,7 @@ export default function VendorFinance() {
       ["Subtotal", `RWF ${Math.round(order.subtotal || order.total || 0)}`],
       ["Shipping", `RWF ${Math.round(order.shipping_fee || 0)}`],
       ["Gross Total", `RWF ${Math.round(order.total || 0)}`],
-      ["Platform Fee (10%)", `-RWF ${Math.round((order.total || 0) * 0.1)}`],
+      [`Platform Fee (${platformFeePercent}%)`, `-RWF ${Math.round((order.total || 0) * (1 - payoutRate))}`],
     ];
     rows.forEach(([label, val]) => {
       doc.setFont("helvetica", "normal");
@@ -231,7 +240,7 @@ export default function VendorFinance() {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.text("Net Payout", 134, y + 5);
-    doc.text(`RWF ${Math.round((order.total || 0) * 0.9)}`, 185, y + 5, { align: "right" });
+    doc.text(`RWF ${Math.round((order.total || 0) * payoutRate)}`, 185, y + 5, { align: "right" });
 
     // Footer
     doc.setTextColor(148, 163, 184);
@@ -262,14 +271,15 @@ export default function VendorFinance() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      {!embedded && <BackLink to="Settings" label={t("common.backTo", { page: t("nav.settings") })} />}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("finance.title")}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("finance.subtitle")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("finance.subtitle", { fee: platformFeePercent, rate: Math.round(payoutRate * 100) })}</p>
         </div>
         <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-2">
+            <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl gap-2 shrink-0 w-full sm:w-auto">
               <Wallet className="w-4 h-4" /> {t("finance.requestWithdrawal")}
             </Button>
           </DialogTrigger>
@@ -285,7 +295,7 @@ export default function VendorFinance() {
             <div className="space-y-4 mt-2">
               <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                 <p className="text-xs text-slate-500 dark:text-slate-400">{t("finance.availableBalance")}</p>
-                <p className="text-2xl font-bold text-orange-700">${availableBalance.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-orange-700">{formatCurrency(availableBalance)}</p>
               </div>
 
               {!store?.payment_method && (
@@ -311,39 +321,39 @@ export default function VendorFinance() {
                 {parseFloat(withdrawForm.amount) > availableBalance && (
                   <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.exceedsBalance")}</p>
                 )}
-                {parseFloat(withdrawForm.amount) > 0 && parseFloat(withdrawForm.amount) < 20 && (
-                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.minimumWithdrawal")}</p>
+                {parseFloat(withdrawForm.amount) > 0 && parseFloat(withdrawForm.amount) < minWithdrawalAmount && (
+                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {t("finance.minimumWithdrawal", { min: formatCurrency(minWithdrawalAmount) })}</p>
                 )}
               </div>
               
               <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
                 <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">{t("finance.payoutMethod")}</label>
-                <div className="flex gap-2">
-                  <button 
+                <div className="grid grid-cols-2 gap-2">
+                  <button
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "bank_transfer" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "bank_transfer" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "bank_transfer" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     Bank
                   </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "paypal" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "paypal" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "paypal" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     PayPal
                   </button>
-                   <button 
+                   <button
                      type="button"
                      onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "itecpay" }))}
-                     className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "itecpay" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                     className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "itecpay" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                    >
                      ITEC Pay
                    </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setWithdrawForm(p => ({ ...p, payment_method: "mobile_money" }))}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-colors ${withdrawForm.payment_method === "mobile_money" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
+                    className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors truncate ${withdrawForm.payment_method === "mobile_money" ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     M-Money
                   </button>
@@ -401,7 +411,7 @@ export default function VendorFinance() {
                    ((withdrawForm.payment_method === "bank_transfer" || withdrawForm.payment_method === "itecpay") && (!withdrawForm.bank_name || !withdrawForm.bank_account_name || !withdrawForm.bank_account_number)) ||
                   (withdrawForm.payment_method === "paypal" && !withdrawForm.paypal_email) ||
                   (withdrawForm.payment_method === "mobile_money" && !withdrawForm.mobile_money_number) ||
-                  parseFloat(withdrawForm.amount) < 20 ||
+                  parseFloat(withdrawForm.amount) < minWithdrawalAmount ||
                   parseFloat(withdrawForm.amount) > availableBalance
                 }
                 className="w-full bg-orange-600 hover:bg-orange-700 mt-2"
@@ -422,6 +432,13 @@ export default function VendorFinance() {
         <StatCard icon={CheckCircle2} label={t("finance.totalWithdrawn")} value={formatCurrency(totalWithdrawn)} color="bg-purple-50 text-purple-600" />
       </div>
 
+      {disputedOrders.length > 0 && (
+        <div className="mb-6 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-xl flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <p className="text-xs text-rose-700 dark:text-rose-300">{t("finance.disputedOrders", { count: disputedOrders.length })}</p>
+        </div>
+      )}
+
       {/* Monthly Chart */}
       {chartData.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 mb-6">
@@ -432,7 +449,7 @@ export default function VendorFinance() {
           <div className="flex items-end gap-2 h-28">
             {chartData.map(([month, val]) => (
               <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">${val.toFixed(0)}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">{formatCurrency(val)}</span>
                 <div
                   className="w-full bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg transition-all"
                   style={{ height: `${Math.max(8, (val / maxVal) * 80)}px` }}
@@ -472,7 +489,7 @@ export default function VendorFinance() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-green-600">+{formatCurrency(order.total * 0.9)}</p>
+                      <p className="text-sm font-bold text-green-600">+{formatCurrency(order.total * payoutRate)}</p>
                       <p className="text-[10px] text-slate-400 line-through">{formatCurrency(order.total)}</p>
                     </div>
                     {expandedOrder === order.id ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
@@ -492,12 +509,12 @@ export default function VendorFinance() {
                             <span className="font-medium">{formatCurrency(order.total)}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-500 dark:text-slate-400">{t("finance.platformFee")}</span>
-                            <span className="text-red-500">-{formatCurrency(order.total * 0.1)}</span>
+                            <span className="text-slate-500 dark:text-slate-400">{t("finance.platformFee", { fee: platformFeePercent })}</span>
+                            <span className="text-red-500">-{formatCurrency(order.total * (1 - payoutRate))}</span>
                           </div>
                           <div className="flex justify-between text-xs font-semibold border-t border-slate-200 dark:border-slate-600 pt-1.5">
                             <span>{t("finance.netPayout")}</span>
-                            <span className="text-green-600">{formatCurrency(order.total * 0.9)}</span>
+                            <span className="text-green-600">{formatCurrency(order.total * payoutRate)}</span>
                           </div>
                           <div className="flex justify-between text-[10px] text-slate-400 pt-1 capitalize">
                             <span>{t("checkout.paymentMethod")}</span>
@@ -527,7 +544,7 @@ export default function VendorFinance() {
           {pendingWithdrawals > 0 && (
             <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl mb-3">
               <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-              <p className="text-xs text-amber-700">{t("finance.pendingProcessing", { amount: pendingWithdrawals.toFixed(2) })}</p>
+              <p className="text-xs text-amber-700">{t("finance.pendingProcessing", { amount: formatCurrency(pendingWithdrawals) })}</p>
             </div>
           )}
           <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -535,7 +552,7 @@ export default function VendorFinance() {
               <div className="text-center py-8">
                 <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm text-slate-400">{t("finance.noWithdrawals")}</p>
-                <p className="text-xs text-slate-300 mt-0.5">{t("finance.yourAvailableBalance", { balance: availableBalance.toFixed(2) })}</p>
+                <p className="text-xs text-slate-300 mt-0.5">{t("finance.yourAvailableBalance", { balance: formatCurrency(availableBalance) })}</p>
               </div>
             ) : (
               withdrawals.map(w => (

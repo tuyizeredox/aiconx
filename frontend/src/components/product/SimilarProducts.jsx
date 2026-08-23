@@ -3,9 +3,11 @@ import { productsAPI } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
+import { useTranslation } from "react-i18next";
 import { Zap } from "lucide-react";
 
 export default function SimilarProducts({ product }) {
+  const { t } = useTranslation();
   const { data: similar = [], isLoading } = useQuery({
     queryKey: ["similarProducts", product?.id, product?.category],
     queryFn: async () => {
@@ -41,12 +43,12 @@ export default function SimilarProducts({ product }) {
   if (!isLoading && combined.length === 0) return null;
 
   return (
-    <div className="mt-12 border-t border-slate-100 pt-8">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Zap className="w-5 h-5 text-amber-500" />
-        <h2 className="text-xl font-bold text-slate-900">You Might Also Like</h2>
+        <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+        <h2 className="text-base font-bold text-slate-900 dark:text-white">{t("product.youMightAlsoLike")}</h2>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
         {isLoading
           ? Array(6).fill(0).map((_, i) => <ProductSkeleton key={`skeleton-${i}`} />)
           : combined.map(p => <ProductCard key={p.id || p._id} product={p} compact />)

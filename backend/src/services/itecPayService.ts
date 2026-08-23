@@ -2,7 +2,8 @@ import { Order } from '../models/Order';
 import { VendorSubscription } from '../models/VendorSubscription';
 import { PLAN_PRIORITY, PLAN_LIMITS } from '../middleware/subscription';
 import { Product } from '../models/Product';
-import { Settings } from '../models/Settings';
+import { getPlanPrice } from '../utils/planPricing';
+import { creditAffiliateConversions } from './affiliateService';
 import axios from 'axios';
 
 export interface ITECPayPaymentResponse {
@@ -121,6 +122,65 @@ export const itecPayService = {
   },
 
   /**
+   * Send money out to a phone number via ITEC Pay (api/transfer) — used for admin
+   * cashouts. Distinct from initializeMobileMoneyPayment, which collects money
+   * *from* a customer; this pushes money *out* of the platform's account.
+   */
+  async transferToPhone(
+    amount: number,
+    phone: string,
+    provider: 'mtn' | 'airtel'
+  ): Promise<{ transactionId: string; raw: any }> {
+    const apiKeyMap: Record<string, string> = {
+      mtn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
+      airtel: process.env.ITECPAY_API_KEY_AIRTEL_MONEY || '',
+    };
+
+    const apiKey = apiKeyMap[provider];
+
+    if (!apiKey) {
+      throw new Error(`ITEC Pay API key not configured for provider: ${provider}`);
+    }
+
+    const normalizedPhone = this.normalizePhone(phone);
+    const reqRef = crypto.randomUUID();
+
+    try {
+      const response = await axios.post(
+        'https://pay.itecpay.rw/api/transfer',
+        {
+          amount: Number(amount),
+          phone: normalizedPhone,
+          key: apiKey,
+          req_ref: reqRef,
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const res = response.data as any;
+      console.log('ITEC Pay transfer raw response:', JSON.stringify(res));
+
+      // Same success heuristic as the collection endpoint — still unverified
+      // against a real successful transfer response, so treat with caution.
+      const statusVal = String(res.status ?? '').toLowerCase();
+      const ok = res.status === 200 || res.status === true || res.status === 1 ||
+        statusVal === 'success' || statusVal === 'ok' || statusVal === '200';
+
+      if (!ok) {
+        const errMsg = res.data?.message || res.message || `Transfer failed (status: ${res.status})`;
+        throw new Error(errMsg);
+      }
+
+      const transactionId = res.data?.transaction_id || res.transaction_id || reqRef;
+      return { transactionId, raw: res };
+    } catch (error: any) {
+      console.error('ITEC Pay Transfer Error:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || error.response?.data?.data?.message || error.message || 'Failed to transfer funds via ITEC Pay';
+      throw new Error(errorMessage);
+    }
+  },
+
+  /**
    * Initialize a card payment via ITEC Pay (pesapal/generatecode)
    */
   async initializeCardPayment(
@@ -178,6 +238,9 @@ export const itecPayService = {
         if (bodyStatus === 500 || bodyMsg.includes('Initiate failed')) {
           throw new Error('Card payment service is temporarily unavailable. Please try again later or use mobile money payment.');
         }
+        if (/balance/i.test(bodyMsg)) {
+          throw new Error('Payment declined: the selected card or mobile money account does not have enough funds to cover this order. Please top up or try a different payment method.');
+        }
         throw new Error(bodyMsg || `Card payment gateway error (status: ${bodyStatus})`);
       }
 
@@ -229,23 +292,27 @@ export const itecPayService = {
   },
 
   /**
-   * Verify payment status via ITEC Pay
+   * Check payment status via ITEC Pay without throwing for a non-final or
+   * unsuccessful status (e.g. 'pending' while the customer hasn't yet approved
+   * the prompt on their phone). Used for polling, where the caller needs to
+   * distinguish "still pending, keep waiting" from "genuinely failed" instead
+   * of getting the same generic rejection for both.
    */
-  async verifyPayment(reqRef: string, provider: 'mtn' | 'airtel' | 'spenn' | 'card' = 'mtn'): Promise<ITECPayVerifyResponse> {
+  async checkPaymentStatus(reqRef: string, provider: 'mtn' | 'airtel' | 'spenn' | 'card' = 'mtn'): Promise<{ status: string; amount?: string; raw: any }> {
+    const apiKeyMap: Record<string, string> = {
+      mtn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
+      airtel: process.env.ITECPAY_API_KEY_AIRTEL_MONEY || '',
+      spenn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
+      card: process.env.ITECPAY_API_KEY_CARD || '',
+    };
+
+    const apiKey = apiKeyMap[provider];
+
+    if (!apiKey) {
+      throw new Error(`ITEC Pay API key not configured for provider: ${provider}`);
+    }
+
     try {
-      const apiKeyMap: Record<string, string> = {
-        mtn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
-        airtel: process.env.ITECPAY_API_KEY_AIRTEL_MONEY || '',
-        spenn: process.env.ITECPAY_API_KEY_MOBILE_MONEY || '',
-        card: process.env.ITECPAY_API_KEY_CARD || '',
-      };
-
-      const apiKey = apiKeyMap[provider];
-
-      if (!apiKey) {
-        throw new Error(`ITEC Pay API key not configured for provider: ${provider}`);
-      }
-
       const response = await axios.post(
         'https://pay.itecpay.rw/api2/verify',
         {
@@ -262,45 +329,52 @@ export const itecPayService = {
 
       console.log('ITEC Pay Verify Response:', JSON.stringify(response.data));
 
-      // Validate that payment is actually successful
       const res = response.data as any;
-      const successfulStatuses = ['completed', 'success', 'paid', 'approved'];
-      // Extract status from various possible locations
+      // Prefer explicit transaction/payment status fields. A bare "status" field is
+      // often just the HTTP-style envelope code (e.g. 200) and does NOT confirm the
+      // transaction itself succeeded — trusting it caused cancelled payments to be
+      // approved, so it's only used as a last resort and never auto-treated as success.
       const status = String(
         res.transaction_status ||
         res.data?.transaction_status ||
         res.payment_status ||
         res.data?.payment_status ||
-        res.status ||
         res.data?.status ||
+        res.status ||
         ''
       ).toLowerCase();
 
       console.log('Extracted payment status:', status);
 
-      // If status is a number (like 200), it's likely an HTTP code, not payment status
-      if (!isNaN(Number(status))) {
-        console.warn(`ITEC Pay Verify: Status appears to be HTTP code, not payment status: ${status}`);
-        // Assume success if HTTP 200 and no explicit failure
-        if (status === '200') {
-          console.log('ITEC Pay Verify: Assuming success based on HTTP 200');
-          return response.data;
-        }
-      }
-
-      if (!successfulStatuses.includes(status)) {
-        console.warn(`ITEC Pay Verify: Payment not successful - status: ${status}`);
-        throw new Error(`Payment not successful. Current status: ${status}`);
-      }
-
-      return response.data;
+      return { status, amount: res.data?.amount ?? res.amount, raw: response.data };
     } catch (error: any) {
       console.error('ITEC Pay Verify Error:', error.response?.data || error.message);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to verify ITEC Pay payment';
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to check ITEC Pay payment status';
       const newError: any = new Error(errorMessage);
       newError.statusCode = error.response?.status || 500;
       throw newError;
     }
+  },
+
+  /**
+   * Verify payment status via ITEC Pay, throwing unless the gateway confirms
+   * a successful terminal status. Used to gate activation (subscription
+   * upgrades, order payment confirmation) — never used for polling, since a
+   * 'pending' status must not be treated as an error there.
+   */
+  async verifyPayment(reqRef: string, provider: 'mtn' | 'airtel' | 'spenn' | 'card' = 'mtn'): Promise<ITECPayVerifyResponse> {
+    const { status, raw } = await this.checkPaymentStatus(reqRef, provider);
+    const successfulStatuses = ['completed', 'success', 'paid', 'approved'];
+
+    if (!successfulStatuses.includes(status)) {
+      console.warn(`ITEC Pay Verify: Payment not successful - status: ${status || 'unknown'}`);
+      const err: any = new Error(`Payment not successful. Current status: ${status || 'unknown'}`);
+      err.statusCode = 400;
+      err.paymentStatus = status || 'unknown';
+      throw err;
+    }
+
+    return raw;
   },
 
   /**
@@ -396,6 +470,9 @@ export const itecPayService = {
           statusVal === 'success' || statusVal === 'ok' || statusVal === '200';
         if (!ok) {
           const errMsg = res.data?.message || res.message || `Payment request failed (status: ${res.status})`;
+          if (/balance/i.test(errMsg)) {
+            throw new Error('Payment declined: the selected mobile money account does not have enough funds to cover this order. Please top up or try a different payment method.');
+          }
           throw new Error(errMsg);
         }
 
@@ -439,7 +516,7 @@ export const itecPayService = {
   /**
    * Handle successful ITEC Pay payment
    */
-  async handleSuccessfulPayment(orderIdsString: string, transID: string, amount: string) {
+  async handleSuccessfulPayment(orderIdsString: string, transID: string, amount: string, io?: any) {
     try {
       const allIds = orderIdsString.split(',').map(id => id.trim()).filter(id => id !== '');
 
@@ -461,39 +538,48 @@ export const itecPayService = {
             continue;
           }
 
+          const paymentAmount = Number(amount) || 0;
+
+          // Never activate a plan for less than it costs. The amount charged at
+          // initialize time can be tampered with client-side, so the only trustworthy
+          // gate is comparing what the gateway confirms was actually paid against the
+          // server's own price for the plan being granted.
           if (subscription.pending_plan) {
+            const targetCycle = (subscription.pending_billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+            const expectedAmount = subscription.pending_amount ?? await getPlanPrice(subscription.pending_plan, targetCycle);
+            const TOLERANCE = 1;
+            if (paymentAmount + TOLERANCE < expectedAmount) {
+              console.error(
+                `ITEC Pay Webhook: Underpayment for subscription ${subscriptionId} (transaction ${transID}). ` +
+                `Paid ${paymentAmount}, expected ${expectedAmount} for plan ${subscription.pending_plan}/${targetCycle}. Refusing to activate.`
+              );
+              continue;
+            }
+
             subscription.plan = subscription.pending_plan;
-            subscription.billing_cycle = (subscription.pending_billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
+            subscription.billing_cycle = targetCycle;
             subscription.pending_plan = undefined;
             subscription.pending_billing_cycle = undefined;
+            subscription.pending_amount = undefined;
+          } else {
+            // Renewal of the current plan (no tier change) — still must cover its price.
+            const expectedAmount = await getPlanPrice(subscription.plan, subscription.billing_cycle);
+            const TOLERANCE = 1;
+            if (expectedAmount > 0 && paymentAmount + TOLERANCE < expectedAmount) {
+              console.error(
+                `ITEC Pay Webhook: Underpayment renewing subscription ${subscriptionId} (transaction ${transID}). ` +
+                `Paid ${paymentAmount}, expected ${expectedAmount} for plan ${subscription.plan}/${subscription.billing_cycle}. Refusing to renew.`
+              );
+              continue;
+            }
           }
 
           subscription.status = 'active';
           subscription.payment_reference = transID;
           subscription.last_payment_date = new Date();
-          
-          // Calculate amount from plan if not provided
-          let paymentAmount = Number(amount) || 0;
-          if (paymentAmount === 0 && subscription.pending_plan) {
-            // Fetch plan prices from Settings
-            const settings = await Settings.findOne();
-            const plan = subscription.pending_plan as 'pro' | 'elite';
-            const billingCycle = (subscription.pending_billing_cycle || subscription.billing_cycle) as 'monthly' | 'annual';
-            
-            if (settings?.plan_prices?.[plan]) {
-              paymentAmount = billingCycle === 'annual' 
-                ? settings.plan_prices[plan].annual 
-                : settings.plan_prices[plan].monthly;
-            } else {
-              // Fallback to default prices
-              const defaultPrices: Record<string, { monthly: number; annual: number }> = {
-                pro: { monthly: 29000, annual: 23000 },
-                elite: { monthly: 79000, annual: 63000 }
-              };
-              paymentAmount = defaultPrices[plan]?.[billingCycle] || 0;
-            }
-          }
-          subscription.amount = paymentAmount;
+          subscription.amount = paymentAmount > 0
+            ? paymentAmount
+            : await getPlanPrice(subscription.plan, subscription.billing_cycle);
 
           const now = new Date();
           subscription.expires_at = subscription.billing_cycle === 'annual'
@@ -534,6 +620,8 @@ export const itecPayService = {
         if (result.modifiedCount > 0) {
           console.log(`ITEC Pay: ${result.modifiedCount} order(s) marked as paid (Ref: ${transID})`);
         }
+
+        await creditAffiliateConversions(cleanOrderIds, io);
       }
     } catch (error) {
       console.error('Error handling ITEC Pay successful payment:', error);

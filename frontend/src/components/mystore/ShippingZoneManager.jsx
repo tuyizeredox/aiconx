@@ -53,10 +53,10 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-50 rounded-2xl border border-slate-200 p-4 space-y-4">
+    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="text-xs text-slate-500 font-medium block mb-1">{t("store.zoneName")}</label>
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">{t("store.zoneName")}</label>
           <Input
             value={form.zone_name}
             onChange={e => setForm(f => ({ ...f, zone_name: e.target.value }))}
@@ -65,7 +65,7 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500 font-medium block mb-1">{t("store.flatRateUSD")}</label>
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">{t("store.flatRateUSD")}</label>
           <Input
             type="number"
             value={form.flat_rate ?? ""}
@@ -75,7 +75,7 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500 font-medium block mb-1">{t("store.freeAboveLabel")}</label>
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">{t("store.freeAboveLabel")}</label>
           <Input
             type="number"
             value={form.free_above ?? ""}
@@ -85,7 +85,7 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500 font-medium block mb-1">{t("store.minDays")}</label>
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">{t("store.minDays")}</label>
           <Input
             type="number"
             value={form.estimated_days_min}
@@ -94,7 +94,7 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500 font-medium block mb-1">{t("store.maxDays")}</label>
+          <label className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">{t("store.maxDays")}</label>
           <Input
             type="number"
             value={form.estimated_days_max}
@@ -105,14 +105,14 @@ function ZoneForm({ initial = BLANK_ZONE, onSave, onCancel, saving }) {
       </div>
 
       <div>
-        <label className="text-xs text-slate-500 font-medium block mb-2">{t("store.countriesRegions")}</label>
+        <label className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-2">{t("store.countriesRegions")}</label>
         <div className="flex flex-wrap gap-2">
           {COUNTRY_PRESETS.map(c => (
             <button
               key={c.code}
               type="button"
               onClick={() => toggleCountry(c.code)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${form.countries.includes(c.code) ? "bg-orange-600 text-white border-orange-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${form.countries.includes(c.code) ? "bg-orange-600 text-white border-orange-600" : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500"}`}
             >
               {c.label}
             </button>
@@ -183,10 +183,10 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Truck className="w-5 h-5 text-orange-500" /> {t("store.shippingZones")}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">{t("store.shippingZonesDesc")}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t("store.shippingZonesDesc")}</p>
         </div>
         <Button 
           onClick={() => {
@@ -221,15 +221,15 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
       ) : zones.length === 0 && !showAdd ? (
-        <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">
-          <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-500 font-medium">{t("store.noShippingZones")}</p>
-          <p className="text-xs text-slate-400">{t("store.addZonesDesc")}</p>
+        <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+          <Globe className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t("store.noShippingZones")}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t("store.addZonesDesc")}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {zones.map(zone => (
-            <motion.div key={zone._id || zone.id} layout className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <motion.div key={zone._id || zone.id} layout className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
               {editId === (zone._id || zone.id) ? (
                 <div className="p-4">
                   <ZoneForm
@@ -243,29 +243,29 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${zone.is_active ? "bg-orange-50" : "bg-slate-100"}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${zone.is_active ? "bg-orange-50 dark:bg-orange-950" : "bg-slate-100 dark:bg-slate-700"}`}>
                         <MapPin className={`w-4 h-4 ${zone.is_active ? "text-orange-500" : "text-slate-400"}`} />
                       </div>
                       <div>
-                        <p className={`text-sm font-semibold ${zone.is_active ? "text-slate-900" : "text-slate-400 line-through"}`}>{zone.zone_name}</p>
+                        <p className={`text-sm font-semibold ${zone.is_active ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500 line-through"}`}>{zone.zone_name}</p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="text-xs font-bold text-green-600">${(Number(zone.flat_rate) || 0).toFixed(2)} {t("store.flatRate")}</span>
-                          {(Number(zone.free_above) || 0) > 0 && <span className="text-xs text-slate-400">· {t("store.freeOver", { amount: zone.free_above })}</span>}
-                          <span className="text-xs text-slate-400">· {t("store.estimatedDays", { min: zone.estimated_days_min, max: zone.estimated_days_max })}</span>
+                          {(Number(zone.free_above) || 0) > 0 && <span className="text-xs text-slate-400 dark:text-slate-500">· {t("store.freeOver", { amount: zone.free_above })}</span>}
+                          <span className="text-xs text-slate-400 dark:text-slate-500">· {t("store.estimatedDays", { min: zone.estimated_days_min, max: zone.estimated_days_max })}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => toggleActive(zone)}
-                        className={`w-8 h-5 rounded-full transition-colors relative ${zone.is_active ? "bg-orange-500" : "bg-slate-200"}`}
+                        className={`w-8 h-5 rounded-full transition-colors relative ${zone.is_active ? "bg-orange-500" : "bg-slate-200 dark:bg-slate-600"}`}
                       >
                         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${zone.is_active ? "left-3.5" : "left-0.5"}`} />
                       </button>
-                      <button onClick={() => setEditId(zone._id || zone.id)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                      <button onClick={() => setEditId(zone._id || zone.id)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deleteMutation.mutate(zone._id || zone.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                      <button onClick={() => deleteMutation.mutate(zone._id || zone.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -286,30 +286,30 @@ export default function ShippingZoneManager({ store, vendorUsername, plan = 'fre
         </div>
       )}
 
-      <div className={`mt-8 p-5 rounded-2xl border-2 border-dashed transition-all ${isElite ? "bg-amber-50/30 border-amber-100" : "bg-slate-50 border-slate-200"}`}>
+      <div className={`mt-8 p-5 rounded-2xl border-2 border-dashed transition-all ${isElite ? "bg-amber-50/30 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900" : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"}`}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h4 className={`text-sm font-bold ${isElite ? "text-amber-900" : "text-slate-900"}`}>{t("store.calculatedLiveRates")}</h4>
-              <Badge className={isElite ? "bg-amber-500 text-white border-0" : "bg-slate-200 text-slate-500 border-0"}>Elite</Badge>
+              <h4 className={`text-sm font-bold ${isElite ? "text-amber-900 dark:text-amber-400" : "text-slate-900 dark:text-white"}`}>{t("store.calculatedLiveRates")}</h4>
+              <Badge className={isElite ? "bg-amber-500 text-white border-0" : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-0"}>Elite</Badge>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed max-w-md">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-md">
               {t("store.liveRatesDesc")}
             </p>
           </div>
           <Truck className={`w-8 h-8 ${isElite ? "text-amber-500" : "text-slate-300"} shrink-0`} />
         </div>
-        
+
         {!isElite ? (
-          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 font-medium">{t("store.upgradeForLiveRates")}</span>
-            <Button onClick={onUpgrade} size="sm" variant="outline" className="h-8 text-[10px] rounded-lg border-amber-200 text-amber-700 hover:bg-amber-50">
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">{t("store.upgradeForLiveRates")}</span>
+            <Button onClick={onUpgrade} size="sm" variant="outline" className="h-8 text-[10px] rounded-lg border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950">
               {t("store.upgradeToElite")}
             </Button>
           </div>
         ) : (
-          <div className="mt-4 p-3 bg-white rounded-xl border border-amber-100 text-center">
-            <p className="text-xs font-semibold text-amber-700">{t("store.liveRatesPreparing")}</p>
+          <div className="mt-4 p-3 bg-white dark:bg-slate-800 rounded-xl border border-amber-100 dark:border-amber-900 text-center">
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">{t("store.liveRatesPreparing")}</p>
             <p className="text-[10px] text-amber-500 mt-0.5">{t("store.liveRatesContact")}</p>
           </div>
         )}

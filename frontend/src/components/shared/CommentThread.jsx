@@ -1,0 +1,518 @@
+import React, { useState, useRef, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/lib/utils";
+import AvatarImg from "@/components/shared/AvatarImg";
+import { Send, Loader2, MessageCircle, Heart, CornerDownRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { commentsAPI } from "@/api/apiClient";
+import { useTranslation } from "react-i18next";
+import { useSocket } from "@/lib/SocketContext";
+import { toast } from "sonner";
+
+/**
+ * A post's comment thread, independent of whatever is wrapping it.
+ *
+ * Comments used to live inside PostDetailModal, so the only way to read them
+ * was to reopen the whole post. They are split out here so the mobile bottom
+ * sheet and the desktop modal's side column render the same thread, replies,
+ * likes and composer without either one forking a second copy of the logic.
+ */
+
+function ReplyItem({ reply, currentUser }) {
+  const queryClient = useQueryClient();
+  const { on } = useSocket();
+  const replyId = (reply.id || reply._id)?.toString();
+  const [isLiked, setIsLiked] = useState(!!reply.is_liked);
+  const [likesCount, setLikesCount] = useState(reply.likes_count || 0);
+  const replyAuthorProfile = createPageUrl("Profile") + `?username=${reply.author_username || "anonymous"}`;
+
+  React.useEffect(() => { setIsLiked(!!reply.is_liked); }, [reply.is_liked]);
+  React.useEffect(() => { setLikesCount(reply.likes_count || 0); }, [reply.likes_count]);
+
+  React.useEffect(() => {
+    if (!replyId) return;
+    const unsubscribe = on('comment_updated', (data) => {
+      if (data.comment_id === replyId) {
+        if (data.likes_count !== undefined) setLikesCount(data.likes_count);
+        if (data.user_username && currentUser?.username &&
+            data.user_username.toLowerCase() === currentUser.username.toLowerCase()) {
+          if (data.type === 'like') setIsLiked(true);
+          else if (data.type === 'unlike') setIsLiked(false);
+        }
+      }
+    });
+    return unsubscribe;
+  }, [replyId, currentUser?.username, on]);
+
+  const likeMutation = useMutation({
+    mutationFn: async (wasLiked) => {
+      return wasLiked ? await commentsAPI.unlike(replyId) : await commentsAPI.like(replyId);
+    },
+    onMutate: (wasLiked) => {
+      const next = !wasLiked;
+      setIsLiked(next);
+      setLikesCount(prev => next ? prev + 1 : Math.max(0, prev - 1));
+    },
+    onSuccess: (data) => {
+      if (data?.likes_count !== undefined) setLikesCount(data.likes_count);
+      if (data?.is_liked !== undefined) setIsLiked(data.is_liked);
+      queryClient.setQueriesData({ queryKey: ["postComments"] }, (old) => {
+        if (!old) return old;
+        const updateReply = (c) =>
+          (c.id || c._id)?.toString() === replyId
+            ? { ...c, likes_count: data?.likes_count ?? c.likes_count, is_liked: data?.is_liked ?? c.is_liked }
+            : c;
+        if (Array.isArray(old)) return old.map(updateReply);
+        if (old.comments) return { ...old, comments: old.comments.map(updateReply) };
+        return old;
+      });
+    },
+    onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["postComments"] });
+        return;
+      }
+      if (error?.status === 404) {
+        toast.error("This reply is no longer available");
+      } else {
+        toast.error("Failed to update like. Please try again.");
+      }
+      setIsLiked(!!reply.is_liked);
+      setLikesCount(reply.likes_count || 0);
+    },
+  });
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex gap-2.5 ml-10 mt-3"
+    >
+      <Link to={replyAuthorProfile} className="shrink-0">
+        <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold shrink-0 overflow-hidden border border-white dark:border-slate-800 shadow-sm hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
+          <AvatarImg
+            src={reply.author_avatar}
+            className="w-full h-full object-cover"
+            fallback={reply.author_name?.[0]?.toUpperCase() || "U"}
+          />
+        </div>
+      </Link>
+      <div className="flex-1">
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm px-3.5 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Link to={replyAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{reply.author_name || "User"}</span>
+              <span className="text-[10px] text-slate-400">@{reply.author_username || "anonymous"}</span>
+            </Link>
+            <span className="text-[10px] text-slate-300">·</span>
+            <span className="text-[10px] text-slate-400">
+              {new Date(reply.created_at || reply.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{reply.content}</p>
+        </div>
+        <button
+          onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
+          disabled={likeMutation.isPending}
+          className={`flex items-center gap-1 text-[10px] font-bold mt-1.5 ml-1 transition-colors disabled:opacity-60 ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+        >
+          <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
+          {likesCount > 0 && likesCount} {isLiked ? "Liked" : "Like"}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
+  const queryClient = useQueryClient();
+  const { on } = useSocket();
+  const { t } = useTranslation();
+  const commentId = (comment.id || comment._id)?.toString();
+  const [isLiked, setIsLiked] = useState(!!comment.is_liked);
+  const [likesCount, setLikesCount] = useState(comment.likes_count || 0);
+  const commentAuthorProfile = createPageUrl("Profile") + `?username=${comment.author_username || "anonymous"}`;
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const replyInputRef = useRef(null);
+
+  React.useEffect(() => { setIsLiked(!!comment.is_liked); }, [comment.is_liked]);
+  React.useEffect(() => { setLikesCount(comment.likes_count || 0); }, [comment.likes_count]);
+
+  useEffect(() => {
+    if (showReplyInput && replyInputRef.current) {
+      replyInputRef.current.focus();
+    }
+  }, [showReplyInput]);
+
+  React.useEffect(() => {
+    if (!commentId) return;
+    const unsubscribe = on('comment_updated', (data) => {
+      if (data.comment_id === commentId) {
+        if (data.likes_count !== undefined) setLikesCount(data.likes_count);
+        if (data.user_username && currentUser?.username &&
+            data.user_username.toLowerCase() === currentUser.username.toLowerCase()) {
+          if (data.type === 'like') setIsLiked(true);
+          else if (data.type === 'unlike') setIsLiked(false);
+        }
+      }
+    });
+    return unsubscribe;
+  }, [commentId, currentUser?.username, on]);
+
+  const likeMutation = useMutation({
+    mutationFn: async (wasLiked) => {
+      return wasLiked ? await commentsAPI.unlike(commentId) : await commentsAPI.like(commentId);
+    },
+    onMutate: (wasLiked) => {
+      const next = !wasLiked;
+      setIsLiked(next);
+      setLikesCount(prev => next ? prev + 1 : Math.max(0, prev - 1));
+    },
+    onSuccess: (data) => {
+      if (data?.likes_count !== undefined) setLikesCount(data.likes_count);
+      if (data?.is_liked !== undefined) setIsLiked(data.is_liked);
+      queryClient.setQueriesData({ queryKey: ["postComments"] }, (old) => {
+        if (!old) return old;
+        const updateComment = (c) =>
+          (c.id || c._id)?.toString() === commentId
+            ? { ...c, likes_count: data?.likes_count ?? c.likes_count, is_liked: data?.is_liked ?? c.is_liked }
+            : c;
+        if (Array.isArray(old)) return old.map(updateComment);
+        if (old.comments) return { ...old, comments: old.comments.map(updateComment) };
+        return old;
+      });
+    },
+    onError: (error) => {
+      if (error?.status === 409) {
+        // A concurrent request already registered this like server-side;
+        // resync from the server instead of reverting the optimistic state.
+        queryClient.invalidateQueries({ queryKey: ["postComments"] });
+        return;
+      }
+      if (error?.status === 404) {
+        toast.error("This comment is no longer available");
+      } else {
+        toast.error("Failed to update like. Please try again.");
+      }
+      setIsLiked(!!comment.is_liked);
+      setLikesCount(comment.likes_count || 0);
+    },
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: async () => {
+      await commentsAPI.create({
+        post_id: postId,
+        parent_comment_id: commentId,
+        content: replyText.trim(),
+      });
+    },
+    onSuccess: () => {
+      setReplyText("");
+      setShowReplyInput(false);
+      setShowReplies(true);
+      queryClient.invalidateQueries({ queryKey: ["postComments"] });
+      queryClient.invalidateQueries({ queryKey: ["postDetail"] });
+      if (onReplyPosted) onReplyPosted();
+    },
+  });
+
+  const replyCount = replies?.length || 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex gap-3 group"
+    >
+      <Link to={commentAuthorProfile} className="shrink-0">
+        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold shrink-0 border border-white dark:border-slate-800 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
+          <AvatarImg
+            src={comment.author_avatar}
+            className="w-full h-full rounded-full object-cover"
+            fallback={comment.author_name?.[0]?.toUpperCase() || "U"}
+          />
+        </div>
+      </Link>
+      <div className="flex-1 min-w-0">
+        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 hover:shadow-md hover:shadow-slate-100 dark:hover:shadow-slate-700/50 transition-all">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <Link to={commentAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                <span className="text-sm font-bold text-slate-900 dark:text-white">{comment.author_name || "User"}</span>
+                <span className="text-[10px] text-slate-400 font-medium">@{comment.author_username || "anonymous"}</span>
+              </Link>
+            </div>
+            <span className="text-[10px] font-medium text-slate-400">
+              {new Date(comment.created_at || comment.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">{comment.content}</p>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
+              disabled={likeMutation.isPending}
+              className={`flex items-center gap-1 text-[10px] font-bold transition-colors disabled:opacity-60 ${isLiked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+            >
+              <Heart className={`w-3 h-3 ${isLiked ? "fill-current" : ""}`} />
+              {likesCount > 0 && likesCount} {isLiked ? "Liked" : "Like"}
+            </button>
+            {currentUser && (
+              <button
+                onClick={() => setShowReplyInput(prev => !prev)}
+                className={`flex items-center gap-1 text-[10px] font-bold transition-colors ${showReplyInput ? "text-orange-600" : "text-slate-400 hover:text-orange-500"}`}
+              >
+                <CornerDownRight className="w-3 h-3" />
+                {t("common.reply") || "Reply"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Reply input */}
+        <AnimatePresence>
+          {showReplyInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-center gap-2 mt-2 ml-2 pl-2 border-l-2 border-orange-200">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                  {currentUser?.full_name?.[0]?.toUpperCase() || "U"}
+                </div>
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    ref={replyInputRef}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder={`${t("common.replyTo") || "Reply to"} @${comment.author_username || "User"}...`}
+                    className="rounded-xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-9 text-sm focus:ring-orange-100"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey && replyText.trim() && !replyMutation.isPending) {
+                        e.preventDefault();
+                        replyMutation.mutate();
+                      }
+                      if (e.key === "Escape") {
+                        setShowReplyInput(false);
+                        setReplyText("");
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={() => replyText.trim() && replyMutation.mutate()}
+                    disabled={!replyText.trim() || replyMutation.isPending}
+                    size="icon"
+                    className="rounded-xl bg-orange-600 hover:bg-orange-700 w-9 h-9 shrink-0"
+                  >
+                    {replyMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* View / hide replies */}
+        {replyCount > 0 && (
+          <button
+            onClick={() => setShowReplies(prev => !prev)}
+            className="flex items-center gap-1.5 ml-2 mt-2 text-[11px] font-bold text-orange-600 hover:text-orange-700 transition-colors"
+          >
+            {showReplies ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showReplies
+              ? (t("common.hideReplies") || "Hide replies")
+              : `${t("common.viewReplies") || "View"} ${replyCount} ${replyCount === 1 ? (t("common.reply") || "reply") : (t("common.replies") || "replies")}`
+            }
+          </button>
+        )}
+
+        {/* Replies list */}
+        <AnimatePresence>
+          {showReplies && replyCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mt-1 space-y-1"
+            >
+              {replies.map((reply, i) => (
+                <ReplyItem
+                  key={reply.id || reply._id || i}
+                  reply={reply}
+                  currentUser={currentUser}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Loads a post's comments and splits them into top-level entries plus a
+ * parent-id -> replies map, so every surface showing this thread counts and
+ * orders it identically.
+ */
+export function usePostComments(postId, currentUser, enabled = true) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["postComments", postId, currentUser?.username],
+    queryFn: () => {
+      const p = { sort: "created_at", limit: 100 };
+      if (currentUser?.username) p.user_username = currentUser.username;
+      return commentsAPI.list(postId, p);
+    },
+    enabled: !!enabled && !!postId,
+    retry: false,
+  });
+
+  const all = Array.isArray(data) ? data : data?.comments || [];
+  const topLevelComments = all.filter((c) => !c.parent_comment_id);
+  const repliesMap = all
+    .filter((c) => !!c.parent_comment_id)
+    .reduce((acc, reply) => {
+      const pid = reply.parent_comment_id;
+      if (!acc[pid]) acc[pid] = [];
+      acc[pid].push(reply);
+      return acc;
+    }, {});
+
+  return { topLevelComments, repliesMap, isLoading, error };
+}
+
+/** The scrollable body: loading, empty and loaded states for one thread. */
+export function CommentList({ postId, currentUser, topLevelComments, repliesMap, isLoading, error, className = "" }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return (
+    <div className={className}>
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-2xl text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          {t("common.commentsLoadFailed")}
+        </div>
+      )}
+
+      {isLoading ? (
+        Array(3).fill(0).map((_, i) => (
+          <div key={i} className="flex gap-3 animate-pulse">
+            <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 shrink-0" />
+            <div className="flex-1 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2">
+              <div className="h-2.5 w-24 bg-slate-100 dark:bg-slate-700 rounded" />
+              <div className="h-2 w-full bg-slate-50 dark:bg-slate-700/50 rounded" />
+            </div>
+          </div>
+        ))
+      ) : topLevelComments.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <MessageCircle className="w-10 h-10 text-slate-200 dark:text-slate-700 mb-3" />
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{t("common.noCommentsTitle")}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("common.noCommentsDesc")}</p>
+        </div>
+      ) : (
+        topLevelComments.map((comment, i) => (
+          <CommentItem
+            key={comment.id || comment._id || i}
+            comment={comment}
+            currentUser={currentUser}
+            replies={repliesMap[(comment.id || comment._id)?.toString()] || []}
+            postId={postId}
+            onReplyPosted={() => queryClient.invalidateQueries({ queryKey: ["postComments"] })}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
+/**
+ * The composer. Signed-out visitors get a prompt to sign in rather than a
+ * dead input: the thread is readable without an account, so the wall belongs
+ * at the point of writing, not the point of reading.
+ */
+export function CommentComposer({ postId, currentUser, className = "", autoFocus = false }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [commentText, setCommentText] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
+
+  const addCommentMutation = useMutation({
+    mutationFn: async () => {
+      await commentsAPI.create({ post_id: postId, content: commentText.trim() });
+    },
+    onSuccess: () => {
+      setCommentText("");
+      queryClient.invalidateQueries({ queryKey: ["postComments"] });
+      queryClient.invalidateQueries({ queryKey: ["postDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: () => toast.error(t("common.commentFailed")),
+  });
+
+  if (!currentUser) {
+    return (
+      <div className={className}>
+        <Link
+          to="/login"
+          className="flex items-center justify-center h-11 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-semibold text-slate-600 dark:text-slate-300"
+        >
+          {t("common.signInToComment")}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+          <AvatarImg
+            src={currentUser.avatar_url}
+            className="w-full h-full object-cover"
+            fallback={currentUser.full_name?.[0]?.toUpperCase() || currentUser.display_name?.[0]?.toUpperCase() || "U"}
+          />
+        </div>
+        <Input
+          ref={inputRef}
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          placeholder={t("common.addComment")}
+          className="flex-1 rounded-full border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 h-11 focus-visible:ring-orange-200"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && commentText.trim() && !addCommentMutation.isPending) {
+              e.preventDefault();
+              addCommentMutation.mutate();
+            }
+          }}
+        />
+        <Button
+          onClick={() => commentText.trim() && addCommentMutation.mutate()}
+          disabled={!commentText.trim() || addCommentMutation.isPending}
+          size="icon"
+          className="rounded-full bg-orange-600 hover:bg-orange-700 w-11 h-11 shrink-0 disabled:opacity-40 transition-all active:scale-95"
+          aria-label={t("common.postComment")}
+        >
+          {addCommentMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export { CommentItem, ReplyItem };

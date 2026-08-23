@@ -89,8 +89,14 @@ export async function logActivity(request: FastifyRequest, action: string, targe
 
 export async function checkMaintenance(request: FastifyRequest, reply: FastifyReply) {
   try {
-    // Skip check for login and admin routes
-    if (request.url.startsWith('/api/auth') || request.url.startsWith('/api/admin')) {
+    // Skip check for login and admin routes. /api/health must also stay reachable —
+    // it's what the hosting platform polls to decide whether to restart the
+    // container, and it would misread "site is in maintenance" as "server is down".
+    if (
+      request.url.startsWith('/api/auth') ||
+      request.url.startsWith('/api/admin') ||
+      request.url.startsWith('/api/health')
+    ) {
       return;
     }
 

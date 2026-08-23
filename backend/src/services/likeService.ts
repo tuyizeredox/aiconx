@@ -115,7 +115,17 @@ export async function likeTarget(user_username: string, target_type: string, tar
     target_id
   });
 
-  await like.save();
+  try {
+    await like.save();
+  } catch (err: any) {
+    // Concurrent duplicate request raced past the existence check above and
+    // hit the unique index first — treat it the same as "Already liked"
+    // instead of surfacing a generic 500 to the client.
+    if (err?.code === 11000) {
+      throw new Error('Already liked');
+    }
+    throw err;
+  }
   const likes_count = await updateLikesCount(target_type, target_id, 1);
 
   const result: LikeResult = {

@@ -9,8 +9,15 @@ export interface IProduct extends Document {
   currency: string;
   images: string[];
   videos: string[];
+  colors: { name: string; hex?: string; image?: string }[];
+  sizes: string[];
+  custom_options: { name: string; values: string[] }[];
   category: string;
   tags: string[];
+  // Buyer-facing detail content. Both are vendor-authored and optional: the
+  // product page only renders these blocks when they're populated.
+  highlights: string[];
+  specifications: { name: string; value: string }[];
   store_id: string;
   store_name?: string;
   vendor_username: string;
@@ -25,6 +32,7 @@ export interface IProduct extends Document {
   clicks_count: number;
   add_to_cart_count: number;
   checkout_start_count: number;
+  affiliate_enabled: boolean;
   affiliate_commission_pct: number;
   created_at: Date;
   updated_at: Date;
@@ -51,7 +59,7 @@ const ProductSchema = new Schema<IProduct>({
   },
   currency: {
     type: String,
-    default: 'USD',
+    default: 'RWF',
     uppercase: true,
   },
   images: [{
@@ -59,6 +67,21 @@ const ProductSchema = new Schema<IProduct>({
   }],
   videos: [{
     type: String,
+  }],
+  colors: [{
+    name: { type: String, required: true, trim: true },
+    hex: { type: String, trim: true },
+    image: { type: String },
+    _id: false,
+  }],
+  sizes: [{
+    type: String,
+    trim: true,
+  }],
+  custom_options: [{
+    name: { type: String, required: true, trim: true },
+    values: [{ type: String, trim: true }],
+    _id: false,
   }],
   category: {
     type: String,
@@ -68,6 +91,16 @@ const ProductSchema = new Schema<IProduct>({
     type: String,
     trim: true,
     lowercase: true,
+  }],
+  highlights: [{
+    type: String,
+    trim: true,
+    maxlength: 120,
+  }],
+  specifications: [{
+    name: { type: String, required: true, trim: true, maxlength: 60 },
+    value: { type: String, required: true, trim: true, maxlength: 200 },
+    _id: false,
   }],
   store_id: {
     type: String,
@@ -137,6 +170,10 @@ const ProductSchema = new Schema<IProduct>({
     type: Number,
     default: 0,
     min: 0,
+  },
+  affiliate_enabled: {
+    type: Boolean,
+    default: true,
   },
   affiliate_commission_pct: {
     type: Number,

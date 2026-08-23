@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl, formatCurrency } from "@/lib/utils";
+import { Link, useNavigate } from "react-router-dom";
+import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
 import PostCard from "@/components/shared/PostCard";
 import ProductCard from "@/components/shared/ProductCard";
 import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
+import AvatarImg from "@/components/shared/AvatarImg";
 import {
   usersAPI, postsAPI, productsAPI, ordersAPI, reviewsAPI,
   followsAPI, likesAPI, storesAPI, vendorSubscriptionsAPI
@@ -15,7 +16,8 @@ import { useAuth } from "@/lib/AuthContext";
 import {
   Grid3X3, ShoppingBag, UserPlus, UserCheck, LogOut,
   Store, Package, CheckCircle2, Clock, Truck, Pencil, Star, BadgeCheck, Heart,
-  Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X
+  Search, Users2, Calendar, MessageCircle, CreditCard, Sparkles, X,
+  Settings as SettingsIcon, Link2, ArrowLeft
 } from "lucide-react";
 import StarRating from "@/components/reviews/StarRating";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
@@ -74,11 +76,11 @@ function UserListModal({ open, onClose, title, users = [] }) {
                   className="flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-700">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-orange-600 dark:text-orange-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>
-                    )}
+                    <AvatarImg
+                      src={avatarUrl}
+                      className="w-full h-full object-cover"
+                      fallback={<span className="text-orange-600 dark:text-orange-400 font-bold text-xs">{name[0]?.toUpperCase()}</span>}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{name}</p>
@@ -110,7 +112,9 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [userList, setUserList] = useState({ open: false, title: "", users: [] });
   const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
 
   const targetUsername = profileUsername || currentUser?.username;
@@ -139,7 +143,7 @@ export default function Profile() {
   const { data: userProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ["userProducts", targetUsername],
     queryFn: async () => {
-      const res = await productsAPI.list({ vendor_username: targetUsername, status: "active", sort: "-created_date", limit: 30 });
+      const res = await productsAPI.list({ vendor_username: targetUsername, status: "active", sort: "-created_at", limit: 30 });
       return res.data || [];
     },
     enabled: !!targetUsername,
@@ -148,7 +152,7 @@ export default function Profile() {
   const { data: buyerOrders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["profileOrders", targetUsername],
     queryFn: async () => {
-      const res = await ordersAPI.list({ buyer_username: targetUsername, sort: "-created_date", limit: 30 });
+      const res = await ordersAPI.list({ buyer_username: targetUsername, sort: "-created_at", limit: 30 });
       return res.data || [];
     },
     enabled: !!targetUsername && isOwnProfile,
@@ -157,7 +161,7 @@ export default function Profile() {
   const { data: reviews = [] } = useQuery({
     queryKey: ["userReviews", targetUsername],
     queryFn: async () => {
-      const res = await reviewsAPI.list({ reviewer_username: targetUsername, sort: "-created_date", limit: 5 });
+      const res = await reviewsAPI.list({ reviewer_username: targetUsername, sort: "-created_at", limit: 5 });
       return res.data || [];
     },
     enabled: !!targetUsername,
@@ -243,7 +247,7 @@ export default function Profile() {
   const { data: vendorStoreReviews = [] } = useQuery({
     queryKey: ["vendorStoreReviews", store?.id],
     queryFn: async () => {
-      const res = await reviewsAPI.list({ store_id: store.id, sort: "-created_date", limit: 100 });
+      const res = await reviewsAPI.list({ store_id: store.id, sort: "-created_at", limit: 100 });
       return res.data || [];
     },
     enabled: !!store?.id,
@@ -270,6 +274,7 @@ export default function Profile() {
 
   const displayName = profileUser?.display_name || profileUser?.full_name || "User";
   const avatarUrl = profileUser?.avatar_url;
+  useEffect(() => { setAvatarLoadFailed(false); }, [avatarUrl]);
   const bannerUrl = profileUser?.banner_url;
   const bio = profileUser?.bio;
   const completedOrders = buyerOrders.filter(o => o.status === "delivered").length;
@@ -277,6 +282,23 @@ export default function Profile() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      {/* Other users' profiles are reached from many places (a post, search, a
+          followers list, a story...) with no single logical "back to X" page, so
+          unlike the rest of the app's fixed-destination back links, this one uses
+          real browser history — falling back to Home if opened with no history
+          (e.g. a profile link shared directly). Your own profile via the bottom
+          nav stays a top-level tab with no back button. */}
+      {!isOwnProfile && (
+        <button
+          onClick={() => {
+            if (window.history.state?.idx > 0) navigate(-1);
+            else navigate(createPageUrl("Home"));
+          }}
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> {t("common.back")}
+        </button>
+      )}
       {/* Profile Header Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -293,18 +315,24 @@ export default function Profile() {
         </div>
 
         <div className="px-5 pb-5">
-          <div className="flex items-end justify-between -mt-12 mb-4">
+          <div className="flex flex-wrap items-end justify-between gap-2 -mt-12 mb-4">
             {/* Avatar */}
             <div className="relative">
-              {avatarUrl ? (
+              {avatarUrl && !avatarLoadFailed ? (
                 <button
                   onClick={() => setImageModalOpen(true)}
-                  className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300 cursor-pointer p-0"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300 cursor-pointer p-0"
                 >
-                  <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                  <AvatarImg
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    onLoadError={() => setAvatarLoadFailed(true)}
+                    fallback={<span className="text-white font-bold text-3xl">{displayName[0]?.toUpperCase()}</span>}
+                  />
                 </button>
               ) : (
-                <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center transition-transform hover:scale-105 duration-300">
                   <span className="text-white font-bold text-3xl">{displayName[0]?.toUpperCase()}</span>
                 </div>
               )}
@@ -316,13 +344,13 @@ export default function Profile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-end">
               {isOwnProfile ? (
                 <>
-                  <Button 
+                  <Button
                       type="button"
-                      variant="outline" 
-                      size="sm" 
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         setActiveTab("plan");
                         setTimeout(() => {
@@ -330,31 +358,57 @@ export default function Profile() {
                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 100);
                       }}
-                      className={`relative rounded-xl gap-1.5 transition-all font-bold h-9 px-4 shadow-sm border-orange-200 ${
-                        activeTab === "plan" 
-                          ? "bg-orange-600 text-white border-orange-600 shadow-orange-100" 
+                      className={`relative rounded-xl gap-1.5 transition-all font-bold h-9 px-3 sm:px-4 shadow-sm border-orange-200 ${
+                        activeTab === "plan"
+                          ? "bg-orange-600 text-white border-orange-600 shadow-orange-100"
                           : "bg-orange-50/80 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
                       }`}
                     >
-                      <CreditCard className="w-4 h-4" /> 
-                      <span>{t("profile.managePlan")}</span>
+                      <CreditCard className="w-4 h-4" />
+                      <span className="hidden sm:inline">{t("profile.managePlan")}</span>
                       {subscription?.status === 'pending' && (
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
                       )}
                     </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setEditOpen(true)} 
-                    className="rounded-xl gap-1.5 border-slate-200 hover:bg-slate-50 hover:text-orange-600 transition-all font-semibold h-9"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditOpen(true)}
+                    className="rounded-xl gap-1.5 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-orange-600 transition-all font-semibold h-9 px-3 sm:px-4"
                   >
-                    <Pencil className="w-3.5 h-3.5" /> {t("profile.editProfile")}
+                    <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">{t("profile.editProfile")}</span>
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => logout()} 
-                    className="rounded-xl border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all h-9 w-9 p-0"
+                  <Link to={createPageUrl("Affiliate")}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      title={t("nav.affiliate")}
+                      aria-label={t("nav.affiliate")}
+                      className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all h-9 w-9 p-0 shrink-0"
+                    >
+                      <Link2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                  <Link to={createPageUrl("Settings")}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      title={t("nav.settings")}
+                      aria-label={t("nav.settings")}
+                      className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all h-9 w-9 p-0 shrink-0"
+                    >
+                      <SettingsIcon className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => logout()}
+                    title={t("common.logout")}
+                    aria-label={t("common.logout")}
+                    className="rounded-xl border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all h-9 w-9 p-0 shrink-0"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                   </Button>
@@ -364,9 +418,9 @@ export default function Profile() {
                   <Button
                     onClick={() => followMutation.mutate()}
                     size="sm"
-                    className={`rounded-xl px-5 h-9 font-semibold transition-all ${
-                      isFollowing 
-                        ? "bg-slate-100 text-slate-700 hover:bg-slate-200" 
+                    className={`rounded-xl px-4 sm:px-5 h-9 font-semibold transition-all ${
+                      isFollowing
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                         : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100"
                     }`}
                     variant={isFollowing ? "secondary" : "default"}
@@ -380,10 +434,10 @@ export default function Profile() {
                     )}
                   </Button>
                   <Link to={createPageUrl("Chat") + `?to=${targetUsername || profileUser?.username}`}>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-xl border-slate-200 hover:bg-slate-50 h-9 px-4 font-semibold"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-9 px-3 sm:px-4 font-semibold"
                     >
                       <MessageCircle className="w-3.5 h-3.5 mr-1.5" /> {t("profile.message")}
                     </Button>
@@ -421,7 +475,7 @@ export default function Profile() {
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {store && (
                 <Link 
-                  to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} 
+                  to={storeUrl(store)}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 dark:bg-orange-950 rounded-lg text-xs text-orange-700 dark:text-orange-400 font-bold hover:bg-orange-100 dark:hover:bg-orange-900 transition-colors"
                 >
                   <Store className="w-3.5 h-3.5" /> {store.name}
@@ -438,7 +492,7 @@ export default function Profile() {
           </div>
 
           {/* Stats row */}
-          <div className="flex gap-5 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700">
             {[
               { label: t("profile.posts"), value: posts.length, onClick: null },
               { 
@@ -504,7 +558,7 @@ export default function Profile() {
                   <ShoppingBag className="w-4 h-4 text-orange-500" />
                   {t("profile.storeHighlights")}
                 </h2>
-                <Link to={createPageUrl("StoreDetail") + `?id=${store.id || store._id}`} className="text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:underline">
+                <Link to={storeUrl(store)} className="text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:underline">
                   {t("profile.visitStore")}
                 </Link>
               </div>
@@ -554,16 +608,16 @@ export default function Profile() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
         <TabsList id="profile-tabs-list" className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full">
-          <TabsTrigger value="posts" className="flex-1 gap-1.5"><Grid3X3 className="w-4 h-4" />{t("profile.posts")}</TabsTrigger>
-          <TabsTrigger value="products" className="flex-1 gap-1.5"><ShoppingBag className="w-4 h-4" />{t("shop.products")}</TabsTrigger>
-          {isOwnProfile && <TabsTrigger value="orders" className="flex-1 gap-1.5"><Package className="w-4 h-4" />{t("orders.title")}</TabsTrigger>}
-          {isOwnProfile && <TabsTrigger value="liked" className="flex-1 gap-1.5"><Heart className="w-4 h-4" />{t("common.liked")}</TabsTrigger>}
+          <TabsTrigger value="posts" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><Grid3X3 className="w-4 h-4" /><span className="hidden sm:inline">{t("profile.posts")}</span></TabsTrigger>
+          <TabsTrigger value="products" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><ShoppingBag className="w-4 h-4" /><span className="hidden sm:inline">{t("shop.products")}</span></TabsTrigger>
+          {isOwnProfile && <TabsTrigger value="orders" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><Package className="w-4 h-4" /><span className="hidden sm:inline">{t("orders.title")}</span></TabsTrigger>}
+          {isOwnProfile && <TabsTrigger value="liked" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm"><Heart className="w-4 h-4" /><span className="hidden sm:inline">{t("common.liked")}</span></TabsTrigger>}
           {isOwnProfile && (
-            <TabsTrigger value="plan" className="flex-1 gap-1.5 text-orange-600 font-bold border-orange-100 data-[state=active]:bg-orange-50/50 relative">
+            <TabsTrigger value="plan" className="gap-1.5 px-2.5 sm:px-4 text-xs sm:text-sm text-orange-600 font-bold border-orange-100 data-[state=active]:bg-orange-50/50 relative">
               <CreditCard className="w-4 h-4" />
-              <span>{t("profile.plan")}</span>
+              <span className="hidden sm:inline">{t("profile.plan")}</span>
               {subscription?.status === 'pending' && (
-                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shrink-0" />
               )}
             </TabsTrigger>
           )}
@@ -576,10 +630,11 @@ export default function Profile() {
           {postsLoading
             ? Array(3).fill(0).map((_, i) => <PostSkeleton key={`post-skeleton-${i}`} />)
             : posts.map((post, idx) => (
-                <PostCard 
-                  key={post.id || post._id || `profile-post-${idx}`} 
-                  post={post} 
-                  currentUser={currentUser} 
+                <PostCard
+                  key={post.id || post._id || `profile-post-${idx}`}
+                  post={post}
+                  currentUser={currentUser}
+                  feedPosts={posts}
                 />
               ))}
           {!postsLoading && posts.length === 0 && (
@@ -669,10 +724,11 @@ export default function Profile() {
           {likedPostsLoading
             ? Array(3).fill(0).map((_, i) => <PostSkeleton key={`liked-skeleton-${i}`} />)
             : likedPosts.map((post, idx) => (
-                <PostCard 
-                  key={post.id || post._id || `liked-post-${idx}`} 
-                  post={post} 
-                  currentUser={currentUser} 
+                <PostCard
+                  key={post.id || post._id || `liked-post-${idx}`}
+                  post={post}
+                  currentUser={currentUser}
+                  feedPosts={likedPosts}
                 />
               ))}
           {!likedPostsLoading && likedPosts.length === 0 && (
