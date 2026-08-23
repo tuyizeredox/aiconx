@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify';
+import mongoose from 'mongoose';
 import { WishlistItem, IWishlistItem } from '../models/WishlistItem';
+import { Product } from '../models/Product';
 import { User } from '../models/User';
 
 export async function wishlistRoutes(fastify: FastifyInstance) {
@@ -37,8 +39,40 @@ export async function wishlistRoutes(fastify: FastifyInstance) {
 
       const total = await WishlistItem.countDocuments(filter);
 
+      // A wishlist row is a snapshot taken when the item was saved, so a price
+      // change or a sell-out never reaches it. Resolve the live products and
+      // fold them in: the saved title/price/image get refreshed, and `product`
+      // carries the fields a card needs but a snapshot never captured —
+      // including the affiliate terms behind the "Earn X" badge.
+      const productIds = wishlist
+        .map(w => w.product_id)
+        .filter(id => mongoose.Types.ObjectId.isValid(id));
+      const products = productIds.length
+        ? await Product.find(
+            { _id: { $in: productIds } },
+            { title: 1, price: 1, compare_at_price: 1, images: 1, status: 1, category: 1,
+              store_name: 1, vendor_username: 1, vendor_plan: 1,
+              affiliate_enabled: 1, affiliate_commission_pct: 1 }
+          ).lean()
+        : [];
+      const productMap = new Map(products.map(p => [String(p._id), p]));
+
+      const items = wishlist.map(item => {
+        const product = productMap.get(String(item.product_id)) as any;
+        if (!product) return item.toObject();
+        return {
+          ...item.toObject(),
+          product_title: product.title ?? item.product_title,
+          product_price: product.price ?? item.product_price,
+          compare_at_price: product.compare_at_price ?? item.compare_at_price,
+          product_image: product.images?.[0] || item.product_image,
+          store_name: product.store_name || item.store_name,
+          product: { ...product, id: String(product._id) },
+        };
+      });
+
       return reply.send({
-        items: wishlist,
+        items,
         pagination: {
           total,
           limit: parseInt(limit),

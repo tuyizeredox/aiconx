@@ -1040,7 +1040,8 @@
     "earnPerSaleTitle": "You earn {{amount}} on every sale from your share",
     "youEarnPerSale": "You earn {{amount}} per sale",
     "shareEarnExplainer": "Your link is ready — anyone who buys through it pays you commission.",
-    "shareAndEarn": "Share and earn {{amount}} per sale"
+    "shareAndEarn": "Share and earn {{amount}} per sale",
+    "shareToEarn": "Share and earn"
   },
   "store": {
     "title": "My Store",

@@ -120,8 +120,9 @@ export default function ProductDetail() {
   const canEarn = !!currentUser && affiliate.eligible && affiliate.amount > 0;
   const nativeShare = useNativeShare({
     product,
-    shareUrl: affiliate.hasLink ? affiliate.shareUrl : undefined,
-    // Without a link yet, the dialog opens and mints one with UI on screen.
+    // Pressing share mints the link if it doesn't exist yet, so even the very
+    // first share of a product goes out attributed.
+    resolveUrl: affiliate.ensureLink,
     onFallback: () => setIsShareModalOpen(true),
   });
 

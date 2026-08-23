@@ -11,24 +11,31 @@ import ShareModal from "./ShareModal";
 import ReportModal from "./ReportModal";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { recordSignal } from "@/lib/personalization";
-import { estimateEarnings } from "@/lib/affiliate";
-import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { useAffiliateLink } from "@/hooks/useAffiliateLink";
+import { useAuth } from "@/lib/AuthContext";
 import EarnBadge from "./EarnBadge";
 
-export default function ProductCard({ product, compact = false, currentUser }) {
+export default function ProductCard({ product, compact = false, currentUser: currentUserProp }) {
   const { t } = useTranslation();
+  // Most callers never passed currentUser, which quietly signed the viewer out
+  // of their own card: no wishlist heart, and a share that couldn't be
+  // attributed to them. Reading auth here fixes every call site at once,
+  // including the ones written next. The prop still wins where it is passed.
+  const { user: authUser } = useAuth();
+  const currentUser = currentUserProp ?? authUser;
   const queryClient = useQueryClient();
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
-  const nativeShare = useNativeShare({ product, onFallback: () => setIsShareModalOpen(true) });
+  // `authoritative: false` — no eligibility request per card. The link is
+  // minted from `ensureLink` on the share tap, and the backend re-checks then.
+  const affiliate = useAffiliateLink(product, currentUser, { authoritative: false });
+  const nativeShare = useNativeShare({
+    product,
+    resolveUrl: affiliate.ensureLink,
+    onFallback: () => setIsShareModalOpen(true),
+  });
   const productId = product?.id || product?._id;
   const isOwner = currentUser?.username && currentUser.username === product?.vendor_username;
-  const { isSubscriptionEnforced } = usePlatformSettings();
-  // Estimated from the product itself — no request per card.
-  const earnings = estimateEarnings(product, {
-    subscriptionEnforced: isSubscriptionEnforced,
-    viewerUsername: currentUser?.username,
-  });
 
   // Only fetch wishlist for authenticated users with username
   const { data: wishlistItems = [] } = useQuery({
@@ -169,9 +176,9 @@ export default function ProductCard({ product, compact = false, currentUser }) {
                 <span className="text-xs text-slate-400 dark:text-slate-500 line-through">{formatCurrency(product.compare_at_price)}</span>
               )}
             </div>
-            {earnings && (
+            {affiliate.eligible && affiliate.amount > 0 && (
               <div className="mt-1.5">
-                <EarnBadge amount={earnings.amount} />
+                <EarnBadge amount={affiliate.amount} />
               </div>
             )}
             {product.rating_avg > 0 && (

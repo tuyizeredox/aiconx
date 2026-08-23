@@ -78,16 +78,7 @@ export function useAffiliateLink(product, currentUser, { authoritative = false }
     }
   }, [productId, signedIn, eligible, refCode, currentUser?.username, queryClient]);
 
-  return {
-    eligible,
-    pct,
-    amount,
-    refCode,
-    /** true once a link exists, so the URL can be built with no round trip */
-    hasLink: !!refCode,
-    shareUrl: affiliateProductUrl(productId, refCode),
-    ensureLink,
-  };
+  return { eligible, pct, amount, refCode, ensureLink };
 }
 
 export default useAffiliateLink;

@@ -1418,7 +1418,8 @@
     "earnPerSaleTitle": "Unguka {{amount}} kuri buri gicuruzwa kigurishijwe unyuze kuri link yawe",
     "youEarnPerSale": "Unguka {{amount}} kuri buri kiguzi",
     "shareEarnExplainer": "Link yawe yiteguye — umuntu wese uguze anyuze kuri yo akwinjiriza amafaranga.",
-    "shareAndEarn": "Sangiza unguke {{amount}} kuri buri kiguzi"
+    "shareAndEarn": "Sangiza unguke {{amount}} kuri buri kiguzi",
+    "shareToEarn": "Sangiza unguke"
   },
   "ai": {
     "title": "Aicon AI",

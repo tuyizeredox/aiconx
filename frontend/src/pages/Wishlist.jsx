@@ -2,6 +2,10 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
+import EarnBadge from "@/components/shared/EarnBadge";
+import { estimateEarnings } from "@/lib/affiliate";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import ProductShareButton from "@/components/shared/ProductShareButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +20,7 @@ export default function Wishlist() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  const { isSubscriptionEnforced } = usePlatformSettings();
 
   const { data: wishlistItems = [], isLoading } = useQuery({
     queryKey: ["wishlist", currentUser?.username],
@@ -118,6 +123,12 @@ export default function Wishlist() {
             {wishlistItems.map(item => {
               const discount = item.compare_at_price > 0
                 ? Math.round((1 - item.product_price / item.compare_at_price) * 100) : 0;
+              // `item.product` is the live product the API folds in behind the
+              // saved snapshot; without it there are no affiliate terms to read.
+              const earnings = estimateEarnings(item.product, {
+                subscriptionEnforced: isSubscriptionEnforced,
+                viewerUsername: currentUser?.username,
+              });
               return (
                 <motion.div
                   key={item.id}
@@ -144,12 +155,17 @@ export default function Wishlist() {
                   <div className="p-3">
                     <p className="text-[10px] text-slate-400 font-medium mb-0.5">{item.store_name}</p>
                     <p className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2 leading-tight mb-2">{item.product_title}</p>
-                    <div className="flex items-center gap-1.5 mb-3">
+                    <div className="flex items-center gap-1.5 mb-2">
                       <span className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(item.product_price)}</span>
                       {item.compare_at_price > 0 && (
                         <span className="text-xs text-slate-400 line-through">{formatCurrency(item.compare_at_price)}</span>
                       )}
                     </div>
+                    {earnings && (
+                      <div className="mb-2.5">
+                        <EarnBadge amount={earnings.amount} />
+                      </div>
+                    )}
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => addToCartMutation.mutate(item)}
@@ -157,6 +173,7 @@ export default function Wishlist() {
                       >
                         <ShoppingCart className="w-3 h-3" /> {t("wishlist.addToCart")}
                       </button>
+                      <ProductShareButton product={item.product} />
                       <button
                         onClick={() => removeMutation.mutate(item.product_id)}
                         className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-400 hover:text-red-500 transition-colors"

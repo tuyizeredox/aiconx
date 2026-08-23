@@ -8,9 +8,19 @@ import { toast } from "sonner";
 import { createPageUrl, formatCurrency } from "@/lib/utils";
 import { productsAPI, cartAPI } from "@/api/apiClient";
 import { addToGuestCart } from "@/lib/guestCart";
+import EarnBadge from "@/components/shared/EarnBadge";
+import { estimateEarnings } from "@/lib/affiliate";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { useAuth } from "@/lib/AuthContext";
 
 function BundleItem({ product, isAnchor }) {
   const id = product.id || product._id;
+  const { user: currentUser } = useAuth();
+  const { isSubscriptionEnforced } = usePlatformSettings();
+  const earnings = estimateEarnings(product, {
+    subscriptionEnforced: isSubscriptionEnforced,
+    viewerUsername: currentUser?.username,
+  });
   const body = (
     <div className={`flex items-center gap-2.5 rounded-2xl border p-2.5 w-[240px] shrink-0 ${
       isAnchor
@@ -25,6 +35,7 @@ function BundleItem({ product, isAnchor }) {
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight">{product.title}</p>
         <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{formatCurrency(product.price)}</p>
+        <EarnBadge amount={earnings?.amount} className="mt-1" />
       </div>
     </div>
   );

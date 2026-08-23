@@ -52,6 +52,12 @@ const saveChatHistory = (messages) => {
 function ProductRecommendation({ product, onAddToCart, isAdding }) {
   const discount = product.compare_at_price > 0
     ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
+  const { user: currentUser } = useAuth();
+  const { isSubscriptionEnforced } = usePlatformSettings();
+  const earnings = estimateEarnings(product, {
+    subscriptionEnforced: isSubscriptionEnforced,
+    viewerUsername: currentUser?.username,
+  });
 
   return (
     <div className="group relative">
@@ -76,7 +82,9 @@ function ProductRecommendation({ product, onAddToCart, isAdding }) {
                   <span className="text-xs text-slate-400 dark:text-slate-500 line-through">${product.compare_at_price?.toFixed(2)}</span>
                 )}
               </div>
-              {product.rating_avg > 0 && (
+              {earnings ? (
+                <EarnBadge amount={earnings.amount} />
+              ) : product.rating_avg > 0 && (
                 <div className="flex items-center gap-0.5">
                   <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                   <span className="text-xs text-slate-500 dark:text-slate-400">{product.rating_avg?.toFixed(1)}</span>
