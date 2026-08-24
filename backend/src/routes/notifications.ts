@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Notification as NotificationModel, INotification } from '../models/Notification';
+import { isAdmin } from '../middleware/auth';
+import { runReminderSweep } from '../services/reminderService';
 
 export async function notificationRoutes(fastify: FastifyInstance) {
   // List notifications for a user
@@ -138,6 +140,25 @@ export async function notificationRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ 
         error: 'Internal server error', 
         message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      });
+    }
+  });
+
+  // Run the reminder sweep on demand instead of waiting for the next scheduled
+  // one. Reminders are idempotent (each carries a dedupe key), so triggering
+  // this repeatedly cannot double-send. Admin only, and it bypasses the
+  // quiet-hours hold so it is usable for verification at any time.
+  fastify.post('/run-reminders', {
+    preHandler: [fastify.authenticate, isAdmin],
+  }, async (_request, reply) => {
+    try {
+      const result = await runReminderSweep(fastify, { force: true });
+      return result;
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
   });

@@ -48,6 +48,7 @@ import { publicSettingsRoutes } from './routes/publicSettings';
 import { setupWebSocket, io } from './websocket/socket';
 import './services/orderCleanupService';
 import './services/backupService';
+import { startReminderService } from './services/reminderService';
 import { authenticate, authenticateOptional, checkMaintenance, extractLanguage } from './middleware/auth';
 
 const fastify = Fastify({
@@ -275,6 +276,10 @@ const start = async () => {
     setupWebSocket(fastify);
     fastify.io = io;
     console.log('✅ WebSocket server initialized');
+
+    // Reminders are dispatched through fastify.io, so they only start once the
+    // socket server is attached.
+    startReminderService(fastify);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

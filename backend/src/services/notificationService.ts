@@ -5,7 +5,13 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { User } from '../models/User';
 import { INotification } from '../models/Notification';
 
-type NotificationPreference = 'notif_sales' | 'notif_msg' | 'notif_follow' | 'notif_live';
+type NotificationPreference =
+  | 'notif_sales'
+  | 'notif_msg'
+  | 'notif_follow'
+  | 'notif_live'
+  | 'notif_reminders'
+  | 'notif_new_products';
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -46,6 +52,18 @@ function typeToPreference(type: string): NotificationPreference | null {
       return 'notif_sales';
     case 'live':
       return 'notif_live';
+    // Generated reminders — one switch for all of them, so a shopper who turns
+    // reminders off stops getting the whole family, not just one kind.
+    case 'cart_reminder':
+    case 'wishlist_price_drop':
+    case 'back_in_stock':
+    case 'review_reminder':
+    case 'reorder_reminder':
+    case 'delivery_reminder':
+      return 'notif_reminders';
+    case 'product_added':
+    case 'recommendation':
+      return 'notif_new_products';
     default:
       return null;
   }
@@ -65,6 +83,33 @@ export async function shouldSendNotification(username: string, type: string): Pr
   }
 
   return (preferences as Record<string, boolean> | undefined)?.[preferenceKey] !== false;
+}
+
+/**
+ * The bulk form of `shouldSendNotification`: one query for the whole batch
+ * instead of one per recipient, which matters when a sweep is deciding who to
+ * remind out of a few hundred candidates.
+ *
+ * Users with no preferences stored yet are opted in, matching the single-user
+ * behaviour and the schema defaults.
+ */
+export async function filterByNotificationPreference(usernames: string[], type: string): Promise<string[]> {
+  const preferenceKey = typeToPreference(type);
+  if (!preferenceKey || usernames.length === 0) {
+    return usernames;
+  }
+
+  const optedOut = await User.find({
+    username: { $in: usernames.map((username) => username.toLowerCase()) },
+    [`notifications.${preferenceKey}`]: false,
+  }).select('username').lean();
+
+  if (optedOut.length === 0) {
+    return usernames;
+  }
+
+  const excluded = new Set(optedOut.map((user: any) => user.username));
+  return usernames.filter((username) => !excluded.has(username.toLowerCase()));
 }
 
 /**

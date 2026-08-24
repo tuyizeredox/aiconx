@@ -12,7 +12,8 @@ import {
   User, Lock, Bell, Camera, Loader2,
   ChevronRight, LogOut, Shield, Smartphone,
   Globe, Moon, Mail, CreditCard, LayoutGrid,
-  DollarSign, Link2, Heart, Bookmark, MapPin, LifeBuoy
+  DollarSign, Link2, Heart, Bookmark, MapPin, LifeBuoy,
+  ShoppingCart, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,6 +115,8 @@ export default function Settings() {
     notif_msg: currentUser?.notifications?.notif_msg ?? true,
     notif_follow: currentUser?.notifications?.notif_follow ?? true,
     notif_live: currentUser?.notifications?.notif_live ?? false,
+    notif_reminders: currentUser?.notifications?.notif_reminders ?? true,
+    notif_new_products: currentUser?.notifications?.notif_new_products ?? true,
   });
 
   const { theme, setTheme } = useTheme();
@@ -136,6 +139,8 @@ export default function Settings() {
           notif_msg: currentUser.notifications.notif_msg ?? true,
           notif_follow: currentUser.notifications.notif_follow ?? true,
           notif_live: currentUser.notifications.notif_live ?? false,
+          notif_reminders: currentUser.notifications.notif_reminders ?? true,
+          notif_new_products: currentUser.notifications.notif_new_products ?? true,
         });
       }
 
@@ -623,13 +628,20 @@ export default function Settings() {
             { id: "notif_msg", label: t("settings.directMessages"), icon: Mail },
             { id: "notif_follow", label: t("settings.newFollowers"), icon: User },
             { id: "notif_live", label: t("settings.liveStreams"), icon: Smartphone },
+            { id: "notif_reminders", label: t("settings.reminders"), hint: t("settings.remindersHint"), icon: ShoppingCart },
+            { id: "notif_new_products", label: t("settings.newProducts"), hint: t("settings.newProductsHint"), icon: Sparkles },
           ].map((item) => (
             <div key={item.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500">
                   <item.icon className="w-4 h-4" />
                 </div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                <div className="min-w-0">
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                  {item.hint && (
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.hint}</p>
+                  )}
+                </div>
               </div>
               <div 
                 onClick={() => handleNotificationToggle(item.id)}

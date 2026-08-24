@@ -3,8 +3,12 @@ import { notificationsAPI } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/lib/utils";
-import { Bell, MessageCircle, Package, DollarSign, Heart, UserPlus, CheckCheck, X } from "lucide-react";
+import {
+  Bell, MessageCircle, Package, DollarSign, Heart, UserPlus, CheckCheck, X,
+  ShoppingCart, TrendingDown, PackageCheck, Star, RefreshCw, Truck, Sparkles
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { useSocket } from "@/lib/SocketContext";
 
 const TYPE_CONFIG = {
@@ -16,6 +20,14 @@ const TYPE_CONFIG = {
   comment:      { icon: MessageCircle, color: "bg-orange-100 text-orange-600",     label: "Comment" },
   product_added: { icon: Package,      color: "bg-emerald-100 text-emerald-600", label: "Product" },
   mention:      { icon: MessageCircle, color: "bg-amber-100 text-amber-600",   label: "Mention" },
+  // Reminders raised by the backend sweep (services/reminderService.ts)
+  cart_reminder:       { icon: ShoppingCart, color: "bg-amber-100 text-amber-600",   label: "Cart" },
+  wishlist_price_drop: { icon: TrendingDown, color: "bg-rose-100 text-rose-500",     label: "Price drop" },
+  back_in_stock:       { icon: PackageCheck, color: "bg-emerald-100 text-emerald-600", label: "In stock" },
+  review_reminder:     { icon: Star,         color: "bg-yellow-100 text-yellow-600", label: "Review" },
+  reorder_reminder:    { icon: RefreshCw,    color: "bg-sky-100 text-sky-600",       label: "Reorder" },
+  delivery_reminder:   { icon: Truck,        color: "bg-green-100 text-green-600",   label: "Delivery" },
+  recommendation:      { icon: Sparkles,     color: "bg-violet-100 text-violet-600", label: "For you" },
 };
 
 export default function NotificationBell({ userEmail }) {
@@ -41,13 +53,25 @@ export default function NotificationBell({ userEmail }) {
   useEffect(() => {
     if (!userEmail) return;
 
-    const cleanup = on('notification:new', () => {
+    const cleanup = on('notification:new', (notification) => {
       queryClient.invalidateQueries({ queryKey: ["notifications", userEmail] });
       queryClient.invalidateQueries({ queryKey: ["unreadNotifs"] });
+
+      // The app is open, so the OS notification is suppressed (see
+      // SocketContext) — surface it in-app instead, close enough to the bell
+      // that it's obvious where it went.
+      if (!notification?.title) return;
+
+      toast(notification.title, {
+        description: notification.body || undefined,
+        action: notification.link?.startsWith("/")
+          ? { label: "View", onClick: () => navigate(notification.link) }
+          : undefined,
+      });
     });
 
     return cleanup;
-  }, [userEmail, on, queryClient]);
+  }, [userEmail, on, queryClient, navigate]);
 
   // Close on outside click
   useEffect(() => {

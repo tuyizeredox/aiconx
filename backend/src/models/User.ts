@@ -15,6 +15,8 @@ export interface IUser extends Document {
     notif_msg: boolean;
     notif_follow: boolean;
     notif_live: boolean;
+    notif_reminders: boolean;
+    notif_new_products: boolean;
   };
   preferences?: {
     theme: 'light' | 'dark' | 'system';
@@ -123,6 +125,11 @@ const UserSchema = new Schema<IUser>({
     notif_msg: { type: Boolean, default: true },
     notif_follow: { type: Boolean, default: true },
     notif_live: { type: Boolean, default: false },
+    // Personal reminders: cart left behind, price drops, restocks, review and
+    // reorder nudges (see services/reminderService.ts).
+    notif_reminders: { type: Boolean, default: true },
+    // New arrivals — from stores the shopper follows or bought from before.
+    notif_new_products: { type: Boolean, default: true },
   },
   preferences: {
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },

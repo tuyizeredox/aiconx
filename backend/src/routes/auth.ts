@@ -190,7 +190,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           is_2fa_enabled: finalUser.is_2fa_enabled || false,
           phone_number: finalUser.phone_number || '',
           is_phone_verified: finalUser.is_phone_verified || false,
-          notifications: finalUser.notifications || { notif_sales: true, notif_msg: true, notif_follow: true, notif_live: false },
+          notifications: finalUser.notifications || { notif_sales: true, notif_msg: true, notif_follow: true, notif_live: false, notif_reminders: true, notif_new_products: true },
           preferences: finalUser.preferences || { theme: 'system', language: 'en' },
           unread_messages_count: finalUser.unread_messages_count || 0,
         },
@@ -885,6 +885,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         notif_msg: z.boolean().optional(),
         notif_follow: z.boolean().optional(),
         notif_live: z.boolean().optional(),
+        notif_reminders: z.boolean().optional(),
+        notif_new_products: z.boolean().optional(),
       }).optional(),
       preferences: z.object({
         theme: z.enum(['light', 'dark', 'system']).optional(),

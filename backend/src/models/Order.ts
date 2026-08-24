@@ -267,6 +267,9 @@ OrderSchema.index({ store_id: 1, created_at: -1 });
 OrderSchema.index({ status: 1, created_at: -1 });
 OrderSchema.index({ payment_status: 1 });
 OrderSchema.index({ buyer_confirmation_status: 1 });
+// Review, reorder and delivery-confirmation reminders all select
+// delivered orders by age (services/reminderService.ts).
+OrderSchema.index({ status: 1, delivered_at: -1 });
 OrderSchema.index({ affiliate_username: 1 });
 
 export const Order = mongoose.model<IOrder>('Order', OrderSchema);

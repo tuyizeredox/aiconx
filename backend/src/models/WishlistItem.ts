@@ -10,6 +10,12 @@ export interface IWishlistItem extends Document {
   store_id: string;
   store_name: string;
   vendor_username: string;
+  /**
+   * Stock state as of the last reminder sweep. Only a false -> true
+   * transition is worth telling the shopper about, so the sweep needs to
+   * remember what it saw last time.
+   */
+  last_known_in_stock?: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -54,6 +60,9 @@ const WishlistItemSchema = new Schema<IWishlistItem>({
     type: String,
     required: true,
     index: true
+  },
+  last_known_in_stock: {
+    type: Boolean
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

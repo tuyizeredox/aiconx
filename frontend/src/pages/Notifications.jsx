@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import EmptyState from "@/components/shared/EmptyState";
 import {
-  Bell, Heart, MessageCircle, UserPlus, Package, Users, Megaphone, CheckCheck, ShieldAlert
+  Bell, Heart, MessageCircle, UserPlus, Package, Users, Megaphone, CheckCheck, ShieldAlert,
+  ShoppingCart, TrendingDown, PackageCheck, Star, RefreshCw, Truck, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -23,6 +24,14 @@ const TYPE_ICONS = {
   promotion: { icon: Megaphone, color: "bg-orange-100 text-orange-500" },
   subscription_limit: { icon: ShieldAlert, color: "bg-amber-100 text-amber-600" },
   product_added: { icon: Package, color: "bg-emerald-100 text-emerald-500" },
+  // Reminders raised by the backend sweep (services/reminderService.ts)
+  cart_reminder: { icon: ShoppingCart, color: "bg-amber-100 text-amber-600" },
+  wishlist_price_drop: { icon: TrendingDown, color: "bg-rose-100 text-rose-500" },
+  back_in_stock: { icon: PackageCheck, color: "bg-emerald-100 text-emerald-600" },
+  review_reminder: { icon: Star, color: "bg-yellow-100 text-yellow-600" },
+  reorder_reminder: { icon: RefreshCw, color: "bg-sky-100 text-sky-600" },
+  delivery_reminder: { icon: Truck, color: "bg-green-100 text-green-600" },
+  recommendation: { icon: Sparkles, color: "bg-violet-100 text-violet-600" },
 };
 
 export default function Notifications() {
@@ -134,9 +143,23 @@ export default function Notifications() {
                 }`}
                 onClick={() => handleNotificationClick(notif)}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${typeConfig.color}`}>
-                  <Icon className="w-4 h-4" />
-                </div>
+                {notif.metadata?.product_image ? (
+                  <div className="relative shrink-0">
+                    <img
+                      src={notif.metadata.product_image}
+                      alt=""
+                      className="w-10 h-10 rounded-xl object-cover bg-slate-100 dark:bg-slate-700"
+                      loading="lazy"
+                    />
+                    <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-800 ${typeConfig.color}`}>
+                      <Icon className="w-3 h-3" />
+                    </span>
+                  </div>
+                ) : (
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${typeConfig.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-900 dark:text-white font-medium">{notif.title}</p>
                   {notif.body && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{notif.body}</p>}

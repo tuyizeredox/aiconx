@@ -88,5 +88,7 @@ const CartItemSchema = new Schema<ICartItem>({
 CartItemSchema.index({ user_username: 1 });
 CartItemSchema.index({ product_id: 1 });
 CartItemSchema.index({ store_id: 1 });
+// Abandoned-cart reminders scan by idle time.
+CartItemSchema.index({ updated_at: 1 });
 
 export const CartItem = mongoose.model<ICartItem>('CartItem', CartItemSchema);

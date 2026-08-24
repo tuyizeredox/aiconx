@@ -96,6 +96,14 @@ export const SocketProvider = ({ children }) => {
 
     newSocket.on('notification:new', (notification) => {
       console.log('New notification received via socket:', notification);
+
+      // Only raise an OS-level notification when the app isn't on screen.
+      // While it is, NotificationBell shows an in-app toast instead, so a
+      // reminder arriving in a focused tab doesn't fire twice.
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        return;
+      }
+
       showLocalNotification(
         notification.title || 'New Notification',
         notification.body || '',
