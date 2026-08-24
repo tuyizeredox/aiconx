@@ -90,3 +90,22 @@ export function haversineKm(from, to) {
     + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
+
+/**
+ * The paint of the mobile app bar.
+ *
+ * Layout's top bar and the block Home sticks directly underneath it are two
+ * components rendering one bar, so the surface has to be defined once. Any
+ * difference between them shows up as a visible seam across the header.
+ */
+export const APP_BAR_SURFACE = "bg-white/95 dark:bg-[#181824]/95 backdrop-blur-xl";
+
+/**
+ * The paint behind a banner or cover slot that has no image uploaded yet.
+ *
+ * Near-black with a low brand glow instead of a flat orange fill: the slot sits
+ * under avatars, logos and white text in both themes, and a saturated block
+ * there reads as a design choice rather than an empty slot waiting for a photo.
+ */
+export const COVER_PLACEHOLDER =
+  "bg-slate-950 bg-[radial-gradient(circle_at_18%_130%,rgba(249,115,22,0.38)_0%,transparent_58%),radial-gradient(circle_at_88%_-25%,rgba(249,115,22,0.16)_0%,transparent_52%)]";

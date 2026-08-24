@@ -38,7 +38,10 @@ export async function notificationRoutes(fastify: FastifyInstance) {
           .skip(skip)
           .lean({ virtuals: true }),
         NotificationModel.countDocuments(filter),
-        NotificationModel.countDocuments({ recipient_username: user.username, is_read: false })
+        // Chat messages already surface their own unread count on the
+        // messages icon, so they are deliberately left out of this badge
+        // number — otherwise a single incoming message is counted twice.
+        NotificationModel.countDocuments({ recipient_username: user.username, is_read: false, type: { $ne: 'message' } })
       ]);
 
       return {

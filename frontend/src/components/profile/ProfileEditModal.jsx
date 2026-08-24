@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { authAPI } from "@/api/apiClient";
 import { uploadAvatar, uploadImage } from "@/lib/storage";
+import { COVER_PLACEHOLDER } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -80,7 +81,7 @@ export default function ProfileEditModal({ open, onClose, user }) {
           {bannerUrl ? (
             <img src={bannerUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700" />
+            <div className={`w-full h-full ${COVER_PLACEHOLDER}`} />
           )}
           <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
             {uploadingBanner ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}

@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { notificationsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import BackLink from "@/components/shared/BackLink";
+import { countUnread } from "@/lib/notifications";
 
 const TYPE_ICONS = {
   like: { icon: Heart, color: "bg-red-100 text-red-500" },
@@ -84,7 +85,10 @@ export default function Notifications() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = countUnread(notifications);
+  // "Mark all read" still clears message notifications even though they are
+  // not part of the count above, otherwise they would have no way out.
+  const hasUnread = notifications.some(n => !n.is_read);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -96,7 +100,7 @@ export default function Notifications() {
             <p className="text-sm text-slate-500 dark:text-slate-400">{t("notifications.unread", { count: unreadCount })}</p>
           )}
         </div>
-        {unreadCount > 0 && (
+        {hasUnread && (
           <Button
             variant="ghost"
             size="sm"

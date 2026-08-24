@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { createPageUrl } from "@/lib/utils";
-import { notificationsAPI, messagesAPI, cartAPI } from "@/api/apiClient";
+import { createPageUrl, APP_BAR_SURFACE } from "@/lib/utils";
+import { notificationsAPI, messagesAPI, cartAPI, wishlistAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -40,15 +40,18 @@ import {
   Flag,
   Wallet,
   ShieldCheck,
-  History
+  History,
+  Check
 } from "lucide-react";
 import NotificationBell from "@/components/layout/NotificationBell";
 import GlobalSearch from "@/components/layout/GlobalSearch";
 import CreateActionModal from "@/components/layout/CreateActionModal";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Logo from "@/components/layout/Logo";
+import AvatarImg from "@/components/shared/AvatarImg";
 import LanguagePicker from "@/components/layout/LanguagePicker";
 import { getGuestCartCount } from "@/lib/guestCart";
+import { countUnread } from "@/lib/notifications";
 
 // Five destinations, one per intention: discover, find, create, check what I
 // bought, manage my account. Affiliate, wallet, loyalty, communities and the
@@ -119,6 +122,18 @@ const QUICK_LINK_ITEMS = [
   { name: "Track Order", tKey: "nav.trackOrder", icon: MapPin, page: "OrderTracking" },
   { name: "Support", tKey: "nav.support", icon: LifeBuoy, page: "Support" },
 ];
+
+// One badge shape for every counter in the app bar: same size, same red, same
+// ring punched out of the bar behind it, so four icons don't read as four
+// different notification systems.
+function CountBadge({ count }) {
+  if (!count) return null;
+  return (
+    <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 bg-red-500 text-white text-[10px] font-bold leading-none rounded-full flex items-center justify-center ring-2 ring-white dark:ring-[#181824]">
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
 
 const HIDE_LAYOUT_PAGES = [];
 
@@ -240,15 +255,33 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!currentUser?.username,
   });
 
+  // Same query key ProductCard/ProductDetail invalidate when a heart is
+  // tapped, so the app bar's counter moves the moment an item is saved.
+  const { data: wishlistItems = [] } = useQuery({
+    queryKey: ["wishlist", currentUser?.username],
+    queryFn: async () => {
+      const res = await wishlistAPI.list({ sort: "-created_at", limit: 200 });
+      return res.items || res.data || (Array.isArray(res) ? res : []);
+    },
+    staleTime: 60000,
+    enabled: !!currentUser?.username,
+  });
+
   if (HIDE_LAYOUT_PAGES.includes(currentPageName)) {
     return <>{children}</>;
   }
 
-  const unreadCount = unreadNotifs.length;
+  const unreadCount = countUnread(unreadNotifs);
   const unreadMsgCount = unreadMessages.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
   const cartItemCount = currentUser
     ? (Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0)
     : guestCartCount;
+  const wishlistCount = Array.isArray(wishlistItems) ? wishlistItems.length : 0;
+
+  // Home pins its own search field and category row directly under the app
+  // bar, so the bar keeps a square, borderless bottom edge there and lets
+  // that block finish the header. Everywhere else the bar closes itself off.
+  const hasAttachedSubHeader = currentPageName === "Home";
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-[#0a0a0c] transition-colors duration-300">
@@ -440,46 +473,106 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Mobile Top Bar */}
-      <header
-        className={`lg:hidden fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 z-50 transition-transform duration-300 ease-out ${
-          topBarHidden ? "-translate-y-full" : "translate-y-0"
-        }`}
-      >
-        {/* Logo, then the two things a shopper looks for at the top of a
-            shopping app: what happened, and what's in my basket. Messages and
-            language live in the menu, which carries a dot when something is
-            unread there — four icons in a row is how a top bar starts feeling
-            like a toolbar. */}
-        <div className="h-14 flex items-center justify-between px-4">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              aria-label={t("nav.menu")}
-              className="relative p-2 -ml-2 text-slate-600 dark:text-slate-400"
-            >
-              <Menu className="w-5 h-5" />
-              {unreadMsgCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-500 border-2 border-white dark:border-slate-900" />
-              )}
-            </button>
-            <Link to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"} className="flex items-center min-w-0">
-              <Logo size="sm" showText={true} />
-            </Link>
-          </div>
+      {/* Laid out the way a shopping app's bar is: identity on the left, then
+          the four things a shopper checks mid-session — what I saved, who
+          replied, what happened, what's in the basket — ending on their own
+          avatar, which is also the way back into their account.
 
-          <div className="flex items-center gap-0.5">
-            <NotificationBell userEmail={currentUser?.email} />
+          On Home the search field and category row stick immediately beneath
+          this bar (Home.jsx reads --app-bar-offset), so the three rows read as
+          one header rather than as a bar with a floating panel under it. */}
+      <header
+        className={`lg:hidden fixed top-0 left-0 right-0 pt-[env(safe-area-inset-top)] ${APP_BAR_SURFACE} z-50 transition-transform duration-300 ease-out ${
+          hasAttachedSubHeader
+            ? ""
+            : "border-b border-slate-200/60 dark:border-white/[0.06] rounded-b-[1.375rem] shadow-[0_6px_16px_-8px_rgba(15,23,42,0.35)] dark:shadow-[0_8px_20px_-10px_rgba(0,0,0,0.9)]"
+        } ${topBarHidden ? "-translate-y-full" : "translate-y-0"}`}
+      >
+        <div className="h-14 flex items-center gap-1 px-3">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label={t("nav.menu")}
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-slate-700 dark:text-slate-200 active:bg-slate-100 dark:active:bg-white/10 transition-colors"
+          >
+            <Menu className="w-[22px] h-[22px]" />
+          </button>
+
+          <Link
+            to={currentUser?.role === 'super_admin' ? "/admin-dashboard" : "/"}
+            className="flex items-center min-w-0 shrink"
+          >
+            {/* The wordmark is the first thing to go on a narrow handset: the
+                mark alone still identifies the app, five cramped tap targets
+                do not. */}
+            <Logo size="sm" showText textClassName="hidden min-[360px]:flex" className="!gap-2" />
+          </Link>
+
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-0.5 shrink-0">
             {currentUser?.role !== 'super_admin' && (
-              <Link to={createPageUrl("cart")} aria-label={t("nav.cart")} className="relative p-2">
-                <ShoppingBag className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                {cartItemCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-orange-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white dark:border-slate-900">
-                    {cartItemCount > 9 ? "9+" : cartItemCount}
-                  </span>
-                )}
+              <Link
+                to={createPageUrl("Wishlist")}
+                aria-label={t("nav.wishlist")}
+                className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
+              >
+                <Heart className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
+                <CountBadge count={wishlistCount} />
+              </Link>
+            )}
+
+            <Link
+              to={createPageUrl("Chat")}
+              aria-label={t("nav.messages")}
+              className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
+            >
+              <MessageCircle className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
+              <CountBadge count={unreadMsgCount} />
+            </Link>
+
+            <NotificationBell userEmail={currentUser?.email} />
+
+            {currentUser?.role !== 'super_admin' && (
+              <Link
+                to={createPageUrl("cart")}
+                aria-label={t("nav.cart")}
+                className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
+              >
+                <ShoppingBag className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
+                <CountBadge count={cartItemCount} />
               </Link>
             )}
           </div>
+
+          <Link
+            to={createPageUrl("Profile")}
+            aria-label={t("nav.profile")}
+            className="relative shrink-0 ml-1.5"
+          >
+            <span className="block w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-br from-orange-400 to-orange-600">
+              <span className="flex w-full h-full items-center justify-center rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <AvatarImg
+                  src={currentUser?.avatar_url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  fallback={
+                    currentUser?.full_name || currentUser?.username ? (
+                      <span className="text-[13px] font-bold text-slate-600 dark:text-slate-200">
+                        {(currentUser.full_name || currentUser.username)[0].toUpperCase()}
+                      </span>
+                    ) : (
+                      <User className="w-[18px] h-[18px] text-slate-500 dark:text-slate-300" />
+                    )
+                  }
+                />
+              </span>
+            </span>
+            {currentUser?.is_verified && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-[15px] h-[15px] rounded-full bg-orange-500 ring-2 ring-white dark:ring-[#181824] flex items-center justify-center">
+                <Check className="w-2 h-2 text-white" strokeWidth={4} />
+              </span>
+            )}
+          </Link>
         </div>
       </header>
 

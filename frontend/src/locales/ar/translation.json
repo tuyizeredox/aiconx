@@ -165,7 +165,8 @@
     "recommendedForYou": "موصى به لك",
     "loadingMore": "جارٍ تحميل المزيد من المنشورات...",
     "scrollForMore": "مرر لمزيد",
-    "endOfFeed": "لقد وصلت إلى نهاية الخلاصة"
+    "endOfFeed": "لقد وصلت إلى نهاية الخلاصة",
+    "voiceSearch": "البحث الصوتي"
   },
   "explore": {
     "title": "استكشاف",

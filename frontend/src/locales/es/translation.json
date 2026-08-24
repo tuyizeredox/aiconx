@@ -165,7 +165,8 @@
     "recommendedForYou": "Recomendado para ti",
     "loadingMore": "Cargando más publicaciones...",
     "scrollForMore": "Desliza para ver más",
-    "endOfFeed": "Has llegado al final del feed"
+    "endOfFeed": "Has llegado al final del feed",
+    "voiceSearch": "Búsqueda por voz"
   },
   "explore": {
     "title": "Explorar",

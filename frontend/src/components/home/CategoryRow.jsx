@@ -69,11 +69,14 @@ export default function CategoryRow({ active, onChange }) {
     onChange(chip);
   };
 
+  // The selected chip carries the brand colour rather than a black/white
+  // inversion: it sits inside the app bar now, where inverting it would make
+  // the chip read as a second surface instead of a selection.
   const chipClass = (isActive) =>
     "snap-start shrink-0 flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors duration-150 " +
     (isActive
-      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-      : "bg-slate-100 text-slate-600 active:bg-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700");
+      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-sm shadow-orange-500/30"
+      : "bg-slate-100 text-slate-600 active:bg-slate-200 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.1]");
 
   return (
     <div

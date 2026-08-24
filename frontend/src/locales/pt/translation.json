@@ -165,7 +165,8 @@
     "recommendedForYou": "Recomendado para você",
     "loadingMore": "Carregando mais publicações...",
     "scrollForMore": "Role para ver mais",
-    "endOfFeed": "Você chegou ao fim do feed"
+    "endOfFeed": "Você chegou ao fim do feed",
+    "voiceSearch": "Pesquisa por voz"
   },
   "explore": {
     "title": "Explorar",

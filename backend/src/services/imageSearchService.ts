@@ -183,18 +183,23 @@ const CATEGORY_QUERY: Record<string, string> = {
   other: 'retail shop products',
 };
 
-/** Background gradient per category for the generated placeholder tile. */
+/**
+ * Background gradient per category for the generated placeholder tile. Kept in
+ * near-black so the tile reads as a quiet gap in both light and dark themes
+ * instead of a vivid block competing with real photos; the category only tints
+ * the top stop, it never drives the brightness.
+ */
 const CATEGORY_GRADIENT: Record<string, [string, string]> = {
-  fashion: ['#db2777', '#7c3aed'],
-  electronics: ['#0ea5e9', '#4338ca'],
-  home: ['#0d9488', '#065f46'],
-  beauty: ['#f472b6', '#be185d'],
-  sports: ['#16a34a', '#0f766e'],
-  food: ['#f59e0b', '#b45309'],
-  art: ['#8b5cf6', '#6d28d9'],
-  books: ['#334155', '#0f172a'],
-  handmade: ['#d97706', '#92400e'],
-  other: ['#ea580c', '#c2410c'],
+  fashion: ['#241626', '#0b0a0f'],
+  electronics: ['#152232', '#080b12'],
+  home: ['#12241f', '#080f0e'],
+  beauty: ['#281722', '#0d0a10'],
+  sports: ['#14231a', '#080f0c'],
+  food: ['#2a1e10', '#100c07'],
+  art: ['#1f1730', '#0b0912'],
+  books: ['#1a222e', '#080b10'],
+  handmade: ['#261a10', '#0f0a06'],
+  other: ['#1e1a17', '#0a0a0b'],
 };
 
 const STOPWORDS = new Set([
@@ -494,11 +499,13 @@ export function placeholderImage(label: string, category?: string, size: ImageOr
   const background =
     `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
     `<stop offset='0' stop-color='${from}'/><stop offset='1' stop-color='${to}'/></linearGradient></defs>` +
-    `<rect width='${w}' height='${h}' fill='url(#g)'/>`;
+    `<rect width='${w}' height='${h}' fill='url(#g)'/>` +
+    // A hairline keeps the near-black tile from bleeding into a dark page.
+    `<rect x='1' y='1' width='${w - 2}' height='${h - 2}' fill='none' stroke='#fff' stroke-opacity='.07' stroke-width='2'/>`;
 
   const uri = svgToDataUri(
     `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>${background}${text}` +
-      `<text x='${w / 2}' y='${h - fontSize}' font-family='${font}' font-size='${Math.round(fontSize * 0.45)}' fill='#fff' fill-opacity='.75' text-anchor='middle'>Add your photo</text></svg>`
+      `<text x='${w / 2}' y='${h - fontSize}' font-family='${font}' font-size='${Math.round(fontSize * 0.45)}' fill='#fff' fill-opacity='.55' text-anchor='middle'>Add your photo</text></svg>`
   );
   if (uri.length <= MAX_IMAGE_URL_LENGTH) return uri;
 

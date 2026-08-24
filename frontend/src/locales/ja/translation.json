@@ -165,7 +165,8 @@
     "recommendedForYou": "あなたへのおすすめ",
     "loadingMore": "さらに投稿を読み込んでいます...",
     "scrollForMore": "スクロールしてもっと見る",
-    "endOfFeed": "フィードの最後に達しました"
+    "endOfFeed": "フィードの最後に達しました",
+    "voiceSearch": "音声検索"
   },
   "explore": {
     "title": "探索",

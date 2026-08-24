@@ -5,7 +5,7 @@ import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import AvatarImg from "@/components/shared/AvatarImg";
 import { Link } from "react-router-dom";
-import { createPageUrl, storeUrl } from "@/lib/utils";
+import { COVER_PLACEHOLDER, createPageUrl, storeUrl } from "@/lib/utils";
 import { Search, TrendingUp, Sparkles, X, User, Store, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { productsAPI, communitiesAPI, usersAPI, storesAPI, followsAPI } from "@/api/apiClient";
@@ -395,7 +395,7 @@ export default function Explore() {
                   to={createPageUrl("CommunityDetail") + `?id=${c.id || c._id}`}
                   className="w-52 shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
                 >
-                  <div className="h-24 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 relative">
+                  <div className={`h-24 relative ${COVER_PLACEHOLDER}`}>
                     {c.cover_image ? (
                       <img src={c.cover_image} alt="" className="w-full h-full object-cover" />
                     ) : (

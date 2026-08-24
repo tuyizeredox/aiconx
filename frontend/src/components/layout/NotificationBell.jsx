@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useSocket } from "@/lib/SocketContext";
+import { countUnread } from "@/lib/notifications";
 
 const TYPE_CONFIG = {
   message:      { icon: MessageCircle, color: "bg-orange-100 text-orange-600", label: "Message" },
@@ -102,17 +103,20 @@ export default function NotificationBell({ userEmail }) {
     },
   });
 
-  const unread = notifications.filter(notif => !notif.is_read).length;
+  const unread = countUnread(notifications);
 
   return (
     <div ref={ref} className="relative">
+      {/* Sized and badged to match the other app-bar actions in Layout.jsx —
+          the bell is one of five icons on that row, not a control of its own. */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        aria-label="Notifications"
+        className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
       >
-        <Bell className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+        <Bell className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 bg-red-500 text-white text-[10px] font-bold leading-none rounded-full flex items-center justify-center ring-2 ring-white dark:ring-[#181824]">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -125,7 +129,7 @@ export default function NotificationBell({ userEmail }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-1.5rem))] max-w-[20rem] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">

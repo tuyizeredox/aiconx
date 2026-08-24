@@ -1,4 +1,5 @@
 import React, { useState } from "react"; 
+ import { COVER_PLACEHOLDER } from "@/lib/utils";
  import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
  import { useTranslation } from "react-i18next"; 
  import { Link, useSearchParams } from "react-router-dom"; 
@@ -111,7 +112,7 @@ const COMMUNITY_CATEGORIES = [
 
        {/* Banner */} 
        <div className="rounded-2xl overflow-hidden mb-6 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm">
-         <div className="h-32 lg:h-40 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 relative"> 
+         <div className={`h-32 lg:h-40 relative ${COVER_PLACEHOLDER}`}> 
            {community.cover_image && <img src={community.cover_image} alt="" className="w-full h-full object-cover" />} 
            {isAdmin && ( 
              <div className="absolute top-3 right-3 px-2 py-1 bg-orange-700/80 backdrop-blur-sm rounded-lg flex items-center gap-1 text-white text-xs font-medium"> 

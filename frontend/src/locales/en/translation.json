@@ -275,6 +275,7 @@
     "affiliateBannerTitle": "Earn commission promoting products",
     "affiliateBannerDesc": "Join the Affiliate Program and get paid for every sale you refer.",
     "searchPlaceholder": "Search products, shops, brands...",
+    "voiceSearch": "Voice search",
     "searchNoResults": "No matches for “{{query}}”",
     "seeAllResults": "See all results",
     "nearby": "Nearby",

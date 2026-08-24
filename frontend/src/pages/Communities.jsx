@@ -1,4 +1,5 @@
 import React, { useState } from "react"; 
+ import { COVER_PLACEHOLDER } from "@/lib/utils";
  import { useTranslation } from "react-i18next";
  import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; 
  import { Link } from "react-router-dom"; 
@@ -196,7 +197,7 @@ import React, { useState } from "react";
          whileHover={{ y: -4 }} 
          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all h-full shadow-sm" 
        > 
-         <div className="h-28 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 relative"> 
+         <div className={`h-28 relative ${COVER_PLACEHOLDER}`}> 
            {community.cover_image && <img src={community.cover_image} alt="" className="w-full h-full object-cover" />} 
            {joined && ( 
              <div className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[10px] font-bold uppercase tracking-wider text-orange-600 shadow-sm"> 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
+import { COVER_PLACEHOLDER, createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
 import PostCard from "@/components/shared/PostCard";
 import ProductCard from "@/components/shared/ProductCard";
 import { PostSkeleton, ProductSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -310,7 +310,7 @@ export default function Profile() {
           {bannerUrl ? (
             <img src={bannerUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700" />
+            <div className={`w-full h-full ${COVER_PLACEHOLDER}`} />
           )}
         </div>
 

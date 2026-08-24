@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, Link } from "react-router-dom";
 import { authAPI } from "@/api/apiClient";
 import { uploadAvatar } from "@/lib/storage";
-import { createPageUrl } from "@/lib/utils";
+import { COVER_PLACEHOLDER, createPageUrl } from "@/lib/utils";
 import SubscriptionManager from "@/components/mystore/SubscriptionManager";
 import AvatarImg from "@/components/shared/AvatarImg";
 import BackLink from "@/components/shared/BackLink";
@@ -358,7 +358,7 @@ export default function Settings() {
               {profileData.banner_url ? (
                 <img src={profileData.banner_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 opacity-80" />
+                <div className={`w-full h-full ${COVER_PLACEHOLDER}`} />
               )}
               <label className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
                 <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30">

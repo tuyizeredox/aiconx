@@ -19,9 +19,14 @@ import AvatarImg from "@/components/shared/AvatarImg";
  * anyone who already followed the popular accounts had every candidate
  * filtered out and saw no section at all.
  *
- * Now the only local state is what the viewer follows *during this render*,
- * so a row they just followed stays put with a "Following" label instead of
- * vanishing under their thumb.
+ * The server list is still checked here against the viewer's own follow list,
+ * because the server answer is cached: a follow made anywhere else in the app
+ * (a profile, a store page) never reaches into this query's cache, and a
+ * stale answer puts someone the viewer already follows back into the row.
+ * That check costs one request for the whole list, not one per candidate.
+ *
+ * A row the viewer follows *during this render* stays put with a "Following"
+ * label instead of vanishing under their thumb.
  */
 export default function SuggestedUsers({ currentUser }) {
   const { t } = useTranslation();
@@ -29,23 +34,69 @@ export default function SuggestedUsers({ currentUser }) {
   const [justFollowed, setJustFollowed] = useState(new Set());
   const signedIn = !!currentUser?.username;
 
+  // Both ask for more than the row shows: the follow check below can drop a
+  // few candidates, and a short row is worse than a wasted candidate.
   const { data: usersRes, isLoading: usersLoading } = useQuery({
     queryKey: ["suggestedUsers", currentUser?.username],
-    queryFn: () => usersAPI.getSuggested({ limit: 10 }),
+    queryFn: () => usersAPI.getSuggested({ limit: 16 }),
     staleTime: 5 * 60 * 1000,
     enabled: signedIn,
   });
 
   const { data: storesRes, isLoading: storesLoading } = useQuery({
     queryKey: ["suggestedStores", currentUser?.username],
-    queryFn: () => storesAPI.getSuggested({ limit: 10 }),
+    queryFn: () => storesAPI.getSuggested({ limit: 16 }),
     staleTime: 5 * 60 * 1000,
     enabled: signedIn,
   });
 
+  // The endpoint caps out at 100, newest first — enough to catch anything the
+  // server list could be stale about, and the server still excludes the rest.
+  const { data: followingRes } = useQuery({
+    queryKey: ["myFollowing", currentUser?.username],
+    queryFn: () => followsAPI.getMyFollowing({ limit: 100 }),
+    staleTime: 60 * 1000,
+    enabled: signedIn,
+  });
+
+  const followed = useMemo(() => {
+    const usernames = new Set();
+    const storeIds = new Set();
+    const storeOwners = new Set();
+
+    // Nobody should be invited to follow themselves or their own shop.
+    if (currentUser?.username) usernames.add(currentUser.username.toLowerCase());
+
+    (followingRes?.following || []).forEach((f) => {
+      const name = f?.following_username ? String(f.following_username).toLowerCase() : null;
+      if (f?.follow_type === "store") {
+        // A store follow records both the store id and the owner, and older
+        // rows may carry only one — match on either.
+        if (f.target_id) storeIds.add(String(f.target_id));
+        if (name) storeOwners.add(name);
+      } else if (name) {
+        usernames.add(name);
+      }
+    });
+
+    return { usernames, storeIds, storeOwners };
+  }, [followingRes, currentUser?.username]);
+
   // Interleaved rather than concatenated, so the row leads with a mix instead
   // of burying every shop behind every person.
   const suggestions = useMemo(() => {
+    const alreadyFollowed = (item) => {
+      const name = item.username ? String(item.username).toLowerCase() : null;
+      if (item.type === "store") {
+        return followed.storeIds.has(String(item.id)) || (!!name && followed.storeOwners.has(name));
+      }
+      return !!name && followed.usernames.has(name);
+    };
+
+    // A card the viewer just tapped is kept deliberately, even once that
+    // follow shows up in the list it is being checked against.
+    const keep = (item) => justFollowed.has(item.key) || !alreadyFollowed(item);
+
     const people = (usersRes?.users || []).map((u) => ({
       key: "user:" + u.username,
       username: u.username,
@@ -55,7 +106,7 @@ export default function SuggestedUsers({ currentUser }) {
       id: u._id || u.id,
       type: "user",
       is_verified: u.is_verified,
-    }));
+    })).filter(keep);
 
     const shops = (storesRes?.data || []).map((s) => ({
       key: "store:" + (s.id || s._id),
@@ -67,7 +118,7 @@ export default function SuggestedUsers({ currentUser }) {
       slug: s.slug,
       type: "store",
       is_verified: s.is_verified,
-    }));
+    })).filter(keep);
 
     const mixed = [];
     for (let i = 0; i < Math.max(people.length, shops.length); i++) {
@@ -75,7 +126,7 @@ export default function SuggestedUsers({ currentUser }) {
       if (shops[i]) mixed.push(shops[i]);
     }
     return mixed.slice(0, 10);
-  }, [usersRes, storesRes, t]);
+  }, [usersRes, storesRes, followed, justFollowed, t]);
 
   const followMutation = useMutation({
     mutationFn: ({ username, type, targetId }) =>
@@ -93,9 +144,11 @@ export default function SuggestedUsers({ currentUser }) {
     },
     onSuccess: (_, { display_name }) => {
       toast.success(t("home.nowFollowing", { name: display_name }));
-      // The feed's "Following" tab and the follow counters both change.
+      // The feed's "Following" tab and the follow counters both change, and
+      // the follow list this section checks against is now one row short.
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["followStatus"] });
+      queryClient.invalidateQueries({ queryKey: ["myFollowing"] });
     },
   });
 
@@ -122,8 +175,11 @@ export default function SuggestedUsers({ currentUser }) {
         </Link>
       </div>
 
-      <div className="-mx-4 overflow-x-auto overscroll-x-contain hide-scrollbar snap-x">
-        <div className="inline-flex gap-3 px-4">
+      {/* Contained to the same gutter as the post cards above and below it
+          rather than bled to the display edge — one set of vertical lines
+          down the whole feed. */}
+      <div className="overflow-x-auto overscroll-x-contain hide-scrollbar snap-x">
+        <div className="inline-flex gap-3">
           {isLoading
             ? Array(3).fill(0).map((_, i) => (
                 <div
@@ -132,7 +188,7 @@ export default function SuggestedUsers({ currentUser }) {
                 />
               ))
             : suggestions.map((item) => {
-                const followed = justFollowed.has(item.key);
+                const followedNow = justFollowed.has(item.key);
                 const linkTo = item.type === "store"
                   ? storeUrl(item)
                   : createPageUrl("Profile") + `?username=${item.username}`;
@@ -163,23 +219,23 @@ export default function SuggestedUsers({ currentUser }) {
                     </Link>
 
                     <button
-                      onClick={() => !followed && followMutation.mutate({
+                      onClick={() => !followedNow && followMutation.mutate({
                         key: item.key,
                         username: item.username,
                         type: item.type,
                         targetId: item.id,
                         display_name: item.display_name,
                       })}
-                      disabled={followed || followMutation.isPending}
+                      disabled={followedNow || followMutation.isPending}
                       className={`mt-2.5 w-full h-8 rounded-full text-[12px] font-bold flex items-center justify-center gap-1 transition-colors ${
-                        followed
+                        followedNow
                           ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                           : "bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90"
                       }`}
                     >
                       {followMutation.isPending && followMutation.variables?.key === item.key ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : followed ? (
+                      ) : followedNow ? (
                         <><Check className="w-3.5 h-3.5" /> {t("home.following")}</>
                       ) : (
                         <><UserPlus className="w-3.5 h-3.5" /> {t("home.follow")}</>

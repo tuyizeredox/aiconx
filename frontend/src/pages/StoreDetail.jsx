@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { createPageUrl, storeUrl } from "@/lib/utils";
+import { COVER_PLACEHOLDER, createPageUrl, storeUrl } from "@/lib/utils";
 import ProductCard from "@/components/shared/ProductCard";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import {
@@ -252,7 +252,7 @@ export default function StoreDetail() {
 
       {/* Store Banner */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
-        <div className="h-36 lg:h-56 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 relative">
+        <div className={`h-36 lg:h-56 relative ${COVER_PLACEHOLDER}`}>
           {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0" />
         </div>

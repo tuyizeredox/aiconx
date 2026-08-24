@@ -165,7 +165,8 @@
     "recommendedForYou": "Empfohlen für dich",
     "loadingMore": "Mehr Beiträge werden geladen...",
     "scrollForMore": "Scrollen für mehr",
-    "endOfFeed": "Du hast das Ende des Feeds erreicht"
+    "endOfFeed": "Du hast das Ende des Feeds erreicht",
+    "voiceSearch": "Sprachsuche"
   },
   "explore": {
     "title": "Entdecken",

@@ -222,6 +222,14 @@ export default function Marketplace() {
     onRetry: requestLocation,
   };
 
+  // Outline pills that fill in with the brand colour when selected — one
+  // selection style for "all" and for a named category.
+  const pillClass = (active) => `shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-colors ${
+    active
+      ? "bg-orange-600 border-orange-600 text-white"
+      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+  }`;
+
   const filterPanel = (
     <MarketplaceFilters
       values={values}
@@ -239,89 +247,67 @@ export default function Marketplace() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <ShopHeaderBar backTo={createPageUrl("Home")} backLabel={t("nav.home")} />
 
-      {/* Hero + primary search */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-orange-600 via-orange-500 to-amber-400 text-white">
-        {/* Photo sits under a gradient wash rather than behind plain text —
-            the wash is what keeps the headline and search box readable no
-            matter how busy the image is at a given viewport width. */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-25"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&q=80')" }}
-          aria-hidden="true"
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-orange-700/85 via-orange-600/70 to-amber-500/60"
-          aria-hidden="true"
-        />
-        {/* Softens the seam into the category rail below. */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/15 to-transparent" aria-hidden="true" />
+      {/* Page header — title, search and categories share one clean surface
+          instead of a photo hero, so the results start higher on the page. */}
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-5 sm:pt-7">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-10">
+            <div className="min-w-0 lg:flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-[28px] font-bold tracking-tight text-slate-900 dark:text-white">
+                {t("shop.heroTitle")}
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("shop.heroSubtitle")}</p>
+            </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-1.5 drop-shadow-sm">{t("shop.heroTitle")}</h1>
-          <p className="text-white/90 text-sm sm:text-base mb-5 max-w-xl">{t("shop.heroSubtitle")}</p>
-
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t("shop.searchPlaceholder")}
-              aria-label={t("shop.searchPlaceholder")}
-              className="pl-11 pr-11 h-12 rounded-2xl bg-white dark:bg-slate-900 border-0 text-slate-900 dark:text-white shadow-lg text-sm"
-            />
-            {searchInput && (
-              <button
-                onClick={() => setSearchInput("")}
-                aria-label={t("shop.clearSearch")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <div className="relative w-full lg:w-[420px] lg:shrink-0">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <Input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={t("shop.searchPlaceholder")}
+                aria-label={t("shop.searchPlaceholder")}
+                className="pl-10 pr-10 h-11 rounded-xl bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white shadow-none text-sm focus-visible:ring-2 focus-visible:ring-orange-500/30 focus-visible:border-orange-400"
+              />
+              {searchInput && (
+                <button
+                  onClick={() => setSearchInput("")}
+                  aria-label={t("shop.clearSearch")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mt-4 text-xs sm:text-sm">
-            <span className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1.5 font-medium">
-              <ShoppingBag className="w-3.5 h-3.5" />
+          {/* What's in the catalogue, as quiet meta rather than badges. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3.5 text-xs sm:text-[13px] text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1.5">
+              <ShoppingBag className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
               {t("shop.productsCount", { count: totalResults })}
             </span>
-            <span className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1.5 font-medium">
-              <Store className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5">
+              <Store className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
               {t("shop.storesCount", { count: nearbyActive ? nearbyStores.length : featuredStores.length })}
             </span>
             {nearbyActive && (
-              <span className="flex items-center gap-1.5 bg-white/25 rounded-full px-3 py-1.5 font-bold">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-orange-600 dark:text-orange-400">
                 <MapPin className="w-3.5 h-3.5" />
                 {t("shop.withinKm", { km: radius })}
               </span>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Category quick-pills */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6">
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar py-3">
-            <button
-              onClick={() => updateValues({ category: "" })}
-              className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-colors ${
-                !values.category
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
+          {/* Category quick-pills */}
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-3 sm:-mx-6 px-3 sm:px-6 mt-4 pb-3">
+            <button onClick={() => updateValues({ category: "" })} className={pillClass(!values.category)}>
               {t("shop.allCategories")}
             </button>
             {CATEGORY_KEYS.map(key => (
               <button
                 key={key}
                 onClick={() => updateValues({ category: values.category === key ? "" : key })}
-                className={`shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-colors ${
-                  values.category === key
-                    ? "bg-orange-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                }`}
+                className={pillClass(values.category === key)}
               >
                 {t(`shop.category_${key}`)}
               </button>

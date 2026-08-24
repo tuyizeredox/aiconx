@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Logo = ({ size = "md", showText = true, className = "", subtext = "", showDecoration = false }) => {
+const Logo = ({ size = "md", showText = true, className = "", textClassName = "", subtext = "", showDecoration = false }) => {
   const sizes = {
     sm: {
       container: "w-8 h-8 rounded-xl",
@@ -57,7 +57,7 @@ const Logo = ({ size = "md", showText = true, className = "", subtext = "", show
       </div>
 
       {showText && (
-        <div className={`flex flex-col gap-0.5 ${className.includes('flex-col') ? 'items-center' : ''}`}>
+        <div className={`flex flex-col gap-0.5 ${className.includes('flex-col') ? 'items-center' : ''} ${textClassName}`}>
           <div className={`${currentSize.text} font-black tracking-tight leading-none flex items-baseline gap-[2px]`}>
             <span className="text-slate-800 dark:text-white" style={{ letterSpacing: '-0.03em' }}>aicon</span>
             <span

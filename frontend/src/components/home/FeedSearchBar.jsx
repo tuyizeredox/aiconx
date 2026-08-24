@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, X, Loader2, Package, Store as StoreIcon, Clock } from "lucide-react";
+import { Search, X, Loader2, Package, Store as StoreIcon, Clock, Mic } from "lucide-react";
 import { productsAPI, storesAPI } from "@/api/apiClient";
 import { createPageUrl, storeUrl, formatCurrency } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -18,7 +18,7 @@ import { recordSignal, getTasteProfile } from "@/lib/personalization";
  * the full Discover results for people who want to browse.
  */
 export default function FeedSearchBar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -27,6 +27,18 @@ export default function FeedSearchBar() {
   const enabled = debounced.trim().length >= 2;
 
   const [recent, setRecent] = useState(() => getTasteProfile().recentSearches.slice(0, 5));
+
+  // Voice search. Speaking a product name is the fastest way to search on a
+  // phone, and it is the one control in the bar that has to disappear rather
+  // than sit there dead — browsers without SpeechRecognition (Firefox, older
+  // WebViews) never render the mic at all.
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef(null);
+  const SpeechRecognition =
+    typeof window !== "undefined" &&
+    (window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  useEffect(() => () => { try { recognitionRef.current?.abort(); } catch { /* already gone */ } }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -64,11 +76,34 @@ export default function FeedSearchBar() {
     navigate(createPageUrl("Explore") + "?search=" + encodeURIComponent(q));
   };
 
+  const startVoice = () => {
+    if (!SpeechRecognition) return;
+    if (listening) {
+      try { recognitionRef.current?.stop(); } catch { /* nothing running */ }
+      return;
+    }
+    const rec = new SpeechRecognition();
+    rec.lang = i18n.language || "en";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (event) => {
+      const said = event.results?.[0]?.[0]?.transcript?.trim();
+      if (!said) return;
+      setQuery(said);
+      setOpen(true);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    setListening(true);
+    try { rec.start(); } catch { setListening(false); }
+  };
+
   const showRecent = open && !enabled && recent.length > 0;
 
   return (
     <div ref={wrapRef} className="relative">
-      <div className="flex items-center gap-2.5 h-11 px-4 rounded-full bg-slate-100 dark:bg-slate-800/80 transition-colors focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-orange-500/60">
+      <div className="flex items-center gap-2.5 h-12 px-4 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-transparent dark:border-white/[0.07] transition-colors focus-within:bg-white dark:focus-within:bg-white/[0.09] focus-within:ring-2 focus-within:ring-orange-500/60">
         <Search className="w-[18px] h-[18px] text-slate-400 shrink-0" />
         <input
           value={query}
@@ -83,6 +118,21 @@ export default function FeedSearchBar() {
         {query && !loadingProducts && (
           <button onClick={() => { setQuery(""); setOpen(false); }} aria-label={t("common.clear")} className="shrink-0">
             <X className="w-4 h-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" />
+          </button>
+        )}
+        {!query && SpeechRecognition && (
+          <button
+            type="button"
+            onClick={startVoice}
+            aria-label={t("home.voiceSearch")}
+            aria-pressed={listening}
+            className="shrink-0 -mr-1 p-1 rounded-full transition-colors"
+          >
+            <Mic
+              className={`w-[18px] h-[18px] transition-colors ${
+                listening ? "text-orange-500 animate-pulse" : "text-slate-400 dark:text-slate-500"
+              }`}
+            />
           </button>
         )}
       </div>

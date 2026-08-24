@@ -21,7 +21,7 @@ import SuggestedUsers from "@/components/home/SuggestedUsers";
 import { postsAPI, productsAPI, storesAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
 import useGeolocation from "@/hooks/useGeolocation";
-import { createPageUrl } from "@/lib/utils";
+import { createPageUrl, APP_BAR_SURFACE } from "@/lib/utils";
 import { rankProducts } from "@/lib/personalization";
 
 const POSTS_PER_PAGE = 10;
@@ -305,10 +305,14 @@ export default function Home() {
           category", and neither should cost a scroll back to the top.
 
           --app-bar-offset is published by Layout as its top bar hides and
-          reveals on scroll, so this block rides with it as one header rather
-          than hovering over a gap. */}
+          reveals on scroll, and this block paints the shared APP_BAR_SURFACE
+          with no seam between them: on a phone the icon row, the search field
+          and the chips are one app bar that happens to be assembled from two
+          components. It is the block down here that closes the bar off, which
+          is why the rounded bottom edge and the shadow live on this element
+          and not on the header. */}
       <div
-        className="sticky z-30 px-4 pt-2 pb-2.5 bg-slate-50/90 dark:bg-[#0a0a0c]/90 backdrop-blur-xl border-b border-slate-200/70 dark:border-slate-800/70 transition-[top] duration-300 ease-out"
+        className={`sticky z-30 px-4 pt-0.5 pb-3 transition-[top] duration-300 ease-out ${APP_BAR_SURFACE} rounded-b-[1.375rem] shadow-[0_6px_16px_-8px_rgba(15,23,42,0.35)] dark:shadow-[0_8px_20px_-10px_rgba(0,0,0,0.9)] lg:rounded-none lg:shadow-none lg:bg-slate-50/90 dark:lg:bg-[#0a0a0c]/90 lg:border-b lg:border-slate-200/70 dark:lg:border-slate-800/70 lg:pt-2`}
         style={{ top: "calc(env(safe-area-inset-top) + var(--app-bar-offset, 3.5rem))" }}
       >
         <FeedSearchBar />

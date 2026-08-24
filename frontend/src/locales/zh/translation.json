@@ -165,7 +165,8 @@
     "recommendedForYou": "为你推荐",
     "loadingMore": "正在加载更多动态...",
     "scrollForMore": "滑动查看更多",
-    "endOfFeed": "您已到达动态流底部"
+    "endOfFeed": "您已到达动态流底部",
+    "voiceSearch": "语音搜索"
   },
   "explore": {
     "title": "探索",
