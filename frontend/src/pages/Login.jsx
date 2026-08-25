@@ -168,7 +168,7 @@ const Login = () => {
   const anyLoading = isLoading || isGoogleLoading;
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-[max(1rem,env(safe-area-inset-top))] lg:pt-0">
+    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-ink-900 bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 pt-[max(1rem,env(safe-area-inset-top))] lg:pt-0">
       <Seo path="/login" title="Sign In" description="Sign in to your Aicon X account to shop, sell, and connect with communities." />
       <MemoizedBackground />
 
@@ -178,7 +178,7 @@ const Login = () => {
           variant="ghost"
           size="icon"
           onClick={() => navigate('/')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
           aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -190,7 +190,7 @@ const Login = () => {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -203,7 +203,7 @@ const Login = () => {
           variant="ghost"
           size="icon"
           onClick={() => navigate('/')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
           aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -215,7 +215,7 @@ const Login = () => {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -242,7 +242,7 @@ const Login = () => {
               {t("auth.loginHeroLine1")} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">{t("auth.loginHeroLine2")}</span>
             </h1>
-            <p className="text-base xl:text-lg dark:text-slate-400 text-slate-600 leading-relaxed max-w-sm">
+            <p className="text-base xl:text-lg dark:text-ink-400 text-slate-600 leading-relaxed max-w-sm">
               {t("auth.loginHeroSubtitle")}
             </p>
           </div>
@@ -278,7 +278,7 @@ const Login = () => {
 
                   <div className="hidden lg:block space-y-1">
                     <h2 className="text-2xl sm:text-3xl font-black dark:text-white text-slate-900 tracking-tight">{t("auth.signIn")}</h2>
-                    <p className="dark:text-slate-500 text-slate-500 text-sm">{t("auth.loginSubtitle")}</p>
+                    <p className="dark:text-ink-500 text-slate-500 text-sm">{t("auth.loginSubtitle")}</p>
                   </div>
 
                   <AnimatePresence>
@@ -298,25 +298,25 @@ const Login = () => {
 
                   <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                     <div className="space-y-1.5">
-                      <Label htmlFor="identifier" className="text-xs font-semibold dark:text-slate-400 text-slate-600 ml-0.5">{t("auth.email")} / {t("auth.username")}</Label>
+                      <Label htmlFor="identifier" className="text-xs font-semibold dark:text-ink-400 text-slate-600 ml-0.5">{t("auth.email")} / {t("auth.username")}</Label>
                       <div className="relative group">
                         <Input
                           id="identifier"
                           type="text"
                           value={identifier}
                           onChange={(e) => setIdentifier(e.target.value)}
-                          className="w-full pl-11 pr-4 py-4 sm:py-5 rounded-xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-medium dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-slate-500 placeholder:text-slate-400"
+                          className="w-full pl-11 pr-4 py-4 sm:py-5 rounded-xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-medium dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-ink-500 placeholder:text-slate-400"
                           placeholder={t("auth.emailOrUsernamePlaceholder")}
                           required
                           autoComplete="username"
                         />
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] dark:text-slate-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] dark:text-ink-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-center ml-0.5">
-                        <Label htmlFor="password" className="text-xs font-semibold dark:text-slate-400 text-slate-600">{t("auth.password")}</Label>
+                        <Label htmlFor="password" className="text-xs font-semibold dark:text-ink-400 text-slate-600">{t("auth.password")}</Label>
                         <Link to="/forgot-password" title="Reset your password" className="text-xs font-medium text-orange-600 hover:text-orange-500 transition-colors">
                           {t("auth.forgotPassword")}
                         </Link>
@@ -327,18 +327,18 @@ const Login = () => {
                           type={showPassword ? "text" : "password"}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full pl-11 pr-11 py-4 sm:py-5 rounded-xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-medium dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-slate-500 placeholder:text-slate-400"
+                          className="w-full pl-11 pr-11 py-4 sm:py-5 rounded-xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-medium dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-ink-500 placeholder:text-slate-400"
                           placeholder={t("auth.passwordPlaceholder")}
                           required
                           autoComplete="current-password"
                         />
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] dark:text-slate-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] dark:text-ink-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 dark:text-slate-500 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-9 w-9 dark:hover:bg-white/5 hover:bg-slate-100 rounded-lg"
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 dark:text-ink-500 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-9 w-9 dark:hover:bg-white/5 hover:bg-slate-100 rounded-lg"
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -353,7 +353,7 @@ const Login = () => {
                           onCheckedChange={setRememberMe}
                           className="h-5 w-5 rounded-md border-slate-300 bg-white text-slate-900 hover:border-orange-500 dark:border-white/20 dark:bg-white/10 dark:text-white data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600 data-[state=checked]:text-white data-[state=checked]:hover:bg-orange-500 data-[state=checked]:hover:border-orange-500 transition-colors"
                         />
-                        <span className="text-sm font-medium dark:text-slate-400 text-slate-600">
+                        <span className="text-sm font-medium dark:text-ink-400 text-slate-600">
                           {t("auth.staySignedIn")}
                         </span>
                       </label>
@@ -379,7 +379,7 @@ const Login = () => {
                       <span className="w-full border-t dark:border-white/5 border-slate-200"></span>
                     </div>
                     <div className="relative flex justify-center">
-                      <span className="dark:bg-[#0a0a0c] bg-white px-3 text-[10px] uppercase tracking-wider dark:text-slate-600 text-slate-500 font-medium">
+                      <span className="dark:bg-ink-900 bg-white px-3 text-[10px] uppercase tracking-wider dark:text-ink-600 text-slate-500 font-medium">
                         {t("auth.orContinueWith")}
                       </span>
                     </div>
@@ -408,7 +408,7 @@ const Login = () => {
                           )}
                         </AnimatePresence>
                       </div>
-                      <span className={`text-[10px] font-medium dark:text-slate-500 text-slate-500 transition-colors ${isGoogleLoading ? 'text-orange-500' : ''}`}>
+                      <span className={`text-[10px] font-medium dark:text-ink-500 text-slate-500 transition-colors ${isGoogleLoading ? 'text-orange-500' : ''}`}>
                         {isGoogleLoading ? t("auth.signingIn") : t("auth.continueWith", { provider: 'Google' })}
                       </span>
                     </div>
@@ -419,16 +419,16 @@ const Login = () => {
                         variant="outline"
                         size="icon"
                         disabled={anyLoading}
-                        className="h-11 w-11 rounded-full dark:border-white/5 border-slate-200 dark:bg-white/5 bg-slate-50 group-hover:bg-orange-600 group-hover:border-orange-600 group-hover:text-white dark:text-slate-400 text-slate-500 transition-all duration-300 active:scale-95 disabled:opacity-50 shadow-sm"
+                        className="h-11 w-11 rounded-full dark:border-white/5 border-slate-200 dark:bg-white/5 bg-slate-50 group-hover:bg-orange-600 group-hover:border-orange-600 group-hover:text-white dark:text-ink-400 text-slate-500 transition-all duration-300 active:scale-95 disabled:opacity-50 shadow-sm"
                       >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-5 w-5" />}
                       </Button>
-                      <span className="text-[9px] font-black dark:text-slate-600 text-slate-500 uppercase tracking-[0.15em] group-hover:text-orange-400 transition-colors">{t("auth.biometricLabel")}</span>
+                      <span className="text-[9px] font-black dark:text-ink-600 text-slate-500 uppercase tracking-[0.15em] group-hover:text-orange-400 transition-colors">{t("auth.biometricLabel")}</span>
                     </div>
                   </div>
 
                   <div className="text-center">
-                    <p className="dark:text-slate-500 text-slate-500 text-sm">
+                    <p className="dark:text-ink-500 text-slate-500 text-sm">
                       {t("auth.newHere")}{' '}
                       <Link to="/register" state={location.state} className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
                         {t("auth.joinNetwork")}
@@ -456,7 +456,7 @@ const Login = () => {
                     </motion.div>
                     <div className="space-y-2">
                       <h1 className="text-3xl font-black dark:text-white text-slate-900 tracking-tighter uppercase">{t("auth.vaultTitle")}</h1>
-                      <p className="dark:text-slate-500 text-slate-500 font-semibold text-xs tracking-[0.2em] uppercase">
+                      <p className="dark:text-ink-500 text-slate-500 font-semibold text-xs tracking-[0.2em] uppercase">
                         {t("auth.identityVerification")}
                       </p>
                     </div>
@@ -516,7 +516,7 @@ const Login = () => {
                       <button
                         type="button"
                         onClick={() => setShow2FA(false)}
-                        className="w-full dark:text-slate-600 text-slate-500 dark:hover:text-white hover:text-slate-900 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                        className="w-full dark:text-ink-600 text-slate-500 dark:hover:text-white hover:text-slate-900 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                       >
                         <ArrowRight className="h-3 w-3 rotate-180" /> {t("auth.backToAuthentication")}
                       </button>
@@ -531,7 +531,7 @@ const Login = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="mt-6 text-center dark:text-slate-700 text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]"
+            className="mt-6 text-center dark:text-ink-700 text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]"
           >
             {t("auth.securedBy")}
           </motion.p>
@@ -540,7 +540,7 @@ const Login = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
-            className="mt-3 text-center text-[10px] dark:text-slate-600 text-slate-500"
+            className="mt-3 text-center text-[10px] dark:text-ink-600 text-slate-500"
           >
             {t("auth.legalAgreement")}{' '}
             <Link to="/terms" className="text-orange-500 hover:text-orange-400 font-medium transition-colors">

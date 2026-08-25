@@ -27,7 +27,7 @@
     @apply bg-white/80 backdrop-blur-xl border border-white/20;
   }
   .glass-dark {
-    @apply bg-slate-900/80 backdrop-blur-xl border border-slate-700/30;
+    @apply bg-ink-900/80 backdrop-blur-xl border border-slate-700/30;
   }
   .shimmer {
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);

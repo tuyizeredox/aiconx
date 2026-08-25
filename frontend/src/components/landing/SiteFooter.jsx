@@ -22,7 +22,7 @@ function StoreBadge({ href, icon: Icon, line1, line2 }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2.5 h-11 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 active:scale-[0.98] transition-all"
+      className="flex items-center gap-2.5 h-11 px-4 rounded-xl bg-ink-900 dark:bg-white text-white dark:text-ink-900 hover:opacity-90 active:scale-[0.98] transition-all"
     >
       <Icon className="w-5 h-5 shrink-0" />
       <span className="text-left leading-tight">
@@ -43,21 +43,21 @@ function FooterColumn({ title, children }) {
 }
 
 const linkClass =
-  "text-sm text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors";
+  "text-sm text-slate-500 dark:text-ink-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors";
 
 export default function SiteFooter() {
   const { t } = useTranslation();
   const hasApps = Boolean(PLAY_STORE_URL || APP_STORE_URL);
 
   return (
-    <footer className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40">
+    <footer className="border-t border-slate-100 dark:border-ink-800 bg-slate-50/60 dark:bg-ink-900/40">
       {/* Extra bottom padding clears the fixed MobileTabBar on small screens. */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] lg:pb-14">
         <div className="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Logo size="sm" showText />
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 max-w-xs leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-ink-400 mt-3 max-w-xs leading-relaxed">
               {t("landing.footer.tagline")}
             </p>
 
@@ -129,13 +129,13 @@ export default function SiteFooter() {
           </FooterColumn>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-10 pt-6 border-t border-slate-200/70 dark:border-slate-800">
-          <p className="text-xs text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-10 pt-6 border-t border-slate-200/70 dark:border-ink-800">
+          <p className="text-xs text-slate-400 dark:text-ink-500">
             {t("landing.footer.copyright", { year: new Date().getFullYear() })}
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+            className="text-xs font-semibold text-slate-500 dark:text-ink-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
           >
             {SUPPORT_EMAIL}
           </a>

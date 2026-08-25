@@ -30,7 +30,7 @@ export default function CategoryPills({ value, onChange }) {
               className={`flex items-center gap-1.5 shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold border transition-colors active:scale-[0.95] ${
                 active
                   ? "bg-orange-600 border-orange-600 text-white"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-orange-300 hover:text-orange-600"
+                  : "bg-white dark:bg-ink-900 border-slate-200 dark:border-ink-800 text-slate-600 dark:text-ink-300 hover:border-orange-300 hover:text-orange-600"
               }`}
             >
               <Icon className="w-3.5 h-3.5" />

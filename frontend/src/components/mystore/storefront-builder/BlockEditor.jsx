@@ -14,7 +14,7 @@ const CATEGORIES = ["fashion", "electronics", "home", "beauty", "sports", "food"
 function Field({ label, children }) {
   return (
     <div className="space-y-1.5">
-      {label && <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">{label}</label>}
+      {label && <label className="text-xs font-semibold text-slate-500 dark:text-ink-400 block">{label}</label>}
       {children}
     </div>
   );
@@ -38,7 +38,7 @@ function ImageUploadField({ label, value, onChange }) {
   return (
     <Field label={label}>
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-ink-800 border border-slate-100 dark:border-ink-700 flex items-center justify-center overflow-hidden shrink-0">
           {value ? <img src={value} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
         </div>
         <div className="relative flex-1">
@@ -76,7 +76,7 @@ function VideoUploadField({ label, value, onChange }) {
   return (
     <Field label={label}>
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-ink-800 border border-slate-100 dark:border-ink-700 flex items-center justify-center overflow-hidden shrink-0">
           {value ? <VideoIcon className="w-5 h-5 text-slate-400" /> : <VideoIcon className="w-5 h-5 text-slate-300" />}
         </div>
         <div className="relative flex-1">
@@ -124,7 +124,7 @@ function GalleryImagesField({ images = [], onChange }) {
     <Field label={`Images (${images.length}/20)`}>
       <div className="flex flex-wrap gap-2">
         {images.map((url, i) => (
-          <div key={`${url}-${i}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-700 group">
+          <div key={`${url}-${i}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-100 dark:border-ink-700 group">
             <img src={url} alt="" className="w-full h-full object-cover" />
             <button
               type="button"
@@ -136,7 +136,7 @@ function GalleryImagesField({ images = [], onChange }) {
           </div>
         ))}
         {images.length < 20 && (
-          <label className="w-16 h-16 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center cursor-pointer hover:border-orange-400 transition-colors text-slate-400">
+          <label className="w-16 h-16 rounded-lg border-2 border-dashed border-slate-200 dark:border-ink-700 flex items-center justify-center cursor-pointer hover:border-orange-400 transition-colors text-slate-400">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             <input type="file" accept="image/*" multiple className="hidden" onChange={handle} disabled={uploading} />
           </label>
@@ -148,14 +148,14 @@ function GalleryImagesField({ images = [], onChange }) {
 
 function StyleEditor({ style = {}, onChange }) {
   return (
-    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-ink-700">
       <Field label="Background color">
         <div className="flex items-center gap-2">
           <input
             type="color"
             value={style.background_color || "#ffffff"}
             onChange={(e) => onChange({ background_color: e.target.value })}
-            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer bg-transparent p-0.5"
+            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-ink-700 cursor-pointer bg-transparent p-0.5"
           />
           {style.background_color && (
             <button type="button" onClick={() => onChange({ background_color: undefined })} className="text-xs text-slate-400 hover:text-red-500">
@@ -296,7 +296,7 @@ export default function BlockEditor({ block, onUpdate, storeProducts = [] }) {
           )}
           {data.mode === "curated" && (
             <Field label={`Handpicked products (${(data.product_ids || []).length}/24)`}>
-              <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-100 dark:border-slate-700 rounded-xl p-2">
+              <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-100 dark:border-ink-700 rounded-xl p-2">
                 {storeProducts.length === 0 && (
                   <p className="text-xs text-slate-400 px-1 py-2">Add products to your store first.</p>
                 )}
@@ -304,7 +304,7 @@ export default function BlockEditor({ block, onUpdate, storeProducts = [] }) {
                   const pid = String(p.id || p._id);
                   const selected = (data.product_ids || []).includes(pid);
                   return (
-                    <label key={pid} className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm">
+                    <label key={pid} className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-ink-800 cursor-pointer text-sm">
                       <input
                         type="checkbox"
                         checked={selected}

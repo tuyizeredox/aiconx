@@ -10,7 +10,7 @@ const Guidelines = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen w-full dark:bg-[#0a0a0c] bg-slate-50 font-sans transition-colors duration-300">
+    <div className="min-h-screen w-full dark:bg-ink-900 bg-slate-50 font-sans transition-colors duration-300">
       <Seo path="/community-guidelines" title="Community Guidelines" description="Read the Aicon X Community Guidelines for respectful, safe participation in our marketplace and social features." />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
@@ -21,7 +21,7 @@ const Guidelines = () => {
         >
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold dark:text-slate-400 text-slate-600 hover:text-orange-500 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-semibold dark:text-ink-400 text-slate-600 hover:text-orange-500 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("common.back")}
@@ -44,11 +44,11 @@ const Guidelines = () => {
             </h1>
           </div>
 
-          <p className="text-sm dark:text-slate-400 text-slate-500 mb-8">
+          <p className="text-sm dark:text-ink-400 text-slate-500 mb-8">
             {t("legal.lastUpdated")}
           </p>
 
-          <div className="space-y-8 text-sm dark:text-slate-300 text-slate-600 leading-relaxed">
+          <div className="space-y-8 text-sm dark:text-ink-300 text-slate-600 leading-relaxed">
             <section className="space-y-3">
               <h2 className="text-base font-bold dark:text-white text-slate-900">{t("legal.guidelinesIntro")}</h2>
               <p>
@@ -100,7 +100,7 @@ const Guidelines = () => {
           </div>
         </motion.div>
 
-        <p className="mt-8 text-center text-xs dark:text-slate-600 text-slate-400">
+        <p className="mt-8 text-center text-xs dark:text-ink-600 text-slate-400">
           © {new Date().getFullYear()} Aicon X. {t("legal.allRightsReserved")}
         </p>
       </div>

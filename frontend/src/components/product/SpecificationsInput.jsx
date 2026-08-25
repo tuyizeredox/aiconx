@@ -24,17 +24,17 @@ export default function SpecificationsInput({ specifications = [], onChange }) {
 
   return (
     <div>
-      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+      <label className="text-sm font-medium text-slate-700 dark:text-ink-300 mb-1.5 block">
         {t("store.productSpecifications")}
       </label>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{t("store.productSpecificationsHint")}</p>
+      <p className="text-xs text-slate-400 dark:text-ink-500 mb-2">{t("store.productSpecificationsHint")}</p>
 
       {specifications.length > 0 && (
-        <div className="rounded-xl border border-slate-100 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700 mb-2.5 overflow-hidden">
+        <div className="rounded-xl border border-slate-100 dark:border-ink-700 divide-y divide-slate-100 dark:divide-ink-700 mb-2.5 overflow-hidden">
           {specifications.map((spec, idx) => (
             <div key={`${spec.name}-${idx}`} className="flex items-center gap-2 px-2.5 py-1.5">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 w-1/3 min-w-0 truncate">{spec.name}</span>
-              <span className="text-sm text-slate-800 dark:text-slate-200 flex-1 min-w-0 truncate">{spec.value}</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-ink-400 w-1/3 min-w-0 truncate">{spec.name}</span>
+              <span className="text-sm text-slate-800 dark:text-ink-200 flex-1 min-w-0 truncate">{spec.value}</span>
               <button
                 type="button"
                 onClick={() => onChange(specifications.filter((_, i) => i !== idx))}

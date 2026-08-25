@@ -207,7 +207,7 @@ export default function OrderDetailModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-0 gap-0 grid-cols-1">
-        <DialogHeader className="min-w-0 p-6 pr-10 pb-4 bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10 backdrop-blur-md border-b dark:border-slate-700">
+        <DialogHeader className="min-w-0 p-6 pr-10 pb-4 bg-slate-50/50 dark:bg-ink-800/50 sticky top-0 z-10 backdrop-blur-md border-b dark:border-ink-700">
           <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
             <Badge className={`${status.color} border-0 flex items-center gap-1.5 shrink-0`}>
               <StatusIcon className="w-3.5 h-3.5" />
@@ -216,7 +216,7 @@ export default function OrderDetailModal({
             <p className="text-xs text-slate-400 font-mono truncate min-w-0">#{order._id?.slice(-12)}</p>
           </div>
           <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Order Details</DialogTitle>
-          <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-500 dark:text-ink-400">
             <div className="flex items-center gap-1 font-medium shrink-0">
               <Calendar className="w-3.5 h-3.5" />
               {new Date(order.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -304,7 +304,7 @@ export default function OrderDetailModal({
                           value={retryPhone}
                           onChange={(e) => setRetryPhone(e.target.value)}
                           placeholder="e.g. 078xxxxxxx"
-                          className="flex-1 min-w-0 h-10 rounded-xl border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 text-sm"
+                          className="flex-1 min-w-0 h-10 rounded-xl border-red-200 dark:border-red-800 bg-white dark:bg-ink-800 text-sm"
                         />
                         <Button
                           size="sm"
@@ -341,7 +341,7 @@ export default function OrderDetailModal({
                   value={order.status} 
                   onValueChange={(newStatus) => onUpdateStatus?.(order._id || order.id, newStatus)}
                 >
-                  <SelectTrigger className="flex-1 bg-white dark:bg-slate-700 rounded-xl h-11 border-orange-100 dark:border-orange-800">
+                  <SelectTrigger className="flex-1 bg-white dark:bg-ink-700 rounded-xl h-11 border-orange-100 dark:border-orange-800">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -359,7 +359,7 @@ export default function OrderDetailModal({
 
           {/* Status Tracker — only for shipped/shipping orders, not pickup */}
           {["pending", "processing", "shipped", "delivered", "confirmed"].includes(order.status) && order.delivery_method !== "pickup" && (
-            <div className="bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+            <div className="bg-white dark:bg-ink-800 border dark:border-ink-700 rounded-2xl p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 {order.delivery_method === "delivery" ? (
                   <Navigation className="w-4 h-4 text-orange-600" />
@@ -391,8 +391,8 @@ export default function OrderDetailModal({
             </h3>
             <div className="space-y-4">
               {order.items?.map((item, idx) => (
-                <div key={idx} className="flex gap-4 p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-2xl transition-colors">
-                  <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-100 dark:border-slate-600">
+                <div key={idx} className="flex gap-4 p-2 hover:bg-slate-50 dark:hover:bg-ink-700/50 rounded-2xl transition-colors">
+                  <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-ink-700 overflow-hidden shrink-0 border border-slate-100 dark:border-ink-600">
                     {item.product_image ? (
                       <img src={item.product_image} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -403,7 +403,7 @@ export default function OrderDetailModal({
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{item.product_title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-ink-400 mt-0.5">
                       {item.quantity} x {formatCurrency(item.price)}
                     </p>
                     {(item.selected_color || item.selected_size || item.selected_options?.length > 0) && (
@@ -435,7 +435,7 @@ export default function OrderDetailModal({
             </div>
           </section>
 
-          <Separator className="bg-slate-100 dark:bg-slate-700" />
+          <Separator className="bg-slate-100 dark:bg-ink-700" />
 
           {/* Summary and Payment */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-w-0">
@@ -444,13 +444,13 @@ export default function OrderDetailModal({
                 <CreditCard className="w-4 h-4 text-orange-600" />
                 Payment Info
               </h3>
-              <div className="space-y-3 bg-slate-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-600 min-w-0">
+              <div className="space-y-3 bg-slate-50/50 dark:bg-ink-700/50 p-4 rounded-2xl border border-slate-100 dark:border-ink-600 min-w-0">
                 <div className="flex items-center justify-between gap-2 text-xs min-w-0">
-                  <span className="text-slate-500 dark:text-slate-400 shrink-0">Method</span>
+                  <span className="text-slate-500 dark:text-ink-400 shrink-0">Method</span>
                   <span className="font-medium text-slate-900 dark:text-white capitalize truncate min-w-0 text-right">{order.payment_method?.replace('_', ' ') || 'Card'}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2 text-xs min-w-0">
-                  <span className="text-slate-500 dark:text-slate-400 shrink-0">Status</span>
+                  <span className="text-slate-500 dark:text-ink-400 shrink-0">Status</span>
                   <Badge variant="outline" className={`text-[10px] h-5 capitalize px-1.5 shrink-0 ${
                     order.payment_status === 'paid' ? 'bg-green-50 text-green-700 border-green-100' :
                     order.payment_status === 'failed' ? 'bg-red-50 text-red-700 border-red-100' :
@@ -459,7 +459,7 @@ export default function OrderDetailModal({
                     {order.payment_status}
                   </Badge>
                 </div>
-                <div className="pt-2 flex items-center justify-between gap-2 text-xs font-bold text-slate-900 dark:text-white border-t border-slate-200/60 dark:border-slate-600 min-w-0">
+                <div className="pt-2 flex items-center justify-between gap-2 text-xs font-bold text-slate-900 dark:text-white border-t border-slate-200/60 dark:border-ink-600 min-w-0">
                   <span className="shrink-0">Total Amount</span>
                   <span className="truncate min-w-0 text-right">{formatCurrency(order.total)}</span>
                 </div>
@@ -477,7 +477,7 @@ export default function OrderDetailModal({
                 )}
                 {order.delivery_method === "pickup" ? "Store Pickup" : order.delivery_method === "delivery" ? "Local Delivery" : "Delivery Address"}
               </h3>
-              <div className="bg-slate-50/50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-600 h-full min-h-[100px] flex flex-col gap-3">
+              <div className="bg-slate-50/50 dark:bg-ink-700/50 p-4 rounded-2xl border border-slate-100 dark:border-ink-600 h-full min-h-[100px] flex flex-col gap-3">
                 {order.delivery_method === "pickup" ? (
                   <>
                     {order.pickup_instructions && (
@@ -487,14 +487,14 @@ export default function OrderDetailModal({
                       </div>
                     )}
                     {order.shipping_address && (
-                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{order.shipping_address}</p>
+                      <p className="text-xs text-slate-600 dark:text-ink-400 leading-relaxed">{order.shipping_address}</p>
                     )}
                     {!order.pickup_instructions && !order.shipping_address && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Collect from store location</p>
+                      <p className="text-xs text-slate-500 dark:text-ink-400">Collect from store location</p>
                     )}
                   </>
                 ) : (
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed flex-1">
+                  <p className="text-xs text-slate-600 dark:text-ink-400 leading-relaxed flex-1">
                     {order.shipping_address || "No address provided"}
                   </p>
                 )}
@@ -547,7 +547,7 @@ export default function OrderDetailModal({
                   <Button 
                     variant="outline" 
                     onClick={() => onBuyAgain?.(order)}
-                    className="w-full rounded-xl gap-2 border-slate-200 dark:border-slate-600 h-12 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                    className="w-full rounded-xl gap-2 border-slate-200 dark:border-ink-600 h-12 font-semibold hover:bg-slate-50 dark:hover:bg-ink-700 transition-all"
                   >
                     <ShoppingBag className="w-4 h-4" />
                     Buy Again

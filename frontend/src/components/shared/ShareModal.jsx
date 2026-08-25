@@ -202,8 +202,8 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
         <div className="px-5 pb-5 pt-4 space-y-4 overflow-y-auto max-h-[85vh]">
           {/* Item Preview */}
           {item && (
-            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 overflow-hidden shrink-0 shadow-sm">
+            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-ink-800/60 rounded-2xl border border-slate-100 dark:border-ink-700/50">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-ink-700 border border-slate-200 dark:border-ink-600 overflow-hidden shrink-0 shadow-sm">
                 {itemImage ? (
                   <img src={itemImage} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -213,7 +213,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug">
+                <p className="text-sm font-semibold text-slate-900 dark:text-ink-100 line-clamp-2 leading-snug">
                   {itemTitle}
                 </p>
                 {isProduct && (
@@ -243,8 +243,8 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
           )}
 
           {/* Copy Link */}
-          <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-            <div className="flex-1 px-2.5 py-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate font-mono">
+          <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-ink-800/60 rounded-2xl border border-slate-100 dark:border-ink-700/50">
+            <div className="flex-1 px-2.5 py-1 text-xs sm:text-sm text-slate-500 dark:text-ink-400 truncate font-mono">
               {itemUrl}
             </div>
             <Button 
@@ -253,7 +253,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
               className={`rounded-xl shrink-0 h-9 px-3 sm:px-4 text-xs sm:text-sm font-semibold shadow-sm transition-all ${
                 copied
                   ? "bg-green-500 hover:bg-green-600 text-white border-0"
-                  : "bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 hover:text-orange-600"
+                  : "bg-white dark:bg-ink-700 border border-slate-200 dark:border-ink-600 text-slate-700 dark:text-ink-200 hover:bg-slate-50 dark:hover:bg-ink-600 hover:text-orange-600"
               }`}
             >
               {copied ? (
@@ -266,7 +266,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
 
           {/* External Share Platforms */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-0.5">
+            <p className="text-xs font-semibold text-slate-400 dark:text-ink-500 uppercase tracking-wider px-0.5">
               Share via
             </p>
             <ExternalPlatforms url={itemUrl} title={itemTitle} />
@@ -274,9 +274,9 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
 
           {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">or send in-app</span>
-            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
+            <div className="flex-1 h-px bg-slate-100 dark:bg-ink-700/60" />
+            <span className="text-xs text-slate-400 dark:text-ink-500 font-medium">or send in-app</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-ink-700/60" />
           </div>
 
           {/* Internal Search */}
@@ -287,7 +287,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                 placeholder={t("share.searchUsersOrVendors")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-11 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-800 transition-all text-sm"
+                className="pl-10 h-11 rounded-xl border-slate-200 dark:border-ink-700 bg-slate-50/80 dark:bg-ink-800/60 focus:bg-white dark:focus:bg-ink-800 transition-all text-sm"
               />
             </div>
 
@@ -316,10 +316,10 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left ${
                         selectedRecipient?.id === recipient.id
                           ? "bg-orange-50 dark:bg-orange-900/30 ring-1 ring-orange-200 dark:ring-orange-700"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                          : "hover:bg-slate-50 dark:hover:bg-ink-800/60"
                       }`}
                     >
-                      <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                      <div className="w-9 h-9 rounded-full bg-white dark:bg-ink-700 border border-slate-100 dark:border-ink-600 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                         <AvatarImg
                           src={recipient.avatar_url || recipient.logo_url}
                           className="w-full h-full object-cover"
@@ -331,10 +331,10 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-ink-100 truncate">
                           {recipient.display_name || recipient.name || recipient.full_name || t("share.unknownUser")}
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                        <p className="text-xs text-slate-400 dark:text-ink-500 truncate">
                           {recipient.type === 'vendor'
                             ? (recipient.category || t("share.vendor"))
                             : `@${recipient.username || recipient.display_name?.replace(/\s+/g, '_').toLowerCase()}`}
@@ -343,7 +343,7 @@ export default function ShareModal({ isOpen, onOpenChange, post, product, curren
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                         selectedRecipient?.id === recipient.id
                           ? "bg-orange-600 border-orange-600"
-                          : "border-slate-200 dark:border-slate-600"
+                          : "border-slate-200 dark:border-ink-600"
                       }`}>
                         {selectedRecipient?.id === recipient.id && (
                           <Check className="w-3 h-3 text-white" />

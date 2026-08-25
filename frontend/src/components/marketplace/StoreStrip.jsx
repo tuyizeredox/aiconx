@@ -24,7 +24,7 @@ export default function StoreStrip({ stores, isLoading, nearbyMode }) {
           {nearbyMode ? t("shop.storesNearYou") : t("shop.featuredStores")}
         </h2>
         {!isLoading && (
-          <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0">
+          <span className="text-xs text-slate-400 dark:text-ink-500 shrink-0">
             {t("shop.storesCount", { count: stores.length })}
           </span>
         )}
@@ -40,7 +40,7 @@ export default function StoreStrip({ stores, isLoading, nearbyMode }) {
                   <Link
                     key={id || `store-${idx}`}
                     to={storeUrl(store)}
-                    className="w-40 shrink-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 text-center hover:shadow-lg hover:border-orange-200 dark:hover:border-orange-900 transition-all"
+                    className="w-40 shrink-0 bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 text-center hover:shadow-lg hover:border-orange-200 dark:hover:border-orange-900 transition-all"
                   >
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-950 dark:to-orange-900 flex items-center justify-center mx-auto mb-2 text-2xl font-bold text-orange-700 dark:text-orange-300 overflow-hidden">
                       {store.logo_url
@@ -57,7 +57,7 @@ export default function StoreStrip({ stores, isLoading, nearbyMode }) {
                         {t("shop.kmAway", { km: store.distance_km })}
                       </span>
                     ) : (
-                      <span className="block mt-1 text-xs text-slate-400 dark:text-slate-500 truncate">
+                      <span className="block mt-1 text-xs text-slate-400 dark:text-ink-500 truncate">
                         {store.location?.city || t("shop.storeItems", { count: store.product_count || 0 })}
                       </span>
                     )}

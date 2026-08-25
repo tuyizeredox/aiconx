@@ -82,7 +82,7 @@ export default function CouponManager({ store, vendorUsername }) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t("store.discountCoupons")}</h3>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t("store.couponsCreated", { count: coupons.length })}</p>
+          <p className="text-xs text-slate-400 dark:text-ink-500">{t("store.couponsCreated", { count: coupons.length })}</p>
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
@@ -94,7 +94,7 @@ export default function CouponManager({ store, vendorUsername }) {
             <DialogHeader><DialogTitle>{t("store.createCouponCode")}</DialogTitle></DialogHeader>
             <div className="space-y-3 mt-2">
               <div>
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">{t("store.couponCodeLabel")}</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-ink-300 mb-1 block">{t("store.couponCodeLabel")}</label>
                 <Input
                   placeholder="e.g. SAVE20"
                   value={form.code}
@@ -104,7 +104,7 @@ export default function CouponManager({ store, vendorUsername }) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">{t("store.discountType")}</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-ink-300 mb-1 block">{t("store.discountType")}</label>
                   <Select value={form.discount_type} onValueChange={v => setForm(p => ({ ...p, discount_type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -114,7 +114,7 @@ export default function CouponManager({ store, vendorUsername }) {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">
+                  <label className="text-xs font-medium text-slate-600 dark:text-ink-300 mb-1 block">
                     {form.discount_type === "percentage" ? t("store.discountPct") : t("store.discountFlat")} *
                   </label>
                   <Input
@@ -127,7 +127,7 @@ export default function CouponManager({ store, vendorUsername }) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">{t("store.minOrderLabel")}</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-ink-300 mb-1 block">{t("store.minOrderLabel")}</label>
                   <Input
                     type="number" placeholder="0"
                     value={form.min_order_amount}
@@ -135,7 +135,7 @@ export default function CouponManager({ store, vendorUsername }) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">{t("store.maxUsesLabel")}</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-ink-300 mb-1 block">{t("store.maxUsesLabel")}</label>
                   <Input
                     type="number" placeholder="0"
                     value={form.max_uses}
@@ -144,7 +144,7 @@ export default function CouponManager({ store, vendorUsername }) {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">{t("store.expiryDate")}</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-ink-300 mb-1 block">{t("store.expiryDate")}</label>
                 <Input
                   type="date"
                   value={form.expires_at}
@@ -155,9 +155,9 @@ export default function CouponManager({ store, vendorUsername }) {
 
               {form.code && form.discount_value && (
                 <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-xl border border-dashed border-orange-200 dark:border-orange-900">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("store.couponPreview")}</p>
+                  <p className="text-xs text-slate-500 dark:text-ink-400 mb-1">{t("store.couponPreview")}</p>
                   <p className="text-sm font-bold text-orange-700 dark:text-orange-400 font-mono">{form.code}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                  <p className="text-xs text-slate-600 dark:text-ink-300 mt-0.5">
                     {form.discount_type === "percentage"
                       ? t("store.percentOff", { value: form.discount_value })
                       : t("store.flatOff", { value: form.discount_value })}
@@ -182,12 +182,12 @@ export default function CouponManager({ store, vendorUsername }) {
       {isLoading ? (
         <div className="space-y-2">
           {Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 animate-pulse h-16" />
+            <div key={i} className="bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 p-4 animate-pulse h-16" />
           ))}
         </div>
       ) : coupons.length === 0 ? (
-        <div className="text-center py-10 text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-          <Tag className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+        <div className="text-center py-10 text-slate-400 dark:text-ink-500 bg-white dark:bg-ink-800 rounded-2xl border border-dashed border-slate-200 dark:border-ink-700">
+          <Tag className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-ink-600" />
           <p className="text-sm font-medium">{t("store.noCouponsYet")}</p>
           <p className="text-xs mt-0.5">{t("store.createFirstCoupon")}</p>
         </div>
@@ -206,12 +206,12 @@ export default function CouponManager({ store, vendorUsername }) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className={`bg-white dark:bg-slate-800 rounded-xl border p-4 flex items-center gap-3 ${
-                    isInactive ? "border-slate-100 dark:border-slate-700 opacity-60" : "border-slate-100 dark:border-slate-700"
+                  className={`bg-white dark:bg-ink-800 rounded-xl border p-4 flex items-center gap-3 ${
+                    isInactive ? "border-slate-100 dark:border-ink-700 opacity-60" : "border-slate-100 dark:border-ink-700"
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    isInactive ? "bg-slate-100 dark:bg-slate-700" : "bg-orange-50 dark:bg-orange-950"
+                    isInactive ? "bg-slate-100 dark:bg-ink-700" : "bg-orange-50 dark:bg-orange-950"
                   }`}>
                     <Tag className={`w-4 h-4 ${isInactive ? "text-slate-400" : "text-orange-600"}`} />
                   </div>
@@ -235,10 +235,10 @@ export default function CouponManager({ store, vendorUsername }) {
                           : t("store.flatOff", { value: coupon.discount_value })}
                       </span>
                       {expired && <Badge className="bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border-0 text-[10px]">{t("store.couponExpired")}</Badge>}
-                      {maxed && <Badge className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-0 text-[10px]">{t("store.maxUsesReached")}</Badge>}
+                      {maxed && <Badge className="bg-gray-100 dark:bg-ink-800 text-gray-600 dark:text-ink-400 border-0 text-[10px]">{t("store.maxUsesReached")}</Badge>}
                       {!isInactive && <Badge className="bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 border-0 text-[10px]">{t("store.couponActive")}</Badge>}
                     </div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-400 dark:text-ink-500 mt-0.5">
                       {coupon.min_order_amount > 0 ? `${t("store.minOrderMin", { amount: coupon.min_order_amount })} · ` : ""}
                       {t("store.couponUses", { count: coupon.uses_count || 0 })}
                       {coupon.max_uses > 0 ? ` / ${coupon.max_uses}` : ""}
@@ -249,7 +249,7 @@ export default function CouponManager({ store, vendorUsername }) {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => toggleMutation.mutate({ id: coupon.id, is_active: coupon.is_active })}
-                      className="p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-ink-700 transition-colors"
                       title={coupon.is_active ? t("store.deactivate") : t("store.activate")}
                     >
                       {coupon.is_active

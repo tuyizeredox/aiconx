@@ -59,17 +59,17 @@ export default function CustomOptionsInput({ options = [], onChange }) {
 
   return (
     <div>
-      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+      <label className="text-sm font-medium text-slate-700 dark:text-ink-300 mb-1.5 block">
         {t("store.productCustomOptions")}
       </label>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{t("store.productCustomOptionsHint")}</p>
+      <p className="text-xs text-slate-400 dark:text-ink-500 mb-2">{t("store.productCustomOptionsHint")}</p>
 
       {options.length > 0 && (
         <div className="space-y-3 mb-3">
           {options.map((group, idx) => (
-            <div key={`${group.name}-${idx}`} className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-2">
+            <div key={`${group.name}-${idx}`} className="p-3 rounded-xl border border-slate-100 dark:border-ink-700 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{group.name}</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-ink-200">{group.name}</span>
                 <button
                   type="button"
                   onClick={() => removeGroup(idx)}
@@ -83,13 +83,13 @@ export default function CustomOptionsInput({ options = [], onChange }) {
                   {group.values.map((v, vi) => (
                     <span
                       key={`${v}-${vi}`}
-                      className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200"
+                      className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-slate-100 dark:bg-ink-700 text-xs font-medium text-slate-700 dark:text-ink-200"
                     >
                       {v}
                       <button
                         type="button"
                         onClick={() => removeValueFromGroup(idx, vi)}
-                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-ink-600 transition-colors"
                       >
                         <X className="w-2.5 h-2.5" />
                       </button>

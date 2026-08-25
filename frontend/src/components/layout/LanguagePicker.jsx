@@ -13,7 +13,7 @@ export default function LanguagePicker({ compact = false, openUp = false }) {
     <div className={`relative ${compact ? "" : "w-full"}`}>
       <button
         onClick={() => setOpen(v => !v)}
-        className={`flex items-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm text-slate-600 dark:text-slate-400 font-medium ${
+        className={`flex items-center rounded-xl hover:bg-slate-100 dark:hover:bg-ink-800 transition-colors text-sm text-slate-600 dark:text-ink-400 font-medium ${
           compact
             ? "justify-center w-full gap-1.5 px-2.5 py-1.5"
             : "justify-between w-full gap-2 px-3 py-2.5"
@@ -36,13 +36,13 @@ export default function LanguagePicker({ compact = false, openUp = false }) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: openUp ? 4 : -4 }}
               transition={{ duration: 0.12 }}
-              className={`absolute right-0 ${openUp ? "bottom-full mb-1.5" : "top-full mt-1.5"} bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-1.5 z-50 min-w-[180px] max-h-[60vh] overflow-y-auto`}
+              className={`absolute right-0 ${openUp ? "bottom-full mb-1.5" : "top-full mt-1.5"} bg-white dark:bg-ink-800 rounded-2xl shadow-xl border border-slate-100 dark:border-ink-700 p-1.5 z-50 min-w-[180px] max-h-[60vh] overflow-y-auto`}
             >
               {SUPPORTED_LANGS.map(l => (
                 <button
                   key={l.code}
                   onClick={() => { setLang(l.code); setOpen(false); }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${lang === l.code ? "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-400 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${lang === l.code ? "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-400 font-semibold" : "text-slate-700 dark:text-ink-300 hover:bg-slate-50 dark:hover:bg-ink-700"}`}
                 >
                   <span className="text-base">{l.flag}</span>
                   <span className="flex-1 text-left">{l.label}</span>

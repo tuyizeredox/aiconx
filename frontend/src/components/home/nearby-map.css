@@ -1,0 +1,249 @@
+/* ---------------------------------------------------------------------------
+   "Shops near you" map.
+
+   Leaflet ships a global stylesheet built for a stock blue-marker map, so
+   everything here is scoped under .nb-map (the map container itself) and
+   .nb-pin (the marker markup we hand to L.divIcon). Nothing in this file
+   leaks to the rest of the app, which is why it lives beside the component
+   and is imported from the lazy chunk rather than from index.css.
+--------------------------------------------------------------------------- */
+
+/* The colour behind the tiles: it is what the shopper sees while tiles load
+   and in the seams during a pan, so it has to match the theme rather than
+   flash Leaflet's default grey. */
+.nb-map {
+  background: #e9eef4;
+  font: inherit;
+  outline: none;
+}
+
+.dark .nb-map {
+  background: #101014;
+}
+
+/* Leaflet assigns z-indexes up to 1000 to its own panes and controls. Its own
+   stacking context keeps those from ever climbing over the app's sticky
+   search bar or the bottom tab bar. */
+.nb-map-shell {
+  isolation: isolate;
+}
+
+/* Attribution is a licensing requirement for the tiles, so it is styled to sit
+   quietly rather than hidden. */
+.nb-map .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(4px);
+  color: #71717a;
+  font-size: 9px;
+  line-height: 1.4;
+  padding: 1px 5px;
+  border-radius: 6px 0 0 0;
+}
+
+.nb-map .leaflet-control-attribution a {
+  color: #52525b;
+}
+
+.dark .nb-map .leaflet-control-attribution {
+  background: rgba(10, 10, 12, 0.72);
+  color: #a1a1a8;
+}
+
+.dark .nb-map .leaflet-control-attribution a {
+  color: #d2d2d5;
+}
+
+/* ------------------------------------------------------------------ pins */
+
+/* A circular badge carrying the shop's own logo, with a tail pointing at the
+   exact coordinate — the logo is what makes a pin recognisable at a glance,
+   and the tail is what makes "exactly here" unambiguous. */
+.nb-pin {
+  position: relative;
+  width: 46px;
+  height: 56px;
+  cursor: pointer;
+}
+
+.nb-pin__body {
+  position: absolute;
+  top: 0;
+  left: 3px;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: #fff;
+  border: 2.5px solid #f97316;
+  box-shadow: 0 6px 14px -5px rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ea580c;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.nb-pin__body img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.nb-pin__tail {
+  position: absolute;
+  top: 38px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid #f97316;
+  filter: drop-shadow(0 3px 2px rgba(15, 23, 42, 0.3));
+  transition: border-top-color 160ms ease;
+}
+
+/* The selected shop lifts off the map: bigger, ringed, and above its
+   neighbours, so the card at the bottom of the screen is never ambiguous
+   about which pin it is describing. */
+.nb-pin.is-on .nb-pin__body {
+  transform: scale(1.18) translateY(-2px);
+  border-color: #0a0a0c;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.28), 0 10px 20px -6px rgba(15, 23, 42, 0.6);
+}
+
+.nb-pin.is-on .nb-pin__tail {
+  border-top-color: #0a0a0c;
+}
+
+.dark .nb-pin__body {
+  background: #141417;
+  color: #fdba74;
+}
+
+.dark .nb-pin.is-on .nb-pin__body {
+  border-color: #fff;
+}
+
+.dark .nb-pin.is-on .nb-pin__tail {
+  border-top-color: #fff;
+}
+
+/* Distance is only drawn on the selected pin — on every pin it would turn a
+   dense high street into unreadable soup. */
+.nb-pin__label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, -4px);
+  margin-bottom: 2px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: #0a0a0c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px -4px rgba(15, 23, 42, 0.6);
+}
+
+.dark .nb-pin__label {
+  background: #fff;
+  color: #0a0a0c;
+}
+
+/* Keyboard users tab through markers; Leaflet gives them focus but no ring. */
+.nb-map .leaflet-marker-icon:focus-visible .nb-pin__body {
+  outline: 3px solid #f97316;
+  outline-offset: 3px;
+}
+
+/* -------------------------------------------------------------- me marker */
+
+.nb-me {
+  position: relative;
+}
+
+.nb-me__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 9999px;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.45);
+}
+
+.nb-me__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.3);
+  animation: nb-me-pulse 2.4s cubic-bezier(0.24, 0.6, 0.3, 1) infinite;
+}
+
+@keyframes nb-me-pulse {
+  0% { transform: scale(0.45); opacity: 0.85; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-me__pulse { animation: none; opacity: 0.4; }
+  .nb-pin__body { transition: none; }
+}
+
+/* --------------------------------------------------- approximate location */
+
+/* Shops placed by an IP lookup rather than by a pin their owner dropped. The
+   dashed, desaturated ring is the visual promise that the app is guessing —
+   paired with the accuracy circle the map draws once one is selected. */
+.nb-pin.is-approx .nb-pin__body {
+  border-style: dashed;
+  border-color: #94a3b8;
+  color: #64748b;
+  box-shadow: 0 4px 10px -5px rgba(15, 23, 42, 0.4);
+}
+
+.nb-pin.is-approx .nb-pin__body img {
+  opacity: 0.82;
+}
+
+.nb-pin.is-approx .nb-pin__tail {
+  border-top-color: #94a3b8;
+}
+
+.nb-pin.is-approx.is-on .nb-pin__body {
+  border-color: #0a0a0c;
+  box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.26), 0 10px 20px -6px rgba(15, 23, 42, 0.55);
+}
+
+.nb-pin.is-approx.is-on .nb-pin__tail {
+  border-top-color: #0a0a0c;
+}
+
+.dark .nb-pin.is-approx .nb-pin__body {
+  border-color: #52525b;
+  color: #a1a1a8;
+}
+
+.dark .nb-pin.is-approx .nb-pin__tail {
+  border-top-color: #52525b;
+}
+
+.dark .nb-pin.is-approx.is-on .nb-pin__body,
+.dark .nb-pin.is-approx.is-on .nb-pin__tail {
+  border-color: #fff;
+  border-top-color: #fff;
+}

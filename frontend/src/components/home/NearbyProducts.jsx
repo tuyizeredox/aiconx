@@ -7,6 +7,7 @@ import { storesAPI, productsAPI } from "@/api/apiClient";
 import { createPageUrl } from "@/lib/utils";
 import { ProductSkeleton } from "@/components/shared/LoadingSkeleton";
 import FeedProductTile from "./FeedProductTile";
+import NearbyShopsMap from "./NearbyShopsMap";
 import { rankProducts } from "@/lib/personalization";
 
 const RADIUS_KM = 15;
@@ -69,18 +70,18 @@ export default function NearbyProducts({ geo, limit = 10, variant = "rail" }) {
   if (!coords) {
     if (status === "denied" || status === "unavailable") return null;
     return (
-      <section className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
+      <section className="rounded-2xl bg-slate-50 dark:bg-ink-800/50 p-4 flex items-center gap-3.5">
+        <div className="w-10 h-10 rounded-full bg-white dark:bg-ink-900 flex items-center justify-center shrink-0">
           <MapPin className="w-5 h-5 text-orange-500" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("home.nearbyInviteTitle")}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t("home.nearbyPromptDesc")}</p>
+          <p className="text-xs text-slate-500 dark:text-ink-400 mt-0.5">{t("home.nearbyPromptDesc")}</p>
         </div>
         <button
           onClick={request}
           disabled={status === "locating"}
-          className="shrink-0 h-9 px-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-bold flex items-center gap-1.5 disabled:opacity-60"
+          className="shrink-0 h-9 px-4 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 text-[13px] font-bold flex items-center gap-1.5 disabled:opacity-60"
         >
           {status === "locating" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {t("home.nearbyEnable")}
@@ -92,7 +93,7 @@ export default function NearbyProducts({ geo, limit = 10, variant = "rail" }) {
   if (!loading && products.length === 0) {
     if (variant === "rail") return null;
     return (
-      <p className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+      <p className="py-12 text-center text-sm text-slate-400 dark:text-ink-500">
         {t("home.nearbyEmpty", { km: RADIUS_KM })}
       </p>
     );
@@ -104,14 +105,14 @@ export default function NearbyProducts({ geo, limit = 10, variant = "rail" }) {
         <h2 className="text-[17px] font-bold text-slate-900 dark:text-white">
           {t("home.nearbyTitle")}
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+        <p className="text-xs text-slate-500 dark:text-ink-400 mt-0.5">
           {t("home.nearbySubtitle", { count: stores.length })}
         </p>
       </div>
       {variant === "rail" && (
         <Link
           to={createPageUrl("Marketplace")}
-          className="shrink-0 text-[13px] font-semibold text-slate-500 dark:text-slate-400 flex items-center"
+          className="shrink-0 text-[13px] font-semibold text-slate-500 dark:text-ink-400 flex items-center"
         >
           {t("home.seeAll")} <ChevronRight className="w-4 h-4" />
         </Link>
@@ -123,6 +124,12 @@ export default function NearbyProducts({ geo, limit = 10, variant = "rail" }) {
     return (
       <section>
         {header}
+        {/* The map goes above the products: on the Nearby tab the question is
+            "which shops are around me", and the grid below is the answer to
+            "what do they have". */}
+        <div className="mb-5">
+          <NearbyShopsMap stores={stores} center={coords} radiusKm={RADIUS_KM} variant="panel" />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-5">
           {loading
             ? Array(6).fill(0).map((_, i) => <ProductSkeleton key={"nearby-sk-" + i} />)
@@ -142,6 +149,11 @@ export default function NearbyProducts({ geo, limit = 10, variant = "rail" }) {
   return (
     <section>
       {header}
+      {/* A still map, not a live one: mid-feed a draggable map would eat the
+          vertical swipe. Tapping it opens the full-screen version. */}
+      <div className="mb-3">
+        <NearbyShopsMap stores={stores} center={coords} radiusKm={RADIUS_KM} variant="preview" />
+      </div>
       {/* Contained to the same gutter as everything else on the screen rather
           than bled to the display edge — one set of vertical lines down the
           whole feed. */}

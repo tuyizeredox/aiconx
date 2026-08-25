@@ -112,12 +112,12 @@ export default function Orders() {
           placeholder={t("orders.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-2xl h-12 focus:ring-orange-500 focus:border-orange-500"
+          className="pl-10 bg-white dark:bg-ink-800 border-slate-100 dark:border-ink-700 rounded-2xl h-12 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
 
 <Tabs value={tab} onValueChange={setTab} className="mb-6">
-         <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full justify-start overflow-x-auto hide-scrollbar h-auto p-1">
+         <TabsList className="bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 w-full justify-start overflow-x-auto hide-scrollbar h-auto p-1">
            <TabsTrigger value="all" className="rounded-xl px-4 py-2">{t("common.all")}</TabsTrigger>
            <TabsTrigger value="pending" className="rounded-xl px-4 py-2">{t("orders.pending")}</TabsTrigger>
            <TabsTrigger value="processing" className="rounded-xl px-4 py-2">{t("orders.processing")}</TabsTrigger>
@@ -131,9 +131,9 @@ export default function Orders() {
       {isLoading ? (
         <div className="space-y-3">
           {Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 animate-pulse">
-              <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-3" />
-              <div className="h-3 w-48 bg-slate-100 dark:bg-slate-700 rounded" />
+            <div key={i} className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-4 animate-pulse">
+              <div className="h-4 w-32 bg-slate-200 dark:bg-ink-700 rounded mb-3" />
+              <div className="h-3 w-48 bg-slate-100 dark:bg-ink-700 rounded" />
             </div>
           ))}
         </div>
@@ -159,7 +159,7 @@ export default function Orders() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 hover:shadow-lg transition-all duration-300"
+                  className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-4 hover:shadow-lg transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="cursor-pointer" onClick={() => setDetailOrder(order)}>
@@ -168,7 +168,7 @@ export default function Orders() {
                       </p>
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 flex items-center gap-1.5">
                         {order.store_name || "Store"}
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-ink-600" />
                       </h3>
                       <p className="text-[10px] text-slate-400 mt-0.5">
                         {new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · {order.payment_method?.replaceAll('_', ' ') || 'card'}
@@ -183,7 +183,7 @@ export default function Orders() {
                   <div className="space-y-3 mb-4 cursor-pointer" onClick={() => setDetailOrder(order)}>
                     {order.items?.slice(0, 2).map((item, i) => (
                       <div key={i} className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 overflow-hidden shrink-0">
+                        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-ink-700 border border-slate-100 dark:border-ink-600 overflow-hidden shrink-0">
                           {item.product_image ? (
                             <img src={item.product_image} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -212,7 +212,7 @@ export default function Orders() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-700">
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-ink-700">
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] text-slate-400 uppercase tracking-tight">{t("orders.total")}</span>
                       <span className="text-sm font-extrabold text-slate-900 dark:text-white">{formatCurrency(order.total)}</span>
@@ -220,7 +220,7 @@ export default function Orders() {
                         <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full w-fit ${
                           order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
                           order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
-                          "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                          "bg-slate-100 dark:bg-ink-700 text-slate-500 dark:text-ink-400"
                         }`}>
                           {order.delivery_method === "pickup" ? t("orders.storePickup") : order.delivery_method === "delivery" ? t("orders.localDelivery") : t("orders.shippingMethod")}
                         </span>
@@ -254,7 +254,7 @@ export default function Orders() {
                             size="sm"
                             onClick={() => buyAgainMutation.mutate(order)}
                             disabled={buyAgainMutation.isPending}
-                            className="rounded-xl text-[10px] h-8 bg-slate-900 hover:bg-slate-800"
+                            className="rounded-xl text-[10px] h-8 bg-ink-900 hover:bg-ink-800"
                           >
                             {t("orders.buyAgain")}
                           </Button>
@@ -275,7 +275,7 @@ export default function Orders() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setDetailOrder(order)}
-                        className="rounded-xl text-[10px] h-8 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                        className="rounded-xl text-[10px] h-8 text-slate-500 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-700"
                       >
                         <Info className="w-3.5 h-3.5" />
                         {t("orders.details")}
@@ -284,7 +284,7 @@ export default function Orders() {
                   </div>
                   
                   {["processing", "shipped", "confirmed"].includes(order.status) && order.delivery_method !== "pickup" && (
-                    <div className="mt-3 bg-slate-50/50 dark:bg-slate-700/30 rounded-xl p-1">
+                    <div className="mt-3 bg-slate-50/50 dark:bg-ink-700/30 rounded-xl p-1">
                       <OrderTrackingPanel order={order} />
                     </div>
                   )}

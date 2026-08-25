@@ -8,7 +8,7 @@ import { PAYMENT_METHODS } from "@/lib/paymentMethods";
 
 function Card({ children }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4">
+    <div className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4">
       {children}
     </div>
   );
@@ -17,10 +17,10 @@ function Card({ children }) {
 function Guarantee({ icon: Icon, title, body }) {
   return (
     <div className="flex items-start gap-3">
-      <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+      <Icon className="w-4 h-4 text-slate-400 dark:text-ink-500 shrink-0 mt-0.5" />
       <div className="min-w-0">
-        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{title}</p>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">{body}</p>
+        <p className="text-xs font-bold text-slate-800 dark:text-ink-200">{title}</p>
+        <p className="text-[11px] text-slate-400 dark:text-ink-500 leading-relaxed">{body}</p>
       </div>
     </div>
   );
@@ -56,26 +56,26 @@ export default function ProductPurchaseSidebar({ store, returnWindowDays = 7 }) 
       {hasDeliveryInfo && (
         <Card>
           <div className="flex items-center gap-2 mb-3">
-            <Truck className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+            <Truck className="w-4 h-4 text-slate-700 dark:text-ink-200" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t("product.delivery")}</h3>
           </div>
 
           {delivery?.delivery_time_est && (
             <div className="mb-3">
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">{t("product.getItBy")}</p>
+              <p className="text-[11px] text-slate-400 dark:text-ink-500">{t("product.getItBy")}</p>
               <p className="text-base font-bold text-green-600 dark:text-green-500">{delivery.delivery_time_est}</p>
             </div>
           )}
 
           {methods.length > 0 && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2.5 flex items-start gap-1.5">
+            <p className="text-xs text-slate-500 dark:text-ink-400 mb-2.5 flex items-start gap-1.5">
               <PackageCheck className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" />
               <span>{methods.join(" · ")}</span>
             </p>
           )}
 
           {city && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2.5">
+            <p className="text-xs text-slate-500 dark:text-ink-400 flex items-center gap-1.5 mb-2.5">
               <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
               {t("product.shipsFrom", { city })}
             </p>
@@ -89,8 +89,8 @@ export default function ProductPurchaseSidebar({ store, returnWindowDays = 7 }) 
               </p>
             </div>
           ) : deliveryFee > 0 ? (
-            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl px-3 py-2.5">
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="bg-slate-50 dark:bg-ink-800/60 rounded-xl px-3 py-2.5">
+              <p className="text-xs font-bold text-slate-700 dark:text-ink-200">
                 {t("product.deliveryFee", { amount: formatCurrency(deliveryFee) })}
               </p>
             </div>
@@ -100,7 +100,7 @@ export default function ProductPurchaseSidebar({ store, returnWindowDays = 7 }) 
 
       <Card>
         <div className="flex items-center gap-2 mb-3">
-          <Lock className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+          <Lock className="w-4 h-4 text-slate-700 dark:text-ink-200" />
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t("product.secureCheckout")}</h3>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -108,19 +108,19 @@ export default function ProductPurchaseSidebar({ store, returnWindowDays = 7 }) 
             <div
               key={method.id}
               title={method.label}
-              className="h-9 min-w-[56px] px-2 rounded-lg border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden"
+              className="h-9 min-w-[56px] px-2 rounded-lg border border-slate-100 dark:border-ink-700 bg-white dark:bg-ink-800 flex items-center justify-center overflow-hidden"
             >
               {method.logo ? (
                 <img src={method.logo} alt={method.label} className="max-h-6 max-w-[52px] object-contain" />
               ) : (
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-ink-300 whitespace-nowrap">
                   {method.emoji} {t("product.cardPayment")}
                 </span>
               )}
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2.5">{t("product.securePaymentNote")}</p>
+        <p className="text-[11px] text-slate-400 dark:text-ink-500 mt-2.5">{t("product.securePaymentNote")}</p>
       </Card>
 
       <Card>

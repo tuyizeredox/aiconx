@@ -163,13 +163,13 @@ export default function SuggestedUsers({ currentUser }) {
           <h2 className="text-[17px] font-bold text-slate-900 dark:text-white">
             {t("home.suggestedToFollow")}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-ink-400 mt-0.5">
             {t("home.suggestedToFollowDesc")}
           </p>
         </div>
         <Link
           to={createPageUrl("Explore") + "?tab=suggestions"}
-          className="shrink-0 text-[13px] font-semibold text-slate-500 dark:text-slate-400 flex items-center"
+          className="shrink-0 text-[13px] font-semibold text-slate-500 dark:text-ink-400 flex items-center"
         >
           {t("home.seeAll")} <ChevronRight className="w-4 h-4" />
         </Link>
@@ -184,7 +184,7 @@ export default function SuggestedUsers({ currentUser }) {
             ? Array(3).fill(0).map((_, i) => (
                 <div
                   key={"sug-sk-" + i}
-                  className="w-40 h-[168px] shrink-0 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse"
+                  className="w-40 h-[168px] shrink-0 rounded-2xl bg-slate-100 dark:bg-ink-800 animate-pulse"
                 />
               ))
             : suggestions.map((item) => {
@@ -198,10 +198,10 @@ export default function SuggestedUsers({ currentUser }) {
                     key={item.key}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="snap-start shrink-0 w-40 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center"
+                    className="snap-start shrink-0 w-40 p-3 rounded-2xl bg-white dark:bg-ink-900 border border-slate-100 dark:border-ink-800 flex flex-col items-center text-center"
                   >
                     <Link to={linkTo} className="flex flex-col items-center min-w-0 w-full">
-                      <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 dark:bg-ink-800 flex items-center justify-center">
                         <AvatarImg
                           src={item.avatar_url}
                           className="w-full h-full object-cover"
@@ -213,7 +213,7 @@ export default function SuggestedUsers({ currentUser }) {
                       <p className="mt-2 text-[13px] font-bold text-slate-900 dark:text-white truncate w-full">
                         {item.display_name}
                       </p>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate w-full">
+                      <p className="text-[11px] text-slate-400 dark:text-ink-500 truncate w-full">
                         {item.subtitle}
                       </p>
                     </Link>
@@ -229,8 +229,8 @@ export default function SuggestedUsers({ currentUser }) {
                       disabled={followedNow || followMutation.isPending}
                       className={`mt-2.5 w-full h-8 rounded-full text-[12px] font-bold flex items-center justify-center gap-1 transition-colors ${
                         followedNow
-                          ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                          : "bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90"
+                          ? "bg-slate-100 text-slate-500 dark:bg-ink-800 dark:text-ink-400"
+                          : "bg-ink-900 text-white dark:bg-white dark:text-ink-900 hover:opacity-90"
                       }`}
                     >
                       {followMutation.isPending && followMutation.variables?.key === item.key ? (

@@ -37,7 +37,7 @@ import { isOrderWithdrawable } from "@/lib/orderConfirmation";
 
 const RANK_MEDAL = {
   1: { bg: "bg-yellow-100 dark:bg-yellow-900", text: "text-yellow-700 dark:text-yellow-400", border: "border-yellow-200 dark:border-yellow-700", icon: Crown },
-  2: { bg: "bg-slate-100 dark:bg-slate-700", text: "text-slate-600 dark:text-slate-300", border: "border-slate-200 dark:border-slate-600", icon: Medal },
+  2: { bg: "bg-slate-100 dark:bg-ink-700", text: "text-slate-600 dark:text-ink-300", border: "border-slate-200 dark:border-ink-600", icon: Medal },
   3: { bg: "bg-orange-100 dark:bg-orange-900", text: "text-orange-700 dark:text-orange-400", border: "border-orange-200 dark:border-orange-700", icon: Medal },
 };
 
@@ -172,15 +172,15 @@ function LeaderboardItem({ rank, name, avatar_url, total_earned, total_sales, is
       className={`flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-3.5 rounded-2xl border mb-2 transition-all ${
         isMe
           ? "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800 shadow-sm shadow-orange-100"
-          : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600"
+          : "bg-white dark:bg-ink-800 border-slate-100 dark:border-ink-700 hover:border-slate-200 dark:hover:border-ink-600"
       }`}
     >
       <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-black text-xs sm:text-sm border-2 shrink-0 ${
-        medal ? `${medal.bg} ${medal.text} ${medal.border}` : "bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600"
+        medal ? `${medal.bg} ${medal.text} ${medal.border}` : "bg-slate-50 dark:bg-ink-700 text-slate-400 dark:text-ink-500 border-slate-200 dark:border-ink-600"
       }`}>
         {rank}
       </div>
-      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0 overflow-hidden border-2 border-white dark:border-ink-700 shadow-sm">
         <AvatarImg src={avatar_url} className="w-full h-full object-cover" fallback={initials} />
       </div>
       <div className="flex-1 min-w-0">
@@ -188,11 +188,11 @@ function LeaderboardItem({ rank, name, avatar_url, total_earned, total_sales, is
           {name}
           {isMe && <span className="text-[9px] font-black text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900 px-1.5 py-0.5 rounded-full shrink-0">{t("affiliate.youBadge")}</span>}
         </p>
-        <p className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500">{total_sales} {t(`affiliate.saleSuffix_${total_sales === 1 ? "one" : "other"}`)}</p>
+        <p className="text-[11px] sm:text-xs text-slate-400 dark:text-ink-500">{total_sales} {t(`affiliate.saleSuffix_${total_sales === 1 ? "one" : "other"}`)}</p>
       </div>
       <div className="text-right shrink-0">
         <p className={`text-xs sm:text-sm font-black ${isMe ? "text-orange-700 dark:text-orange-400" : "text-orange-600"}`}>{formatCurrency(total_earned)}</p>
-        <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.earnedLabel")}</p>
+        <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-ink-500">{t("affiliate.earnedLabel")}</p>
       </div>
     </motion.div>
   );
@@ -221,11 +221,11 @@ function AssetCard({ asset, affiliateUrl }) {
 
   const renderPreview = () => {
     if (!affiliateUrl) {
-      return <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap break-words font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">{resolvedContent}</pre>;
+      return <pre className="text-xs text-slate-700 dark:text-ink-300 bg-slate-50 dark:bg-ink-900 border border-slate-100 dark:border-ink-700 rounded-xl p-4 whitespace-pre-wrap break-words font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">{resolvedContent}</pre>;
     }
     const parts = asset.content.split(/(\{YOUR_LINK\})/g);
     return (
-      <pre className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-4 whitespace-pre-wrap break-words font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">
+      <pre className="text-xs text-slate-700 dark:text-ink-300 bg-slate-50 dark:bg-ink-900 border border-slate-100 dark:border-ink-700 rounded-xl p-4 whitespace-pre-wrap break-words font-sans leading-relaxed mb-3 max-h-64 overflow-y-auto">
         {parts.map((part, i) =>
           part === "{YOUR_LINK}" ? (
             <span key={i} className="text-orange-600 dark:text-orange-400 font-semibold break-all">{affiliateUrl}</span>
@@ -238,7 +238,7 @@ function AssetCard({ asset, affiliateUrl }) {
   };
 
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden transition-all duration-300 ${expanded ? "shadow-lg" : "hover:shadow-md"}`}>
+    <div className={`bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 overflow-hidden transition-all duration-300 ${expanded ? "shadow-lg" : "hover:shadow-md"}`}>
       <div className={`bg-gradient-to-br ${asset.gradient} p-4 sm:p-5 flex items-start justify-between`}>
         <div>
           <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center mb-2.5 sm:mb-3`}>
@@ -249,7 +249,7 @@ function AssetCard({ asset, affiliateUrl }) {
         </div>
       </div>
       <div className="p-3.5 sm:p-4">
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">{asset.description}</p>
+        <p className="text-xs text-slate-500 dark:text-ink-400 mb-3 leading-relaxed">{asset.description}</p>
 
         <AnimatePresence>
           {expanded && (
@@ -269,7 +269,7 @@ function AssetCard({ asset, affiliateUrl }) {
             size="sm"
             variant="outline"
             onClick={() => setExpanded(v => !v)}
-            className="flex-1 rounded-xl h-8 text-xs gap-1 border-slate-200 dark:border-slate-600"
+            className="flex-1 rounded-xl h-8 text-xs gap-1 border-slate-200 dark:border-ink-600"
           >
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             {expanded ? t("affiliate.hide") : t("affiliate.previewBtn")}
@@ -291,13 +291,13 @@ function AssetCard({ asset, affiliateUrl }) {
 
 function StatCard({ icon: Icon, label, value, color, sub }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3 sm:p-5 min-w-0">
+    <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-3 sm:p-5 min-w-0">
       <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${color}`}>
         <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
       </div>
       <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
-      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate">{label}</p>
-      {sub && <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{sub}</p>}
+      <p className="text-xs sm:text-sm text-slate-500 dark:text-ink-400 truncate">{label}</p>
+      {sub && <p className="text-[10px] sm:text-xs text-slate-400 dark:text-ink-500 mt-0.5 truncate">{sub}</p>}
     </div>
   );
 }
@@ -306,7 +306,7 @@ function ActivityItem({ entry }) {
   const { t } = useTranslation();
   const config = {
     new_referral: { icon: Zap, color: "text-orange-500 bg-orange-50 dark:bg-orange-950", label: t("affiliate.activityNewReferral", { product: entry.product_title || t("affiliate.aProduct") }) },
-    order_update: { icon: Package, color: "text-slate-500 bg-slate-100 dark:bg-slate-800", label: t("affiliate.activityOrderUpdate", { product: entry.product_title || t("affiliate.aProduct"), status: entry.status }) },
+    order_update: { icon: Package, color: "text-slate-500 bg-slate-100 dark:bg-ink-800", label: t("affiliate.activityOrderUpdate", { product: entry.product_title || t("affiliate.aProduct"), status: entry.status }) },
     commission_credited: { icon: DollarSign, color: "text-green-600 bg-green-50 dark:bg-green-950", label: t("affiliate.activityCommissionCredited", { amount: formatCurrency(entry.amount || 0), product: entry.product_title || t("affiliate.aProduct") }) },
   }[entry.type];
   if (!config) return null;
@@ -317,8 +317,8 @@ function ActivityItem({ entry }) {
         <Icon className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{config.label}</p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+        <p className="text-xs font-medium text-slate-700 dark:text-ink-300 truncate">{config.label}</p>
+        <p className="text-[10px] text-slate-400 dark:text-ink-500 flex items-center gap-1">
           <Clock className="w-2.5 h-2.5" /> {entry.time.toLocaleTimeString()}
         </p>
       </div>
@@ -331,11 +331,11 @@ function ConversionBar({ clicks, conversions }) {
   const pct = clicks ? Math.min(100, (conversions / clicks) * 100) : 0;
   return (
     <div>
-      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+      <div className="flex justify-between text-xs text-slate-500 dark:text-ink-400 mb-1">
         <span>{t("affiliate.conversionRate")}</span>
         <span className="font-semibold text-orange-600">{pct.toFixed(1)}%</span>
       </div>
-      <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-100 dark:bg-ink-700 rounded-full overflow-hidden">
         <div className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -589,7 +589,7 @@ export default function Affiliate() {
 
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
         {heldCommission > 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <p className="text-xs text-slate-500 dark:text-ink-400 flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" /> {t("affiliate.heldCommission", { amount: formatCurrency(heldCommission) })}
           </p>
         ) : <div />}
@@ -603,11 +603,11 @@ export default function Affiliate() {
             <DialogHeader><DialogTitle>{t("affiliate.requestPayout")}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                <p className="text-xs text-slate-500 dark:text-slate-400">{t("affiliate.availableBalance")}</p>
+                <p className="text-xs text-slate-500 dark:text-ink-400">{t("affiliate.availableBalance")}</p>
                 <p className="text-2xl font-bold text-orange-700">${availablePayoutBalance.toFixed(2)}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">{t("finance.withdrawalAmount")} *</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-ink-400 mb-1 block">{t("finance.withdrawalAmount")} *</label>
                 <Input
                   type="number"
                   placeholder="0.00"
@@ -623,7 +623,7 @@ export default function Affiliate() {
                 )}
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">{t("finance.payoutMethod")}</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-ink-400 mb-1 block">{t("finance.payoutMethod")}</label>
                 <Select value={payoutForm.payment_method} onValueChange={(v) => setPayoutForm(p => ({ ...p, payment_method: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -668,7 +668,7 @@ export default function Affiliate() {
       </div>
 
       {/* Live Activity */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3 sm:p-4 mb-4 sm:mb-6">
+      <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-2 mb-1">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -679,9 +679,9 @@ export default function Affiliate() {
           </h3>
         </div>
         {activity.length === 0 ? (
-          <p className="text-xs text-slate-400 dark:text-slate-500 pl-4">{t("affiliate.liveActivityEmpty")}</p>
+          <p className="text-xs text-slate-400 dark:text-ink-500 pl-4">{t("affiliate.liveActivityEmpty")}</p>
         ) : (
-          <div className="divide-y divide-slate-50 dark:divide-slate-700/50 max-h-56 overflow-y-auto">
+          <div className="divide-y divide-slate-50 dark:divide-ink-700/50 max-h-56 overflow-y-auto">
             <AnimatePresence initial={false}>
               {activity.map(entry => <ActivityItem key={entry.id} entry={entry} />)}
             </AnimatePresence>
@@ -690,10 +690,10 @@ export default function Affiliate() {
       </div>
 
       <Tabs defaultValue="links" className="w-full">
-        <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-4 sm:mb-6 w-full lg:w-auto overflow-x-auto justify-start lg:justify-center scrollbar-hide">
-          <TabsTrigger value="links" className="rounded-xl px-3 sm:px-6 py-2 text-xs sm:text-sm whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.links")}</TabsTrigger>
-          <TabsTrigger value="leaderboard" className="rounded-xl px-3 sm:px-6 py-2 text-xs sm:text-sm whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.leaderboard")}</TabsTrigger>
-          <TabsTrigger value="assets" className="rounded-xl px-3 sm:px-6 py-2 text-xs sm:text-sm whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">{t("affiliate.marketingAssets")}</TabsTrigger>
+        <TabsList className="bg-slate-100 dark:bg-ink-800 p-1 rounded-2xl mb-4 sm:mb-6 w-full lg:w-auto overflow-x-auto justify-start lg:justify-center scrollbar-hide">
+          <TabsTrigger value="links" className="rounded-xl px-3 sm:px-6 py-2 text-xs sm:text-sm whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-ink-700 data-[state=active]:shadow-sm">{t("affiliate.links")}</TabsTrigger>
+          <TabsTrigger value="leaderboard" className="rounded-xl px-3 sm:px-6 py-2 text-xs sm:text-sm whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-ink-700 data-[state=active]:shadow-sm">{t("affiliate.leaderboard")}</TabsTrigger>
+          <TabsTrigger value="assets" className="rounded-xl px-3 sm:px-6 py-2 text-xs sm:text-sm whitespace-nowrap shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-ink-700 data-[state=active]:shadow-sm">{t("affiliate.marketingAssets")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="links" className="mt-0">
@@ -702,7 +702,7 @@ export default function Affiliate() {
             <div className="lg:col-span-3 space-y-3">
               <div className="flex items-center justify-between gap-2 sm:gap-3 mb-2">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate min-w-0">{t("affiliate.myLinks")}</h2>
-                <Button onClick={() => setCreating(v => !v)} size="sm" className={`rounded-xl gap-1.5 shrink-0 text-xs sm:text-sm ${creating ? "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600" : "bg-orange-600 hover:bg-orange-700"}`}>
+                <Button onClick={() => setCreating(v => !v)} size="sm" className={`rounded-xl gap-1.5 shrink-0 text-xs sm:text-sm ${creating ? "bg-slate-200 dark:bg-ink-700 text-slate-700 dark:text-ink-300 hover:bg-slate-300 dark:hover:bg-ink-600" : "bg-orange-600 hover:bg-orange-700"}`}>
                   <Plus className="w-4 h-4" /> {t("affiliate.newLink")}
                 </Button>
               </div>
@@ -710,22 +710,22 @@ export default function Affiliate() {
               {isLoading ? (
                 <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
               ) : myLinks.length === 0 ? (
-                <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                  <Link2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{t("affiliate.noLinks")}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("affiliate.pickProduct")}</p>
+                <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-ink-700 rounded-2xl">
+                  <Link2 className="w-10 h-10 text-slate-300 dark:text-ink-600 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-slate-600 dark:text-ink-400">{t("affiliate.noLinks")}</p>
+                  <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">{t("affiliate.pickProduct")}</p>
                 </div>
               ) : (
                 myLinks.map(link => {
                   const linkId = link._id || link.id;
                   return (
-                    <motion.div key={linkId} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3 sm:p-4">
+                    <motion.div key={linkId} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-3 sm:p-4">
                       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 flex-wrap">
                         <Link
                           to={`${createPageUrl("ProductDetail")}?id=${link.product_id}`}
                           className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 group"
                         >
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-100 dark:bg-ink-700 overflow-hidden shrink-0 flex items-center justify-center border border-slate-100 dark:border-ink-700">
                             {link.product_image ? (
                               <img
                                 src={link.product_image}
@@ -734,22 +734,22 @@ export default function Affiliate() {
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105"
                               />
                             ) : (
-                              <Package className="w-5 h-5 text-slate-300 dark:text-slate-500" />
+                              <Package className="w-5 h-5 text-slate-300 dark:text-ink-500" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{link.product_title}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{link.store_name} · {formatCurrency(link.product_price)}</p>
+                            <p className="text-xs text-slate-400 dark:text-ink-500 truncate">{link.store_name} · {formatCurrency(link.product_price)}</p>
                           </div>
                         </Link>
                         <div className="flex items-center gap-2 shrink-0">
-                          <Badge className={`text-[10px] border-0 capitalize ${link.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"}`}>
+                          <Badge className={`text-[10px] border-0 capitalize ${link.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 dark:bg-ink-700 text-slate-500 dark:text-ink-400"}`}>
                             {link.status}
                           </Badge>
                           <span className="text-xs font-bold text-orange-600 whitespace-nowrap">{link.commission_pct}% comm.</span>
                           <button
                             onClick={() => setDeleteTarget(link)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors shrink-0"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 dark:text-ink-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors shrink-0"
                             title={t("affiliate.deleteLink")}
                             aria-label={t("affiliate.deleteLink")}
                           >
@@ -759,24 +759,24 @@ export default function Affiliate() {
                       </div>
 
                       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3 text-center">
-                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl py-1.5 sm:py-2 px-1">
+                        <div className="bg-slate-50 dark:bg-ink-700/50 rounded-xl py-1.5 sm:py-2 px-1">
                           <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{link.clicks || 0}</p>
-                          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.clicks")}</p>
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-ink-500">{t("affiliate.clicks")}</p>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl py-1.5 sm:py-2 px-1">
+                        <div className="bg-slate-50 dark:bg-ink-700/50 rounded-xl py-1.5 sm:py-2 px-1">
                           <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{link.conversions || 0}</p>
-                          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.sales")}</p>
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-ink-500">{t("affiliate.sales")}</p>
                         </div>
                         <div className="bg-green-50 dark:bg-green-950 rounded-xl py-1.5 sm:py-2 px-1 min-w-0">
                           <p className="text-base sm:text-lg font-black text-green-700 dark:text-green-400 truncate">{formatCurrency(link.total_commission_earned || 0)}</p>
-                          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.earned")}</p>
+                          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-ink-500">{t("affiliate.earned")}</p>
                         </div>
                       </div>
 
                       <ConversionBar clicks={link.clicks} conversions={link.conversions} />
 
                       <div className="flex items-start gap-2 mt-3">
-                        <div className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 break-all font-mono">
+                        <div className="flex-1 min-w-0 bg-slate-50 dark:bg-ink-900 border border-slate-200 dark:border-ink-700 rounded-xl px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs text-slate-500 dark:text-ink-400 break-all font-mono">
                           {buildAffiliateUrl(link)}
                         </div>
                         <button
@@ -814,7 +814,7 @@ export default function Affiliate() {
                   </Link>
                 </div>
               )}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3.5 sm:p-4 lg:sticky lg:top-4">
+              <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-3.5 sm:p-4 lg:sticky lg:top-4">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4 text-orange-500 shrink-0" /> {t("affiliate.chooseProduct")}
                 </h3>
@@ -842,16 +842,16 @@ export default function Affiliate() {
                           onClick={() => !linked && createLinkMutation.mutate(product)}
                           disabled={linked || createLinkMutation.isPending}
                           className={`w-full flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl text-left transition-colors border ${
-                            linked ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 cursor-default" : "hover:bg-orange-50 dark:hover:bg-orange-950 border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800"
+                            linked ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 cursor-default" : "hover:bg-orange-50 dark:hover:bg-orange-950 border-slate-100 dark:border-ink-700 hover:border-orange-200 dark:hover:border-orange-800"
                           }`}
                         >
-                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-100 dark:bg-ink-700 overflow-hidden shrink-0">
                             {product.images?.[0] && <img src={product.images[0]} alt="" className="w-full h-full object-cover" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">{product.title}</p>
+                            <p className="text-xs font-semibold text-slate-800 dark:text-ink-200 line-clamp-2">{product.title}</p>
                             <p className="text-xs text-orange-600 font-bold">{formatCurrency(product.price)}</p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("affiliate.commissionLabel", { pct: product.affiliate_commission_pct || 10 })}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-ink-500">{t("affiliate.commissionLabel", { pct: product.affiliate_commission_pct || 10 })}</p>
                           </div>
                           {pendingProductId === productId ? (
                             <Loader2 className="w-4 h-4 text-orange-400 animate-spin shrink-0" />
@@ -871,7 +871,7 @@ export default function Affiliate() {
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-700 p-3.5 sm:p-6">
+          <div className="bg-white dark:bg-ink-800 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-ink-700 p-3.5 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center shrink-0">
@@ -879,10 +879,10 @@ export default function Affiliate() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">{t("affiliate.leaderboardTitle")}</h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate">{t("affiliate.leaderboardSubtitle")}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-ink-400 truncate">{t("affiliate.leaderboardSubtitle")}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl self-start sm:self-auto w-full sm:w-auto max-w-full overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-ink-700 p-1 rounded-xl self-start sm:self-auto w-full sm:w-auto max-w-full overflow-x-auto scrollbar-hide">
                 {[
                   { value: "week", label: t("affiliate.thisWeek") },
                   { value: "month", label: t("affiliate.thisMonth") },
@@ -893,8 +893,8 @@ export default function Affiliate() {
                     onClick={() => setLeaderboardPeriod(opt.value)}
                     className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                       leaderboardPeriod === opt.value
-                        ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                        ? "bg-white dark:bg-ink-600 text-slate-900 dark:text-white shadow-sm"
+                        : "text-slate-500 dark:text-ink-400 hover:text-slate-700 dark:hover:text-ink-200"
                     }`}
                   >
                     {opt.label}
@@ -909,10 +909,10 @@ export default function Affiliate() {
                   <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
                 </div>
               ) : !leaderboardData?.leaderboard?.length ? (
-                <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                  <Trophy className="w-10 h-10 text-slate-200 dark:text-slate-600 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{t("affiliate.noDataYet")}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("affiliate.noDataDesc")}</p>
+                <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-ink-700 rounded-2xl">
+                  <Trophy className="w-10 h-10 text-slate-200 dark:text-ink-600 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-slate-600 dark:text-ink-400">{t("affiliate.noDataYet")}</p>
+                  <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">{t("affiliate.noDataDesc")}</p>
                 </div>
               ) : (
                 <>
@@ -942,14 +942,14 @@ export default function Affiliate() {
                   )}
 
                   {leaderboardData.my_rank === null && currentUser && (
-                    <div className="mt-4 p-3 sm:p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div className="mt-4 p-3 sm:p-4 bg-slate-50 dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-700 flex items-center justify-between">
                       <div className="flex items-center gap-2.5 sm:gap-3">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-black text-[10px] sm:text-xs shrink-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-ink-700 flex items-center justify-center text-slate-500 dark:text-ink-400 font-black text-[10px] sm:text-xs shrink-0">
                           {t("affiliate.youBadge")}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{t("affiliate.notRanked")}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{t("affiliate.notRankedDesc")}</p>
+                          <p className="text-sm font-bold text-slate-700 dark:text-ink-300">{t("affiliate.notRanked")}</p>
+                          <p className="text-xs text-slate-400 dark:text-ink-500">{t("affiliate.notRankedDesc")}</p>
                         </div>
                       </div>
                     </div>
@@ -965,7 +965,7 @@ export default function Affiliate() {
             <div className="flex items-start justify-between gap-3 sm:gap-4">
               <div className="min-w-0">
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{t("affiliate.marketingAssets")}</h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t("affiliate.assetsSubtitle")}</p>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-ink-400">{t("affiliate.assetsSubtitle")}</p>
               </div>
               <Badge className="bg-orange-100 text-orange-700 border-0 text-[10px] sm:text-xs font-bold shrink-0 mt-1 whitespace-nowrap">
                 {t("affiliate.templatesCount", { count: MARKETING_ASSETS.length })}

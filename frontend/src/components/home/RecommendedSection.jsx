@@ -47,7 +47,7 @@ export default function RecommendedSection({ currentUser }) {
         </h2>
         <Link
           to={createPageUrl("Marketplace")}
-          className="shrink-0 text-[13px] font-semibold text-slate-500 dark:text-slate-400 flex items-center"
+          className="shrink-0 text-[13px] font-semibold text-slate-500 dark:text-ink-400 flex items-center"
         >
           {t("home.seeAll")} <ChevronRight className="w-4 h-4" />
         </Link>

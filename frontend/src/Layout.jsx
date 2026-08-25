@@ -17,7 +17,6 @@ import {
   Store,
   Users,
   Package,
-  Sparkles,
   Settings as SettingsIcon,
   Bell,
   Shield,
@@ -49,6 +48,7 @@ import CreateActionModal from "@/components/layout/CreateActionModal";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Logo from "@/components/layout/Logo";
 import AvatarImg from "@/components/shared/AvatarImg";
+import AISparkIcon from "@/components/shared/AISparkIcon";
 import LanguagePicker from "@/components/layout/LanguagePicker";
 import { getGuestCartCount } from "@/lib/guestCart";
 import { countUnread } from "@/lib/notifications";
@@ -105,7 +105,7 @@ const SIDEBAR_ITEMS = [
   { name: "Cart", tKey: "nav.cart", icon: ShoppingBag, page: "Cart" },
   { name: "Communities", tKey: "nav.communities", icon: Users, page: "Communities" },
   { name: "Messages", tKey: "nav.messages", icon: MessageCircle, page: "Chat" },
-  { name: "AI Assistant", tKey: "nav.aiAssistant", icon: Sparkles, page: "AIAssistant" },
+  { name: "AI Assistant", tKey: "nav.aiAssistant", icon: AISparkIcon, page: "AIAssistant" },
   { name: "Orders", tKey: "nav.orders", icon: Package, page: "Orders" },
   { name: "My Store", tKey: "nav.myStore", icon: Store, page: "MyStore" },
   { name: "Notifications", tKey: "nav.notifications", icon: Bell, page: "Notifications" },
@@ -129,7 +129,7 @@ const QUICK_LINK_ITEMS = [
 function CountBadge({ count }) {
   if (!count) return null;
   return (
-    <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 bg-red-500 text-white text-[10px] font-bold leading-none rounded-full flex items-center justify-center ring-2 ring-white dark:ring-[#181824]">
+    <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 bg-red-500 text-white text-[10px] font-bold leading-none rounded-full flex items-center justify-center ring-2 ring-white dark:ring-ink-900">
       {count > 9 ? "9+" : count}
     </span>
   );
@@ -284,11 +284,11 @@ export default function Layout({ children, currentPageName }) {
   const hasAttachedSubHeader = currentPageName === "Home";
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-[#0a0a0c] transition-colors duration-300">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-ink-900 transition-colors duration-300">
       {/* Mobile Sidebar Overlay */}
       {!isDesktop && sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60]"
+          className="fixed inset-0 bg-ink-900/50 backdrop-blur-sm z-[60]"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -297,7 +297,7 @@ export default function Layout({ children, currentPageName }) {
       <aside
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`fixed left-0 top-0 bottom-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300
+        className={`fixed left-0 top-0 bottom-0 bg-white dark:bg-ink-900 border-r border-slate-200 dark:border-ink-800 flex flex-col transition-all duration-300
           ${!isDesktop
             ? `z-[70] ${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64"}`
             : `z-30 ${isDesktopExpanded ? "w-64" : "w-[72px]"}`
@@ -320,7 +320,7 @@ export default function Layout({ children, currentPageName }) {
               {(!isDesktop || isDesktopExpanded) && (
                 <button
                   onClick={toggleSidebar}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-ink-800 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {!isDesktop ? <X className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
                 </button>
@@ -359,7 +359,7 @@ export default function Layout({ children, currentPageName }) {
                       className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                         isActive
                           ? "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                          : "text-slate-600 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-white"
                       } ${isCollapsed ? "justify-center" : ""}`}
                     >
                       <item.icon className={`w-6 h-6 shrink-0 ${isActive ? "text-orange-600 dark:text-orange-400" : ""}`} />
@@ -388,7 +388,7 @@ export default function Layout({ children, currentPageName }) {
                         (item.name === "Messages" && unreadMsgCount > 0) ||
                         (item.name === "Cart" && cartItemCount > 0)
                       ) && (
-                        <div className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
+                        <div className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-ink-900" />
                       )}
                     </Link>
                   );
@@ -397,7 +397,7 @@ export default function Layout({ children, currentPageName }) {
                   <button
                     onClick={() => setShowAllItems(prev => !prev)}
                     title={showAllItems ? "Show less" : "More"}
-                    className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300 transition-all"
+                    className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl text-slate-400 dark:text-ink-500 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-300 transition-all"
                   >
                     <ChevronRight className={`w-5 h-5 transition-transform ${showAllItems ? "rotate-90" : ""}`} />
                   </button>
@@ -411,7 +411,7 @@ export default function Layout({ children, currentPageName }) {
                       to={createPageUrl("Settings") + "?section=quickLinks"}
                       onClick={() => !isDesktop && setSidebarOpen(false)}
                       title={t("settings.quickLinks")}
-                      className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                      className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl text-slate-600 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-white transition-all"
                     >
                       <LayoutGrid className="w-6 h-6 shrink-0" />
                     </Link>
@@ -419,7 +419,7 @@ export default function Layout({ children, currentPageName }) {
                     <>
                       <button
                         onClick={() => setQuickLinksOpen(prev => !prev)}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-white transition-all"
                       >
                         <LayoutGrid className="w-6 h-6 shrink-0" />
                         <span className="truncate flex-1 text-left">{t("settings.quickLinks")}</span>
@@ -438,7 +438,7 @@ export default function Layout({ children, currentPageName }) {
                                 key={link.name}
                                 to={createPageUrl(link.page)}
                                 onClick={() => !isDesktop && setSidebarOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all"
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-white transition-all"
                               >
                                 <link.icon className="w-4 h-4 shrink-0" />
                                 <span className="truncate">{t(link.tKey)}</span>
@@ -455,7 +455,7 @@ export default function Layout({ children, currentPageName }) {
           })()}
         </nav>
 
-        <div className={`p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
+        <div className={`p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-ink-800 space-y-2 ${!isDesktopExpanded && isDesktop && "flex flex-col items-center"}`}>
           <LanguagePicker compact={!isDesktopExpanded && isDesktop} openUp />
           {currentUser?.role !== 'super_admin' && (
             <button
@@ -492,7 +492,7 @@ export default function Layout({ children, currentPageName }) {
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label={t("nav.menu")}
-            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-slate-700 dark:text-slate-200 active:bg-slate-100 dark:active:bg-white/10 transition-colors"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-slate-700 dark:text-ink-200 active:bg-slate-100 dark:active:bg-white/10 transition-colors"
           >
             <Menu className="w-[22px] h-[22px]" />
           </button>
@@ -516,7 +516,7 @@ export default function Layout({ children, currentPageName }) {
                 aria-label={t("nav.wishlist")}
                 className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
               >
-                <Heart className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
+                <Heart className="w-[21px] h-[21px] text-slate-600 dark:text-ink-300" />
                 <CountBadge count={wishlistCount} />
               </Link>
             )}
@@ -526,7 +526,7 @@ export default function Layout({ children, currentPageName }) {
               aria-label={t("nav.messages")}
               className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
             >
-              <MessageCircle className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
+              <MessageCircle className="w-[21px] h-[21px] text-slate-600 dark:text-ink-300" />
               <CountBadge count={unreadMsgCount} />
             </Link>
 
@@ -538,7 +538,7 @@ export default function Layout({ children, currentPageName }) {
                 aria-label={t("nav.cart")}
                 className="relative w-9 h-9 flex items-center justify-center rounded-xl active:bg-slate-100 dark:active:bg-white/10 transition-colors"
               >
-                <ShoppingBag className="w-[21px] h-[21px] text-slate-600 dark:text-slate-300" />
+                <ShoppingBag className="w-[21px] h-[21px] text-slate-600 dark:text-ink-300" />
                 <CountBadge count={cartItemCount} />
               </Link>
             )}
@@ -550,25 +550,25 @@ export default function Layout({ children, currentPageName }) {
             className="relative shrink-0 ml-1.5"
           >
             <span className="block w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-br from-orange-400 to-orange-600">
-              <span className="flex w-full h-full items-center justify-center rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+              <span className="flex w-full h-full items-center justify-center rounded-full overflow-hidden bg-slate-100 dark:bg-ink-800">
                 <AvatarImg
                   src={currentUser?.avatar_url}
                   alt=""
                   className="w-full h-full object-cover"
                   fallback={
                     currentUser?.full_name || currentUser?.username ? (
-                      <span className="text-[13px] font-bold text-slate-600 dark:text-slate-200">
+                      <span className="text-[13px] font-bold text-slate-600 dark:text-ink-200">
                         {(currentUser.full_name || currentUser.username)[0].toUpperCase()}
                       </span>
                     ) : (
-                      <User className="w-[18px] h-[18px] text-slate-500 dark:text-slate-300" />
+                      <User className="w-[18px] h-[18px] text-slate-500 dark:text-ink-300" />
                     )
                   }
                 />
               </span>
             </span>
             {currentUser?.is_verified && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-[15px] h-[15px] rounded-full bg-orange-500 ring-2 ring-white dark:ring-[#181824] flex items-center justify-center">
+              <span className="absolute -bottom-0.5 -right-0.5 w-[15px] h-[15px] rounded-full bg-orange-500 ring-2 ring-white dark:ring-ink-900 flex items-center justify-center">
                 <Check className="w-2 h-2 text-white" strokeWidth={4} />
               </span>
             )}
@@ -577,14 +577,14 @@ export default function Layout({ children, currentPageName }) {
       </header>
 
       {/* Main Content */}
-      <main className={`pt-[calc(env(safe-area-inset-top)+3.5rem)] lg:pt-0 ${currentPageName === "Chat" ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"} lg:pb-0 min-h-screen dark:text-slate-100 transition-all duration-300 ${isDesktop && (sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]")}`}>
+      <main className={`pt-[calc(env(safe-area-inset-top)+3.5rem)] lg:pt-0 ${currentPageName === "Chat" ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"} lg:pb-0 min-h-screen dark:text-ink-100 transition-all duration-300 ${isDesktop && (sidebarOpen ? "lg:ml-64" : "lg:ml-[72px]")}`}>
         <AnnouncementBanner />
         {children}
       </main>
 
       {/* Mobile Bottom Nav */}
       {currentPageName !== "Chat" && (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-ink-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-ink-800/60 z-50">
         <div className="flex items-center justify-around h-16 px-2">
           {(currentUser?.role === 'super_admin' ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
             const isActive = currentPageName === item.page;
@@ -607,12 +607,12 @@ export default function Layout({ children, currentPageName }) {
               >
                 <item.icon
                   className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-slate-500"
+                    isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-ink-500"
                   }`}
                 />
                 <span
                   className={`text-[10px] font-medium ${
-                    isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-slate-500"
+                    isActive ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-ink-500"
                   }`}
                 >
                   {item.tKey ? t(item.tKey) : item.name}

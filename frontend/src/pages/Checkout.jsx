@@ -44,14 +44,14 @@ const CheckoutStepper = ({ t, stage }) => {
             <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 transition-all ${
               s.state === "done" ? "bg-emerald-500 text-white" :
               s.state === "active" ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30" :
-              "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700"
+              "bg-slate-100 dark:bg-ink-800 text-slate-400 dark:text-ink-500 border border-slate-200 dark:border-ink-700"
             }`}>
               {s.state === "done" ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : idx + 1}
             </div>
-            <span className={`text-[10px] sm:text-xs font-semibold whitespace-nowrap ${s.state === "upcoming" ? "text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-200"}`}>{s.label}</span>
+            <span className={`text-[10px] sm:text-xs font-semibold whitespace-nowrap ${s.state === "upcoming" ? "text-slate-400 dark:text-ink-500" : "text-slate-700 dark:text-ink-200"}`}>{s.label}</span>
           </div>
           {idx < steps.length - 1 && (
-            <div className={`w-6 sm:w-16 h-0.5 rounded-full -mt-4 shrink-0 ${s.state === "done" ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+            <div className={`w-6 sm:w-16 h-0.5 rounded-full -mt-4 shrink-0 ${s.state === "done" ? "bg-emerald-500" : "bg-slate-200 dark:bg-ink-700"}`} />
           )}
         </React.Fragment>
       ))}
@@ -60,7 +60,7 @@ const CheckoutStepper = ({ t, stage }) => {
 };
 
 const CheckoutSection = ({ number, title, children }) => (
-  <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 mb-6">
+  <div className="bg-white dark:bg-ink-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-ink-800 p-4 sm:p-6 mb-6">
     <div className="flex items-center gap-3 mb-5">
       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-lg shadow-orange-500/30">
         {number}
@@ -731,7 +731,7 @@ export default function Checkout() {
   return (
     // Renders outside the app sidebar layout (see App.jsx) so nothing competes
     // with the checkout flow — ShopHeaderBar is the only chrome.
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-ink-900 dark:text-ink-100">
       <ShopHeaderBar backTo={createPageUrl("cart")} backLabel={t("checkout.backToCart")} showCart={false} />
 
       <div className="max-w-6xl mx-auto px-3 sm:px-6 py-5 sm:py-8 lg:py-10 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
@@ -740,18 +740,18 @@ export default function Checkout() {
           <CheckoutStepper t={t} stage={stage} />
         </div>
 
-        <div className="hidden sm:flex order-2 items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shrink-0">
+        <div className="hidden sm:flex order-2 items-center gap-2 bg-white dark:bg-ink-900 border border-slate-200 dark:border-ink-700 rounded-xl px-3 py-2 shrink-0">
           <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <div className="text-left leading-tight">
             <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.secureCheckout")}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">{t("checkout.secureCheckoutDesc")}</p>
+            <p className="text-[10px] text-slate-500 dark:text-ink-400">{t("checkout.secureCheckoutDesc")}</p>
           </div>
         </div>
       </div>
 
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{t("common.checkout")}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("checkout.completeInFewSteps")}</p>
+        <p className="text-sm text-slate-500 dark:text-ink-400 mt-1">{t("checkout.completeInFewSteps")}</p>
       </div>
 
       {mobileMoneyStatus === 'completed' && (
@@ -782,7 +782,7 @@ export default function Checkout() {
                 const storeHasPickup = selectedMethod === "pickup";
 
                 return (
-                  <div key={group.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-100 dark:border-slate-700" : ""}`}>
+                  <div key={group.store_id} className={`space-y-3 ${idx !== 0 ? "pt-6 border-t border-slate-100 dark:border-ink-700" : ""}`}>
                     {storeGroups.length > 1 && (
                       <div className="flex items-center gap-2 mb-3 flex-wrap min-w-0">
                         <StoreIcon className="w-4 h-4 text-orange-500 shrink-0" />
@@ -843,9 +843,9 @@ export default function Checkout() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{selectedAddress.label || "Address"}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5 truncate">{selectedAddress.street}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">{selectedAddress.country}</p>
+                      <p className="text-xs text-slate-600 dark:text-ink-300 font-medium mt-0.5 truncate">{selectedAddress.street}</p>
+                      <p className="text-xs text-slate-500 dark:text-ink-400 truncate">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
+                      <p className="text-xs text-slate-400 dark:text-ink-500">{selectedAddress.country}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       {selectedAddress.is_default && (
@@ -882,7 +882,7 @@ export default function Checkout() {
                             className={`flex flex-col text-left p-3.5 rounded-xl border transition-all ${
                               selectedAddressId === addr._id
                                 ? "border-orange-500 bg-orange-50/70 dark:bg-orange-900/20"
-                                : "border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700"
+                                : "border-slate-200 dark:border-ink-800 hover:border-orange-300 dark:hover:border-orange-700"
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -890,7 +890,7 @@ export default function Checkout() {
                               {selectedAddressId === addr._id && <CheckCircle2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
                             </div>
                             <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">{addr.street}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{addr.city}, {addr.state} {addr.zip}</p>
+                            <p className="text-xs text-slate-500 dark:text-ink-400 truncate">{addr.city}, {addr.state} {addr.zip}</p>
                           </button>
                         ))}
                       </div>
@@ -899,40 +899,40 @@ export default function Checkout() {
                     {!isAddingAddress ? (
                       <button
                         onClick={() => setIsAddingAddress(true)}
-                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 text-sm font-semibold"
+                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-ink-800 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 text-sm font-semibold"
                       >
                         <Plus className="w-4 h-4" /> {t("checkout.addNewAddress")}
                       </button>
                     ) : (
-                      <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                      <div className="p-5 bg-slate-50 dark:bg-ink-800/50 rounded-xl border border-slate-200 dark:border-ink-700 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{t("checkout.newAddressDetails")}</h4>
-                          <button onClick={() => setIsAddingAddress(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">{t("common.cancel")}</button>
+                          <button onClick={() => setIsAddingAddress(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-ink-300">{t("common.cancel")}</button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="col-span-1 sm:col-span-2">
                             <label htmlFor="addr-label" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.addressLabel")}</label>
-                            <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                            <Input id="addr-label" value={newAddress.label} onChange={e => setNewAddress({...newAddress, label: e.target.value})} placeholder="Home" className="rounded-xl h-11 bg-white dark:bg-ink-700 border-slate-200 dark:border-ink-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                           <div className="col-span-1 sm:col-span-2">
                             <label htmlFor="addr-street" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.streetAddress")}</label>
-                            <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                            <Input id="addr-street" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} placeholder="123 Main St" className="rounded-xl h-11 bg-white dark:bg-ink-700 border-slate-200 dark:border-ink-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                           <div>
                             <label htmlFor="addr-city" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.city")}</label>
-                            <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Kigali" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                            <Input id="addr-city" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} placeholder="Kigali" className="rounded-xl h-11 bg-white dark:bg-ink-700 border-slate-200 dark:border-ink-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                           <div>
                             <label htmlFor="addr-state" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.state")}</label>
-                            <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Kigali City" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                            <Input id="addr-state" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} placeholder="Kigali City" className="rounded-xl h-11 bg-white dark:bg-ink-700 border-slate-200 dark:border-ink-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                           <div>
                             <label htmlFor="addr-zip" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.zipCode")}</label>
-                            <Input id="addr-zip" value={newAddress.zip} onChange={e => setNewAddress({...newAddress, zip: e.target.value})} placeholder="100001" className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                            <Input id="addr-zip" value={newAddress.zip} onChange={e => setNewAddress({...newAddress, zip: e.target.value})} placeholder="100001" className="rounded-xl h-11 bg-white dark:bg-ink-700 border-slate-200 dark:border-ink-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                           <div>
                             <label htmlFor="addr-phone" className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">{t("checkout.phone")}</label>
-                            <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+250..." className="rounded-xl h-11 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+                            <Input id="addr-phone" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} placeholder="+250..." className="rounded-xl h-11 bg-white dark:bg-ink-700 border-slate-200 dark:border-ink-600 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
                           </div>
                         </div>
                         <Button
@@ -983,7 +983,7 @@ export default function Checkout() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
                       <span className="text-base leading-none">🇷🇼</span>
-                      <span className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
+                      <span className="w-px h-4 bg-slate-300 dark:bg-ink-600" />
                       <Smartphone className="w-4 h-4 text-slate-400" />
                     </span>
                     <Input
@@ -991,10 +991,10 @@ export default function Checkout() {
                       placeholder="+250 7XX XXX XXX"
                       value={checkoutPhone}
                       onChange={e => setCheckoutPhone(e.target.value)}
-                      className="rounded-xl h-12 pl-[4.5rem] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      className="rounded-xl h-12 pl-[4.5rem] bg-white dark:bg-ink-800 border-slate-200 dark:border-ink-700 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                     />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{t("checkout.phonePaymentNote")}</p>
+                  <p className="text-xs text-slate-500 dark:text-ink-400 mt-2">{t("checkout.phonePaymentNote")}</p>
                 </div>
               )}
             </div>
@@ -1006,7 +1006,7 @@ export default function Checkout() {
               value={orderNote}
               onChange={e => setOrderNote(e.target.value)}
               placeholder={t("checkout.orderNotePlaceholder")}
-              className="rounded-xl min-h-[100px] border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+              className="rounded-xl min-h-[100px] border-slate-200 dark:border-ink-700 dark:bg-ink-800 dark:text-white dark:placeholder:text-ink-400 resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
             />
           </CheckoutSection>
           </>
@@ -1021,7 +1021,7 @@ export default function Checkout() {
             <ArrowLeft className="w-4 h-4" /> {t("checkout.backToEdit")}
           </button>
 
-          <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 mb-6">
+          <div className="bg-white dark:bg-ink-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-ink-800 p-4 sm:p-6 mb-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/30">
                 <CheckCircle2 className="w-4 h-4" />
@@ -1041,12 +1041,12 @@ export default function Checkout() {
                     const FulfillIcon = FULFILLMENT_ICONS[store.delivery_method] || Truck;
                     const label = store.delivery_method === "shipping" ? t("checkout.shippingLabel") : store.delivery_method === "delivery" ? t("checkout.deliveryLabel") : t("checkout.pickupLabel");
                     return (
-                      <div key={store.store_id} className="flex items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                      <div key={store.store_id} className="flex items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-ink-800/50 rounded-xl border border-slate-100 dark:border-ink-700">
                         <div className="flex items-center gap-2 min-w-0 text-sm">
                           <FulfillIcon className="w-4 h-4 text-orange-500 shrink-0" />
                           <span className="font-semibold text-slate-900 dark:text-white truncate">{storeGroups.length > 1 ? `${store.store_name} · ${label}` : label}</span>
                         </div>
-                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">{store.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(store.shipping)}</span>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-ink-400 shrink-0">{store.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(store.shipping)}</span>
                       </div>
                     );
                   })}
@@ -1060,11 +1060,11 @@ export default function Checkout() {
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("checkout.deliverToSectionTitle")}</p>
                     <button type="button" onClick={() => setStage("form")} className="text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">{t("common.edit")}</button>
                   </div>
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-ink-800/50 rounded-xl border border-slate-100 dark:border-ink-700">
                     <Home className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                     <div className="min-w-0">
                       <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{selectedAddress.label ? `${selectedAddress.label} · ` : ""}{selectedAddress.street}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}, {selectedAddress.country}</p>
+                      <p className="text-xs text-slate-500 dark:text-ink-400 truncate">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}, {selectedAddress.country}</p>
                     </div>
                   </div>
                 </div>
@@ -1076,8 +1076,8 @@ export default function Checkout() {
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("checkout.paymentMethod")}</p>
                   <button type="button" onClick={() => setStage("form")} className="text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">{t("common.edit")}</button>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                  <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-ink-800/50 rounded-xl border border-slate-100 dark:border-ink-700">
+                  <div className="w-9 h-9 rounded-lg bg-white dark:bg-ink-900 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 dark:border-ink-700">
                     {selectedPaymentMethodInfo?.logo
                       ? <img src={selectedPaymentMethodInfo.logo} alt="" className="w-5 h-5 object-contain" />
                       : <span className="text-base">{selectedPaymentMethodInfo?.emoji}</span>
@@ -1086,7 +1086,7 @@ export default function Checkout() {
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{selectedPaymentMethodInfo?.label}</p>
                     {checkoutPhone && (paymentMethod === 'mtn' || paymentMethod === 'airtel') && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{checkoutPhone}</p>
+                      <p className="text-xs text-slate-500 dark:text-ink-400">{checkoutPhone}</p>
                     )}
                   </div>
                 </div>
@@ -1096,7 +1096,7 @@ export default function Checkout() {
               {orderNote && (
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{t("checkout.orderNote")}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 p-3">{orderNote}</p>
+                  <p className="text-sm text-slate-600 dark:text-ink-300 bg-slate-50 dark:bg-ink-800/50 rounded-xl border border-slate-100 dark:border-ink-700 p-3">{orderNote}</p>
                 </div>
               )}
             </div>
@@ -1108,29 +1108,29 @@ export default function Checkout() {
         {/* SUMMARY SIDEBAR */}
         <div className="min-w-0 lg:col-span-4">
           <div className="lg:sticky lg:top-[4.5rem] space-y-6">
-            <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <div className="bg-white dark:bg-ink-900/50 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-ink-800 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">{t("cart.orderSummary")}</h3>
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full whitespace-nowrap">{t("checkout.itemsCount", { count: calculations.itemCount })}</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-ink-400 bg-slate-100 dark:bg-ink-800 px-2.5 py-1 rounded-full whitespace-nowrap">{t("checkout.itemsCount", { count: calculations.itemCount })}</span>
               </div>
 
               {/* Itemized product list */}
               <div className="space-y-3 max-h-64 overflow-y-auto pr-1 mb-5">
                 {calculations.storeBreakdown.flatMap(store => store.items).map(item => (
                   <div key={item._id} className="flex gap-3">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-ink-800 border border-slate-200 dark:border-ink-700 shrink-0">
                       <img src={item.product_image} alt={item.product_title} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{item.product_title}</p>
                       {(item.selected_color || item.selected_size) && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-xs text-slate-500 dark:text-ink-400 truncate">
                           {item.selected_color && <>{t("product.color")}: {item.selected_color}</>}
                           {item.selected_color && item.selected_size ? " · " : ""}
                           {item.selected_size && <>{t("product.size")}: {item.selected_size}</>}
                         </p>
                       )}
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{t("checkout.qty", { qty: item.quantity, price: formatCurrency(item.product_price) })}</p>
+                      <p className="text-xs text-slate-500 dark:text-ink-400">{t("checkout.qty", { qty: item.quantity, price: formatCurrency(item.product_price) })}</p>
                     </div>
                     <div className="text-right shrink-0 flex items-center">
                       <p className="font-semibold text-sm text-slate-900 dark:text-white">{formatCurrency(item.product_price * item.quantity)}</p>
@@ -1139,20 +1139,20 @@ export default function Checkout() {
                 ))}
               </div>
 
-              <div className="h-px bg-slate-200 dark:bg-slate-700 mb-4" />
+              <div className="h-px bg-slate-200 dark:bg-ink-700 mb-4" />
 
               <div className="space-y-2.5 text-sm">
-                <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
+                <div className="flex justify-between text-slate-500 dark:text-ink-400 font-medium">
                   <span>{t("cart.subtotal")}</span>
                   <span className="text-slate-900 dark:text-white font-semibold">{formatCurrency(calculations.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
+                <div className="flex justify-between text-slate-500 dark:text-ink-400 font-medium">
                   <span>{t("checkout.fulfillment")}</span>
                   <span className={calculations.shipping === 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-900 dark:text-white font-semibold"}>
                     {calculations.shipping === 0 ? t("checkout.freeBadge") : formatCurrency(calculations.shipping)}
                   </span>
                 </div>
-                <div className="flex justify-between text-slate-500 dark:text-slate-400 font-medium">
+                <div className="flex justify-between text-slate-500 dark:text-ink-400 font-medium">
                   <span>{t("common.discount")}</span>
                   <span className={calculations.discount > 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-900 dark:text-white font-semibold"}>
                     {calculations.discount > 0 ? `- ${formatCurrency(calculations.discount)}` : formatCurrency(0)}
@@ -1160,12 +1160,12 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="h-px bg-slate-200 dark:bg-slate-700 my-4" />
+              <div className="h-px bg-slate-200 dark:bg-ink-700 my-4" />
 
               <div className="flex justify-between items-end">
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white">{t("cart.total")}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">{t("checkout.allTaxesIncluded")}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-ink-500">{t("checkout.allTaxesIncluded")}</p>
                 </div>
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{formatCurrency(calculations.total)}</span>
               </div>
@@ -1178,7 +1178,7 @@ export default function Checkout() {
                       value={couponCode}
                       onChange={e => setCouponCode(e.target.value)}
                       placeholder={t("checkout.couponPlaceholder")}
-                      className="rounded-xl h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      className="rounded-xl h-11 border-slate-200 dark:border-ink-700 dark:bg-ink-800 dark:text-white dark:placeholder:text-ink-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                     />
                     <Button
                       onClick={() => validateCouponMutation.mutate(couponCode)}
@@ -1200,7 +1200,7 @@ export default function Checkout() {
                         <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold">{t("checkout.appliedSuccessfully")}</p>
                       </div>
                     </div>
-                    <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 dark:text-slate-500 hover:text-red-500 p-1 shrink-0">
+                    <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 dark:text-ink-500 hover:text-red-500 p-1 shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -1208,26 +1208,26 @@ export default function Checkout() {
               </div>
 
               {/* Trust list */}
-              <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-3.5">
+              <div className="mt-6 pt-5 border-t border-slate-200 dark:border-ink-700 space-y-3.5">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0"><Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /></div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.securePaymentTrust")}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("checkout.securePaymentTrustDesc")}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-ink-400">{t("checkout.securePaymentTrustDesc")}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0"><RotateCcw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /></div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.easyReturns")}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("checkout.easyReturnsDesc")}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-ink-400">{t("checkout.easyReturnsDesc")}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0"><Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /></div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white">{t("checkout.support247")}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("checkout.support247Desc")}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-ink-400">{t("checkout.support247Desc")}</p>
                   </div>
                 </div>
               </div>
@@ -1253,11 +1253,11 @@ export default function Checkout() {
                   )}
                 </Button>
               )}
-              <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-3">{stage === "form" ? t("checkout.reviewBeforePay") : t("checkout.wontBeCharged")}</p>
+              <p className="text-center text-[11px] text-slate-400 dark:text-ink-500 mt-3">{stage === "form" ? t("checkout.reviewBeforePay") : t("checkout.wontBeCharged")}</p>
             </div>
 
             {/* Help/Support info */}
-            <div className="bg-slate-900 rounded-[2rem] p-6 text-white overflow-hidden relative group">
+            <div className="bg-ink-900 rounded-[2rem] p-6 text-white overflow-hidden relative group">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 transition-all group-hover:scale-150 duration-700" />
                 <div className="flex items-center gap-4 mb-3">
                     <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
@@ -1275,7 +1275,7 @@ export default function Checkout() {
       </div>
 
       {/* Bottom trust strip */}
-      <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800">
+      <div className="mt-10 pt-8 border-t border-slate-200 dark:border-ink-800">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
           {[
             { icon: Shield, title: t("checkout.trustSecurePayment"), desc: t("checkout.trustSecurePaymentDesc") },
@@ -1289,7 +1289,7 @@ export default function Checkout() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{item.title}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{item.desc}</p>
+                <p className="text-[11px] text-slate-500 dark:text-ink-400 truncate">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -1303,14 +1303,14 @@ export default function Checkout() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
+            className="bg-white dark:bg-ink-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
           >
             {payStep === "method" ? (
               <>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                   {t("subscription.choosePaymentMethod")}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 dark:text-ink-400 mb-4">
                   {t("subscription.choosePaymentMethodDesc")}
                 </p>
                 <div className="space-y-2 mb-4">
@@ -1318,7 +1318,7 @@ export default function Checkout() {
                     <button
                       key={m.id}
                       onClick={() => handleMethodSelect(m)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950 transition-all text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-ink-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950 transition-all text-left"
                     >
                       {m.logo
                         ? <img src={m.logo} alt={m.label} className="w-10 h-10 object-contain rounded-lg" />
@@ -1335,7 +1335,7 @@ export default function Checkout() {
             ) : (
               <>
                 <button
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mb-3"
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-ink-200 mb-3"
                   onClick={() => setPayStep("method")}
                 >
                   ← {t("common.back")}
@@ -1347,7 +1347,7 @@ export default function Checkout() {
                   }
                   {selectedPaymentMethod?.label}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 dark:text-ink-400 mb-4">
                   {t("subscription.phoneModalDesc")}
                 </p>
 
@@ -1363,9 +1363,9 @@ export default function Checkout() {
                 </div>
 
                 {/* ITEC Pay Branding */}
-                <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-400 dark:text-slate-500">
+                <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-400 dark:text-ink-500">
                   <span>{t("subscription.poweredBy")}</span>
-                  <span className="font-bold text-slate-600 dark:text-slate-400">ITEC Pay</span>
+                  <span className="font-bold text-slate-600 dark:text-ink-400">ITEC Pay</span>
                 </div>
 
                 <form onSubmit={(e) => { e.preventDefault(); handlePhoneSubmit(); }}>
@@ -1408,7 +1408,7 @@ export default function Checkout() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
+            className="bg-white dark:bg-ink-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -1416,7 +1416,7 @@ export default function Checkout() {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">{t("subscription.paymentPending")}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(pendingPayment.amount)}</p>
+                <p className="text-xs text-slate-500 dark:text-ink-400">{formatCurrency(pendingPayment.amount)}</p>
               </div>
             </div>
 
@@ -1430,9 +1430,9 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-400 dark:text-ink-500">
               <span>{t("subscription.poweredBy")}</span>
-              <span className="font-bold text-slate-600 dark:text-slate-400">ITEC Pay</span>
+              <span className="font-bold text-slate-600 dark:text-ink-400">ITEC Pay</span>
             </div>
 
             <Button

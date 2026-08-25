@@ -1077,7 +1077,8 @@
     "chip_trending": "Trend-Mode",
     "voiceUnsupported": "Spracheingabe wird auf diesem Gerät nicht unterstützt",
     "startListening": "Spracheingabe starten",
-    "stopListening": "Spracheingabe stoppen"
+    "stopListening": "Spracheingabe stoppen",
+    "fabLabel": "Einkaufsassistent"
   },
   "orderTracking": {
     "title": "Bestellung verfolgen",

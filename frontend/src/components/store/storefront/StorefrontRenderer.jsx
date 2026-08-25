@@ -57,7 +57,7 @@ export default function StorefrontRenderer({
 
   return (
     <div
-      className="w-full min-h-screen bg-white dark:bg-slate-900"
+      className="w-full min-h-screen bg-white dark:bg-ink-900"
       style={{
         "--store-primary": theme.primary_color || "#ea580c",
         "--store-accent": theme.accent_color || "#f97316",

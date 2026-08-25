@@ -22,7 +22,7 @@ export default function SmartActionChips({ onChipClick }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
           onClick={() => onChipClick(t(chip.labelKey))}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full text-xs text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-950 hover:border-orange-100 dark:hover:border-orange-800 hover:text-orange-700 dark:hover:text-orange-400 transition-all whitespace-nowrap shadow-sm shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 rounded-full text-xs text-slate-600 dark:text-ink-300 hover:bg-orange-50 dark:hover:bg-orange-950 hover:border-orange-100 dark:hover:border-orange-800 hover:text-orange-700 dark:hover:text-orange-400 transition-all whitespace-nowrap shadow-sm shrink-0"
         >
           <chip.icon className="w-3 h-3 text-orange-500" />
           {t(chip.labelKey)}

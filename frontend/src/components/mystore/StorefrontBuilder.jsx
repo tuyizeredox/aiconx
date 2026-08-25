@@ -186,13 +186,13 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
   return (
     <div className="space-y-4">
       {/* Publish + save */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 space-y-3">
+      <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Switch checked={config.enabled} onCheckedChange={(v) => setConfig((c) => ({ ...c, enabled: v }))} />
             <div>
               <Label className="text-sm font-semibold">Publish custom storefront</Label>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-400 dark:text-ink-500">
                 {config.enabled ? "Visitors see your custom layout" : "Visitors see the default layout"}
               </p>
             </div>
@@ -217,9 +217,9 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
 
         {/* Draft state — work is kept server-side, so leaving and coming back
             lands you back on the same unpublished layout. */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs border-t border-slate-100 dark:border-slate-700 pt-2.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs border-t border-slate-100 dark:border-ink-700 pt-2.5">
           {saveDraftMutation.isPending ? (
-            <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-ink-400">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving draft…
             </span>
           ) : hasDraft ? (
@@ -228,14 +228,14 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
               Draft saved{draftSavedAt ? ` ${relativeTime(draftSavedAt)}` : ""} — not published yet
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+            <span className="inline-flex items-center gap-1.5 text-slate-400 dark:text-ink-500">
               <Check className="w-3.5 h-3.5" /> No unpublished changes
             </span>
           )}
 
           {hasDraft && (
             <>
-              <span className="text-slate-500 dark:text-slate-400">
+              <span className="text-slate-500 dark:text-ink-400">
                 Your edits are kept automatically — you can leave and come back.
               </span>
               <button
@@ -259,14 +259,14 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
       <StorefrontAIGenerator store={store} onApply={applyAiResult} hasExistingBlocks={config.blocks.length > 0} />
 
       {/* Theme */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
-        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3">Brand colors</h3>
+      <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-4">
+        <h3 className="text-sm font-bold text-slate-700 dark:text-ink-200 mb-3">Brand colors</h3>
         <ThemeEditor theme={config.theme} onChange={(theme) => setConfig((c) => ({ ...c, theme }))} />
       </div>
 
       {/* Sections */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
-        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3">Sections</h3>
+      <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-4">
+        <h3 className="text-sm font-bold text-slate-700 dark:text-ink-200 mb-3">Sections</h3>
 
         <div className="flex flex-wrap gap-1.5 mb-4">
           {BLOCK_TYPES.map((type) => {
@@ -277,7 +277,7 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
                 key={type}
                 type="button"
                 onClick={() => addBlock(type)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-orange-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-ink-700 text-xs font-medium text-slate-600 dark:text-ink-300 hover:border-orange-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
               >
                 <Icon className="w-3.5 h-3.5" /> {meta.label}
               </button>
@@ -286,7 +286,7 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
         </div>
 
         {config.blocks.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">
+          <p className="text-sm text-slate-400 dark:text-ink-500 text-center py-8">
             No sections yet. Tap a section above to add it.
           </p>
         ) : (
@@ -303,21 +303,21 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
                           <div
                             ref={dragProvided.innerRef}
                             {...dragProvided.draggableProps}
-                            className={`flex items-center gap-3 p-3 rounded-xl border bg-slate-50/50 dark:bg-slate-900/40 ${
-                              snapshot.isDragging ? "border-orange-300 shadow-lg" : "border-slate-100 dark:border-slate-700"
+                            className={`flex items-center gap-3 p-3 rounded-xl border bg-slate-50/50 dark:bg-ink-900/40 ${
+                              snapshot.isDragging ? "border-orange-300 shadow-lg" : "border-slate-100 dark:border-ink-700"
                             }`}
                           >
                             <span {...dragProvided.dragHandleProps} className="cursor-grab text-slate-300 hover:text-slate-500 shrink-0">
                               <GripVertical className="w-4 h-4" />
                             </span>
                             {Icon && <Icon className="w-4 h-4 text-slate-400 shrink-0" />}
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1 truncate">
+                            <span className="text-sm font-medium text-slate-700 dark:text-ink-200 flex-1 truncate">
                               {meta.label || block.type}
                             </span>
                             <button
                               type="button"
                               onClick={() => toggleVisible(block.id)}
-                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0"
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-ink-200 shrink-0"
                               title={block.visible === false ? "Hidden" : "Visible"}
                             >
                               {block.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -325,7 +325,7 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
                             <button
                               type="button"
                               onClick={() => setEditingBlockId(block.id)}
-                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0"
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-ink-200 shrink-0"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -361,8 +361,8 @@ export default function StorefrontBuilder({ store, products = [], vendorUsername
       </Dialog>
 
       {showPreview && (
-        <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 overflow-y-auto">
-          <div className="sticky top-0 z-10 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 flex items-center justify-between gap-3">
+        <div className="fixed inset-0 z-50 bg-white dark:bg-ink-900 overflow-y-auto">
+          <div className="sticky top-0 z-10 bg-ink-900 text-white text-xs font-semibold px-4 py-2.5 flex items-center justify-between gap-3">
             <span>Previewing your draft — this is exactly how visitors will see it, not yet published</span>
             <div className="flex items-center gap-3 shrink-0">
               {storeId && (

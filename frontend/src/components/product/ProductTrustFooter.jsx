@@ -19,14 +19,14 @@ export default function ProductTrustFooter() {
   ];
 
   return (
-    <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
+    <section className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 sm:p-5">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {items.map(({ icon: Icon, title, body }) => (
           <div key={title} className="flex items-start gap-2.5 min-w-0">
-            <Icon className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+            <Icon className="w-5 h-5 text-slate-400 dark:text-ink-500 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">{title}</p>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed mt-0.5">{body}</p>
+              <p className="text-xs font-bold text-slate-800 dark:text-ink-200 leading-tight">{title}</p>
+              <p className="text-[11px] text-slate-400 dark:text-ink-500 leading-relaxed mt-0.5">{body}</p>
             </div>
           </div>
         ))}

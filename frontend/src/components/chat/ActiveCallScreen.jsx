@@ -248,7 +248,7 @@ function ActiveCallScreen({
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-4 right-4 z-[90] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-3 flex items-center gap-3 cursor-pointer"
+        className="fixed bottom-4 right-4 z-[90] bg-white dark:bg-ink-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-ink-700 p-3 flex items-center gap-3 cursor-pointer"
         onClick={toggleMinimize}
       >
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold">
@@ -256,7 +256,7 @@ function ActiveCallScreen({
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{otherPartyName}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-ink-400">
             {callPhase === "connected" ? formatDuration(duration) : callPhase === "connecting" ? "Connecting..." : "Ringing..."}
           </p>
         </div>
@@ -271,7 +271,7 @@ function ActiveCallScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`fixed inset-0 z-[90] bg-slate-900 flex flex-col ${isFullscreen ? "" : "p-2 md:p-4"}`}
+      className={`fixed inset-0 z-[90] bg-ink-900 flex flex-col ${isFullscreen ? "" : "p-2 md:p-4"}`}
     >
       {callPhase === "ringing" && isIncoming && (
         <div className="absolute inset-0 bg-gradient-to-br from-orange-900/90 to-orange-900/90 z-10 flex items-center justify-center">
@@ -329,12 +329,12 @@ function ActiveCallScreen({
       )}
 
       {callPhase === "failed" && (
-        <div className="absolute inset-0 bg-slate-900 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 bg-ink-900 z-10 flex items-center justify-center">
           <div className="text-center">
             <p className="text-white font-medium mb-3">Connection failed</p>
             <button
               onClick={endCall}
-              className="px-4 py-2 bg-slate-700 text-white rounded-xl text-sm"
+              className="px-4 py-2 bg-ink-700 text-white rounded-xl text-sm"
             >
               End Call
             </button>
@@ -400,14 +400,14 @@ function ActiveCallScreen({
       )}
 
       {/* Call info bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
+      <div className="bg-white dark:bg-ink-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
             {otherPartyName?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{otherPartyName}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-ink-400">
               {formatDuration(duration)}
             </p>
           </div>
@@ -415,7 +415,7 @@ function ActiveCallScreen({
         <div className="flex items-center gap-1">
           <button
             onClick={toggleMinimize}
-            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-ink-700 text-slate-500"
             title="Minimize"
           >
             <Minimize className="w-4 h-4" />
@@ -423,7 +423,7 @@ function ActiveCallScreen({
           {call.call_type === "video" && (
             <button
               onClick={toggleFullscreen}
-              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-ink-700 text-slate-500"
               title="Fullscreen"
             >
               {isFullscreen ? (
@@ -437,7 +437,7 @@ function ActiveCallScreen({
       </div>
 
       {/* Controls */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 flex items-center justify-center gap-4 shadow-lg">
+      <div className="bg-white dark:bg-ink-800 rounded-2xl p-4 flex items-center justify-center gap-4 shadow-lg">
         <ControlButton
           icon={micOn ? Mic : MicOff}
           label={micOn ? "Mute" : "Unmute"}
@@ -474,8 +474,8 @@ function ControlButton({ icon: Icon, label, active, onClick, variant = "default"
   const bgClass = variant === "danger"
     ? "bg-red-500 hover:bg-red-600 text-white"
     : active
-      ? "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white"
-      : "bg-slate-100 dark:bg-slate-700 text-red-500";
+      ? "bg-slate-100 dark:bg-ink-700 text-slate-800 dark:text-white"
+      : "bg-slate-100 dark:bg-ink-700 text-red-500";
 
   return (
     <motion.button

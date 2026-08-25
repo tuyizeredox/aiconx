@@ -19,6 +19,7 @@ import MaintenanceGate from '@/components/shared/MaintenanceGate';
 import { ThemeProvider } from "next-themes";
 import { PostUploadProvider } from '@/lib/PostUploadContext';
 import PostUploadIndicator from '@/components/shared/PostUploadIndicator';
+import AIAssistantLauncher from '@/components/shared/AIAssistantLauncher';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -73,10 +74,10 @@ const AppRoutes = () => {
   // Show loading spinner while checking auth
   if (isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center dark:bg-[#0a0a0c] bg-slate-50 transition-colors">
+      <div className="fixed inset-0 flex items-center justify-center dark:bg-ink-900 bg-slate-50 transition-colors">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 dark:border-slate-700 border-slate-200 dark:border-t-orange-500 border-t-orange-500 rounded-full animate-spin"></div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] dark:text-slate-600 text-slate-400">Loading</p>
+          <div className="w-8 h-8 border-4 dark:border-ink-700 border-slate-200 dark:border-t-orange-500 border-t-orange-500 rounded-full animate-spin"></div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] dark:text-ink-600 text-slate-400">Loading</p>
         </div>
       </div>
     );
@@ -233,8 +234,17 @@ function App() {
                   <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                     <ScrollToTop />
                     <AffiliateTracker />
+                    {/* The assistant launcher lives here rather than in Layout
+                        so it also reaches the shopping flow — marketplace,
+                        product, store, cart, checkout — which renders outside
+                        the app chrome, and so maintenance mode hides it along
+                        with everything else. It picks its own screens; see
+                        AIAssistantLauncher. */}
                     <MaintenanceGate>
-                      <AppRoutes />
+                      <>
+                        <AppRoutes />
+                        <AIAssistantLauncher />
+                      </>
                     </MaintenanceGate>
                     <PostUploadIndicator />
                   </Router>

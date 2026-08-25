@@ -1077,7 +1077,8 @@
     "chip_trending": "Moda en tendencia",
     "voiceUnsupported": "La entrada de voz no es compatible con este dispositivo",
     "startListening": "Iniciar entrada de voz",
-    "stopListening": "Detener entrada de voz"
+    "stopListening": "Detener entrada de voz",
+    "fabLabel": "Asistente de compras"
   },
   "orderTracking": {
     "title": "Rastrear pedido",

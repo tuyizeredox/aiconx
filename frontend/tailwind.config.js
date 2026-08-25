@@ -10,6 +10,33 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			/*
+  			 * The neutral ramp for every dark surface, border and dim label.
+  			 *
+  			 * Tailwind's `slate` is a blue-tinted grey: on the near-black app
+  			 * canvas (`ink-900`, the colour the root Layout paints) a slate-800
+  			 * card reads as navy sitting on black rather than as one surface
+  			 * lifted off another. `ink` keeps slate's lightness steps — so
+  			 * contrast and elevation stay where they were — and drops the hue.
+  			 *
+  			 * 900 is the canvas: layout chrome (sidebar, app bar, bottom nav,
+  			 * page roots) paints it so nothing seams against the root.
+  			 * 950 recesses below it, 800 is a card, 700 an input or border.
+  			 * 100-600 are text and icons, lightness-matched to slate.
+  			 */
+  			ink: {
+  				'50': '#fafafa',
+  				'100': '#f5f5f6',
+  				'200': '#e5e5e7',
+  				'300': '#d2d2d5',
+  				'400': '#a1a1a8',
+  				'500': '#71717a',
+  				'600': '#52525b',
+  				'700': '#26262b',
+  				'800': '#141417',
+  				'900': '#0a0a0c',
+  				'950': '#070709'
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

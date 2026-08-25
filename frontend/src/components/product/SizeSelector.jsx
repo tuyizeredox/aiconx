@@ -9,7 +9,7 @@ export default function SizeSelector({ sizes, value, onChange }) {
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="text-sm font-medium text-slate-700 dark:text-ink-300">
           {t("product.size")}
         </span>
       </div>
@@ -24,7 +24,7 @@ export default function SizeSelector({ sizes, value, onChange }) {
               className={`min-w-[2.75rem] h-10 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
                 isSelected
                   ? "border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300"
-                  : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
+                  : "border-slate-200 dark:border-ink-700 text-slate-600 dark:text-ink-300 hover:border-slate-300 dark:hover:border-ink-600"
               }`}
             >
               {size}

@@ -23,7 +23,7 @@ export default function ImageTextBlock({ block, shopLink }) {
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3">{title}</h2>
         )}
         {body && (
-          <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line mb-5">
+          <p className="text-slate-600 dark:text-ink-300 leading-relaxed whitespace-pre-line mb-5">
             {body}
           </p>
         )}

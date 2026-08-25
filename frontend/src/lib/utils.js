@@ -98,7 +98,7 @@ export function haversineKm(from, to) {
  * components rendering one bar, so the surface has to be defined once. Any
  * difference between them shows up as a visible seam across the header.
  */
-export const APP_BAR_SURFACE = "bg-white/95 dark:bg-[#181824]/95 backdrop-blur-xl";
+export const APP_BAR_SURFACE = "bg-white/95 dark:bg-ink-900/95 backdrop-blur-xl";
 
 /**
  * The paint behind a banner or cover slot that has no image uploaded yet.
@@ -108,4 +108,4 @@ export const APP_BAR_SURFACE = "bg-white/95 dark:bg-[#181824]/95 backdrop-blur-x
  * there reads as a design choice rather than an empty slot waiting for a photo.
  */
 export const COVER_PLACEHOLDER =
-  "bg-slate-950 bg-[radial-gradient(circle_at_18%_130%,rgba(249,115,22,0.38)_0%,transparent_58%),radial-gradient(circle_at_88%_-25%,rgba(249,115,22,0.16)_0%,transparent_52%)]";
+  "bg-ink-950 bg-[radial-gradient(circle_at_18%_130%,rgba(249,115,22,0.38)_0%,transparent_58%),radial-gradient(circle_at_88%_-25%,rgba(249,115,22,0.16)_0%,transparent_52%)]";

@@ -6,6 +6,7 @@ import { Follow } from '../models/Follow';
 import { z } from 'zod';
 import { checkCustomDomainLimit, checkShippingZoneLimit, checkStoreLimit, checkStorefrontLimit, getVendorPlan } from '../middleware/subscription';
 import { deleteProductCascade, deleteStoreCascade } from '../services/cascadeService';
+import { locateIp } from '../services/geoipService';
 
 // A store's physical location. Every part is optional so a vendor can publish
 // just a city (still matchable by name in "near me") or drop a precise pin.
@@ -14,7 +15,62 @@ const storeLocationSchema = z.object({
   lng: z.number().min(-180).max(180).nullish(),
   city: z.string().max(120).nullish(),
   country: z.string().max(120).nullish(),
+  // Accepted so that a client echoing back a store it just fetched isn't
+  // rejected by .strict(), but never trusted: resolveStoreLocation decides
+  // both of these server-side. A client cannot label a guess as exact.
+  source: z.enum(['manual', 'ip']).nullish(),
+  accuracy_km: z.number().min(0).nullish(),
 }).strict();
+
+type StoreLocation = z.infer<typeof storeLocationSchema>;
+
+const hasPin = (location?: StoreLocation | null) =>
+  !!location && Number.isFinite(location.lat as number) && Number.isFinite(location.lng as number);
+
+/**
+ * Works out what to store in `location`, given what the vendor submitted and
+ * what the store already had.
+ *
+ * The order is always: a pin the vendor dropped, then whatever pin the store
+ * already carries, then — only if there is still nothing to put on a map — a
+ * guess from the address they are connecting from. That last case is what
+ * stops a shop from being invisible in "near me" purely because its owner
+ * skipped the location step, and it is stamped `source: 'ip'` so the map can
+ * draw it as an area rather than as a doorstep.
+ *
+ * Returns undefined when there is nothing to change.
+ */
+async function resolveStoreLocation(
+  submitted: StoreLocation | null | undefined,
+  existing: StoreLocation | null | undefined,
+  ip: string | undefined,
+  log: { warn: Function },
+): Promise<StoreLocation | undefined> {
+  // The vendor placed a real pin: take it, and retire any earlier guess.
+  if (hasPin(submitted)) {
+    return { ...submitted, source: 'manual', accuracy_km: null };
+  }
+
+  // They already have a pin and this request isn't touching it. Editing only
+  // the city must never demote an exact location back to a guess.
+  if (hasPin(existing)) {
+    return submitted ? { ...submitted, lat: existing!.lat, lng: existing!.lng, source: existing!.source || 'manual', accuracy_km: existing!.accuracy_km ?? null } : undefined;
+  }
+
+  const guess = await locateIp(ip, log);
+  if (!guess) return submitted ?? undefined;
+
+  // A city or country the vendor typed themselves outranks the provider's.
+  return {
+    ...(submitted || {}),
+    lat: guess.lat,
+    lng: guess.lng,
+    city: submitted?.city || guess.city || null,
+    country: submitted?.country || guess.country || null,
+    source: 'ip',
+    accuracy_km: guess.accuracy_km,
+  };
+}
 
 const createStoreSchema = z.object({
   name: z.string().min(1),
@@ -550,8 +606,13 @@ export async function storeRoutes(fastify: FastifyInstance) {
       const user = request.user as any;
       const body = createStoreSchema.parse(request.body);
 
+      // A vendor who skipped the location step still gets a place on the map,
+      // inferred from where they are signing up from. See resolveStoreLocation.
+      const location = await resolveStoreLocation(body.location, null, request.ip, fastify.log);
+
       const store = new Store({
         ...body,
+        ...(location ? { location } : {}),
         owner_username: user.username,
         status: 'active', // In production, might be 'pending'
         created_at: new Date(),
@@ -590,8 +651,22 @@ export async function storeRoutes(fastify: FastifyInstance) {
         return reply.code(403).send({ error: 'Unauthorized' });
       }
 
-      if ((body as any).location !== undefined && (body as any).location !== null) {
-        (body as any).location = storeLocationSchema.parse((body as any).location);
+      // Every save is another chance to place a store that has never had a
+      // pin — including stores created before this fallback existed, which
+      // have no stored address of their own to work from.
+      const submittedLocation = (body as any).location !== undefined && (body as any).location !== null
+        ? storeLocationSchema.parse((body as any).location)
+        : undefined;
+      const resolvedLocation = await resolveStoreLocation(
+        submittedLocation,
+        store.location as any,
+        request.ip,
+        fastify.log,
+      );
+      if (resolvedLocation) {
+        (body as any).location = resolvedLocation;
+      } else {
+        delete (body as any).location;
       }
 
       if ((body as any).storefront_config !== undefined) {

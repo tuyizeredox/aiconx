@@ -18,7 +18,7 @@ export default function MobileTabBar() {
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 z-50">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-ink-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-ink-800/60 z-50">
       <div className="flex items-center justify-around h-16 px-2">
         <button
           onClick={scrollTop}
@@ -32,8 +32,8 @@ export default function MobileTabBar() {
           href="#trending"
           className="flex flex-col items-center gap-0.5 min-w-[3rem] py-1 active:scale-90 transition-transform"
         >
-          <Compass className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{t("nav.explore")}</span>
+          <Compass className="w-5 h-5 text-slate-400 dark:text-ink-500" />
+          <span className="text-[10px] font-medium text-slate-400 dark:text-ink-500">{t("nav.explore")}</span>
         </a>
 
         <Link
@@ -48,21 +48,21 @@ export default function MobileTabBar() {
           to="/cart"
           className="flex flex-col items-center gap-0.5 relative min-w-[3rem] py-1 active:scale-90 transition-transform"
         >
-          <ShoppingBag className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <ShoppingBag className="w-5 h-5 text-slate-400 dark:text-ink-500" />
           {cartCount > 0 && (
-            <span className="absolute top-0 right-1.5 bg-orange-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">
+            <span className="absolute top-0 right-1.5 bg-orange-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-ink-900">
               {cartCount > 9 ? "9+" : cartCount}
             </span>
           )}
-          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{t("nav.cart")}</span>
+          <span className="text-[10px] font-medium text-slate-400 dark:text-ink-500">{t("nav.cart")}</span>
         </Link>
 
         <Link
           to="/login"
           className="flex flex-col items-center gap-0.5 min-w-[3rem] py-1 active:scale-90 transition-transform"
         >
-          <LogIn className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{t("common.login")}</span>
+          <LogIn className="w-5 h-5 text-slate-400 dark:text-ink-500" />
+          <span className="text-[10px] font-medium text-slate-400 dark:text-ink-500">{t("common.login")}</span>
         </Link>
       </div>
     </nav>

@@ -82,7 +82,7 @@ export default function Wishlist() {
             <Heart className="w-6 h-6 fill-red-500 text-red-500 shrink-0" />
             {t("common.wishlist")}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{t("wishlist.savedItems_other", { count: wishlistItems.length })}</p>
+          <p className="text-slate-500 dark:text-ink-400 text-sm mt-0.5">{t("wishlist.savedItems_other", { count: wishlistItems.length })}</p>
         </div>
         {wishlistItems.length > 0 && (
           <Button
@@ -97,11 +97,11 @@ export default function Wishlist() {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {Array(6).fill(0).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden animate-pulse">
-              <div className="aspect-square bg-slate-200 dark:bg-slate-700" />
+            <div key={i} className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 overflow-hidden animate-pulse">
+              <div className="aspect-square bg-slate-200 dark:bg-ink-700" />
               <div className="p-3 space-y-2">
-                <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-4 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-3 w-3/4 bg-slate-200 dark:bg-ink-700 rounded" />
+                <div className="h-4 w-1/2 bg-slate-200 dark:bg-ink-700 rounded" />
               </div>
             </div>
           ))}
@@ -136,7 +136,7 @@ export default function Wishlist() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden group hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-slate-900 transition-all"
+                  className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 overflow-hidden group hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-ink-900 transition-all"
                 >
                   <Link to={createPageUrl("ProductDetail") + `?id=${item.product_id}`}>
                     <div className="relative aspect-square overflow-hidden">

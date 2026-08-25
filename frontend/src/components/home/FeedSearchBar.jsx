@@ -112,12 +112,12 @@ export default function FeedSearchBar() {
           onKeyDown={(e) => e.key === "Enter" && commit()}
           placeholder={t("home.searchPlaceholder")}
           aria-label={t("home.searchPlaceholder")}
-          className="flex-1 min-w-0 bg-transparent text-[15px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+          className="flex-1 min-w-0 bg-transparent text-[15px] text-slate-800 dark:text-ink-100 placeholder:text-slate-400 dark:placeholder:text-ink-500 outline-none"
         />
         {loadingProducts && <Loader2 className="w-4 h-4 text-orange-500 animate-spin shrink-0" />}
         {query && !loadingProducts && (
           <button onClick={() => { setQuery(""); setOpen(false); }} aria-label={t("common.clear")} className="shrink-0">
-            <X className="w-4 h-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" />
+            <X className="w-4 h-4 text-slate-400 hover:text-slate-600 dark:hover:text-ink-300" />
           </button>
         )}
         {!query && SpeechRecognition && (
@@ -130,7 +130,7 @@ export default function FeedSearchBar() {
           >
             <Mic
               className={`w-[18px] h-[18px] transition-colors ${
-                listening ? "text-orange-500 animate-pulse" : "text-slate-400 dark:text-slate-500"
+                listening ? "text-orange-500 animate-pulse" : "text-slate-400 dark:text-ink-500"
               }`}
             />
           </button>
@@ -144,17 +144,17 @@ export default function FeedSearchBar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-white dark:bg-slate-900 shadow-xl shadow-slate-900/10 dark:shadow-black/50 border border-slate-100 dark:border-slate-800 overflow-hidden"
+            className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-white dark:bg-ink-900 shadow-xl shadow-slate-900/10 dark:shadow-black/50 border border-slate-100 dark:border-ink-800 overflow-hidden"
           >
             <div className="max-h-[60vh] overflow-y-auto overscroll-contain">
               {showRecent && recent.map((q) => (
                 <button
                   key={q}
                   onClick={() => { setQuery(q); commit(q); }}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                 >
-                  <Clock className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
-                  <span className="text-sm text-slate-600 dark:text-slate-300 truncate">{q}</span>
+                  <Clock className="w-4 h-4 text-slate-300 dark:text-ink-600 shrink-0" />
+                  <span className="text-sm text-slate-600 dark:text-ink-300 truncate">{q}</span>
                 </button>
               ))}
 
@@ -163,38 +163,38 @@ export default function FeedSearchBar() {
                   key={p.id || p._id}
                   to={createPageUrl("ProductDetail") + "?id=" + (p.id || p._id)}
                   onClick={() => { recordSignal("search", { query: debounced, category: p.category, price: p.price }); setOpen(false); }}
-                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                 >
-                  <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-ink-800 overflow-hidden shrink-0 flex items-center justify-center">
                     {p.images?.[0]
                       ? <img src={p.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
                       : <Package className="w-4 h-4 text-slate-300" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{p.title}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{p.store_name}</p>
+                    <p className="text-xs text-slate-400 dark:text-ink-500 truncate">{p.store_name}</p>
                   </div>
                   <span className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{formatCurrency(p.price)}</span>
                 </Link>
               ))}
 
               {enabled && stores.length > 0 && (
-                <div className="border-t border-slate-100 dark:border-slate-800">
+                <div className="border-t border-slate-100 dark:border-ink-800">
                   {stores.map((s) => (
                     <Link
                       key={s.id || s._id}
                       to={storeUrl(s)}
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                     >
-                      <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+                      <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-ink-800 overflow-hidden shrink-0 flex items-center justify-center">
                         {s.logo_url
                           ? <img src={s.logo_url} alt="" loading="lazy" className="w-full h-full object-cover" />
                           : <StoreIcon className="w-4 h-4 text-slate-300" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{s.name}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{t("home.shopLabel")}</p>
+                        <p className="text-xs text-slate-400 dark:text-ink-500">{t("home.shopLabel")}</p>
                       </div>
                     </Link>
                   ))}
@@ -202,7 +202,7 @@ export default function FeedSearchBar() {
               )}
 
               {enabled && !loadingProducts && products.length === 0 && stores.length === 0 && (
-                <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-ink-500">
                   {t("home.searchNoResults", { query: debounced })}
                 </p>
               )}
@@ -211,7 +211,7 @@ export default function FeedSearchBar() {
             {enabled && (
               <button
                 onClick={() => commit()}
-                className="w-full px-4 py-3 text-sm font-semibold text-orange-600 dark:text-orange-400 border-t border-slate-100 dark:border-slate-800 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition-colors"
+                className="w-full px-4 py-3 text-sm font-semibold text-orange-600 dark:text-orange-400 border-t border-slate-100 dark:border-ink-800 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition-colors"
               >
                 {t("home.seeAllResults")}
               </button>

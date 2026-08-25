@@ -51,12 +51,26 @@ import './services/backupService';
 import { startReminderService } from './services/reminderService';
 import { authenticate, authenticateOptional, checkMaintenance, extractLanguage } from './middleware/auth';
 
+// Hops of reverse proxy in front of us. On the hosting platform there is
+// exactly one, which is why the default is 1: without this, `request.ip` is
+// the load balancer's address for every visitor at once, so the auth rate
+// limiter shares a single bucket across the whole internet and the geo-IP
+// fallback for store locations would resolve to the datacentre.
+//
+// Counting hops rather than trusting the header outright matters — with
+// `true`, anyone could forge X-Forwarded-For and pick their own identity for
+// rate limiting. Fastify reads the entry the outermost trusted proxy wrote.
+const TRUST_PROXY_HOPS = Number.isFinite(Number(process.env.TRUST_PROXY))
+  ? Number(process.env.TRUST_PROXY)
+  : 1;
+
 const fastify = Fastify({
   logger: {
     level: process.env.LOG_LEVEL || 'info',
   },
   bodyLimit: 50 * 1024 * 1024, // 50MB limit for file uploads
   ignoreTrailingSlash: true,
+  trustProxy: TRUST_PROXY_HOPS,
 });
 
 // Environment variables

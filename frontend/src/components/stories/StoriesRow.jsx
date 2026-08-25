@@ -95,7 +95,7 @@ export default function StoriesRow({ currentUser }) {
             className="shrink-0 flex flex-col items-center gap-1.5"
           >
             <div className={`w-14 h-14 rounded-full flex items-center justify-center relative overflow-hidden ${uploadingStory ? 'p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm animate-pulse' : myStory ? 'p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm' : 'bg-orange-50 border-2 border-dashed border-orange-200'}`}>
-              <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center relative overflow-hidden">
+              <div className="w-full h-full rounded-full bg-white dark:bg-ink-800 flex items-center justify-center relative overflow-hidden">
                 {myStory ? (
                   // Show preview of the latest story
                   (() => {
@@ -138,13 +138,13 @@ export default function StoriesRow({ currentUser }) {
 
               {/* User Avatar Badge (Small overlay) */}
               {myStory && currentUser?.avatar_url && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
+                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-ink-800 overflow-hidden shadow-sm">
                   <AvatarImg src={currentUser.avatar_url} className="w-full h-full object-cover" />
                 </div>
               )}
 
               {!myStory && !uploadingStory && (
-                <div className="absolute bottom-0 right-0 w-5 h-5 bg-orange-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm">
+                <div className="absolute bottom-0 right-0 w-5 h-5 bg-orange-600 rounded-full border-2 border-white dark:border-ink-800 flex items-center justify-center shadow-sm">
                   <Plus className="w-3 h-3 text-white" />
                 </div>
               )}
@@ -175,7 +175,7 @@ export default function StoriesRow({ currentUser }) {
                 className="shrink-0 flex flex-col items-center gap-1.5"
               >
                 <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 shadow-sm relative">
-                  <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center relative overflow-hidden">
+                  <div className="w-full h-full rounded-full bg-white dark:bg-ink-800 flex items-center justify-center relative overflow-hidden">
                     {hasMedia ? (
                       isVideo ? (
                         <video 
@@ -201,7 +201,7 @@ export default function StoriesRow({ currentUser }) {
                   </div>
                   {/* Small Avatar Overlay for other users */}
                   {(hasMedia || isText) && (group.avatar || latestStory.author_avatar) && (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-ink-800 overflow-hidden shadow-sm">
                       <AvatarImg src={group.avatar || latestStory.author_avatar} className="w-full h-full object-cover" />
                     </div>
                   )}

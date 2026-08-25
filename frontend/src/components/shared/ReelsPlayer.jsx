@@ -591,7 +591,7 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-2 mb-2 pointer-events-auto w-fit"
           >
-            <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white/70 bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white/70 bg-ink-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
               <AvatarImg
                 src={activePost.author_avatar}
                 className="w-full h-full object-cover"

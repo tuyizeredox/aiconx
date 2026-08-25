@@ -47,14 +47,14 @@ const PasswordStrength = ({ password, t }) => {
         {checks.map((c, i) => (
           <div
             key={c.label}
-            className={`h-1 flex-1 rounded-full transition-colors ${c.pass ? (passed === checks.length ? 'bg-emerald-500' : 'bg-orange-500') : 'dark:bg-slate-700 bg-slate-200'}`}
+            className={`h-1 flex-1 rounded-full transition-colors ${c.pass ? (passed === checks.length ? 'bg-emerald-500' : 'bg-orange-500') : 'dark:bg-ink-700 bg-slate-200'}`}
           />
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-medium dark:text-slate-500 text-slate-500">
+      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-medium dark:text-ink-500 text-slate-500">
         {checks.map((c) => (
           <span key={c.label} className={`flex items-center gap-1 ${c.pass ? 'text-emerald-500' : ''}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${c.pass ? 'bg-emerald-500' : 'dark:bg-slate-700 bg-slate-300'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${c.pass ? 'bg-emerald-500' : 'dark:bg-ink-700 bg-slate-300'}`} />
             {c.label}
           </span>
         ))}
@@ -160,12 +160,12 @@ const Register = () => {
     }
   };
 
-  const inputClass = "w-full pl-11 pr-4 py-4 sm:py-5 rounded-xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-medium dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-slate-500 placeholder:text-slate-400";
-  const iconClass = "absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] dark:text-slate-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300";
-  const labelClass = "text-xs font-semibold dark:text-slate-400 text-slate-600 ml-0.5";
+  const inputClass = "w-full pl-11 pr-4 py-4 sm:py-5 rounded-xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-medium dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-ink-500 placeholder:text-slate-400";
+  const iconClass = "absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] dark:text-ink-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300";
+  const labelClass = "text-xs font-semibold dark:text-ink-400 text-slate-600 ml-0.5";
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8 sm:px-6 lg:py-8">
+    <div className="min-h-screen w-full relative flex flex-col lg:flex-row items-center justify-start lg:justify-center dark:bg-ink-900 bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8 sm:px-6 lg:py-8">
       <Seo path="/register" title="Create Account" description="Create your free Aicon X account to start shopping, selling, and connecting with communities today." />
       <MemoizedBackground />
 
@@ -173,7 +173,7 @@ const Register = () => {
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
           aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -183,7 +183,7 @@ const Register = () => {
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
             aria-label={t("auth.toggleTheme")}
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -195,7 +195,7 @@ const Register = () => {
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
           aria-label={t("auth.goBack")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -205,7 +205,7 @@ const Register = () => {
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
+            className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300 flex items-center justify-center"
             aria-label={t("auth.toggleTheme")}
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -232,7 +232,7 @@ const Register = () => {
               {t("auth.registerHeroLine1")} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">{t("auth.registerHeroLine2")}</span>
             </h1>
-            <p className="text-base xl:text-lg dark:text-slate-400 text-slate-600 leading-relaxed max-w-sm">
+            <p className="text-base xl:text-lg dark:text-ink-400 text-slate-600 leading-relaxed max-w-sm">
               {t("auth.registerHeroSubtitle")}
             </p>
           </div>
@@ -257,7 +257,7 @@ const Register = () => {
 
               <div className="hidden lg:block space-y-1">
                 <h2 className="text-2xl sm:text-3xl font-black dark:text-white text-slate-900 tracking-tight">{t("auth.registerTitle")}</h2>
-                <p className="dark:text-slate-500 text-slate-500 text-sm">{t("auth.registerSubtitle")}</p>
+                <p className="dark:text-ink-500 text-slate-500 text-sm">{t("auth.registerSubtitle")}</p>
               </div>
 
               <AnimatePresence>
@@ -311,7 +311,7 @@ const Register = () => {
                           minLength={3}
                           autoComplete="username"
                         />
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm dark:text-slate-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300">@</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-sm dark:text-ink-500 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300">@</span>
                       </div>
                     </div>
                   </div>
@@ -356,7 +356,7 @@ const Register = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 dark:text-slate-500 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-9 w-9 dark:hover:bg-white/5 hover:bg-slate-100 rounded-lg"
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 dark:text-ink-500 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-9 w-9 dark:hover:bg-white/5 hover:bg-slate-100 rounded-lg"
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -385,7 +385,7 @@ const Register = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 dark:text-slate-500 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-9 w-9 dark:hover:bg-white/5 hover:bg-slate-100 rounded-lg"
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 dark:text-ink-500 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-9 w-9 dark:hover:bg-white/5 hover:bg-slate-100 rounded-lg"
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -420,7 +420,7 @@ const Register = () => {
                   <span className="w-full border-t dark:border-white/5 border-slate-200"></span>
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="dark:bg-[#0a0a0c] bg-white px-3 text-[10px] uppercase tracking-wider dark:text-slate-600 text-slate-500 font-medium">
+                  <span className="dark:bg-ink-900 bg-white px-3 text-[10px] uppercase tracking-wider dark:text-ink-600 text-slate-500 font-medium">
                     {t("auth.orContinueWith")}
                   </span>
                 </div>
@@ -449,14 +449,14 @@ const Register = () => {
                       )}
                     </AnimatePresence>
                   </div>
-                  <span className={`text-[10px] font-medium dark:text-slate-500 text-slate-500 transition-colors ${isGoogleLoading ? 'text-orange-500' : ''}`}>
+                  <span className={`text-[10px] font-medium dark:text-ink-500 text-slate-500 transition-colors ${isGoogleLoading ? 'text-orange-500' : ''}`}>
                     {isGoogleLoading ? t("auth.signingUp") : t("auth.continueWith", { provider: 'Google' })}
                   </span>
                 </div>
               </div>
 
               <div className="text-center">
-                <p className="dark:text-slate-500 text-slate-500 text-sm">
+                <p className="dark:text-ink-500 text-slate-500 text-sm">
                   {t("auth.haveAccount")}{' '}
                   <Link to="/login" state={location.state} className="text-orange-600 hover:text-orange-500 font-semibold transition-colors relative group/link">
                     {t("auth.signInLink")}
@@ -471,7 +471,7 @@ const Register = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-5 text-center dark:text-slate-700 text-slate-400 text-[10px] font-medium tracking-wide"
+            className="mt-5 text-center dark:text-ink-700 text-slate-400 text-[10px] font-medium tracking-wide"
           >
             {t("auth.securedBy")}
           </motion.p>
@@ -480,7 +480,7 @@ const Register = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="mt-3 text-center text-[10px] dark:text-slate-600 text-slate-500"
+            className="mt-3 text-center text-[10px] dark:text-ink-600 text-slate-500"
           >
             {t("auth.legalAgreement")}{' '}
             <Link to="/terms" className="text-orange-600 hover:text-orange-500 font-medium transition-colors">

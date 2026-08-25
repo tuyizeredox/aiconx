@@ -82,7 +82,7 @@ export default function ReportModal({ isOpen, onOpenChange, targetId, targetType
           <div className="space-y-2">
             <Label htmlFor="report-reason" className="text-sm font-bold">{t('report.reasonLabel')}</Label>
             <Select onValueChange={setReason} value={reason}>
-              <SelectTrigger id="report-reason" className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+              <SelectTrigger id="report-reason" className="rounded-xl border-slate-200 dark:border-ink-600 dark:bg-ink-700 dark:text-white">
                 <SelectValue placeholder={t('report.reasonPlaceholder')} />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -97,7 +97,7 @@ export default function ReportModal({ isOpen, onOpenChange, targetId, targetType
             <Textarea
               id="report-description"
               placeholder={t('report.detailsPlaceholder')}
-              className="min-h-[100px] rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 resize-none"
+              className="min-h-[100px] rounded-xl border-slate-200 dark:border-ink-600 dark:bg-ink-700 dark:text-white dark:placeholder:text-ink-400 resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />

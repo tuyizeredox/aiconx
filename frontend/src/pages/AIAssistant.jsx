@@ -5,8 +5,8 @@ import { createPageUrl } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  Sparkles, Send, Star, ChevronRight,
-  Loader2, Bot, User, RefreshCw, Mic, MicOff, Plus, ArrowLeft
+  Send, Star, ChevronRight,
+  Loader2, User, RefreshCw, Mic, MicOff, Plus, ArrowLeft, X, Maximize2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,12 @@ import { authAPI, aiAPI, cartAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
 import OrderStatusCard from "@/components/chat/OrderStatusCard";
 import SmartActionChips from "@/components/chat/SmartActionChips";
+import EarnBadge from "@/components/shared/EarnBadge";
+import AISparkIcon from "@/components/shared/AISparkIcon";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { useAuth } from "@/lib/AuthContext";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { estimateEarnings } from "@/lib/affiliate";
 
 // Bumped to v2 to drop stale cached histories from before the assistant stopped
 // auto-attaching "Recommended for you" products to every reply.
@@ -64,7 +69,7 @@ function ProductRecommendation({ product, onAddToCart, isAdding }) {
       <Link to={createPageUrl("ProductDetail") + `?id=${product.id}`}>
         <motion.div
           whileHover={{ y: -2 }}
-          className="flex gap-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3 hover:shadow-md transition-all"
+          className="flex gap-3 bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-3 hover:shadow-md transition-all"
         >
           <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
             <img src={product.images?.[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200"} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
@@ -73,13 +78,13 @@ function ProductRecommendation({ product, onAddToCart, isAdding }) {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{product.store_name}</p>
+            <p className="text-xs text-slate-400 dark:text-ink-500 font-medium">{product.store_name}</p>
             <p className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">{product.title}</p>
             <div className="flex items-center justify-between mt-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold text-orange-600">${product.price?.toFixed(2)}</span>
                 {product.compare_at_price > 0 && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 line-through">${product.compare_at_price?.toFixed(2)}</span>
+                  <span className="text-xs text-slate-400 dark:text-ink-500 line-through">${product.compare_at_price?.toFixed(2)}</span>
                 )}
               </div>
               {earnings ? (
@@ -87,12 +92,12 @@ function ProductRecommendation({ product, onAddToCart, isAdding }) {
               ) : product.rating_avg > 0 && (
                 <div className="flex items-center gap-0.5">
                   <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400">{product.rating_avg?.toFixed(1)}</span>
+                  <span className="text-xs text-slate-500 dark:text-ink-400">{product.rating_avg?.toFixed(1)}</span>
                 </div>
               )}
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 self-center shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-300 dark:text-ink-600 self-center shrink-0" />
         </motion.div>
       </Link>
       <Button
@@ -128,13 +133,13 @@ function ChatMessage({ message, onAddToCart, addingProductId }) {
           ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white"
           : "bg-gradient-to-br from-pink-500 to-orange-600 text-white"
       }`}>
-        {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+        {isUser ? <User className="w-4 h-4" /> : <AISparkIcon className="w-4 h-4" />}
       </div>
       <div className={`max-w-[80%] space-y-3 ${isUser ? "items-end" : "items-start"} flex flex-col`}>
         <div className={`rounded-2xl px-4 py-3 ${
           isUser
             ? "bg-gradient-to-br from-orange-600 to-orange-700 text-white"
-            : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-200 shadow-sm"
+            : "bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 text-slate-800 dark:text-ink-200 shadow-sm"
         }`}>
           {isUser ? (
             <p className="text-sm leading-relaxed">{displayContent}</p>
@@ -158,7 +163,7 @@ function ChatMessage({ message, onAddToCart, addingProductId }) {
 
         {message.products?.length > 0 && (
           <div className="w-full space-y-2">
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium px-1">{t("ai.recommendedForYou")}</p>
+            <p className="text-xs text-slate-400 dark:text-ink-500 font-medium px-1">{t("ai.recommendedForYou")}</p>
             {message.products.map(p => (
               <ProductRecommendation 
                 key={p.id} 
@@ -178,9 +183,9 @@ function TypingIndicator() {
   return (
     <div className="flex gap-3">
       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center">
-        <Bot className="w-4 h-4 text-white" />
+        <AISparkIcon className="w-4 h-4 text-white" />
       </div>
-      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl px-4 py-3 flex items-center gap-1.5">
+      <div className="bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 rounded-2xl px-4 py-3 flex items-center gap-1.5">
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}
@@ -194,7 +199,11 @@ function TypingIndicator() {
   );
 }
 
-export default function AIAssistant({ embedded = false }) {
+// `embedded` renders the assistant as a panel that fills whatever container it
+// is given — the floating launcher's sheet on mobile, its corner widget on
+// desktop — instead of owning the viewport the way the standalone page does.
+// `onClose` is what that launcher passes in to get a close button in the header.
+export default function AIAssistant({ embedded = false, onClose = null }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState(() => loadChatHistory(t));
   const [input, setInput] = useState("");
@@ -317,35 +326,55 @@ export default function AIAssistant({ embedded = false }) {
   return (
     <div className={
       embedded
-        ? "flex flex-col h-[70vh] min-h-[420px] rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
+        ? "flex flex-col h-full min-h-0 overflow-hidden"
         : "max-w-2xl mx-auto flex flex-col h-[calc(100vh-56px-5rem)] lg:h-screen"
     }>
       {/* Header */}
-      <div className="px-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+      <div className="px-4 py-4 bg-white/80 dark:bg-ink-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-ink-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           {!embedded && (
-            <Link to={createPageUrl("Home")} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0" aria-label={t("common.backTo", { page: t("nav.home") })}>
-              <ArrowLeft className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <Link to={createPageUrl("Home")} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-ink-800 transition-colors shrink-0" aria-label={t("common.backTo", { page: t("nav.home") })}>
+              <ArrowLeft className="w-4 h-4 text-slate-400 dark:text-ink-500" />
             </Link>
           )}
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-200">
-            <Sparkles className="w-5 h-5 text-white" />
+            <AISparkIcon tone="gloss" className="w-5 h-5" />
           </div>
           <div>
             <h1 className="text-base font-bold text-slate-900 dark:text-white">{t("ai.title")}</h1>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t("ai.status")}</p>
+              <p className="text-xs text-slate-500 dark:text-ink-400">{t("ai.status")}</p>
             </div>
           </div>
         </div>
-        <button onClick={clearChat} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title={t("ai.clearChat")}>
-          <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-        </button>
+        <div className="flex items-center gap-0.5 shrink-0">
+          {/* A long answer, a product list or an order card outgrows a corner
+              panel — this hands the same conversation to the full page. */}
+          {embedded && (
+            <Link
+              to={createPageUrl("AIAssistant")}
+              onClick={onClose || undefined}
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-ink-800 transition-colors"
+              aria-label={t("ai.openFullPage")}
+              title={t("ai.openFullPage")}
+            >
+              <Maximize2 className="w-4 h-4 text-slate-400 dark:text-ink-500" />
+            </Link>
+          )}
+          <button onClick={clearChat} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-ink-800 transition-colors" aria-label={t("ai.clearChat")} title={t("ai.clearChat")}>
+            <RefreshCw className="w-4 h-4 text-slate-400 dark:text-ink-500" />
+          </button>
+          {onClose && (
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-ink-800 transition-colors" aria-label={t("ai.closeAssistant")} title={t("ai.closeAssistant")}>
+              <X className="w-4 h-4 text-slate-400 dark:text-ink-500" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
         <AnimatePresence initial={false}>
           {messages.map(msg => (
             <ChatMessage 
@@ -368,14 +397,14 @@ export default function AIAssistant({ embedded = false }) {
       )}
 
       {/* Input */}
-      <div className="px-4 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 shrink-0">
+      <div className="px-4 py-3 bg-white/80 dark:bg-ink-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-ink-800 shrink-0">
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
             placeholder={t("ai.placeholder")}
-            className="flex-1 min-w-0 rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 text-sm dark:text-slate-200 dark:placeholder:text-slate-500"
+            className="flex-1 min-w-0 rounded-2xl border-slate-200 dark:border-ink-700 bg-slate-50 dark:bg-ink-800 focus:bg-white dark:focus:bg-ink-700 text-sm dark:text-ink-200 dark:placeholder:text-ink-500"
             disabled={isLoading}
           />
           <Button
@@ -385,7 +414,7 @@ export default function AIAssistant({ embedded = false }) {
             title={isVoiceSupported ? undefined : t("ai.voiceUnsupported")}
             aria-label={isListening ? t("ai.stopListening") : t("ai.startListening")}
             className={`w-10 h-10 rounded-2xl p-0 shrink-0 transition-all disabled:opacity-40 ${
-              isListening ? "bg-red-50 dark:bg-red-950 text-red-600 border-red-200 dark:border-red-800" : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+              isListening ? "bg-red-50 dark:bg-red-950 text-red-600 border-red-200 dark:border-red-800" : "bg-slate-50 dark:bg-ink-800 text-slate-500 dark:text-ink-400 hover:bg-slate-100 dark:hover:bg-ink-700"
             }`}
           >
             {isListening ? (
@@ -404,7 +433,7 @@ export default function AIAssistant({ embedded = false }) {
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>
-        <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center mt-2">{t("ai.poweredBy")}</p>
+        <p className="text-[10px] text-slate-400 dark:text-ink-600 text-center mt-2">{t("ai.poweredBy")}</p>
       </div>
     </div>
   );

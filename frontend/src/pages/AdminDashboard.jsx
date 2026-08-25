@@ -1930,7 +1930,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen dark:bg-[#0a0a0c] bg-slate-50">
+    <div className="min-h-screen dark:bg-ink-900 bg-slate-50">
       <div className="container mx-auto p-4 md:p-8 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -3473,7 +3473,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
                 {[{id:'pro',label:'Pro'},{id:'elite',label:'Elite'}].map(plan => (
-                  <div key={plan.id} className="space-y-3 p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                  <div key={plan.id} className="space-y-3 p-4 rounded-xl border border-slate-100 dark:border-ink-800 bg-slate-50 dark:bg-ink-900">
                     <p className="text-sm font-bold text-slate-800 dark:text-white">{plan.label} {t('admin.subscriptions.planPrices')}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -4561,7 +4561,7 @@ const AdminDashboard = () => {
 
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-semibold">{t('admin.settings.subscriptionTitle')}</h3>
-                <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
+                <div className="flex flex-wrap items-center justify-between gap-3 border p-4 rounded-lg bg-slate-50/50 dark:bg-ink-800/50">
                   <div className="flex flex-col space-y-1 min-w-0">
                     <Label htmlFor="subscription-mode" className="text-base flex items-center gap-2">
                       <Crown className="w-4 h-4 text-yellow-500 shrink-0" />

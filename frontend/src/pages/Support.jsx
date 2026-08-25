@@ -129,31 +129,31 @@ export default function Support() {
     <div className="max-w-5xl mx-auto px-4 py-12">
       <Link 
         to={createPageUrl("Home")} 
-        className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-ink-400 hover:text-slate-900 dark:hover:text-white mb-8 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> {t('support.backToHome')}
       </Link>
 
       <div className="text-center mb-16">
         <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{t('support.title')}</h1>
-        <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto font-medium">
+        <p className="text-slate-500 dark:text-ink-400 max-w-lg mx-auto font-medium">
           {t('support.subtitle')}
         </p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {supportChannels.map((channel, idx) => (
-          <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/30 text-center flex flex-col items-center group hover:border-orange-100 dark:hover:border-orange-700 transition-all">
-            <div className={`w-14 h-14 rounded-2xl ${channel.color} flex items-center justify-center text-white mb-6 shadow-lg shadow-slate-200 dark:shadow-slate-900/50 group-hover:scale-110 transition-transform`}>
+          <div key={idx} className="bg-white dark:bg-ink-800 p-6 rounded-[2.5rem] border border-slate-100 dark:border-ink-700 shadow-xl shadow-slate-200/50 dark:shadow-ink-950/30 text-center flex flex-col items-center group hover:border-orange-100 dark:hover:border-orange-700 transition-all">
+            <div className={`w-14 h-14 rounded-2xl ${channel.color} flex items-center justify-center text-white mb-6 shadow-lg shadow-slate-200 dark:shadow-ink-900/50 group-hover:scale-110 transition-transform`}>
               <channel.icon className="w-7 h-7" />
             </div>
             <h3 className="font-black text-lg mb-2 text-slate-900 dark:text-white">{channel.title}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-6 leading-relaxed flex-1">
+            <p className="text-xs text-slate-500 dark:text-ink-400 font-medium mb-6 leading-relaxed flex-1">
               {channel.description}
             </p>
             <Button 
               onClick={channel.onClick}
-              className="w-full rounded-xl font-bold bg-slate-900 hover:bg-black text-white"
+              className="w-full rounded-xl font-bold bg-ink-900 hover:bg-black text-white"
             >
               {channel.action}
             </Button>
@@ -161,9 +161,9 @@ export default function Support() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/30 p-6 md:p-10 mb-16">
+      <div className="bg-white dark:bg-ink-800 rounded-[2.5rem] border border-slate-100 dark:border-ink-700 shadow-xl shadow-slate-200/50 dark:shadow-ink-950/30 p-6 md:p-10 mb-16">
         <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">{t('support.contactInfo.title')}</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-6 max-w-xl">
+        <p className="text-sm text-slate-500 dark:text-ink-400 font-medium mb-6 max-w-xl">
           {t('support.contactInfo.description')}
         </p>
         <div className="grid sm:grid-cols-2 gap-4">
@@ -171,25 +171,25 @@ export default function Support() {
             href={`https://wa.me/${SUPPORT_PHONE.replace(/[^0-9]/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+            className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-ink-900/50 border border-slate-100 dark:border-ink-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
           >
             <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center text-white shrink-0">
               <Phone className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('support.contactInfo.phoneLabel')}</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wider">{t('support.contactInfo.phoneLabel')}</p>
               <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{SUPPORT_PHONE}</p>
             </div>
           </a>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+            className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-ink-900/50 border border-slate-100 dark:border-ink-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
           >
             <div className="w-11 h-11 rounded-xl bg-orange-600 flex items-center justify-center text-white shrink-0">
               <Mail className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('support.contactInfo.emailLabel')}</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wider">{t('support.contactInfo.emailLabel')}</p>
               <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{SUPPORT_EMAIL}</p>
             </div>
           </a>
@@ -249,7 +249,7 @@ export default function Support() {
             <div className="space-y-2">
               <Label htmlFor="reason" className="text-sm font-bold">{t('support.report.reasonLabel')}</Label>
               <Select onValueChange={(v) => setReportData({ ...reportData, reason: v })} value={reportData.reason}>
-                <SelectTrigger id="reason" className="rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                <SelectTrigger id="reason" className="rounded-xl border-slate-200 dark:border-ink-600 dark:bg-ink-700 dark:text-white">
                   <SelectValue placeholder={t('support.report.reasonPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -267,7 +267,7 @@ export default function Support() {
               <Textarea
                 id="description"
                 placeholder={t('support.report.detailsPlaceholder')}
-                className="min-h-[120px] rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 resize-none"
+                className="min-h-[120px] rounded-xl border-slate-200 dark:border-ink-600 dark:bg-ink-700 dark:text-white dark:placeholder:text-ink-400 resize-none"
                 value={reportData.description}
                 onChange={(e) => setReportData({ ...reportData, description: e.target.value })}
               />
@@ -284,7 +284,7 @@ export default function Support() {
             <Button 
               onClick={handleReportSubmit}
               disabled={isSubmitting}
-              className="bg-slate-900 hover:bg-black text-white rounded-xl font-bold px-8"
+              className="bg-ink-900 hover:bg-black text-white rounded-xl font-bold px-8"
             >
               {isSubmitting ? t('support.report.submitting') : t('support.report.submit')}
             </Button>

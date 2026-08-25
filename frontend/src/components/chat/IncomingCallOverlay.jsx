@@ -51,7 +51,7 @@ function IncomingCallOverlay({ call, currentUser, onAnswer, onReject }) {
           initial={{ scale: 0.8, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.8, y: 20 }}
-          className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 w-full max-w-sm text-center relative overflow-hidden"
+          className="bg-white dark:bg-ink-800 rounded-3xl shadow-2xl p-6 w-full max-w-sm text-center relative overflow-hidden"
         >
           {/* Pulse ring animation */}
           {flash && (
@@ -68,7 +68,7 @@ function IncomingCallOverlay({ call, currentUser, onAnswer, onReject }) {
               {callerName?.[0]?.toUpperCase() || "U"}
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{callerName}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">@{callerUsername}</p>
+            <p className="text-sm text-slate-500 dark:text-ink-400 mb-2">@{callerUsername}</p>
             <motion.p
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity }}

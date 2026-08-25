@@ -43,7 +43,7 @@ export default function SimilarProducts({ product }) {
   if (!isLoading && combined.length === 0) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
+    <div className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
         <Zap className="w-4 h-4 text-amber-500 shrink-0" />
         <h2 className="text-base font-bold text-slate-900 dark:text-white">{t("product.youMightAlsoLike")}</h2>

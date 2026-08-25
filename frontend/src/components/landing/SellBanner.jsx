@@ -18,7 +18,7 @@ export default function SellBanner() {
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-2 leading-tight">
             {t("landing.sell.title")}
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-5 max-w-md">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-ink-400 mb-5 max-w-md">
             {t("landing.sell.subtitle")}
           </p>
           <Link {...authLink("/mystore")} className="block sm:inline-block">
@@ -37,13 +37,13 @@ export default function SellBanner() {
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute -top-3 -left-3 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 px-3 py-2 flex items-center gap-1.5">
+          <div className="absolute -top-3 -left-3 bg-white dark:bg-ink-900 rounded-xl shadow-lg border border-slate-100 dark:border-ink-800 px-3 py-2 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{t("landing.sell.badgeFree")}</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-ink-200">{t("landing.sell.badgeFree")}</span>
           </div>
-          <div className="absolute -bottom-3 -right-3 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 px-3 py-2 flex items-center gap-1.5">
+          <div className="absolute -bottom-3 -right-3 bg-white dark:bg-ink-900 rounded-xl shadow-lg border border-slate-100 dark:border-ink-800 px-3 py-2 flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-orange-500" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{t("landing.sell.badgeNoCode")}</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-ink-200">{t("landing.sell.badgeNoCode")}</span>
           </div>
         </div>
       </div>

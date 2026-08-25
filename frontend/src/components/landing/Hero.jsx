@@ -40,7 +40,7 @@ export default function Hero({ stats, avgRating }) {
   const cardItems = showStats ? statItems : featureItems;
 
   return (
-    <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-50 via-white to-orange-50/60 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 border border-orange-100/80 dark:border-slate-800 pb-5 sm:pb-8 lg:pb-10">
+    <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-50 via-white to-orange-50/60 dark:from-ink-900 dark:via-ink-950 dark:to-ink-900 border border-orange-100/80 dark:border-ink-800 pb-5 sm:pb-8 lg:pb-10">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center p-5 sm:p-10 lg:p-14">
         {/* Left: copy */}
         <div>
@@ -56,12 +56,12 @@ export default function Hero({ stats, avgRating }) {
           <h1 className="text-[2.1rem] leading-[1.1] sm:text-[2.9rem] sm:leading-[1.06] lg:text-[3.2rem] font-black tracking-tight mb-4">
             <span className="text-slate-900 dark:text-white block">{t("landing.hero.titleLine1")}</span>{" "}
             <span className="text-orange-500 block">{t("landing.hero.titleLine2")}</span>{" "}
-            <span className="text-slate-400 dark:text-slate-500 block text-[1.35rem] sm:text-[1.8rem] lg:text-[2rem] mt-1">
+            <span className="text-slate-400 dark:text-ink-500 block text-[1.35rem] sm:text-[1.8rem] lg:text-[2rem] mt-1">
               {t("landing.hero.titleLine3")}
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-md mb-7">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-ink-400 max-w-md mb-7">
             {t("landing.hero.subtitle")}
           </p>
 
@@ -75,7 +75,7 @@ export default function Hero({ stats, avgRating }) {
             <a href="#trending" className="w-full sm:w-auto">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto h-12 px-6 font-bold rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-orange-400 hover:text-orange-600 active:scale-[0.98] transition-transform"
+                className="w-full sm:w-auto h-12 px-6 font-bold rounded-xl border-2 border-slate-200 dark:border-ink-700 text-slate-900 dark:text-white hover:border-orange-400 hover:text-orange-600 active:scale-[0.98] transition-transform"
               >
                 {t("landing.hero.ctaShop")}
               </Button>
@@ -89,7 +89,7 @@ export default function Hero({ stats, avgRating }) {
                   key={src}
                   src={src}
                   alt=""
-                  className="w-9 h-9 rounded-full object-cover ring-2 ring-white dark:ring-slate-950"
+                  className="w-9 h-9 rounded-full object-cover ring-2 ring-white dark:ring-ink-950"
                 />
               ))}
             </div>
@@ -99,13 +99,13 @@ export default function Hero({ stats, avgRating }) {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-3.5 h-3.5 ${i < Math.round(avgRating) ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-700"}`}
+                      className={`w-3.5 h-3.5 ${i < Math.round(avgRating) ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-ink-700"}`}
                     />
                   ))}
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">{avgRating.toFixed(1)}</span>
+                  <span className="text-xs font-bold text-slate-700 dark:text-ink-300 ml-1">{avgRating.toFixed(1)}</span>
                 </div>
               )}
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{t("landing.hero.trustFallback")}</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-ink-400">{t("landing.hero.trustFallback")}</p>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function Hero({ stats, avgRating }) {
 
           {/* Sits under the image on mobile so it never covers the photo; floats over it on desktop. */}
           <div
-            className={`mt-3 lg:mt-0 lg:absolute lg:left-6 lg:right-6 lg:-bottom-8 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4 grid ${GRID_COLS[cardItems.length]} gap-1.5 sm:gap-3`}
+            className={`mt-3 lg:mt-0 lg:absolute lg:left-6 lg:right-6 lg:-bottom-8 bg-white dark:bg-ink-900 rounded-2xl shadow-xl border border-slate-100 dark:border-ink-800 p-3 sm:p-4 grid ${GRID_COLS[cardItems.length]} gap-1.5 sm:gap-3`}
           >
             {cardItems.map(({ icon: Icon, value, label }) => (
               <div key={label} className="flex flex-col items-center text-center gap-1">
@@ -136,7 +136,7 @@ export default function Hero({ stats, avgRating }) {
                 )}
                 <p
                   className={`text-[10px] leading-tight font-semibold ${
-                    showStats ? "text-slate-500 dark:text-slate-400" : "text-slate-700 dark:text-slate-300"
+                    showStats ? "text-slate-500 dark:text-ink-400" : "text-slate-700 dark:text-ink-300"
                   }`}
                 >
                   {label}

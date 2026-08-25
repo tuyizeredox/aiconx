@@ -18,7 +18,7 @@ export default function EmptyState({ icon: Icon, title, description, cta, to, va
 
   return (
     <div
-      className={`flex flex-col items-center text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 px-5 ${
+      className={`flex flex-col items-center text-center rounded-2xl border border-dashed border-slate-200 dark:border-ink-800 bg-slate-50/60 dark:bg-ink-900/40 px-5 ${
         subtle ? "gap-2 py-8" : "gap-3 py-10"
       }`}
     >
@@ -35,7 +35,7 @@ export default function EmptyState({ icon: Icon, title, description, cta, to, va
           {title}
         </p>
         <p
-          className={`text-slate-500 dark:text-slate-400 mt-1 mx-auto ${
+          className={`text-slate-500 dark:text-ink-400 mt-1 mx-auto ${
             subtle ? "text-xs max-w-xs" : "text-xs sm:text-sm max-w-sm"
           }`}
         >

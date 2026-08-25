@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const UserNotRegisteredError = () => {
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center bg-[#0a0a0c] selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans">
+    <div className="min-h-screen w-full relative flex items-center justify-center bg-ink-900 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans">
       {/* Dynamic Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(17,17,19,1)_0%,rgba(0,0,0,1)_100%)]" />

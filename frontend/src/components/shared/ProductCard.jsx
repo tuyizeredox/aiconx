@@ -107,7 +107,7 @@ export default function ProductCard({ product, compact = false, currentUser: cur
       >
         <motion.div
           whileHover={{ y: -4 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300 group"
+          className="bg-white dark:bg-ink-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-ink-800 hover:shadow-xl hover:shadow-slate-100 dark:hover:shadow-ink-950 transition-all duration-300 group"
         >
           <div className="relative aspect-square overflow-hidden">
             <img
@@ -134,11 +134,11 @@ export default function ProductCard({ product, compact = false, currentUser: cur
                 className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors ${
                   isWishlisted
                     ? "bg-red-500 hover:bg-red-600"
-                    : "bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800"
+                    : "bg-white/90 dark:bg-ink-800/90 hover:bg-white dark:hover:bg-ink-800"
                 }`}
               >
                 <Heart className={`w-4 h-4 transition-all ${
-                  isWishlisted ? "fill-white text-white" : "text-slate-600 dark:text-slate-300"
+                  isWishlisted ? "fill-white text-white" : "text-slate-600 dark:text-ink-300"
                 }`} />
               </motion.button>
               <motion.button
@@ -148,9 +148,9 @@ export default function ProductCard({ product, compact = false, currentUser: cur
                   e.stopPropagation();
                   nativeShare();
                 }}
-                className="w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
+                className="w-8 h-8 rounded-full bg-white/90 dark:bg-ink-800/90 hover:bg-white dark:hover:bg-ink-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
               >
-                <Share2 className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                <Share2 className="w-4 h-4 text-slate-600 dark:text-ink-300" />
               </motion.button>
               {currentUser && !isOwner && (
                 <motion.button
@@ -160,20 +160,20 @@ export default function ProductCard({ product, compact = false, currentUser: cur
                     e.stopPropagation();
                     setIsReportModalOpen(true);
                   }}
-                  className="w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
+                  className="w-8 h-8 rounded-full bg-white/90 dark:bg-ink-800/90 hover:bg-white dark:hover:bg-ink-800 flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
                 >
-                  <Flag className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                  <Flag className="w-4 h-4 text-slate-600 dark:text-ink-300" />
                 </motion.button>
               )}
             </div>
           </div>
           <div className={compact ? "p-2" : "p-3"}>
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mb-1">{product.store_name || "Store"}</p>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight">{product.title}</h3>
+            <p className="text-xs text-slate-400 dark:text-ink-500 font-medium mb-1">{product.store_name || "Store"}</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-ink-100 line-clamp-2 leading-tight">{product.title}</h3>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-base font-bold text-slate-900 dark:text-slate-100">{formatCurrency(product.price)}</span>
+              <span className="text-base font-bold text-slate-900 dark:text-ink-100">{formatCurrency(product.price)}</span>
               {product.compare_at_price > 0 && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 line-through">{formatCurrency(product.compare_at_price)}</span>
+                <span className="text-xs text-slate-400 dark:text-ink-500 line-through">{formatCurrency(product.compare_at_price)}</span>
               )}
             </div>
             {affiliate.eligible && affiliate.amount > 0 && (
@@ -184,8 +184,8 @@ export default function ProductCard({ product, compact = false, currentUser: cur
             {product.rating_avg > 0 && (
               <div className="flex items-center gap-1 mt-1.5">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{product.rating_avg?.toFixed(1)}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">({product.rating_count})</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-ink-400">{product.rating_avg?.toFixed(1)}</span>
+                <span className="text-xs text-slate-400 dark:text-ink-500">({product.rating_count})</span>
               </div>
             )}
           </div>

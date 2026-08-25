@@ -12,11 +12,11 @@ export default function ColorSelector({ colors, value, onChange }) {
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="text-sm font-medium text-slate-700 dark:text-ink-300">
           {t("product.color")}
         </span>
         {value && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">{value}</span>
+          <span className="text-xs text-slate-500 dark:text-ink-400">{value}</span>
         )}
       </div>
       <div className="flex flex-wrap gap-2.5">
@@ -31,7 +31,7 @@ export default function ColorSelector({ colors, value, onChange }) {
               className={`relative w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
                 isSelected
                   ? "border-orange-500 ring-2 ring-orange-100 dark:ring-orange-900/40 scale-110"
-                  : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                  : "border-slate-200 dark:border-ink-700 hover:border-slate-300 dark:hover:border-ink-600"
               }`}
               style={color.image ? undefined : { backgroundColor: color.hex || FALLBACK_SWATCH }}
             >

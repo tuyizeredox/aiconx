@@ -1078,7 +1078,8 @@
     "chip_trending": "الموضة الرائجة",
     "voiceUnsupported": "إدخال الصوت غير مدعوم على هذا الجهاز",
     "startListening": "بدء الإدخال الصوتي",
-    "stopListening": "إيقاف الإدخال الصوتي"
+    "stopListening": "إيقاف الإدخال الصوتي",
+    "fabLabel": "مساعد التسوق"
   },
   "orderTracking": {
     "title": "تتبع الطلب",

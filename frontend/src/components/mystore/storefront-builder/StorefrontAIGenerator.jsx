@@ -99,7 +99,7 @@ export default function StorefrontAIGenerator({ store, onApply, hasExistingBlock
         </div>
         <div className="flex-1">
           <p className="text-sm font-bold text-slate-800 dark:text-white">Build my storefront with AI</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Describe your store and get a full draft layout with real photos</p>
+          <p className="text-xs text-slate-500 dark:text-ink-400">Describe your store and get a full draft layout with real photos</p>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
       </button>
@@ -115,10 +115,10 @@ export default function StorefrontAIGenerator({ store, onApply, hasExistingBlock
             <div className="px-4 pb-4 space-y-3 border-t border-orange-100 dark:border-orange-900">
               <div className="pt-3">
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <label className="text-xs font-medium text-slate-600 dark:text-ink-300">
                     What kind of storefront do you want?
                   </label>
-                  <span className={`text-[10px] ${prompt.length > 4000 ? "text-red-500" : "text-slate-400 dark:text-slate-500"}`}>
+                  <span className={`text-[10px] ${prompt.length > 4000 ? "text-red-500" : "text-slate-400 dark:text-ink-500"}`}>
                     {prompt.length}/4000
                   </span>
                 </div>
@@ -126,16 +126,16 @@ export default function StorefrontAIGenerator({ store, onApply, hasExistingBlock
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value.slice(0, 4000))}
                   placeholder="e.g. A bold, modern layout for my handmade jewelry store, warm gold tones, with a gallery and customer reviews"
-                  className="rounded-xl text-sm bg-white dark:bg-slate-800 min-h-[80px]"
+                  className="rounded-xl text-sm bg-white dark:bg-ink-800 min-h-[80px]"
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-800 rounded-xl p-3">
+              <div className="flex items-center justify-between gap-3 bg-white dark:bg-ink-800 rounded-xl p-3">
                 <div className="min-w-0">
                   <Label className="text-xs font-semibold flex items-center gap-1.5">
                     <ShoppingBag className="w-3.5 h-3.5" /> Also create products
                   </Label>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-400 dark:text-ink-500 mt-0.5">
                     {isVerified
                       ? "AI proposes a few real products for your store, ready to review"
                       : "Verify your store to let AI add products too"}
@@ -160,7 +160,7 @@ export default function StorefrontAIGenerator({ store, onApply, hasExistingBlock
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-3 bg-white dark:bg-slate-800 rounded-xl border border-orange-100 dark:border-orange-900 p-4"
+                  className="space-y-3 bg-white dark:bg-ink-800 rounded-xl border border-orange-100 dark:border-orange-900 p-4"
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wide">Draft ready</p>
@@ -174,7 +174,7 @@ export default function StorefrontAIGenerator({ store, onApply, hasExistingBlock
                       const meta = BLOCK_TYPE_META[b.type] || {};
                       const Icon = meta.icon;
                       return (
-                        <span key={`${b.id || b.type}-${i}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                        <span key={`${b.id || b.type}-${i}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-ink-700 text-[11px] font-medium text-slate-600 dark:text-ink-300">
                           {Icon && <Icon className="w-3 h-3" />} {meta.label || b.type}
                         </span>
                       );
@@ -183,20 +183,20 @@ export default function StorefrontAIGenerator({ store, onApply, hasExistingBlock
 
                   {result.products?.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wide">
                         Products ({result.products.length})
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
                         {result.products.map((p, i) => (
-                          <div key={`${p.title}-${i}`} className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 min-w-0">
+                          <div key={`${p.title}-${i}`} className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-50 dark:bg-ink-900 min-w-0">
                             {p.image_url ? (
                               <img src={p.image_url} alt="" className="w-8 h-8 rounded-md object-cover shrink-0" />
                             ) : (
-                              <div className="w-8 h-8 rounded-md bg-slate-200 dark:bg-slate-700 shrink-0" />
+                              <div className="w-8 h-8 rounded-md bg-slate-200 dark:bg-ink-700 shrink-0" />
                             )}
                             <div className="min-w-0">
-                              <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 truncate">{p.title}</p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500">{formatCurrency(p.price)}</p>
+                              <p className="text-[11px] font-semibold text-slate-700 dark:text-ink-200 truncate">{p.title}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-ink-500">{formatCurrency(p.price)}</p>
                             </div>
                           </div>
                         ))}

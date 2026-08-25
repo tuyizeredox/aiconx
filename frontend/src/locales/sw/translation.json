@@ -1077,7 +1077,8 @@
     "chip_trending": "Mitindo inayoongoza",
     "voiceUnsupported": "Uwekaji wa sauti hauungwi mkono kwenye kifaa hiki",
     "startListening": "Anzisha uwekaji wa sauti",
-    "stopListening": "Simamisha uwekaji wa sauti"
+    "stopListening": "Simamisha uwekaji wa sauti",
+    "fabLabel": "Msaidizi wa Ununuzi"
   },
   "orderTracking": {
     "title": "Fuatilia agizo",

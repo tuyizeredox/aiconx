@@ -20,13 +20,13 @@ export default function PageNotFound({}) {
     });
     
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-ink-900">
             <div className="max-w-md w-full">
                 <div className="text-center space-y-6">
                     {/* 404 Error Code */}
                     <div className="space-y-2">
-                        <h1 className="text-7xl font-light text-slate-300 dark:text-slate-600">404</h1>
-                        <div className="h-0.5 w-16 bg-slate-200 dark:bg-slate-700 mx-auto"></div>
+                        <h1 className="text-7xl font-light text-slate-300 dark:text-ink-600">404</h1>
+                        <div className="h-0.5 w-16 bg-slate-200 dark:bg-ink-700 mx-auto"></div>
                     </div>
 
                     {/* Main Message */}
@@ -34,21 +34,21 @@ export default function PageNotFound({}) {
                         <h2 className="text-2xl font-medium text-slate-800 dark:text-white">
                             Page Not Found
                         </h2>
-                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                            The page <span className="font-medium text-slate-700 dark:text-slate-300">"{pageName}"</span> could not be found in this application.
+                        <p className="text-slate-600 dark:text-ink-300 leading-relaxed">
+                            The page <span className="font-medium text-slate-700 dark:text-ink-300">"{pageName}"</span> could not be found in this application.
                         </p>
                     </div>
 
                     {/* Admin Note */}
                     {isFetched && authData.isAuthenticated && authData.user?.role === 'admin' && (
-                        <div className="mt-8 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="mt-8 p-4 bg-slate-100 dark:bg-ink-800 rounded-lg border border-slate-200 dark:border-ink-700">
                             <div className="flex items-start space-x-3">
                                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-950 flex items-center justify-center mt-0.5">
                                     <div className="w-2 h-2 rounded-full bg-orange-400"></div>
                                 </div>
                                 <div className="text-left space-y-1">
-                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Admin Note</p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <p className="text-sm font-medium text-slate-700 dark:text-ink-300">Admin Note</p>
+                                    <p className="text-sm text-slate-600 dark:text-ink-300 leading-relaxed">
                                         This could mean that the AI hasn't implemented this page yet. Ask it to implement it in the chat.
                                     </p>
                                 </div>
@@ -60,7 +60,7 @@ export default function PageNotFound({}) {
                     <div className="pt-6">
                         <button
                             onClick={() => window.location.href = '/'}
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 dark:text-ink-300 bg-white dark:bg-ink-800 border border-slate-200 dark:border-ink-700 rounded-lg hover:bg-slate-50 dark:hover:bg-ink-700 hover:border-slate-300 dark:hover:border-ink-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />

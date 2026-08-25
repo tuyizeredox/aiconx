@@ -21,20 +21,20 @@ export default function HighlightsInput({ highlights = [], onChange }) {
 
   return (
     <div>
-      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+      <label className="text-sm font-medium text-slate-700 dark:text-ink-300 mb-1.5 block">
         {t("store.productHighlights")}
       </label>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{t("store.productHighlightsHint")}</p>
+      <p className="text-xs text-slate-400 dark:text-ink-500 mb-2">{t("store.productHighlightsHint")}</p>
 
       {highlights.length > 0 && (
         <div className="space-y-1.5 mb-2.5">
           {highlights.map((highlight, idx) => (
             <div
               key={`${highlight}-${idx}`}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-100 dark:border-ink-700"
             >
               <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
-              <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 min-w-0 truncate">{highlight}</span>
+              <span className="text-sm text-slate-700 dark:text-ink-200 flex-1 min-w-0 truncate">{highlight}</span>
               <button
                 type="button"
                 onClick={() => onChange(highlights.filter((_, i) => i !== idx))}

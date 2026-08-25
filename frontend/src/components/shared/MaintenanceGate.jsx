@@ -62,13 +62,13 @@ export default function MaintenanceGate({ children }) {
   // mirror of that rule — it should never actually trigger for them.
   if (maintenance.active && user?.role !== 'super_admin') {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center dark:bg-[#0a0a0c] bg-slate-50 px-6 text-center transition-colors">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center dark:bg-ink-900 bg-slate-50 px-6 text-center transition-colors">
         <div className="flex flex-col items-center gap-4 max-w-md">
           <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center">
             <AlertTriangle className="w-7 h-7 text-orange-500" />
           </div>
           <h1 className="text-xl font-bold dark:text-white text-slate-900">{t('maintenance.title')}</h1>
-          <p className="text-sm dark:text-slate-400 text-slate-500">
+          <p className="text-sm dark:text-ink-400 text-slate-500">
             {maintenance.message || t('maintenance.defaultMessage')}
           </p>
           <button

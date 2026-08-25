@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22bg%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%231a1a2e%22/><stop offset=%22100%25%22 stop-color=%220f3460%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22url(%23bg)%22/><rect x=%220%22 y=%2294%22 width=%22100%22 height=%223%22 rx=%221.5%22 fill=%22url(%23og)%22/><defs><linearGradient id=%22og%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%220%22><stop offset=%220%25%22 stop-color=%22transparent%22/><stop offset=%2250%25%22 stop-color=%22%23f97316%22/><stop offset=%22100%25%22 stop-color=%22transparent%22/></linearGradient></defs><text x=%2250%25%22 y=%2262%25%22 font-size=%2250%22 font-family=%22system-ui,sans-serif%22 font-weight=%22900%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22><tspan fill=%22white%22>A</tspan><tspan fill=%22%23f97316%22>i</tspan></text></svg>" />
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Map tiles for the nearby-shops map. The TLS handshake to this origin
+         measures ~0.5s on a phone connection, and without this hint it is paid
+         at the moment the map mounts, in series with the first tile. Opened
+         here it happens during page load instead, in parallel with everything
+         else. Deliberately no crossorigin attribute: Leaflet requests tiles as
+         plain images, and an anonymous-CORS connection would not be reused. -->
+    <link rel="preconnect" href="https://a.basemaps.cartocdn.com" />
     <title>Aicon X — Social Commerce & AI-Powered Shopping Platform</title>
 
     <!-- SEO -->

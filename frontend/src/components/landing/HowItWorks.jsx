@@ -32,7 +32,7 @@ export default function HowItWorks() {
           return (
             <div
               key={step.n}
-              className="flex items-start gap-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3"
+              className="flex items-start gap-3 bg-white dark:bg-ink-900 border border-slate-100 dark:border-ink-800 rounded-xl p-3"
             >
               <div className="relative shrink-0">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors.icon}`}>
@@ -48,7 +48,7 @@ export default function HowItWorks() {
                 <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
                   {t(`landing.how.${step.titleKey}`)}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-ink-400 leading-snug mt-0.5">
                   {t(`landing.how.${step.descKey}`)}
                 </p>
               </div>

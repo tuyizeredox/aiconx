@@ -40,8 +40,8 @@ const PLANS = [
     name: "Starter",
     price: 0,
     priceAnnual: 0,
-    color: "border-slate-200 dark:border-slate-700",
-    headerBg: "bg-slate-50 dark:bg-slate-800/50",
+    color: "border-slate-200 dark:border-ink-700",
+    headerBg: "bg-slate-50 dark:bg-ink-800/50",
     badge: null,
     icon: Star,
     iconColor: "text-slate-500",
@@ -116,7 +116,7 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className={`relative min-w-0 rounded-2xl border-2 ${plan.color} ${isActive ? "ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-slate-900" : ""} overflow-hidden flex flex-col h-full`}
+      className={`relative min-w-0 rounded-2xl border-2 ${plan.color} ${isActive ? "ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-ink-900" : ""} overflow-hidden flex flex-col h-full`}
     >
       {plan.badge && (
         <div className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${plan.id === "pro" ? "bg-orange-600 text-white" : "bg-amber-500 text-white"}`}>
@@ -124,13 +124,13 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
         </div>
       )}
       <div className={`p-4 sm:p-5 ${plan.headerBg}`}>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 shrink-0 ${plan.id === "free" ? "bg-slate-200 dark:bg-slate-700" : plan.id === "pro" ? "bg-orange-100 dark:bg-orange-900" : "bg-amber-100 dark:bg-amber-900"}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 shrink-0 ${plan.id === "free" ? "bg-slate-200 dark:bg-ink-700" : plan.id === "pro" ? "bg-orange-100 dark:bg-orange-900" : "bg-amber-100 dark:bg-amber-900"}`}>
           <PlanIcon className={`w-5 h-5 ${plan.iconColor}`} />
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">{plan.name}</h3>
         <div className="flex items-end flex-wrap gap-1 mt-1">
           <span className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white whitespace-nowrap">{formatCurrency(price)}</span>
-          <span className="text-slate-500 dark:text-slate-400 text-sm mb-0.5">{t("subscription.perMonth")}</span>
+          <span className="text-slate-500 dark:text-ink-400 text-sm mb-0.5">{t("subscription.perMonth")}</span>
         </div>
         {billing === "annual" && basePrice > 0 && baseAnnual < basePrice && (
           <p className="text-xs text-green-600 font-medium mt-0.5">{t("subscription.savePerYear", { amount: formatCurrency((basePrice - baseAnnual) * 12) })}</p>
@@ -140,10 +140,10 @@ function PlanCard({ plan, currentPlan, onSelect, billing, prices, isPending }) {
       <div className="p-4 sm:p-5 flex flex-col flex-1">
         <ul className="space-y-2.5 flex-1 mb-5">
           {plan.features.map((f, i) => (
-            <li key={i} className={`flex items-start gap-2 text-sm ${isUnlocked ? "text-slate-600 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}`}>
+            <li key={i} className={`flex items-start gap-2 text-sm ${isUnlocked ? "text-slate-600 dark:text-ink-300" : "text-slate-400 dark:text-ink-500"}`}>
               {isUnlocked
                 ? <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                : <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0 mt-0.5" />}
+                : <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-ink-600 shrink-0 mt-0.5" />}
               <span className="min-w-0 break-words">{t(f)}</span>
             </li>
           ))}
@@ -194,11 +194,11 @@ function CustomDomainManager({ subscription, vendorUsername }) {
 
   if (!canUseDomain) {
     return (
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
-        <Shield className="w-8 h-8 text-slate-400 dark:text-slate-500 shrink-0" />
+      <div className="bg-slate-50 dark:bg-ink-800 rounded-2xl border border-slate-200 dark:border-ink-700 p-5 flex items-center gap-3">
+        <Shield className="w-8 h-8 text-slate-400 dark:text-ink-500 shrink-0" />
         <div>
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("subscription.customDomainTitle")}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t("subscription.customDomainUpgradeHint")}</p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-ink-200">{t("subscription.customDomainTitle")}</p>
+          <p className="text-xs text-slate-500 dark:text-ink-400">{t("subscription.customDomainUpgradeHint")}</p>
         </div>
         <Badge className="ml-auto bg-orange-600 text-white text-xs">Pro+</Badge>
       </div>
@@ -206,17 +206,17 @@ function CustomDomainManager({ subscription, vendorUsername }) {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+    <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-5">
       <div className="flex items-center gap-2 mb-3">
         <Globe className="w-5 h-5 text-orange-500" />
         <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{t("subscription.customDomainTitle")}{isElite && " & SSL"}</h4>
         {subscription?.custom_domain ? (
           <Badge className="ml-auto bg-green-100 text-green-700 border-0 text-xs">{t("subscription.domainActive")}</Badge>
         ) : (
-          <Badge className="ml-auto bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-0 text-xs">{t("subscription.domainNotConfigured")}</Badge>
+          <Badge className="ml-auto bg-slate-100 dark:bg-ink-700 text-slate-500 dark:text-ink-400 border-0 text-xs">{t("subscription.domainNotConfigured")}</Badge>
         )}
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+      <p className="text-xs text-slate-500 dark:text-ink-400 mb-3">
         {t("subscription.domainDescription")}
         {isElite && ` ${t("subscription.domainEliteSSL")}`}
       </p>
@@ -232,8 +232,8 @@ function CustomDomainManager({ subscription, vendorUsername }) {
         </Button>
       </div>
       {domain && (
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-          Add a CNAME record: <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded text-orange-700 dark:text-orange-400">store.iqon.app</code>
+        <p className="text-xs text-slate-400 dark:text-ink-500 mt-2">
+          Add a CNAME record: <code className="bg-slate-100 dark:bg-ink-700 px-1 rounded text-orange-700 dark:text-orange-400">store.iqon.app</code>
         </p>
       )}
     </div>
@@ -544,23 +544,23 @@ export default function SubscriptionManager({ store, vendorUsername }) {
     return (
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-3xl border-2 border-dashed border-green-300 dark:border-green-800 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950 dark:via-emerald-950 dark:to-teal-950 p-6 sm:p-10 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white dark:bg-ink-800 shadow-sm flex items-center justify-center">
             <Gift className="w-8 h-8 text-green-600" />
           </div>
           <Badge className="mb-3 bg-green-600 hover:bg-green-600 text-white border-0">{t("subscription.allFreeBadge")}</Badge>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-2">{t("subscription.allFreeTitle")}</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto">{t("subscription.allFreeDesc")}</p>
+          <p className="text-sm text-slate-600 dark:text-ink-300 max-w-lg mx-auto">{t("subscription.allFreeDesc")}</p>
         </div>
 
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-3 text-center">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-ink-500 mb-3 text-center">
             {t("subscription.allFreeFeaturesTitle")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {eliteFeatures.map((f, i) => (
-              <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 px-4 py-3">
+              <div key={i} className="flex items-center gap-2 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 px-4 py-3">
                 <Check className="w-4 h-4 text-green-500 shrink-0" />
-                <span className="text-sm text-slate-700 dark:text-slate-200">{t(f)}</span>
+                <span className="text-sm text-slate-700 dark:text-ink-200">{t(f)}</span>
               </div>
             ))}
           </div>
@@ -572,7 +572,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
   return (
     <div className="space-y-6">
       {/* Current Plan Banner */}
-      <div className={`relative rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-orange-200 dark:border-orange-800" : "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}>
+      <div className={`relative rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${subscription?.plan === "elite" ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800" : subscription?.plan === "pro" ? "bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950 dark:to-orange-950 border border-orange-200 dark:border-orange-800" : "bg-slate-50 dark:bg-ink-800 border border-slate-200 dark:border-ink-700"}`}>
         <div className="flex items-center gap-4">
           {currentPlanInfo && <currentPlanInfo.icon className={`w-8 h-8 shrink-0 ${currentPlanInfo.iconColor}`} />}
           <div className="flex-1 min-w-0">
@@ -585,7 +585,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
               )}
             </div>
             {subscription?.expires_at && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-ink-400">
                 {subscription.status === 'cancelled'
                   ? t("subscription.expires", { date: new Date(subscription.expires_at).toLocaleDateString() })
                   : t("subscription.renews", { date: new Date(subscription.expires_at).toLocaleDateString() })}
@@ -618,7 +618,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
               size="sm"
               variant="outline"
               disabled={isCancelling}
-              className="h-9 text-xs font-bold border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg px-5 min-w-[90px]"
+              className="h-9 text-xs font-bold border-slate-300 dark:border-ink-600 text-slate-700 dark:text-ink-300 hover:bg-slate-100 dark:hover:bg-ink-800 rounded-lg px-5 min-w-[90px]"
               onClick={() => setCancelDialog({ open: true, type: 'pending' })}
             >
               {isCancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : t("subscription.cancelPending")}
@@ -664,14 +664,14 @@ export default function SubscriptionManager({ store, vendorUsername }) {
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center flex-wrap gap-3 text-center">
-        <span className={`text-sm font-medium ${billing === "monthly" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{t("subscription.monthly")}</span>
+        <span className={`text-sm font-medium ${billing === "monthly" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-ink-500"}`}>{t("subscription.monthly")}</span>
         <button
           onClick={() => setBilling(b => b === "monthly" ? "annual" : "monthly")}
-          className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${billing === "annual" ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
+          className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${billing === "annual" ? "bg-orange-600" : "bg-slate-200 dark:bg-ink-700"}`}
         >
-          <span className={`absolute top-1 w-4 h-4 bg-white dark:bg-slate-200 rounded-full shadow transition-all ${billing === "annual" ? "left-7" : "left-1"}`} />
+          <span className={`absolute top-1 w-4 h-4 bg-white dark:bg-ink-200 rounded-full shadow transition-all ${billing === "annual" ? "left-7" : "left-1"}`} />
         </button>
-        <span className={`text-sm font-medium ${billing === "annual" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>
+        <span className={`text-sm font-medium ${billing === "annual" ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-ink-500"}`}>
           {t("subscription.annual")} <span className="text-green-600 text-xs font-bold">{t("subscription.save20")}</span>
         </span>
       </div>
@@ -704,13 +704,13 @@ export default function SubscriptionManager({ store, vendorUsername }) {
           const requiredIndex = Math.min(...f.plans.map(p => PLANS.findIndex(pl => pl.name === p)));
           const unlocked = currentIndex >= requiredIndex;
           return (
-            <div key={f.label} className="relative bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-3 min-w-0">
+            <div key={f.label} className="relative bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 p-3 min-w-0">
               {!unlocked && (
-                <Lock className="w-3.5 h-3.5 absolute top-2 right-2 text-slate-300 dark:text-slate-600" />
+                <Lock className="w-3.5 h-3.5 absolute top-2 right-2 text-slate-300 dark:text-ink-600" />
               )}
-              <f.icon className={`w-5 h-5 mx-auto mb-1.5 ${unlocked ? f.color : "text-slate-300 dark:text-slate-600"}`} />
-              <p className={`text-xs font-semibold ${unlocked ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}`}>{f.label}</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("subscription.onlyPlans", { plans: f.plans.join(", ") })}</p>
+              <f.icon className={`w-5 h-5 mx-auto mb-1.5 ${unlocked ? f.color : "text-slate-300 dark:text-ink-600"}`} />
+              <p className={`text-xs font-semibold ${unlocked ? "text-slate-700 dark:text-ink-200" : "text-slate-400 dark:text-ink-500"}`}>{f.label}</p>
+              <p className="text-[10px] text-slate-400 dark:text-ink-500">{t("subscription.onlyPlans", { plans: f.plans.join(", ") })}</p>
             </div>
           );
         })}
@@ -722,14 +722,14 @@ export default function SubscriptionManager({ store, vendorUsername }) {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
+            className="bg-white dark:bg-ink-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
           >
             {payStep === "method" ? (
               <>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                   {t("subscription.choosePaymentMethod")}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 dark:text-ink-400 mb-4">
                   {t("subscription.choosePaymentMethodDesc")}
                 </p>
                 <div className="space-y-2 mb-4">
@@ -737,7 +737,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
                     <button
                       key={m.id}
                       onClick={() => handleMethodSelect(m)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950 transition-all text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-ink-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950 transition-all text-left"
                     >
                       {m.logo
                         ? <img src={m.logo} alt={m.label} className="w-10 h-10 object-contain rounded-lg" />
@@ -754,7 +754,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
             ) : (
               <>
                 <button
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mb-3"
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-ink-200 mb-3"
                   onClick={() => setPayStep("method")}
                 >
                   ← {t("common.back")}
@@ -766,7 +766,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
                   }
                   {selectedMethod?.label}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 dark:text-ink-400 mb-4">
                   {t("subscription.phoneModalDesc")}
                 </p>
 
@@ -782,9 +782,9 @@ export default function SubscriptionManager({ store, vendorUsername }) {
                 </div>
 
                 {/* ITEC Pay Branding */}
-                <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-400 dark:text-slate-500">
+                <div className="flex items-center justify-center gap-2 mb-4 text-xs text-slate-400 dark:text-ink-500">
                   <span>{t("subscription.poweredBy")}</span>
-                  <span className="font-bold text-slate-600 dark:text-slate-400">ITEC Pay</span>
+                  <span className="font-bold text-slate-600 dark:text-ink-400">ITEC Pay</span>
                 </div>
 
                 <form onSubmit={(e) => { e.preventDefault(); handlePhoneSubmit(); }}>
@@ -830,7 +830,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+            className="bg-white dark:bg-ink-900 rounded-2xl p-6 max-w-md w-full shadow-2xl"
           >
             <div className="text-center">
               {pendingPayment.status === 'pending' ? (
@@ -841,7 +841,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                     {t("subscription.paymentPendingTitle")}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  <p className="text-sm text-slate-600 dark:text-ink-400 mb-4">
                     {t("subscription.paymentPendingDesc")}
                   </p>
                   <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900 rounded-xl p-3 mb-4 text-left">
@@ -880,7 +880,7 @@ export default function SubscriptionManager({ store, vendorUsername }) {
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                     {t("subscription.paymentFailedTitle")}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  <p className="text-sm text-slate-600 dark:text-ink-400 mb-4">
                     {t("subscription.paymentFailedDesc")}
                   </p>
                   <div className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 rounded-xl p-3 mb-4 text-left">

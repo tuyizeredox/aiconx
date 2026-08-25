@@ -227,7 +227,7 @@ export default function Marketplace() {
   const pillClass = (active) => `shrink-0 h-8 px-3.5 rounded-full text-xs font-semibold border transition-colors ${
     active
       ? "bg-orange-600 border-orange-600 text-white"
-      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+      : "bg-white dark:bg-ink-900 border-slate-200 dark:border-ink-700 text-slate-600 dark:text-ink-300 hover:border-slate-300 dark:hover:border-ink-600 hover:bg-slate-50 dark:hover:bg-ink-800"
   }`;
 
   const filterPanel = (
@@ -244,19 +244,19 @@ export default function Marketplace() {
   const showSkeletons = productsLoading || !resultsEnabled;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-ink-900">
       <ShopHeaderBar backTo={createPageUrl("Home")} backLabel={t("nav.home")} />
 
       {/* Page header — title, search and categories share one clean surface
           instead of a photo hero, so the results start higher on the page. */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200/70 dark:border-slate-800/70">
+      <div className="bg-white dark:bg-ink-900 border-b border-slate-200/70 dark:border-ink-800/70">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-5 sm:pt-7">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-10">
             <div className="min-w-0 lg:flex-1">
               <h1 className="text-xl sm:text-2xl lg:text-[28px] font-bold tracking-tight text-slate-900 dark:text-white">
                 {t("shop.heroTitle")}
               </h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("shop.heroSubtitle")}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-ink-400">{t("shop.heroSubtitle")}</p>
             </div>
 
             <div className="relative w-full lg:w-[420px] lg:shrink-0">
@@ -266,13 +266,13 @@ export default function Marketplace() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("shop.searchPlaceholder")}
                 aria-label={t("shop.searchPlaceholder")}
-                className="pl-10 pr-10 h-11 rounded-xl bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white shadow-none text-sm focus-visible:ring-2 focus-visible:ring-orange-500/30 focus-visible:border-orange-400"
+                className="pl-10 pr-10 h-11 rounded-xl bg-slate-50 dark:bg-ink-800/60 border-slate-200 dark:border-ink-700 text-slate-900 dark:text-white shadow-none text-sm focus-visible:ring-2 focus-visible:ring-orange-500/30 focus-visible:border-orange-400"
               />
               {searchInput && (
                 <button
                   onClick={() => setSearchInput("")}
                   aria-label={t("shop.clearSearch")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-ink-200 hover:bg-slate-200/70 dark:hover:bg-ink-700 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -281,13 +281,13 @@ export default function Marketplace() {
           </div>
 
           {/* What's in the catalogue, as quiet meta rather than badges. */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3.5 text-xs sm:text-[13px] text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3.5 text-xs sm:text-[13px] text-slate-500 dark:text-ink-400">
             <span className="inline-flex items-center gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <ShoppingBag className="w-3.5 h-3.5 text-slate-400 dark:text-ink-500" />
               {t("shop.productsCount", { count: totalResults })}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Store className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <Store className="w-3.5 h-3.5 text-slate-400 dark:text-ink-500" />
               {t("shop.storesCount", { count: nearbyActive ? nearbyStores.length : featuredStores.length })}
             </span>
             {nearbyActive && (
@@ -326,20 +326,20 @@ export default function Marketplace() {
         <div className="grid lg:grid-cols-[260px_1fr] gap-6">
           {/* Desktop filter column */}
           <aside className="hidden lg:block">
-            <div className="sticky top-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 px-4 py-3 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="sticky top-20 bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 px-4 py-3 max-h-[calc(100vh-6rem)] overflow-y-auto">
               {filterPanel}
             </div>
           </aside>
 
           <main className="min-w-0">
             {/* Toolbar */}
-            <div className="sticky top-14 z-20 -mx-3 sm:-mx-6 px-3 sm:px-6 py-2.5 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md mb-3">
+            <div className="sticky top-14 z-20 -mx-3 sm:-mx-6 px-3 sm:px-6 py-2.5 bg-slate-50/90 dark:bg-ink-900/90 backdrop-blur-md mb-3">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden h-9 rounded-xl gap-1.5 shrink-0 bg-white dark:bg-slate-900"
+                  className="lg:hidden h-9 rounded-xl gap-1.5 shrink-0 bg-white dark:bg-ink-900"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   {t("shop.filters")}
@@ -348,14 +348,14 @@ export default function Marketplace() {
                   )}
                 </Button>
 
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex-1 min-w-0 truncate">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-ink-400 flex-1 min-w-0 truncate">
                   {showSkeletons
                     ? t("shop.loadingResults")
                     : t("shop.resultsCount", { count: totalResults })}
                 </p>
 
                 <Select value={values.sort} onValueChange={(v) => updateValues({ sort: v })}>
-                  <SelectTrigger className="w-[140px] sm:w-[170px] h-9 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-900 shrink-0">
+                  <SelectTrigger className="w-[140px] sm:w-[170px] h-9 rounded-xl text-xs sm:text-sm bg-white dark:bg-ink-900 shrink-0">
                     <SelectValue placeholder={t("shop.sortBy")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -384,10 +384,10 @@ export default function Marketplace() {
                 {Array(8).fill(0).map((_, i) => <ProductSkeleton key={`skeleton-${i}`} />)}
               </div>
             ) : products.length === 0 ? (
-              <div className="text-center py-16 sm:py-24 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                <PackageSearch className="w-12 h-12 text-slate-200 dark:text-slate-700 mx-auto mb-4" />
-                <p className="text-base font-bold text-slate-700 dark:text-slate-200">{t("shop.noResultsTitle")}</p>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto px-4">
+              <div className="text-center py-16 sm:py-24 bg-white dark:bg-ink-900 rounded-2xl border border-dashed border-slate-200 dark:border-ink-800">
+                <PackageSearch className="w-12 h-12 text-slate-200 dark:text-ink-700 mx-auto mb-4" />
+                <p className="text-base font-bold text-slate-700 dark:text-ink-200">{t("shop.noResultsTitle")}</p>
+                <p className="text-sm text-slate-400 dark:text-ink-500 mt-1 max-w-sm mx-auto px-4">
                   {nearbyActive ? t("shop.noResultsNearby", { km: radius }) : t("shop.noResultsDesc")}
                 </p>
                 {(activeCount > 0 || values.search) && (
@@ -416,7 +416,7 @@ export default function Marketplace() {
                       onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
                       variant="outline"
-                      className="rounded-xl h-10 px-6 gap-2 bg-white dark:bg-slate-900"
+                      className="rounded-xl h-10 px-6 gap-2 bg-white dark:bg-ink-900"
                     >
                       {isFetchingNextPage && <Loader2 className="w-4 h-4 animate-spin" />}
                       {t("shop.loadMore")}
@@ -425,7 +425,7 @@ export default function Marketplace() {
                 )}
 
                 {!hasNextPage && products.length > PAGE_SIZE && (
-                  <p className="text-center text-xs text-slate-400 dark:text-slate-500 pt-8">
+                  <p className="text-center text-xs text-slate-400 dark:text-ink-500 pt-8">
                     {t("shop.endOfResults")}
                   </p>
                 )}
@@ -438,13 +438,13 @@ export default function Marketplace() {
       {/* Mobile filter drawer */}
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <SheetContent side="left" className="w-[88vw] max-w-sm p-0 flex flex-col">
-          <SheetHeader className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <SheetHeader className="px-4 py-3 border-b border-slate-100 dark:border-ink-800 shrink-0">
             <SheetTitle className="text-base">{t("shop.filters")}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4">
             {filterPanel}
           </div>
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="p-4 border-t border-slate-100 dark:border-ink-800 shrink-0">
             <Button
               onClick={() => setFiltersOpen(false)}
               className="w-full h-11 rounded-xl bg-orange-600 hover:bg-orange-700"

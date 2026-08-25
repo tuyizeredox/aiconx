@@ -18,6 +18,11 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   const [isMuted, setIsMuted] = useState(true);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  // Own copy of the group: the parent hands the array down as a snapshot taken
+  // when the viewer opened, so removing a story has to happen here too.
+  const [items, setItems] = useState(stories);
   const inputRef = useRef(null);
   const videoRef = useRef(null);
   const navigate = useNavigate();
@@ -25,11 +30,13 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
 
   // When stories array changes (e.g. next group), reset state
   useEffect(() => {
+    setItems(stories);
     setCurrent(startIndex >= stories.length ? 0 : startIndex);
     setReplyText("");
     setIsPaused(false);
     setIsMuted(true);
     setShowAnalytics(false);
+    setConfirmDelete(null);
   }, [stories, startIndex]);
 
   const { data: currentUser } = useQuery({
@@ -39,12 +46,12 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   });
 
   useEffect(() => {
-    if (!stories || stories.length === 0) {
+    if (!items || items.length === 0) {
       onClose();
     }
-  }, [stories, onClose]);
+  }, [items, onClose]);
 
-  const story = stories[current];
+  const story = items[current];
   const isOwner = currentUser?.username && story?.author_username ? currentUser.username === story.author_username : false;
   const isLoadingUser = !currentUser;
 
@@ -64,7 +71,9 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
   // Handle auto-progress timer
   useEffect(() => {
     const isVideo = story?.media_type === "video" && story?.media_url;
-    if (isPaused || !story || isVideo) return;
+    // A panel over the story counts as paused - otherwise it advances behind
+    // the overlay and the confirm ends up aimed at a different story.
+    if (isPaused || confirmDelete || showAnalytics || !story || isVideo) return;
 
     const timer = setInterval(() => {
       setProgress(p => {
@@ -77,19 +86,28 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
     }, 50);
 
     return () => clearInterval(timer);
-  }, [current, isPaused, story]);
+  }, [current, isPaused, confirmDelete, showAnalytics, story]);
 
   useEffect(() => {
     if (progress < 100) return;
 
-    if (current < stories.length - 1) {
+    if (current < items.length - 1) {
       setCurrent(c => c + 1);
       setProgress(0);
     } else {
       if (onNext) onNext();
       else onClose();
     }
-  }, [progress, current, stories.length, onNext, onClose]);
+  }, [progress, current, items.length, onNext, onClose]);
+
+  // Hold video playback behind an open panel so the story does not run on
+  // under it.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (confirmDelete || showAnalytics) video.pause();
+    else video.play().catch(() => {});
+  }, [confirmDelete, showAnalytics]);
 
   const handleLike = async () => {
     if (guestMode) { navigate("/register"); return; }
@@ -118,17 +136,43 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this story?")) return;
+  const openDeleteConfirm = () => {
+    if (!story) return;
+    setShowAnalytics(false);
+    setIsPaused(true);
+    setConfirmDelete(story);
+  };
 
+  const closeDeleteConfirm = () => {
+    setConfirmDelete(null);
+    setIsPaused(false);
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting || !confirmDelete) return;
+    const deletedId = confirmDelete._id || confirmDelete.id;
+
+    setIsDeleting(true);
     try {
-      await storiesAPI.delete(story._id || story.id);
-      toast.success("Story deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["stories"] });
-      await queryClient.refetchQueries({ queryKey: ["stories"] });
-      onClose();
+      await storiesAPI.delete(deletedId);
+
+      // Drop it locally, then land on whatever is still there: the story after
+      // it, or the one before it when the deleted story was last in the group.
+      const remaining = items.filter((s) => (s._id || s.id) !== deletedId);
+      setItems(remaining);
+      setCurrent((c) => Math.min(c, Math.max(0, remaining.length - 1)));
+      setProgress(0);
+      setConfirmDelete(null);
+      setIsPaused(false);
+
+      toast.success("Story deleted");
+      queryClient.invalidateQueries({ queryKey: ["stories"] });
+
+      if (remaining.length === 0) onClose();
     } catch (error) {
       toast.error(error.message || "Failed to delete story");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -153,7 +197,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
       <div className="relative w-full max-w-sm h-full max-h-screen overflow-hidden bg-black shadow-2xl">
         {/* Progress bars */}
         <div className="absolute top-3 left-3 right-3 flex gap-1 z-30">
-          {stories.map((_, i) => (
+          {items.map((_, i) => (
             <div key={i} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-white rounded-full transition-none"
@@ -180,9 +224,21 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
             <p className="text-white text-sm font-bold drop-shadow-md">{story.author_name || `@${story.author_username}`}</p>
             <p className="text-white/80 text-[10px] drop-shadow-md">{new Date(story.created_at || story.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
           </div>
-          <button onClick={onClose} className="ml-auto w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center hover:bg-black/40 transition-colors">
-            <X className="w-5 h-5 text-white" />
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {isOwner && !guestMode && (
+              <button
+                onClick={openDeleteConfirm}
+                aria-label="Delete story"
+                title="Delete story"
+                className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center hover:bg-red-500/70 transition-colors"
+              >
+                <Trash2 className="w-[18px] h-[18px] text-white" />
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Close" className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center hover:bg-black/40 transition-colors">
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
         </div>
 
         {/* Story Content */}
@@ -222,7 +278,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
                     onPlay={() => setIsPaused(false)}
                     onEnded={() => {
                       setProgress(100);
-                      if (current < stories.length - 1) {
+                      if (current < items.length - 1) {
                         setCurrent(c => c + 1);
                         setProgress(0);
                       } else {
@@ -273,23 +329,23 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
         {/* Analytics overlay for owner */}
         {showAnalytics && isOwner && (
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-40 flex items-center justify-center p-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm">
+            <div className="bg-white dark:bg-ink-800 rounded-2xl p-6 w-full max-w-sm">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Story Analytics</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Views</span>
+                  <span className="text-gray-600 dark:text-ink-400">Views</span>
                   <span className="text-2xl font-bold text-orange-600">{story.views_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Likes</span>
+                  <span className="text-gray-600 dark:text-ink-400">Likes</span>
                   <span className="text-2xl font-bold text-red-500">{story.likes_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Replies</span>
+                  <span className="text-gray-600 dark:text-ink-400">Replies</span>
                   <span className="text-2xl font-bold text-blue-500">{story.reply_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Posted</span>
+                  <span className="text-gray-600 dark:text-ink-400">Posted</span>
                   <span className="text-sm text-gray-900 dark:text-white">
                     {new Date(story.created_at || story.created_date).toLocaleDateString()}
                   </span>
@@ -297,7 +353,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
               </div>
               <div className="mt-6 space-y-2">
                 <button
-                  onClick={handleDelete}
+                  onClick={openDeleteConfirm}
                   className="w-full py-3 bg-red-500 hover:bg-red-600 rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -305,12 +361,47 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
                 </button>
                 <button
                   onClick={() => setShowAnalytics(false)}
-                  className="w-full py-3 bg-gray-200 dark:bg-slate-700 rounded-xl text-gray-900 dark:text-white font-medium hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+                  className="w-full py-3 bg-gray-200 dark:bg-ink-700 rounded-xl text-gray-900 dark:text-white font-medium hover:bg-gray-300 dark:hover:bg-ink-600 transition-colors"
                 >
                   Close
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Delete confirmation */}
+        {confirmDelete && isOwner && (
+          <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full max-w-sm rounded-3xl bg-white dark:bg-ink-800 p-5 shadow-2xl"
+            >
+              <div className="w-11 h-11 rounded-full bg-red-50 dark:bg-red-500/15 flex items-center justify-center mb-3">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Delete this story?</h3>
+              <p className="mt-1 text-sm text-slate-500 dark:text-ink-400">
+                It disappears for everyone right away, along with its views and replies. This can't be undone.
+              </p>
+              <div className="mt-5 flex flex-col gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-semibold transition-colors"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+                <button
+                  onClick={closeDeleteConfirm}
+                  disabled={isDeleting}
+                  className="w-full py-3 rounded-xl bg-slate-100 dark:bg-ink-700 hover:bg-slate-200 dark:hover:bg-ink-600 disabled:opacity-60 text-slate-900 dark:text-white font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
 
@@ -386,7 +477,7 @@ export default function StoryViewer({ stories = [], startIndex = 0, onClose, onN
             />
             <button
               onClick={() => {
-                if (current < stories.length - 1) {
+                if (current < items.length - 1) {
                   setCurrent(c => c + 1);
                 } else if (onNext) {
                   onNext();

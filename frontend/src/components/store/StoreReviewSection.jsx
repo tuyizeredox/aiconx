@@ -28,7 +28,7 @@ function StarRating({ value, onChange, size = 5, readonly = false }) {
             className={`w-${size} h-${size} transition-colors ${
               s <= (hovered || value)
                 ? "fill-amber-400 text-amber-400"
-                : "fill-slate-100 dark:fill-slate-700 text-slate-200 dark:text-slate-600"
+                : "fill-slate-100 dark:fill-ink-700 text-slate-200 dark:text-ink-600"
             }`}
           />
         </button>
@@ -47,24 +47,24 @@ function RatingBreakdown({ reviews }) {
   const avg = total ? reviews.reduce((s, r) => s + r.rating, 0) / total : 0;
 
   return (
-    <div className="flex items-center gap-5 p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-5">
+    <div className="flex items-center gap-5 p-5 bg-slate-50 dark:bg-ink-800 rounded-2xl mb-5">
       <div className="text-center shrink-0">
         <p className="text-4xl font-black text-slate-900 dark:text-white">{avg.toFixed(1)}</p>
         <StarRating value={Math.round(avg)} readonly size={4} />
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("storeDetail.reviewsTotal", { count: total })}</p>
+        <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">{t("storeDetail.reviewsTotal", { count: total })}</p>
       </div>
       <div className="flex-1 space-y-1.5">
         {counts.map(({ star, count }) => (
           <div key={star} className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400 w-3">{star}</span>
+            <span className="text-xs text-slate-500 dark:text-ink-400 w-3">{star}</span>
             <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-            <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-slate-200 dark:bg-ink-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-amber-400 rounded-full transition-all"
                 style={{ width: total ? `${(count / total) * 100}%` : "0%" }}
               />
             </div>
-            <span className="text-xs text-slate-400 dark:text-slate-500 w-4">{count}</span>
+            <span className="text-xs text-slate-400 dark:text-ink-500 w-4">{count}</span>
           </div>
         ))}
       </div>
@@ -101,7 +101,7 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
   });
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
@@ -117,13 +117,13 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
             </div>
           </div>
         </div>
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
+        <span className="text-[10px] text-slate-400 dark:text-ink-500 shrink-0">
           {new Date(review.created_at).toLocaleDateString(i18n.language, { month: "short", day: "numeric", year: "numeric" })}
         </span>
       </div>
 
-      {review.title && <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">{review.title}</p>}
-      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{review.content}</p>
+      {review.title && <p className="text-sm font-semibold text-slate-800 dark:text-ink-200 mb-1">{review.title}</p>}
+      <p className="text-sm text-slate-600 dark:text-ink-300 leading-relaxed">{review.content}</p>
 
       {/* Vendor reply */}
       {review.vendor_reply && (
@@ -131,14 +131,14 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
           <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1 flex items-center gap-1">
             <MessageSquare className="w-3 h-3" /> {t("storeDetail.vendorResponse")}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">{review.vendor_reply}</p>
+          <p className="text-xs text-slate-600 dark:text-ink-300">{review.vendor_reply}</p>
         </div>
       )}
 
-      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50 dark:border-slate-700">
+      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50 dark:border-ink-700">
         <button
           onClick={() => helpfulMutation.mutate()}
-          className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-ink-500 hover:text-slate-600 dark:hover:text-ink-300 transition-colors"
         >
           <ThumbsUp className="w-3.5 h-3.5" />
           {t("storeDetail.helpful", { count: review.helpful_count || 0 })}
@@ -156,7 +156,7 @@ function ReviewCard({ review, isVendor, vendorUsername, storeId }) {
         {isVendor && review.vendor_reply && (
           <button
             onClick={() => setShowReply(v => !v)}
-            className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+            className="flex items-center gap-1 text-xs text-slate-400 dark:text-ink-500 hover:text-slate-600 dark:hover:text-ink-300"
           >
             <Edit3 className="w-3.5 h-3.5" /> {t("storeDetail.editReply")}
           </button>
@@ -247,10 +247,10 @@ export default function StoreReviewSection({ store, currentUser }) {
 
       <AnimatePresence>
         {showForm && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-white dark:bg-slate-800 rounded-2xl border border-orange-100 dark:border-slate-700 p-5 mb-5">
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-white dark:bg-ink-800 rounded-2xl border border-orange-100 dark:border-ink-700 p-5 mb-5">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">{t("storeDetail.yourReview")}</h3>
             <div className="mb-3">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">{t("storeDetail.rating")}</p>
+              <p className="text-xs text-slate-500 dark:text-ink-400 mb-1.5">{t("storeDetail.rating")}</p>
               <StarRating value={form.rating} onChange={r => setForm(f => ({ ...f, rating: r }))} size={6} />
             </div>
             <Input
@@ -283,10 +283,10 @@ export default function StoreReviewSection({ store, currentUser }) {
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
       ) : reviews.length === 0 ? (
-        <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-          <Star className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t("storeDetail.noReviewsYet")}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t("storeDetail.beFirstToReview")}</p>
+        <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-ink-700 rounded-2xl">
+          <Star className="w-8 h-8 text-slate-300 dark:text-ink-600 mx-auto mb-2" />
+          <p className="text-sm text-slate-500 dark:text-ink-400">{t("storeDetail.noReviewsYet")}</p>
+          <p className="text-xs text-slate-400 dark:text-ink-500">{t("storeDetail.beFirstToReview")}</p>
         </div>
       ) : (
         <div className="space-y-3">

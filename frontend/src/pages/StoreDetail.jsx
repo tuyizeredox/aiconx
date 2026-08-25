@@ -179,9 +179,9 @@ export default function StoreDetail() {
   if (!isValidId) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
-        <ArrowLeft className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-4" />
+        <ArrowLeft className="w-12 h-12 text-slate-200 dark:text-ink-700 mb-4" />
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t("storeDetail.invalidStore")}</h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-6">{t("storeDetail.invalidStoreDesc")}</p>
+        <p className="text-slate-500 dark:text-ink-400 mb-6">{t("storeDetail.invalidStoreDesc")}</p>
         <Link to={createPageUrl("Marketplace")}>
           <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("storeDetail.backToMarketplace")}</Button>
         </Link>
@@ -194,7 +194,7 @@ export default function StoreDetail() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t("storeDetail.storeNotFound")}</h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-6">{storeError.status === 404 ? t("storeDetail.storeMovedOrDeleted") : t("storeDetail.storeLoadError")}</p>
+        <p className="text-slate-500 dark:text-ink-400 mb-6">{storeError.status === 404 ? t("storeDetail.storeMovedOrDeleted") : t("storeDetail.storeLoadError")}</p>
         <Link to={createPageUrl("Marketplace")}>
           <Button className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("storeDetail.backToMarketplace")}</Button>
         </Link>
@@ -202,7 +202,7 @@ export default function StoreDetail() {
     );
   }
 
-  if (storeLoading && !store) return <div className="flex items-center justify-center h-64 text-slate-400 dark:text-slate-500">{t("common.loading")}</div>;
+  if (storeLoading && !store) return <div className="flex items-center justify-center h-64 text-slate-400 dark:text-ink-500">{t("common.loading")}</div>;
 
   const avgRating = storeReviews.length > 0
     ? storeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / storeReviews.length
@@ -251,13 +251,13 @@ export default function StoreDetail() {
       <div className="max-w-6xl mx-auto px-4 lg:px-6 pb-4 lg:pb-6">
 
       {/* Store Banner */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
+      <div className="bg-white dark:bg-ink-800 rounded-3xl border border-slate-100 dark:border-ink-700 overflow-hidden mb-6 shadow-sm">
         <div className={`h-36 lg:h-56 relative ${COVER_PLACEHOLDER}`}>
           {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0" />
         </div>
         <div className="p-5 lg:p-6 -mt-12 relative">
-          <div className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-700 flex items-center justify-center text-2xl font-bold overflow-hidden">
+          <div className="w-24 h-24 rounded-2xl bg-white dark:bg-ink-700 shadow-xl border-4 border-white dark:border-ink-700 flex items-center justify-center text-2xl font-bold overflow-hidden">
             {store.logo_url ? (
               <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -273,23 +273,23 @@ export default function StoreDetail() {
                 <Badge className="bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 border-0"><CheckCircle className="w-3 h-3 mr-1" />{t("common.verified")}</Badge>
               )}
               {store.category && (
-                <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize">
+                <Badge variant="outline" className="border-slate-200 dark:border-ink-600 text-slate-500 dark:text-ink-400 font-medium capitalize">
                   {store.category}
                 </Badge>
               )}
             </div>
             {store.description && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-2xl leading-relaxed">{store.description}</p>
+              <p className="text-sm text-slate-500 dark:text-ink-400 mb-4 max-w-2xl leading-relaxed">{store.description}</p>
             )}
             <div className="flex items-center flex-wrap gap-2 text-sm">
-              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-slate-300 font-medium">
+              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-ink-900 border border-slate-100 dark:border-ink-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-ink-300 font-medium">
                 <Package className="w-3.5 h-3.5 text-orange-500" /> {t("storeDetail.productsCount", { count: storeProductsTotal })}
               </span>
-              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-slate-300 font-medium">
+              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-ink-900 border border-slate-100 dark:border-ink-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-ink-300 font-medium">
                 <Users className="w-3.5 h-3.5 text-orange-500" /> {t("storeDetail.followersCount", { count: store.follower_count || 0 })}
               </span>
               {store.total_sales > 0 && (
-                <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-ink-900 border border-slate-100 dark:border-ink-700 rounded-full px-3 py-1.5 text-slate-600 dark:text-ink-300 font-medium">
                   <TrendingUp className="w-3.5 h-3.5 text-orange-500" /> {t("storeDetail.salesCount", { count: store.total_sales })}
                 </span>
               )}
@@ -297,7 +297,7 @@ export default function StoreDetail() {
                 <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-full px-3 py-1.5">
                   <StarRating value={Math.round(avgRating)} readonly size={4} />
                   <span className="text-amber-600 dark:text-amber-400 font-bold">{avgRating.toFixed(1)}</span>
-                  <span className="text-slate-400 dark:text-slate-500">{t("storeDetail.reviewsCount", { count: storeReviews.length })}</span>
+                  <span className="text-slate-400 dark:text-ink-500">{t("storeDetail.reviewsCount", { count: storeReviews.length })}</span>
                 </span>
               )}
             </div>
@@ -308,7 +308,7 @@ export default function StoreDetail() {
                   disabled={followMutation.isPending}
                   className={`rounded-xl gap-2 font-semibold transition-all ${
                     isFollowing
-                      ? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
+                      ? "bg-slate-100 dark:bg-ink-700 text-slate-700 dark:text-ink-200 hover:bg-slate-200 dark:hover:bg-ink-600"
                       : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100"
                   }`}
                   size="sm"
@@ -324,7 +324,7 @@ export default function StoreDetail() {
                 </Button>
 
                 <Link to={createPageUrl("Chat") + `?to=${store.owner_username}`}>
-                  <Button variant="outline" className="rounded-xl gap-2 border-slate-200 dark:border-slate-600" size="sm">
+                  <Button variant="outline" className="rounded-xl gap-2 border-slate-200 dark:border-ink-600" size="sm">
                     <MessageCircle className="w-4 h-4" /> {t("storeDetail.chatWithVendor")}
                   </Button>
                 </Link>
@@ -339,7 +339,7 @@ export default function StoreDetail() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
           {t("storeDetail.allProducts")}
           {!isLoading && (
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5">
+            <span className="text-xs font-bold text-slate-400 dark:text-ink-500 bg-slate-100 dark:bg-ink-800 rounded-full px-2 py-0.5">
               {filteredProducts.length}
             </span>
           )}
@@ -400,11 +400,11 @@ export default function StoreDetail() {
           : filteredProducts.map((p, idx) => <ProductCard key={p.id || p._id || `p-${idx}`} product={p} />)}
       </div>
       {!isLoading && products.length === 0 && (
-        <div className="text-center py-16 text-slate-400 dark:text-slate-500">{t("storeDetail.noProductsYet")}</div>
+        <div className="text-center py-16 text-slate-400 dark:text-ink-500">{t("storeDetail.noProductsYet")}</div>
       )}
       {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-slate-400 dark:text-slate-500 mb-3">{t("storeDetail.noResultsFilter")}</p>
+          <p className="text-slate-400 dark:text-ink-500 mb-3">{t("storeDetail.noResultsFilter")}</p>
           <button onClick={clearFilters} className="text-sm font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300">
             {t("storeDetail.clearFilters")}
           </button>

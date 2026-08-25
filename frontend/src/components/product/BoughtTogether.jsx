@@ -25,15 +25,15 @@ function BundleItem({ product, isAnchor }) {
     <div className={`flex items-center gap-2.5 rounded-2xl border p-2.5 w-[240px] shrink-0 ${
       isAnchor
         ? "border-orange-200 dark:border-orange-900 bg-orange-50/50 dark:bg-orange-950/30"
-        : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
+        : "border-slate-100 dark:border-ink-800 bg-white dark:bg-ink-900"
     }`}>
-      <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
+      <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-ink-800 overflow-hidden shrink-0">
         {product.images?.[0] && (
           <img src={product.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight">{product.title}</p>
+        <p className="text-xs font-semibold text-slate-800 dark:text-ink-100 line-clamp-2 leading-tight">{product.title}</p>
         <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{formatCurrency(product.price)}</p>
         <EarnBadge amount={earnings?.amount} className="mt-1" />
       </div>
@@ -107,24 +107,24 @@ export default function BoughtTogether({ product, productId, currentUser }) {
   const subheading = source === "store" ? t("product.moreFromStore") : t("product.boughtTogetherNote");
 
   return (
-    <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
+    <section className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 sm:p-5">
       <h2 className="text-base font-bold text-slate-900 dark:text-white">{heading}</h2>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{subheading}</p>
+      <p className="text-xs text-slate-400 dark:text-ink-500 mb-4">{subheading}</p>
 
       <div className="flex flex-col xl:flex-row xl:items-center gap-3">
         <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar flex-1 min-w-0 pb-1">
           <BundleItem product={product} isAnchor />
           {extras.map((extra, i) => (
             <React.Fragment key={extra.id || extra._id || `extra-${i}`}>
-              <Plus className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
+              <Plus className="w-4 h-4 text-slate-300 dark:text-ink-600 shrink-0" />
               <BundleItem product={extra} />
             </React.Fragment>
           ))}
         </div>
 
-        <div className="flex items-center justify-between xl:justify-end gap-3 xl:gap-4 shrink-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800 pt-3 xl:pt-0">
+        <div className="flex items-center justify-between xl:justify-end gap-3 xl:gap-4 shrink-0 border-t xl:border-t-0 border-slate-100 dark:border-ink-800 pt-3 xl:pt-0">
           <div className="xl:text-right">
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t("product.totalPrice")}</p>
+            <p className="text-[11px] text-slate-400 dark:text-ink-500">{t("product.totalPrice")}</p>
             <p className="text-lg font-black text-orange-600 whitespace-nowrap">{formatCurrency(total)}</p>
           </div>
           <Button

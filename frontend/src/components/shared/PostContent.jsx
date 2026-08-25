@@ -59,7 +59,7 @@ export default function PostContent({ content, clamp = true, className = "" }) {
     <div className={className}>
       <p
         ref={textRef}
-        className={`text-[14px] text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words ${isClamped ? "line-clamp-3" : ""}`}
+        className={`text-[14px] text-slate-700 dark:text-ink-300 leading-relaxed whitespace-pre-wrap break-words ${isClamped ? "line-clamp-3" : ""}`}
       >
         {renderTokens(content)}
       </p>

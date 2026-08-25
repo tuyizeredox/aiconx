@@ -14,11 +14,11 @@ export default function PinnedPost({ post }) {
         </div>
         <div>
           <span className="text-xs font-semibold text-slate-800 dark:text-white">{post.author_name}</span>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-2">{new Date(post.created_at || post.created_date).toLocaleDateString()}</span>
+          <span className="text-[10px] text-slate-400 dark:text-ink-500 ml-2">{new Date(post.created_at || post.created_date).toLocaleDateString()}</span>
         </div>
       </div>
-      <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-3">{post.content}</p>
-      <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
+      <p className="text-sm text-slate-700 dark:text-ink-300 line-clamp-3">{post.content}</p>
+      <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-ink-500">
         <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes_count || 0}</span>
         <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {post.comments_count || 0}</span>
       </div>

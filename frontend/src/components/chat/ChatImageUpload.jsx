@@ -27,10 +27,10 @@ export default function ChatImageUpload({ onImageReady, onClear, previewUrl }) {
   if (previewUrl) {
     return (
       <div className="relative w-10 h-10 shrink-0">
-        <img src={previewUrl} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
+        <img src={previewUrl} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-ink-700" />
         <button
           onClick={onClear}
-          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-slate-700 text-white rounded-full flex items-center justify-center"
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-ink-700 text-white rounded-full flex items-center justify-center"
         >
           <X className="w-2.5 h-2.5" />
         </button>
@@ -44,7 +44,7 @@ export default function ChatImageUpload({ onImageReady, onClear, previewUrl }) {
       <button
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+        className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-ink-700 text-slate-500 dark:text-ink-400 transition-colors"
         title="Send image"
       >
         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}

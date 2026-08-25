@@ -10,7 +10,7 @@ export default function BackLink({ to, label, className = "" }) {
   return (
     <Link
       to={createPageUrl(to)}
-      className={`inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors ${className}`}
+      className={`inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-ink-400 hover:text-slate-700 dark:hover:text-ink-200 mb-4 transition-colors ${className}`}
     >
       <ArrowLeft className="w-4 h-4" /> {label}
     </Link>

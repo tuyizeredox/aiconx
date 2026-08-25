@@ -567,7 +567,7 @@ export default function MyStore() {
           <Store className="w-9 h-9 text-orange-500" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("store.createStoreTitle")}</h1>
-        <p className="text-slate-500 dark:text-slate-400 mb-8">{t("store.createStoreSubtitle")}</p>
+        <p className="text-slate-500 dark:text-ink-400 mb-8">{t("store.createStoreSubtitle")}</p>
 
         <Dialog open={showCreateStore} onOpenChange={setShowCreateStore}>
           <DialogTrigger asChild>
@@ -591,13 +591,13 @@ export default function MyStore() {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">{t("store.storeLogo")}</label>
+                      <label className="text-xs font-medium text-slate-500 dark:text-ink-400 block mb-1">{t("store.storeLogo")}</label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-ink-700 border border-slate-100 dark:border-ink-600 flex items-center justify-center overflow-hidden shrink-0">
                           {storeForm.logo_url ? (
                             <img src={storeForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                           ) : (
-                            <Upload className="w-5 h-5 text-slate-300 dark:text-slate-500" />
+                            <Upload className="w-5 h-5 text-slate-300 dark:text-ink-500" />
                           )}
                         </div>
                         <div className="relative flex-1">
@@ -617,13 +617,13 @@ export default function MyStore() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">{t("store.storeBanner")}</label>
+                      <label className="text-xs font-medium text-slate-500 dark:text-ink-400 block mb-1">{t("store.storeBanner")}</label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-ink-700 border border-slate-100 dark:border-ink-600 flex items-center justify-center overflow-hidden shrink-0">
                           {storeForm.banner_url ? (
                             <img src={storeForm.banner_url} alt="Banner" className="w-full h-full object-cover" />
                           ) : (
-                            <Upload className="w-5 h-5 text-slate-300 dark:text-slate-500" />
+                            <Upload className="w-5 h-5 text-slate-300 dark:text-ink-500" />
                           )}
                         </div>
                         <div className="relative flex-1">
@@ -682,17 +682,17 @@ export default function MyStore() {
                   {storeForm.payment_method === 'mobile_money' && (
                     <div className="space-y-3 border-l-2 border-orange-100 dark:border-orange-900 pl-4">
                       <Input placeholder={t("store.mobileMoneyNumber")} value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">{t("store.mobileMoneyHint")}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-ink-500">{t("store.mobileMoneyHint")}</p>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="delivery" className="space-y-6 pt-2">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-ink-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.shipping")}</Label>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.shippingDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.shippingDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.shipping_enabled} 
@@ -700,10 +700,10 @@ export default function MyStore() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-ink-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.localDelivery")}</Label>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.localDeliveryDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.localDeliveryDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.delivery_enabled} 
@@ -760,10 +760,10 @@ export default function MyStore() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-ink-700">
                       <div className="space-y-0.5">
                         <Label>{t("store.storePickup")}</Label>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.storePickupDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.storePickupDesc")}</p>
                       </div>
                       <Switch 
                         checked={storeForm.delivery_settings.pickup_enabled} 
@@ -804,7 +804,7 @@ export default function MyStore() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       {/* Store Header */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden mb-6 shadow-sm">
+      <div className="bg-white dark:bg-ink-800 rounded-3xl border border-slate-100 dark:border-ink-700 overflow-hidden mb-6 shadow-sm">
         {/* Banner */}
         <div className="h-20 sm:h-32 lg:h-40 relative bg-gradient-to-r from-orange-500 via-orange-600 to-purple-600">
           {store.banner_url && <img src={store.banner_url} alt="" className="w-full h-full object-cover" />}
@@ -828,7 +828,7 @@ export default function MyStore() {
             positioned, so without it the banner paints over the logo and hides
             the part that sits inside it. */}
         <div className="relative z-10 flex items-start justify-between gap-4 -mt-8 sm:-mt-10">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-slate-700 shadow-xl border-4 border-white dark:border-slate-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white dark:bg-ink-700 shadow-xl border-4 border-white dark:border-ink-800 flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden">
             {store.logo_url ? (
               <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
             ) : (
@@ -912,7 +912,7 @@ export default function MyStore() {
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.storeLogo")}</label>
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-ink-800 border border-slate-100 dark:border-ink-700 flex items-center justify-center overflow-hidden shrink-0">
                               {storeForm.logo_url ? (
                                 <img src={storeForm.logo_url} alt="Logo" className="w-full h-full object-cover" />
                               ) : (
@@ -938,7 +938,7 @@ export default function MyStore() {
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{t("store.storeBanner")}</label>
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-ink-800 border border-slate-100 dark:border-ink-700 flex items-center justify-center overflow-hidden shrink-0">
                               {storeForm.banner_url ? (
                                 <img src={storeForm.banner_url} alt="Banner" className="w-full h-full object-cover" />
                               ) : (
@@ -989,20 +989,20 @@ export default function MyStore() {
                       {storeForm.payment_method === 'bank_transfer' && (
                         <div className="space-y-4 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.bankName")}</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.bankName")}</label>
                             <Input placeholder={t("store.bankNamePlaceholder")} value={storeForm.bank_name} onChange={e => setStoreForm(p => ({ ...p, bank_name: e.target.value }))} />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.accountHolderName")}</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.accountHolderName")}</label>
                             <Input placeholder={t("store.accountHolderNamePlaceholder")} value={storeForm.bank_account_name} onChange={e => setStoreForm(p => ({ ...p, bank_account_name: e.target.value }))} />
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.accountNumber")}</label>
+                              <label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.accountNumber")}</label>
                               <Input placeholder={t("store.accountNumber")} value={storeForm.bank_account_number} onChange={e => setStoreForm(p => ({ ...p, bank_account_number: e.target.value }))} />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.routingNumber")}</label>
+                              <label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.routingNumber")}</label>
                               <Input placeholder={t("store.routingNumber")} value={storeForm.routing_number} onChange={e => setStoreForm(p => ({ ...p, routing_number: e.target.value }))} />
                             </div>
                           </div>
@@ -1011,14 +1011,14 @@ export default function MyStore() {
 
                       {storeForm.payment_method === 'paypal' && (
                         <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
-                          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.paypalEmail")}</label>
+                          <label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.paypalEmail")}</label>
                           <Input type="email" placeholder="email@example.com" value={storeForm.paypal_email} onChange={e => setStoreForm(p => ({ ...p, paypal_email: e.target.value }))} />
                         </div>
                       )}
 
                       {storeForm.payment_method === 'mobile_money' && (
                         <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1 mt-4">
-                          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.mobileMoneyNumber")}</label>
+                          <label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.mobileMoneyNumber")}</label>
                           <Input placeholder="07XXXXXXXX" value={storeForm.mobile_money_number} onChange={e => setStoreForm(p => ({ ...p, mobile_money_number: e.target.value }))} />
                         </div>
                       )}
@@ -1026,10 +1026,10 @@ export default function MyStore() {
 
                     <TabsContent value="delivery" className="space-y-6 pt-2">
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-ink-700 bg-slate-50/30 dark:bg-ink-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.shipping")}</Label>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.shippingDesc")}</p>
+                            <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.shippingDesc")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.shipping_enabled} 
@@ -1037,10 +1037,10 @@ export default function MyStore() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-ink-700 bg-slate-50/30 dark:bg-ink-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.localDelivery")}</Label>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.localDeliveryDesc")}</p>
+                            <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.localDeliveryDesc")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.delivery_enabled} 
@@ -1052,7 +1052,7 @@ export default function MyStore() {
                           <div className="space-y-4 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.deliveryFee")}</Label>
+                                <Label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.deliveryFee")}</Label>
                                 <Input
                                   type="number"
                                   placeholder="0.00"
@@ -1061,7 +1061,7 @@ export default function MyStore() {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.deliveryRadiusKm")}</Label>
+                                <Label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.deliveryRadiusKm")}</Label>
                                 <Input
                                   type="number"
                                   placeholder="10"
@@ -1072,7 +1072,7 @@ export default function MyStore() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.minOrderForDelivery")}</Label>
+                                <Label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.minOrderForDelivery")}</Label>
                                 <Input
                                   type="number"
                                   placeholder="0.00"
@@ -1081,7 +1081,7 @@ export default function MyStore() {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.freeDeliveryAbove")}</Label>
+                                <Label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.freeDeliveryAbove")}</Label>
                                 <Input
                                   type="number"
                                   placeholder="0.00"
@@ -1091,7 +1091,7 @@ export default function MyStore() {
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.estDeliveryTime")}</Label>
+                              <Label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.estDeliveryTime")}</Label>
                               <Input 
                                 placeholder={t("store.estDeliveryTimePlaceholder2")} 
                                 value={storeForm.delivery_settings.delivery_time_est} 
@@ -1101,10 +1101,10 @@ export default function MyStore() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-ink-700 bg-slate-50/30 dark:bg-ink-800/30">
                           <div className="space-y-1">
                             <Label className="text-base">{t("store.storePickup")}</Label>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.storePickupDesc2")}</p>
+                            <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.storePickupDesc2")}</p>
                           </div>
                           <Switch 
                             checked={storeForm.delivery_settings.pickup_enabled} 
@@ -1114,7 +1114,7 @@ export default function MyStore() {
 
                         {storeForm.delivery_settings.pickup_enabled && (
                           <div className="space-y-2 border-l-2 border-orange-100 dark:border-orange-900 pl-4 py-1">
-                            <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("store.pickupInstructions")}</Label>
+                            <Label className="text-sm font-medium text-slate-600 dark:text-ink-300">{t("store.pickupInstructions")}</Label>
                             <Textarea 
                               placeholder={t("store.pickupInstructionsPlaceholder2")} 
                               className="min-h-[100px]"
@@ -1142,17 +1142,17 @@ export default function MyStore() {
                         <Input placeholder={t("store.storeAddressPlaceholder")} value={storeForm.address} onChange={(e) => setStoreForm(p => ({ ...p, address: e.target.value }))} />
                       </div>
 
-                      <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-ink-800">
                         <div className="flex items-start gap-2 pt-3">
                           <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                           <div className="min-w-0">
-                            <label className="text-sm font-bold text-slate-800 dark:text-slate-200 block">{t("store.locationTitle")}</label>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.locationHelp")}</p>
+                            <label className="text-sm font-bold text-slate-800 dark:text-ink-200 block">{t("store.locationTitle")}</label>
+                            <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.locationHelp")}</p>
                           </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">{t("store.city")}</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase ml-1">{t("store.city")}</label>
                             <Input
                               placeholder={t("store.cityPlaceholder")}
                               value={storeForm.location.city}
@@ -1160,7 +1160,7 @@ export default function MyStore() {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">{t("store.country")}</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase ml-1">{t("store.country")}</label>
                             <Input
                               placeholder={t("store.countryPlaceholder")}
                               value={storeForm.location.country}
@@ -1206,12 +1206,12 @@ export default function MyStore() {
                       </div>
 
                       <div className="space-y-3 pt-2">
-                        <label className="text-sm font-bold text-slate-800 dark:text-slate-200">{t("store.socialMediaHandles")}</label>
+                        <label className="text-sm font-bold text-slate-800 dark:text-ink-200">{t("store.socialMediaHandles")}</label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Instagram</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase ml-1">Instagram</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-ink-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -1221,9 +1221,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">TikTok</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase ml-1">TikTok</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-ink-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -1233,9 +1233,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Twitter / X</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase ml-1">Twitter / X</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">@</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-ink-500 font-medium">@</span>
                               <Input 
                                 className="pl-7 h-10 text-xs rounded-xl" 
                                 placeholder="username" 
@@ -1245,9 +1245,9 @@ export default function MyStore() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-1">Facebook</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-ink-500 uppercase ml-1">Facebook</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-500 font-medium">fb.com/</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-ink-500 font-medium">fb.com/</span>
                               <Input 
                                 className="pl-14 h-10 text-xs rounded-xl" 
                                 placeholder="page-handle" 
@@ -1288,12 +1288,12 @@ export default function MyStore() {
               </Badge>
             )}
             {store.category && (
-              <Badge variant="outline" className="border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium capitalize shrink-0">
+              <Badge variant="outline" className="border-slate-200 dark:border-ink-600 text-slate-500 dark:text-ink-400 font-medium capitalize shrink-0">
                 {store.category}
               </Badge>
             )}
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mt-0.5">{store.description || t("store.noDescription")}</p>
+          <p className="text-sm text-slate-500 dark:text-ink-400 max-w-md mt-0.5">{store.description || t("store.noDescription")}</p>
         </div>
 
         {/* Verification Banner */}
@@ -1353,7 +1353,7 @@ export default function MyStore() {
               <div className="space-y-1.5">
                 <Label className="text-xs">{t("store.documentImage")}</Label>
                 {verificationForm.document_image_url ? (
-                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700">
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-100 dark:border-ink-700">
                     <img src={verificationForm.document_image_url} alt="" className="w-full h-full object-cover" />
                     <button
                       type="button"
@@ -1364,7 +1364,7 @@ export default function MyStore() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 cursor-pointer text-slate-400 hover:border-blue-300 transition-colors">
+                  <label className="flex items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-ink-700 cursor-pointer text-slate-400 hover:border-blue-300 transition-colors">
                     {uploadingVerificationDoc ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
                     <input type="file" accept="image/*" className="hidden" onChange={handleVerificationDocUpload} disabled={uploadingVerificationDoc} />
                   </label>
@@ -1405,8 +1405,8 @@ export default function MyStore() {
                 { label: t("store.setupAddProduct"), done: products.length > 0 },
                 { label: t("store.setupPayoutMethod"), done: !!store.payment_method },
               ].map((step, i) => (
-                <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-slate-700/50 border-orange-100 dark:border-orange-900 text-orange-600' : 'bg-slate-50/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
-                  {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200 dark:border-slate-600" />}
+                <div key={i} className={`flex items-center gap-2 p-2 rounded-xl border ${step.done ? 'bg-white/50 dark:bg-ink-700/50 border-orange-100 dark:border-orange-900 text-orange-600' : 'bg-slate-50/50 dark:bg-ink-800/50 border-slate-100 dark:border-ink-700 text-slate-400'}`}>
+                  {step.done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-200 dark:border-ink-600" />}
                   <span className="text-xs font-medium">{step.label}</span>
                 </div>
               ))}
@@ -1420,7 +1420,7 @@ export default function MyStore() {
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 w-full sm:w-auto">
-          <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full sm:w-auto h-auto flex-wrap justify-start gap-1.5 p-1.5">
+          <TabsList className="bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 w-full sm:w-auto h-auto flex-wrap justify-start gap-1.5 p-1.5">
             <TabsTrigger value="overview">{t("store.overview")}</TabsTrigger>
             <TabsTrigger value="products">{t("store.products")}</TabsTrigger>
             <TabsTrigger value="orders">{t("store.orders")}</TabsTrigger>
@@ -1431,11 +1431,11 @@ export default function MyStore() {
             </TabsTrigger>
             <TabsTrigger value="shipping" className="gap-1.5">
               {t("store.shipping")}
-              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
+              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-ink-700 text-slate-400 dark:text-ink-500 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="storefront" className="gap-1.5">
               {t("store.storefrontBuilder")}
-              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-0">Pro+</Badge>}
+              {currentPlan === 'free' && <Badge className="px-1 py-0 text-[8px] bg-slate-100 dark:bg-ink-700 text-slate-400 dark:text-ink-500 border-0">Pro+</Badge>}
             </TabsTrigger>
             <TabsTrigger value="subscription">{t("store.plan")}</TabsTrigger>
             <TabsTrigger value="finance">{t("store.finance")}</TabsTrigger>
@@ -1501,16 +1501,16 @@ export default function MyStore() {
                 
                 {/* Image Upload */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <label className="text-xs font-medium text-slate-500 dark:text-ink-400 flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5" /> {t("store.productMedia", { limit: limits.images === Infinity ? t("store.unlimited") : limits.images })}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {imagePreviews.map((url, i) => {
                       const isVideo = productImages[i]?.type?.startsWith("video/");
                       return (
-                        <div key={`preview-${i}-${url}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 group">
+                        <div key={`preview-${i}-${url}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-100 dark:border-ink-700 bg-slate-50 dark:bg-ink-800 group">
                           {isVideo ? (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
+                            <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-ink-700">
                               <video src={url} className="w-full h-full object-cover" />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                 <Play className="w-6 h-6 text-white fill-white" />
@@ -1529,7 +1529,7 @@ export default function MyStore() {
                       );
                     })}
                     {(limits.images === Infinity || productImages.length < limits.images) && (
-                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 dark:hover:border-orange-600 hover:bg-orange-50/30 dark:hover:bg-orange-950/30 transition-all text-slate-400 dark:text-slate-500">
+                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 dark:border-ink-700 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 dark:hover:border-orange-600 hover:bg-orange-50/30 dark:hover:bg-orange-950/30 transition-all text-slate-400 dark:text-ink-500">
                         <Upload className="w-5 h-5" />
                         <span className="text-[10px] mt-1 font-medium">{t("store.upload")}</span>
                         <input type="file" accept={limits.videos === 0 ? "image/*" : "image/*,video/*"} multiple className="hidden" onChange={handleFileChange} />
@@ -1559,13 +1559,13 @@ export default function MyStore() {
                 <SpecificationsInput specifications={productForm.specifications} onChange={(specifications) => setProductForm(p => ({ ...p, specifications }))} />
 
                 {/* Affiliate Marketing Settings */}
-                <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
+                <div className="p-3 rounded-xl border border-slate-100 dark:border-ink-700 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
                       <Link2 className="w-4 h-4 text-orange-500 shrink-0" />
                       <div className="min-w-0">
                         <Label className="text-sm">{t("store.allowAffiliate")}</Label>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.allowAffiliateDesc")}</p>
+                        <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.allowAffiliateDesc")}</p>
                       </div>
                     </div>
                     {currentPlan === 'elite' ? (
@@ -1616,8 +1616,8 @@ export default function MyStore() {
 
       {/* Overview Tab */}
       {activeTab === "overview" && (
-        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 p-4 sm:p-6">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">{t("store.overview")}</h2>
+        <div className="bg-white dark:bg-ink-800 rounded-3xl border border-slate-100 dark:border-ink-700 p-4 sm:p-6">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-ink-200 mb-4">{t("store.overview")}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               {
@@ -1654,7 +1654,7 @@ export default function MyStore() {
                 value: actionNeededOrders,
                 sub: t("store.needsActionSub"),
                 icon: Clock,
-                color: actionNeededOrders > 0 ? "text-amber-600 bg-amber-100 dark:bg-amber-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+                color: actionNeededOrders > 0 ? "text-amber-600 bg-amber-100 dark:bg-amber-900" : "text-slate-400 bg-slate-100 dark:bg-ink-700",
                 onClick: () => setActiveTab("orders"),
               },
               {
@@ -1662,7 +1662,7 @@ export default function MyStore() {
                 value: lowStockCount + outOfStockCount,
                 sub: outOfStockCount > 0 ? t("store.outOfStockCount", { count: outOfStockCount }) : undefined,
                 icon: AlertTriangle,
-                color: (lowStockCount + outOfStockCount) > 0 ? "text-rose-600 bg-rose-100 dark:bg-rose-900" : "text-slate-400 bg-slate-100 dark:bg-slate-700",
+                color: (lowStockCount + outOfStockCount) > 0 ? "text-rose-600 bg-rose-100 dark:bg-rose-900" : "text-slate-400 bg-slate-100 dark:bg-ink-700",
                 onClick: () => setActiveTab("products"),
               },
               {
@@ -1683,14 +1683,14 @@ export default function MyStore() {
                 key={stat.label}
                 onClick={stat.onClick}
                 role={stat.onClick ? "button" : undefined}
-                className={`bg-slate-50 dark:bg-slate-800 rounded-xl p-3 ${stat.onClick ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" : ""}`}
+                className={`bg-slate-50 dark:bg-ink-800 rounded-xl p-3 ${stat.onClick ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-ink-700 transition-colors" : ""}`}
               >
                 <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-2`}>
                   <stat.icon className="w-4 h-4" />
                 </div>
                 <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
-                {stat.sub && <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{stat.sub}</p>}
+                <p className="text-xs text-slate-500 dark:text-ink-400">{stat.label}</p>
+                {stat.sub && <p className="text-[10px] text-slate-400 dark:text-ink-500 mt-0.5 truncate">{stat.sub}</p>}
               </div>
             ))}
           </div>
@@ -1701,18 +1701,18 @@ export default function MyStore() {
           card at the bottom of Overview so they are findable but never sit
           next to the everyday buttons. */}
       {activeTab === "overview" && (
-        <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl border border-rose-100 dark:border-rose-900/50 p-4 sm:p-6">
+        <div className="mt-6 bg-white dark:bg-ink-800 rounded-3xl border border-rose-100 dark:border-rose-900/50 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-rose-500" />
             <h3 className="font-bold text-rose-600 dark:text-rose-400">{t("store.dangerZone")}</h3>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t("store.dangerZoneDesc")}</p>
+          <p className="text-sm text-slate-500 dark:text-ink-400 mb-4">{t("store.dangerZoneDesc")}</p>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-2xl border border-slate-100 dark:border-ink-700">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("store.deleteAllProducts")}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.deleteAllProductsDesc", { count: products.length })}</p>
+                <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.deleteAllProductsDesc", { count: products.length })}</p>
               </div>
               <Button
                 variant="outline"
@@ -1725,11 +1725,11 @@ export default function MyStore() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-2xl border border-slate-100 dark:border-ink-700">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("store.deleteStore")}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.deleteStoreDesc")}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{t("store.deleteStoreCanCreateNote")}</p>
+                <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.deleteStoreDesc")}</p>
+                <p className="text-xs text-slate-400 dark:text-ink-500 mt-0.5">{t("store.deleteStoreCanCreateNote")}</p>
               </div>
               <Button
                 size="sm"
@@ -1766,7 +1766,7 @@ export default function MyStore() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-500 dark:text-slate-400">
+              <Label className="text-xs font-bold text-slate-500 dark:text-ink-400">
                 {t("store.typeStoreNameToConfirm", { name: store.name })}
               </Label>
               <Input
@@ -1807,13 +1807,13 @@ export default function MyStore() {
       {activeTab === "products" && (
         <div className="space-y-2">
           {products.length === 0 ? (
-            <div className="text-center py-16 text-slate-400 dark:text-slate-500">{t("store.noProductsDesc")}</div>
+            <div className="text-center py-16 text-slate-400 dark:text-ink-500">{t("store.noProductsDesc")}</div>
           ) : (
             products.map((product, idx) => {
               const productId = product.id || product._id || `product-${idx}`;
               return (
-                <motion.div key={productId} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+                <motion.div key={productId} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 p-4 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-ink-700 overflow-hidden shrink-0">
                     {product.images?.[0] && <img src={product.images[0]} alt="" className="w-full h-full object-cover" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1845,14 +1845,14 @@ export default function MyStore() {
                           >
                             {updateStockMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                           </button>
-                          <button onClick={() => setEditingStockId(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400">
+                          <button onClick={() => setEditingStockId(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-ink-700 text-slate-400">
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => { setEditingStockId(productId); setStockValue(String(product.inventory_count || 0)); }}
-                          className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                          className="flex items-center gap-1 text-xs text-slate-400 dark:text-ink-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
                         >
                           {t("store.stock")}: {product.inventory_count || 0}
                           <Pencil className="w-3 h-3" />
@@ -1909,13 +1909,13 @@ export default function MyStore() {
             <SpecificationsInput specifications={editForm.specifications} onChange={(specifications) => setEditForm(p => ({ ...p, specifications }))} />
 
             {/* Affiliate Marketing Settings */}
-            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3">
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-ink-700 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <Link2 className="w-4 h-4 text-orange-500 shrink-0" />
                   <div className="min-w-0">
                     <Label className="text-sm">{t("store.allowAffiliate")}</Label>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{t("store.allowAffiliateDesc")}</p>
+                    <p className="text-xs text-slate-500 dark:text-ink-400">{t("store.allowAffiliateDesc")}</p>
                   </div>
                 </div>
                 {currentPlan === 'elite' ? (
@@ -1964,12 +1964,12 @@ export default function MyStore() {
       {/* Shipping Tab */}
       {activeTab === "shipping" && (
         currentPlan === 'free' ? (
-          <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
-             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
-               <Package className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+          <div className="bg-slate-50 dark:bg-ink-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-ink-700 p-12 text-center">
+             <div className="w-16 h-16 bg-white dark:bg-ink-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+               <Package className="w-8 h-8 text-slate-300 dark:text-ink-600" />
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.shippingZonesRestricted")}</h3>
-             <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.shippingZonesRestrictedDesc")}</p>
+             <p className="text-slate-500 dark:text-ink-400 max-w-sm mx-auto mb-6">{t("store.shippingZonesRestrictedDesc")}</p>
              <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
@@ -1990,12 +1990,12 @@ export default function MyStore() {
       {/* Coupons Tab */}
       {activeTab === "coupons" && (
         currentPlan === 'free' ? (
-          <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
-             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
-               <Tag className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+          <div className="bg-slate-50 dark:bg-ink-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-ink-700 p-12 text-center">
+             <div className="w-16 h-16 bg-white dark:bg-ink-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+               <Tag className="w-8 h-8 text-slate-300 dark:text-ink-600" />
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.couponsRestricted")}</h3>
-             <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.couponsRestrictedDesc")}</p>
+             <p className="text-slate-500 dark:text-ink-400 max-w-sm mx-auto mb-6">{t("store.couponsRestrictedDesc")}</p>
              <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
@@ -2006,12 +2006,12 @@ export default function MyStore() {
       {/* Storefront Builder Tab */}
       {activeTab === "storefront" && (
         currentPlan === 'free' ? (
-          <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
-             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
-               <LayoutTemplate className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+          <div className="bg-slate-50 dark:bg-ink-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-ink-700 p-12 text-center">
+             <div className="w-16 h-16 bg-white dark:bg-ink-800 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+               <LayoutTemplate className="w-8 h-8 text-slate-300 dark:text-ink-600" />
              </div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t("store.storefrontBuilderRestricted")}</h3>
-             <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">{t("store.storefrontBuilderRestrictedDesc")}</p>
+             <p className="text-slate-500 dark:text-ink-400 max-w-sm mx-auto mb-6">{t("store.storefrontBuilderRestrictedDesc")}</p>
              <Button onClick={() => setActiveTab("subscription")} className="bg-orange-600 hover:bg-orange-700 rounded-xl">{t("store.upgradePlan")}</Button>
           </div>
         ) : (
@@ -2033,18 +2033,18 @@ export default function MyStore() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 mb-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-ink-500" />
               <Input 
                 placeholder={t("store.searchOrders")}
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
-                className="pl-10 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-2xl"
+                className="pl-10 bg-white dark:bg-ink-800 border-slate-100 dark:border-ink-700 rounded-2xl"
               />
             </div>
           </div>
 
           <Tabs value={orderTab} onValueChange={setOrderTab} className="w-full">
-            <TabsList className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full justify-start overflow-x-auto hide-scrollbar h-auto p-1">
+            <TabsList className="bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 w-full justify-start overflow-x-auto hide-scrollbar h-auto p-1">
               <TabsTrigger value="all" className="rounded-xl px-4 py-2">{t("store.all")}</TabsTrigger>
               <TabsTrigger value="pending" className="rounded-xl px-4 py-2">{t("orders.pending")}</TabsTrigger>
               <TabsTrigger value="processing" className="rounded-xl px-4 py-2">{t("orders.processing")}</TabsTrigger>
@@ -2066,7 +2066,7 @@ export default function MyStore() {
             });
 
             if (filtered.length === 0) {
-              return <div className="text-center py-16 text-slate-400 dark:text-slate-500">{t("store.noOrdersFound")}</div>;
+              return <div className="text-center py-16 text-slate-400 dark:text-ink-500">{t("store.noOrdersFound")}</div>;
             }
 
             return (
@@ -2081,18 +2081,18 @@ export default function MyStore() {
                       layout
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 hover:shadow-md transition-all cursor-pointer group"
+                      className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-5 hover:shadow-md transition-all cursor-pointer group"
                       onClick={() => setSelectedOrder(order)}
                     >
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                          <p className="text-[10px] font-mono text-slate-400 dark:text-ink-500 uppercase tracking-wider mb-1">
                             {t("store.orderRef", { id: orderId?.slice(-8) })}
                           </p>
                           <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors truncate">
                             {order.buyer_name || `@${order.buyer_username}`}
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                          <p className="text-xs text-slate-500 dark:text-ink-400 mt-0.5 truncate">
                             {new Date(order.created_at || order.created_date).toLocaleDateString()} · {t("store.itemsCount", { count: order.items?.length || 0 })}
                           </p>
                         </div>
@@ -2102,7 +2102,7 @@ export default function MyStore() {
                               <Badge className={`border-0 text-[9px] px-1.5 py-0.5 h-5 font-semibold flex items-center gap-1 ${
                                 order.delivery_method === "pickup" ? "bg-amber-100 text-amber-700" :
                                 order.delivery_method === "delivery" ? "bg-orange-100 text-orange-700" :
-                                "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                                "bg-slate-100 dark:bg-ink-700 text-slate-500 dark:text-ink-400"
                               }`}>
                                 {order.delivery_method === "pickup" ? <Package className="w-2.5 h-2.5" /> :
                                  order.delivery_method === "delivery" ? <Navigation className="w-2.5 h-2.5" /> :
@@ -2124,15 +2124,15 @@ export default function MyStore() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-700">
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-ink-700">
                         <div className="flex gap-1.5 overflow-hidden">
                           {order.items?.slice(0, 4).map((item, i) => (
-                            <div key={i} className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 overflow-hidden shrink-0">
+                            <div key={i} className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-ink-700 border border-slate-100 dark:border-ink-600 overflow-hidden shrink-0">
                               {item.product_image && <img src={item.product_image} alt="" className="w-full h-full object-cover" />}
                             </div>
                           ))}
                           {order.items?.length > 4 && (
-                            <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                            <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-ink-700 border border-slate-100 dark:border-ink-600 flex items-center justify-center text-[10px] font-bold text-slate-400 dark:text-ink-500">
                               +{order.items.length - 4}
                             </div>
                           )}
@@ -2141,7 +2141,7 @@ export default function MyStore() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-slate-500 dark:text-slate-400"
+                            className="h-8 rounded-xl text-[10px] gap-1 text-slate-500 dark:text-ink-400"
                             onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
                           >
                             <Info className="w-3 h-3" />

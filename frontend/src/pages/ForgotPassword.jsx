@@ -41,7 +41,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300">
+    <div className="min-h-screen w-full relative flex items-center justify-center dark:bg-ink-900 bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 dark:bg-[radial-gradient(circle_at_50%_50%,rgba(17,17,19,1)_0%,rgba(0,0,0,1)_100%)] bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-100" />
 
@@ -60,7 +60,7 @@ export default function ForgotPassword() {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
         >
           {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
@@ -73,7 +73,7 @@ export default function ForgotPassword() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="dark:bg-white/[0.02] bg-white dark:backdrop-blur-3xl backdrop-blur-xl p-8 sm:p-12 rounded-3xl sm:rounded-[3rem] dark:shadow-[0_32px_128px_-16px_rgba(0,0,0,0.7)] shadow-[0_32px_80px_-16px_rgba(0,0,0,0.08)] dark:border dark:border-white/10 border border-slate-200/80 dark:ring-1 dark:ring-white/5 relative overflow-hidden group text-center transition-colors duration-300"
         >
-          <Link to={createPageUrl("login")} className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest dark:text-slate-500 text-slate-500 hover:text-orange-500 mb-8 transition-colors group/back">
+          <Link to={createPageUrl("login")} className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest dark:text-ink-500 text-slate-500 hover:text-orange-500 mb-8 transition-colors group/back">
             <ArrowLeft className="w-3 h-3 group-hover/back:-translate-x-1 transition-transform" /> Back to Access
           </Link>
 
@@ -85,7 +85,7 @@ export default function ForgotPassword() {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-1.5 text-left">
-                  <Label htmlFor="email" className="text-[10px] font-black dark:text-slate-500 text-slate-500 uppercase tracking-[0.2em] ml-1">Identity Email</Label>
+                  <Label htmlFor="email" className="text-[10px] font-black dark:text-ink-500 text-slate-500 uppercase tracking-[0.2em] ml-1">Identity Email</Label>
                   <div className="relative group">
                     <Input
                       id="email"
@@ -93,11 +93,11 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="name@example.com"
-                      className="w-full pl-12 pr-4 py-6 sm:py-7 rounded-2xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-bold dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-slate-700 placeholder:text-slate-400 placeholder:font-medium"
+                      className="w-full pl-12 pr-4 py-6 sm:py-7 rounded-2xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-bold dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-ink-700 placeholder:text-slate-400 placeholder:font-medium"
                       required
                       autoComplete="email"
                     />
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-slate-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-ink-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
                   </div>
                 </div>
 
@@ -116,7 +116,7 @@ export default function ForgotPassword() {
                 <CheckCircle2 className="w-10 h-10 text-orange-500" />
               </div>
               <h2 className="text-3xl font-black dark:text-white text-slate-900 mb-3 tracking-tighter">Link Sent!</h2>
-              <p className="text-sm dark:text-slate-500 text-slate-500 mb-8 leading-relaxed font-medium">
+              <p className="text-sm dark:text-ink-500 text-slate-500 mb-8 leading-relaxed font-medium">
                 If an account exists for <b className="dark:text-white text-slate-800">{email}</b>, you will receive an email with instructions shortly.
               </p>
 
@@ -134,7 +134,7 @@ export default function ForgotPassword() {
               )}
 
               <Link to={createPageUrl("login")}>
-                <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest dark:border-white/5 dark:bg-white/5 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all active:scale-[0.98]">
+                <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest dark:border-white/5 dark:bg-white/5 dark:text-ink-400 dark:hover:text-white dark:hover:bg-white/10 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all active:scale-[0.98]">
                   Return to Access
                 </Button>
               </Link>

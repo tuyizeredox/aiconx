@@ -26,10 +26,10 @@ export default function CategoriesBlock({ block, products = [] }) {
         {categories.map((c) => (
           <div
             key={c.name}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold capitalize text-slate-700 dark:text-slate-200"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-ink-700 bg-white dark:bg-ink-800 text-sm font-semibold capitalize text-slate-700 dark:text-ink-200"
           >
             {t(`explore.cat.${c.name}`, c.name)}
-            <span className="ml-1.5 text-slate-400 dark:text-slate-500 font-normal">({c.count})</span>
+            <span className="ml-1.5 text-slate-400 dark:text-ink-500 font-normal">({c.count})</span>
           </div>
         ))}
       </div>

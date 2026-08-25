@@ -45,7 +45,7 @@ function StarRow({ rating, className = "w-4 h-4" }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(s => (
-        <Star key={s} className={`${className} ${s <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-slate-600"}`} />
+        <Star key={s} className={`${className} ${s <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-ink-600"}`} />
       ))}
     </div>
   );
@@ -56,7 +56,7 @@ function StarRow({ rating, className = "w-4 h-4" }) {
 // otherwise leave a visitor with no way back.
 function ProductPageShell({ backTo, backLabel, onBack, onShare, children }) {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-ink-900 dark:text-ink-100">
       <ShopHeaderBar backTo={backTo} backLabel={backLabel} onBack={onBack} onShare={onShare} />
       {children}
     </div>
@@ -65,7 +65,7 @@ function ProductPageShell({ backTo, backLabel, onBack, onShare, children }) {
 
 function Panel({ children, className = "" }) {
   return (
-    <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 ${className}`}>
+    <div className={`bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 ${className}`}>
       {children}
     </div>
   );
@@ -73,11 +73,11 @@ function Panel({ children, className = "" }) {
 
 function SpecTable({ specifications }) {
   return (
-    <div className="rounded-xl border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
+    <div className="rounded-xl border border-slate-100 dark:border-ink-800 divide-y divide-slate-100 dark:divide-ink-800 overflow-hidden">
       {specifications.map((spec, i) => (
-        <div key={`${spec.name}-${i}`} className="flex items-start gap-3 px-3.5 py-2.5 odd:bg-slate-50/60 dark:odd:bg-slate-800/30">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-2/5 shrink-0">{spec.name}</span>
-          <span className="text-sm text-slate-800 dark:text-slate-100 break-words min-w-0">{spec.value}</span>
+        <div key={`${spec.name}-${i}`} className="flex items-start gap-3 px-3.5 py-2.5 odd:bg-slate-50/60 dark:odd:bg-ink-800/30">
+          <span className="text-xs font-medium text-slate-500 dark:text-ink-400 w-2/5 shrink-0">{spec.name}</span>
+          <span className="text-sm text-slate-800 dark:text-ink-100 break-words min-w-0">{spec.value}</span>
         </div>
       ))}
     </div>
@@ -435,7 +435,7 @@ export default function ProductDetail() {
   const emptyState = (message) => (
     <ProductPageShell backTo={backTo} backLabel={backLabel} onBack={onBack}>
       <div className="max-w-3xl mx-auto px-4 py-16 sm:py-24 flex flex-col items-center text-center">
-        <p className="text-base font-medium text-slate-500 dark:text-slate-400 mb-6">{message}</p>
+        <p className="text-base font-medium text-slate-500 dark:text-ink-400 mb-6">{message}</p>
         {/* The dead-end states keep the marketplace as their explicit way out —
             "back" from a product that doesn't exist would just bounce them. */}
         <Link to={createPageUrl("Marketplace")}>
@@ -458,17 +458,17 @@ export default function ProductDetail() {
       <ProductPageShell backTo={backTo} backLabel={backLabel}>
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-4 sm:py-6 animate-pulse">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-5 aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            <div className="lg:col-span-5 aspect-square bg-slate-200 dark:bg-ink-800 rounded-2xl" />
             <div className="lg:col-span-4 space-y-4">
-              <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
-              <div className="h-7 w-3/4 bg-slate-200 dark:bg-slate-800 rounded" />
-              <div className="h-4 w-1/2 bg-slate-100 dark:bg-slate-800 rounded" />
-              <div className="h-10 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
-              <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="h-4 w-24 bg-slate-100 dark:bg-ink-800 rounded" />
+              <div className="h-7 w-3/4 bg-slate-200 dark:bg-ink-800 rounded" />
+              <div className="h-4 w-1/2 bg-slate-100 dark:bg-ink-800 rounded" />
+              <div className="h-10 w-40 bg-slate-200 dark:bg-ink-800 rounded" />
+              <div className="h-12 w-full bg-slate-200 dark:bg-ink-800 rounded-xl" />
             </div>
             <div className="lg:col-span-3 space-y-3">
-              <div className="h-32 w-full bg-slate-100 dark:bg-slate-800 rounded-2xl" />
-              <div className="h-28 w-full bg-slate-100 dark:bg-slate-800 rounded-2xl" />
+              <div className="h-32 w-full bg-slate-100 dark:bg-ink-800 rounded-2xl" />
+              <div className="h-28 w-full bg-slate-100 dark:bg-ink-800 rounded-2xl" />
             </div>
           </div>
         </div>
@@ -562,7 +562,7 @@ export default function ProductDetail() {
                   </Badge>
                 )}
                 {isSoldOut && (
-                  <Badge variant="secondary" className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] rounded-full px-2.5">
+                  <Badge variant="secondary" className="bg-slate-200 dark:bg-ink-700 text-slate-600 dark:text-ink-300 text-[10px] rounded-full px-2.5">
                     {t("product.outOfStock")}
                   </Badge>
                 )}
@@ -572,7 +572,7 @@ export default function ProductDetail() {
                 {product.title}
               </h1>
               {subtitle && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 capitalize">{subtitle}</p>
+                <p className="text-sm text-slate-500 dark:text-ink-400 mt-1 capitalize">{subtitle}</p>
               )}
 
               {/* Rating + questions */}
@@ -580,23 +580,23 @@ export default function ProductDetail() {
                 {avgRating > 0 ? (
                   <>
                     <StarRow rating={Math.round(avgRating)} className="w-3.5 h-3.5" />
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{avgRating.toFixed(1)}</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-ink-200">{avgRating.toFixed(1)}</span>
                     <button
                       onClick={() => setActiveTab("reviews")}
-                      className="text-sm text-slate-400 dark:text-slate-500 hover:text-orange-600 transition-colors"
+                      className="text-sm text-slate-400 dark:text-ink-500 hover:text-orange-600 transition-colors"
                     >
                       ({t("product.reviewsCount", { count: reviews.length })})
                     </button>
                   </>
                 ) : (
-                  <span className="text-sm text-slate-400 dark:text-slate-500">{t("product.noReviewsYet")}</span>
+                  <span className="text-sm text-slate-400 dark:text-ink-500">{t("product.noReviewsYet")}</span>
                 )}
                 {questionCount > 0 && (
                   <>
-                    <span className="text-slate-200 dark:text-slate-700">·</span>
+                    <span className="text-slate-200 dark:text-ink-700">·</span>
                     <button
                       onClick={() => setActiveTab("questions")}
-                      className="text-sm text-slate-400 dark:text-slate-500 hover:text-orange-600 transition-colors"
+                      className="text-sm text-slate-400 dark:text-ink-500 hover:text-orange-600 transition-colors"
                     >
                       {t("product.answeredQuestions", { count: answeredCount })}
                     </button>
@@ -640,7 +640,7 @@ export default function ProductDetail() {
                   <>
                     <span className="text-red-500 font-medium">{t("product.outOfStock")}</span>
                     {waitingCount > 0 && (
-                      <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      <span className="text-slate-400 dark:text-ink-500 flex items-center gap-1">
                         · <Users className="w-3.5 h-3.5" /> {t("product.peopleWaiting", { count: waitingCount })}
                       </span>
                     )}
@@ -651,7 +651,7 @@ export default function ProductDetail() {
                       <Check className="w-4 h-4" /> {t("product.inStock")}
                     </span>
                     {product.inventory_count > 0 && product.inventory_count <= LOW_STOCK_THRESHOLD && (
-                      <span className="text-slate-400 dark:text-slate-500">
+                      <span className="text-slate-400 dark:text-ink-500">
                         · {t("product.itemsLeft", { count: product.inventory_count })}
                       </span>
                     )}
@@ -661,26 +661,26 @@ export default function ProductDetail() {
 
               {/* Seller */}
               {product.store_name && (
-                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-1.5">{t("product.soldBy")}</p>
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-ink-800">
+                  <p className="text-[11px] text-slate-400 dark:text-ink-500 mb-1.5">{t("product.soldBy")}</p>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                         <span className="truncate">{product.store_name}</span>
                         {store?.is_verified && <BadgeCheck className="w-4 h-4 text-orange-500 shrink-0" />}
                       </p>
-                      <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                      <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-xs text-slate-400 dark:text-ink-500">
                         {store?.rating_avg > 0 && (
                           <>
                             <StarRow rating={Math.round(store.rating_avg)} className="w-3 h-3" />
-                            <span className="font-semibold text-slate-600 dark:text-slate-300">{store.rating_avg.toFixed(1)}</span>
+                            <span className="font-semibold text-slate-600 dark:text-ink-300">{store.rating_avg.toFixed(1)}</span>
                           </>
                         )}
                         {store?.product_count > 0 && <span>· {t("shop.storeItems", { count: store.product_count })}</span>}
                         {storeSince && <span>· {t("product.since", { year: storeSince })}</span>}
                       </div>
                       {(storeDistanceKm != null || store?.location?.city) && (
-                        <p className="flex items-center gap-1.5 mt-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <p className="flex items-center gap-1.5 mt-1.5 text-xs font-semibold text-slate-600 dark:text-ink-300">
                           <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                           {storeDistanceKm != null
                             ? t("home.kmAway", { km: storeDistanceKm })
@@ -710,12 +710,12 @@ export default function ProductDetail() {
 
               {/* Quantity */}
               <div className="flex items-center flex-wrap gap-3 mt-4">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("product.quantity")}</span>
-                <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
+                <span className="text-sm font-medium text-slate-700 dark:text-ink-300">{t("product.quantity")}</span>
+                <div className="flex items-center border border-slate-200 dark:border-ink-700 rounded-xl overflow-hidden bg-white dark:bg-ink-900">
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     aria-label="-"
-                    className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
@@ -723,7 +723,7 @@ export default function ProductDetail() {
                   <button
                     onClick={() => setQuantity(q => q + 1)}
                     aria-label="+"
-                    className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -745,7 +745,7 @@ export default function ProductDetail() {
                       <button
                         onClick={() => cancelBookingMutation.mutate()}
                         disabled={cancelBookingMutation.isPending}
-                        className="mt-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-red-600 transition-colors inline-flex items-center gap-1.5"
+                        className="mt-2.5 text-xs font-semibold text-slate-500 dark:text-ink-400 hover:text-red-600 transition-colors inline-flex items-center gap-1.5"
                       >
                         {cancelBookingMutation.isPending
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -765,7 +765,7 @@ export default function ProductDetail() {
                           : <BellRing className="w-4 h-4 mr-2" />}
                         {t("product.bookThisItem")}
                       </Button>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 text-center leading-relaxed">
+                      <p className="text-xs text-slate-500 dark:text-ink-400 text-center leading-relaxed">
                         {t("product.bookExplainer")}
                       </p>
                     </>
@@ -797,29 +797,29 @@ export default function ProductDetail() {
                   </>
                 )}
 
-                <div className="flex items-center justify-around pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-around pt-1 border-t border-slate-100 dark:border-ink-800">
                   <button
                     onClick={() => wishlistMutation.mutate()}
                     className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium transition-colors ${
-                      isWishlisted ? "text-red-500" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                      isWishlisted ? "text-red-500" : "text-slate-500 dark:text-ink-400 hover:text-slate-800 dark:hover:text-ink-200"
                     }`}
                   >
                     <Heart className={`w-4 h-4 ${isWishlisted ? "fill-current" : ""}`} />
                     {t("product.addToWishlist")}
                   </button>
-                  <span className="w-px h-5 bg-slate-100 dark:bg-slate-800" />
+                  <span className="w-px h-5 bg-slate-100 dark:bg-ink-800" />
                   <button
                     onClick={() => nativeShare()}
-                    className="flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    className="flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium text-slate-500 dark:text-ink-400 hover:text-slate-800 dark:hover:text-ink-200 transition-colors"
                   >
                     <Share2 className="w-4 h-4" /> {t("common.share")}
                   </button>
                   {currentUser && currentUser.username !== product.vendor_username && (
                     <>
-                      <span className="w-px h-5 bg-slate-100 dark:bg-slate-800" />
+                      <span className="w-px h-5 bg-slate-100 dark:bg-ink-800" />
                       <button
                         onClick={() => setIsReportModalOpen(true)}
-                        className="flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                        className="flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium text-slate-500 dark:text-ink-400 hover:text-slate-800 dark:hover:text-ink-200 transition-colors"
                       >
                         <Flag className="w-4 h-4" /> {t("common.report")}
                       </button>
@@ -840,7 +840,7 @@ export default function ProductDetail() {
 
         {/* ===== TABS ===== */}
         <Panel>
-          <div className="flex gap-1 overflow-x-auto hide-scrollbar border-b border-slate-100 dark:border-slate-800 px-2 sm:px-4">
+          <div className="flex gap-1 overflow-x-auto hide-scrollbar border-b border-slate-100 dark:border-ink-800 px-2 sm:px-4">
             {tabs.map(tab => (
               <button
                 key={tab.id}
@@ -848,7 +848,7 @@ export default function ProductDetail() {
                 className={`shrink-0 px-3 sm:px-4 py-3.5 text-sm font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-orange-600 text-orange-600"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    : "border-transparent text-slate-500 dark:text-ink-400 hover:text-slate-800 dark:hover:text-ink-200"
                 }`}
               >
                 {tab.label}
@@ -860,11 +860,11 @@ export default function ProductDetail() {
             {activeTab === "overview" && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 {highlights.length > 0 && (
-                  <div className="lg:border-r lg:border-slate-100 lg:dark:border-slate-800 lg:pr-6">
+                  <div className="lg:border-r lg:border-slate-100 lg:dark:border-ink-800 lg:pr-6">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">{t("product.highlights")}</h3>
                     <ul className="space-y-2">
                       {highlights.map((highlight, i) => (
-                        <li key={`${highlight}-${i}`} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                        <li key={`${highlight}-${i}`} className="flex items-start gap-2 text-sm text-slate-600 dark:text-ink-300">
                           <Check className="w-3.5 h-3.5 text-green-600 shrink-0 mt-1" />
                           <span className="break-words">{highlight}</span>
                         </li>
@@ -877,7 +877,7 @@ export default function ProductDetail() {
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">{t("product.description")}</h3>
                   {product.description ? (
                     <>
-                      <p className={`text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words ${
+                      <p className={`text-sm text-slate-600 dark:text-ink-300 leading-relaxed whitespace-pre-line break-words ${
                         isLongDescription && !descExpanded ? "line-clamp-6" : ""
                       }`}>
                         {product.description}
@@ -892,7 +892,7 @@ export default function ProductDetail() {
                       )}
                     </>
                   ) : (
-                    <p className="text-sm text-slate-400 dark:text-slate-500">{t("product.noDescription")}</p>
+                    <p className="text-sm text-slate-400 dark:text-ink-500">{t("product.noDescription")}</p>
                   )}
                 </div>
 
@@ -952,7 +952,7 @@ export default function ProductDetail() {
                             key={reviewId}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4"
+                            className="border border-slate-100 dark:border-ink-800 rounded-2xl p-4"
                           >
                             <div className="flex items-start justify-between gap-3 mb-2.5">
                               <div className="flex items-center gap-3 min-w-0">
@@ -969,18 +969,18 @@ export default function ProductDetail() {
                                   <StarRow rating={review.rating} className="w-3.5 h-3.5" />
                                 </div>
                               </div>
-                              <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap">
+                              <span className="text-xs text-slate-400 dark:text-ink-500 shrink-0 whitespace-nowrap">
                                 {new Date(review.created_at || review.created_date).toLocaleDateString()}
                               </span>
                             </div>
                             {review.title && (
-                              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">{review.title}</p>
+                              <p className="text-sm font-semibold text-slate-800 dark:text-ink-200 mb-1">{review.title}</p>
                             )}
-                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed break-words">{review.content}</p>
+                            <p className="text-sm text-slate-600 dark:text-ink-300 leading-relaxed break-words">{review.content}</p>
                             {review.media_urls?.length > 0 && (
                               <div className="flex gap-2 mt-3 overflow-x-auto hide-scrollbar">
                                 {review.media_urls.map((url, j) => (
-                                  <div key={`review-media-${reviewId}-${j}`} className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700">
+                                  <div key={`review-media-${reviewId}-${j}`} className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-slate-100 dark:border-ink-700">
                                     <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
                                   </div>
                                 ))}
@@ -992,10 +992,10 @@ export default function ProductDetail() {
                     </div>
                   </>
                 ) : !showReviewForm && (
-                  <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                    <Images className="w-9 h-9 text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("product.noReviewsYet")}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("product.beFirstToReview")}</p>
+                  <div className="text-center py-12 border border-dashed border-slate-200 dark:border-ink-700 rounded-2xl">
+                    <Images className="w-9 h-9 text-slate-200 dark:text-ink-700 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-slate-600 dark:text-ink-300">{t("product.noReviewsYet")}</p>
+                    <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">{t("product.beFirstToReview")}</p>
                   </div>
                 )}
               </div>
@@ -1015,7 +1015,7 @@ export default function ProductDetail() {
                   <h3 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
                     <Truck className="w-4 h-4 text-orange-500" /> {t("product.tabShipping")}
                   </h3>
-                  <ul className="space-y-1.5 text-slate-600 dark:text-slate-300">
+                  <ul className="space-y-1.5 text-slate-600 dark:text-ink-300">
                     {delivery?.shipping_enabled && <li>· {t("product.methodShipping")}</li>}
                     {delivery?.delivery_enabled && (
                       <li>
@@ -1032,14 +1032,14 @@ export default function ProductDetail() {
                     {!delivery && <li className="text-slate-400">{t("product.deliveryNotSet")}</li>}
                   </ul>
                   {delivery?.pickup_enabled && delivery?.pickup_instructions && (
-                    <p className="mt-2.5 text-xs text-slate-500 dark:text-slate-400 whitespace-pre-line">{delivery.pickup_instructions}</p>
+                    <p className="mt-2.5 text-xs text-slate-500 dark:text-ink-400 whitespace-pre-line">{delivery.pickup_instructions}</p>
                   )}
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
                     <PackageCheck className="w-4 h-4 text-orange-500" /> {t("product.returnsTitle")}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{t("product.returnsBody")}</p>
+                  <p className="text-slate-600 dark:text-ink-300 leading-relaxed">{t("product.returnsBody")}</p>
                 </div>
               </div>
             )}
@@ -1056,7 +1056,7 @@ export default function ProductDetail() {
                   <p className="text-4xl font-black text-slate-900 dark:text-white">{avgRating.toFixed(1)}</p>
                   <div>
                     <StarRow rating={Math.round(avgRating)} />
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-400 dark:text-ink-500 mt-0.5">
                       {t("product.basedOnReviews", { count: reviews.length })}
                     </p>
                   </div>
@@ -1064,12 +1064,12 @@ export default function ProductDetail() {
                 <div className="space-y-1.5">
                   {ratingCounts.map(({ star, count, pct }) => (
                     <div key={`rating-stat-${star}`} className="flex items-center gap-2">
-                      <span className="text-xs w-3 text-slate-500 dark:text-slate-400">{star}</span>
+                      <span className="text-xs w-3 text-slate-500 dark:text-ink-400">{star}</span>
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-ink-800 rounded-full overflow-hidden">
                         <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 w-7 text-right">{count}</span>
+                      <span className="text-xs text-slate-400 dark:text-ink-500 w-7 text-right">{count}</span>
                     </div>
                   ))}
                 </div>
@@ -1091,7 +1091,7 @@ export default function ProductDetail() {
                   {reviews.slice(0, 12).map((review, i) => (
                     <div
                       key={review.id || review._id || `rail-${i}`}
-                      className="w-[85%] sm:w-[380px] shrink-0 snap-start bg-amber-50/60 dark:bg-slate-800/50 rounded-2xl p-4"
+                      className="w-[85%] sm:w-[380px] shrink-0 snap-start bg-amber-50/60 dark:bg-ink-800/50 rounded-2xl p-4"
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
@@ -1106,17 +1106,17 @@ export default function ProductDetail() {
                           </div>
                           <StarRow rating={review.rating} className="w-3 h-3" />
                         </div>
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+                        <span className="text-[11px] text-slate-400 dark:text-ink-500 shrink-0">
                           {new Date(review.created_at || review.created_date).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-2.5 line-clamp-3 break-words">{review.content}</p>
+                      <p className="text-sm text-slate-600 dark:text-ink-300 mt-2.5 line-clamp-3 break-words">{review.content}</p>
                       {review.media_urls?.[0] && (
                         <img
                           src={review.media_urls[0]}
                           alt=""
                           loading="lazy"
-                          className="w-16 h-16 rounded-xl object-cover mt-2.5 border border-white dark:border-slate-700"
+                          className="w-16 h-16 rounded-xl object-cover mt-2.5 border border-white dark:border-ink-700"
                         />
                       )}
                     </div>
@@ -1127,14 +1127,14 @@ export default function ProductDetail() {
                     <button
                       onClick={() => scrollReviews(-1)}
                       aria-label={t("common.previous")}
-                      className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="w-8 h-8 rounded-full border border-slate-200 dark:border-ink-700 flex items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => scrollReviews(1)}
                       aria-label={t("common.next")}
-                      className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="w-8 h-8 rounded-full border border-slate-200 dark:border-ink-700 flex items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -1156,7 +1156,7 @@ export default function ProductDetail() {
 
       {/* Floating buy bar — mobile only, once the inline actions scroll away */}
       <div
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+0.625rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 transition-transform duration-300 ${
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+0.625rem)] bg-white/95 dark:bg-ink-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-ink-800 transition-transform duration-300 ${
           showBuyBar ? "translate-y-0" : "translate-y-full"
         }`}
       >

@@ -375,7 +375,7 @@ export default function CreatePost() {
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 shadow-sm">
+          <div className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 p-5 shadow-sm">
         {/* Author row */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-lg shrink-0">
@@ -384,13 +384,13 @@ export default function CreatePost() {
           <div>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{currentUser?.full_name || t("create.you")}</p>
             {communityId && !isEditMode ? (
-              <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-ink-400">
                 <Lock className="w-3 h-3" />
                 {t("create.postingInCommunity", { name: postingCommunity?.name || t("create.visibilityCommunity") })}
               </p>
             ) : (
               <Select value={visibility} onValueChange={setVisibility}>
-                <SelectTrigger className="h-6 text-xs w-auto border-none shadow-none p-0 px-1 text-slate-500 dark:text-slate-400 gap-1">
+                <SelectTrigger className="h-6 text-xs w-auto border-none shadow-none p-0 px-1 text-slate-500 dark:text-ink-400 gap-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -416,21 +416,21 @@ export default function CreatePost() {
           onKeyUp={e => { if (e.key !== "Escape") syncMentionQuery(e.target); }}
           onKeyDown={e => { if (e.key === "Escape" && mentionQuery !== null) setMentionQuery(null); }}
           placeholder={t("create.postPlaceholder")}
-          className="border-none shadow-none resize-none text-base placeholder:text-slate-300 dark:placeholder:text-slate-600 focus-visible:ring-0 min-h-[120px] p-0 text-slate-800 dark:text-slate-200"
+          className="border-none shadow-none resize-none text-base placeholder:text-slate-300 dark:placeholder:text-ink-600 focus-visible:ring-0 min-h-[120px] p-0 text-slate-800 dark:text-ink-200"
         />
 
         {/* @mention autocomplete */}
         {mentionQuery !== null && mentionQuery.length > 0 && (
-          <div className="mt-2 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+          <div className="mt-2 border border-slate-200 dark:border-ink-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
             {mentionUsers.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-3">{t("create.noUsersFound") || "No users found"}</p>
+              <p className="text-xs text-slate-400 dark:text-ink-500 text-center py-3">{t("create.noUsersFound") || "No users found"}</p>
             ) : mentionUsers.map(u => (
               <button
                 key={u.username}
                 onClick={() => insertMention(u.username)}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors text-left"
               >
-                <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-ink-700 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-ink-400">
                   <AvatarImg
                     src={u.avatar_url}
                     className="w-full h-full object-cover"
@@ -438,8 +438,8 @@ export default function CreatePost() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{u.display_name || u.username}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">@{u.username}</p>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-ink-200 truncate">{u.display_name || u.username}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-ink-500 truncate">@{u.username}</p>
                 </div>
               </button>
             ))}
@@ -451,8 +451,8 @@ export default function CreatePost() {
           <div className="flex flex-wrap gap-2 mt-3 p-3 bg-orange-50 dark:bg-orange-950 rounded-xl border border-orange-100 dark:border-orange-900">
             <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 w-full mb-1">{t("create.taggedProducts")} ({taggedProducts.length}/{MAX_TAGGED_ITEMS})</p>
             {taggedProducts.map(p => (
-              <div key={p.id} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1 border border-orange-100 dark:border-orange-900 text-xs">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">{p.title}</span>
+              <div key={p.id} className="flex items-center gap-1.5 bg-white dark:bg-ink-800 rounded-lg px-2.5 py-1 border border-orange-100 dark:border-orange-900 text-xs">
+                <span className="text-slate-700 dark:text-ink-300 font-medium">{p.title}</span>
                 <button onClick={() => toggleProduct(p)} className="text-slate-400 hover:text-red-500">
                   <X className="w-3 h-3" />
                 </button>
@@ -466,8 +466,8 @@ export default function CreatePost() {
           <div className="flex flex-wrap gap-2 mt-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-xl border border-purple-100 dark:border-purple-900">
             <p className="text-xs font-semibold text-purple-700 dark:text-purple-400 w-full mb-1">Affiliate Links ({selectedAffiliateLinks.length}/{MAX_TAGGED_ITEMS})</p>
             {selectedAffiliateLinks.map(link => (
-              <div key={link.id} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1 border border-purple-100 dark:border-purple-900 text-xs">
-                <span className="text-slate-700 dark:text-slate-300 font-medium">{link.product_title}</span>
+              <div key={link.id} className="flex items-center gap-1.5 bg-white dark:bg-ink-800 rounded-lg px-2.5 py-1 border border-purple-100 dark:border-purple-900 text-xs">
+                <span className="text-slate-700 dark:text-ink-300 font-medium">{link.product_title}</span>
                 <span className="text-purple-600 dark:text-purple-400 font-bold">{link.commission_pct}%</span>
                 <button onClick={() => toggleAffiliateLink(link)} className="text-slate-400 hover:text-red-500">
                   <X className="w-3 h-3" />
@@ -481,7 +481,7 @@ export default function CreatePost() {
         {mediaPreviewUrls.length > 0 && (
           <div className={`grid gap-2 mt-4 ${mediaPreviewUrls.length === 1 ? "grid-cols-1" : mediaPreviewUrls.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
             {mediaPreviewUrls.map((media, i) => (
-              <div key={i} className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 group">
+              <div key={i} className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-ink-700 group">
                 {media.type?.startsWith("video") ? (
                   <video
                     src={media.url}
@@ -514,31 +514,31 @@ export default function CreatePost() {
         {/* Product tag search */}
         <AnimatePresence>
           {showProductSearch && (
-            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-3 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-              <div className="flex items-center gap-2 p-2 border-b border-slate-100 dark:border-slate-700">
+            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-3 border border-slate-200 dark:border-ink-700 rounded-xl overflow-hidden">
+              <div className="flex items-center gap-2 p-2 border-b border-slate-100 dark:border-ink-700">
                 <input
                   autoFocus
                   value={productQuery}
                   onChange={e => setProductQuery(e.target.value)}
                   placeholder={t("create.searchProductsToTag")}
-                  className="flex-1 text-sm outline-none text-slate-700 dark:text-slate-300 bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 px-1"
+                  className="flex-1 text-sm outline-none text-slate-700 dark:text-ink-300 bg-transparent placeholder:text-slate-400 dark:placeholder:text-ink-500 px-1"
                 />
-                <button onClick={() => { setShowProductSearch(false); setProductQuery(""); }}><X className="w-4 h-4 text-slate-400 dark:text-slate-500" /></button>
+                <button onClick={() => { setShowProductSearch(false); setProductQuery(""); }}><X className="w-4 h-4 text-slate-400 dark:text-ink-500" /></button>
               </div>
               <div className="max-h-48 overflow-y-auto">
                 {filteredProducts.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">{t("create.noProductsFound")}</p>
+                  <p className="text-xs text-slate-400 dark:text-ink-500 text-center py-4">{t("create.noProductsFound")}</p>
                 ) : filteredProducts.map(p => (
                   <button
                     key={p.id}
                     onClick={() => { toggleProduct(p); setShowProductSearch(false); setProductQuery(""); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors text-left"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-ink-700 overflow-hidden shrink-0">
                       {p.images?.[0] && <img src={p.images[0]} alt="" className="w-full h-full object-cover" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{p.title}</p>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-ink-200 truncate">{p.title}</p>
                       <p className="text-xs text-orange-600 font-bold">{formatCurrency(p.price)}</p>
                     </div>
                     {taggedProducts.find(tp => tp.id === p.id) && (
@@ -554,29 +554,29 @@ export default function CreatePost() {
         {/* Affiliate link search */}
         <AnimatePresence>
           {showAffiliateSearch && (
-            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-3 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-              <div className="flex items-center gap-2 p-2 border-b border-slate-100 dark:border-slate-700">
+            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-3 border border-slate-200 dark:border-ink-700 rounded-xl overflow-hidden">
+              <div className="flex items-center gap-2 p-2 border-b border-slate-100 dark:border-ink-700">
                 <input
                   autoFocus
                   placeholder="Search your affiliate links"
-                  className="flex-1 text-sm outline-none text-slate-700 dark:text-slate-300 bg-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 px-1"
+                  className="flex-1 text-sm outline-none text-slate-700 dark:text-ink-300 bg-transparent placeholder:text-slate-400 dark:placeholder:text-ink-500 px-1"
                 />
-                <button onClick={() => setShowAffiliateSearch(false)}><X className="w-4 h-4 text-slate-400 dark:text-slate-500" /></button>
+                <button onClick={() => setShowAffiliateSearch(false)}><X className="w-4 h-4 text-slate-400 dark:text-ink-500" /></button>
               </div>
               <div className="max-h-48 overflow-y-auto">
                 {myAffiliateLinks.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">No affiliate links found. Create some first!</p>
+                  <p className="text-xs text-slate-400 dark:text-ink-500 text-center py-4">No affiliate links found. Create some first!</p>
                 ) : myAffiliateLinks.map(link => (
                   <button
                     key={link.id}
                     onClick={() => { toggleAffiliateLink(link); setShowAffiliateSearch(false); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors text-left"
                   >
                     <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900 overflow-hidden shrink-0 flex items-center justify-center">
                       <Link2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{link.product_title}</p>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-ink-200 truncate">{link.product_title}</p>
                       <p className="text-xs text-purple-600 dark:text-purple-400 font-bold">{link.commission_pct}% commission</p>
                     </div>
                     {selectedAffiliateLinks.find(sl => sl.id === link.id) && (
@@ -592,45 +592,45 @@ export default function CreatePost() {
         {/* Emoji picker */}
         <AnimatePresence>
           {showEmoji && (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex gap-2 mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex gap-2 mt-3 p-3 bg-slate-50 dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700">
               {QUICK_EMOJIS.map(e => (
                 <button key={e} onClick={() => addEmoji(e)} className="text-2xl hover:scale-125 transition-transform">{e}</button>
               ))}
-              <button onClick={() => setShowEmoji(false)} className="ml-auto text-slate-400 dark:text-slate-500"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowEmoji(false)} className="ml-auto text-slate-400 dark:text-ink-500"><X className="w-4 h-4" /></button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Action bar */}
-        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100 dark:border-ink-700">
           <div className="flex items-center gap-1 flex-wrap">
-            <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-slate-500 dark:text-slate-400 text-sm transition-colors">
+            <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-ink-800 cursor-pointer text-slate-500 dark:text-ink-400 text-sm transition-colors">
               <Image className="w-5 h-5 text-green-500" />
               <span className="hidden sm:inline text-xs">{t("create.photo")}</span>
               <input type="file" accept="image/*,image/gif" multiple className="hidden" onChange={handleMediaSelect} />
             </label>
-            <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-slate-500 dark:text-slate-400 text-sm transition-colors">
+            <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-ink-800 cursor-pointer text-slate-500 dark:text-ink-400 text-sm transition-colors">
               <Video className="w-5 h-5 text-orange-500" />
               <span className="hidden sm:inline text-xs">{t("create.video")}</span>
               <input type="file" accept="video/*" multiple className="hidden" onChange={handleMediaSelect} />
             </label>
             <button
               onClick={() => { setShowProductSearch(v => !v); setShowEmoji(false); setShowAffiliateSearch(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 dark:text-slate-400 text-sm transition-colors ${showProductSearch ? "bg-orange-50 dark:bg-orange-950 text-orange-600" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 dark:text-ink-400 text-sm transition-colors ${showProductSearch ? "bg-orange-50 dark:bg-orange-950 text-orange-600" : "hover:bg-slate-50 dark:hover:bg-ink-800"}`}
             >
               <ShoppingBag className="w-5 h-5 text-purple-500" />
               <span className="hidden sm:inline text-xs">{t("create.tag")}</span>
             </button>
             <button
               onClick={() => { setShowAffiliateSearch(v => !v); setShowEmoji(false); setShowProductSearch(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 dark:text-slate-400 text-sm transition-colors ${showAffiliateSearch ? "bg-purple-50 dark:bg-purple-950 text-purple-600" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 dark:text-ink-400 text-sm transition-colors ${showAffiliateSearch ? "bg-purple-50 dark:bg-purple-950 text-purple-600" : "hover:bg-slate-50 dark:hover:bg-ink-800"}`}
             >
               <Link2 className="w-5 h-5 text-purple-500" />
               <span className="hidden sm:inline text-xs">Affiliate</span>
             </button>
             <button
               onClick={() => { setShowEmoji(v => !v); setShowProductSearch(false); setShowAffiliateSearch(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 dark:text-slate-400 text-sm transition-colors ${showEmoji ? "bg-amber-50 dark:bg-amber-950 text-amber-600" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-slate-500 dark:text-ink-400 text-sm transition-colors ${showEmoji ? "bg-amber-50 dark:bg-amber-950 text-amber-600" : "hover:bg-slate-50 dark:hover:bg-ink-800"}`}
             >
               <Smile className="w-5 h-5 text-amber-500" />
             </button>
@@ -652,7 +652,7 @@ export default function CreatePost() {
 
       {/* Character count hint */}
       {content.length > 200 && (
-        <p className={`text-xs mt-2 text-right ${content.length > 2200 ? "text-red-500" : "text-slate-400 dark:text-slate-500"}`}>
+        <p className={`text-xs mt-2 text-right ${content.length > 2200 ? "text-red-500" : "text-slate-400 dark:text-ink-500"}`}>
           {content.length}/2200
         </p>
       )}

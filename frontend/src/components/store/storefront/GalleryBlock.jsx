@@ -13,7 +13,7 @@ export default function GalleryBlock({ block }) {
       )}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {images.map((url, i) => (
-          <div key={`${url}-${i}`} className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+          <div key={`${url}-${i}`} className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-ink-800">
             <img src={url} alt="" className="w-full h-full object-cover" />
           </div>
         ))}

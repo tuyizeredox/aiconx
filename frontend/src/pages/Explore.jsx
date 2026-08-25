@@ -228,7 +228,7 @@ export default function Explore() {
           placeholder={t("explore.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-12 pr-4 h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl text-base focus:ring-2 focus:ring-orange-100 focus:border-orange-300"
+          className="pl-12 pr-4 h-12 bg-white dark:bg-ink-800 border-slate-200 dark:border-ink-700 rounded-2xl text-base focus:ring-2 focus:ring-orange-100 focus:border-orange-300"
         />
         {search && (
           <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -247,8 +247,8 @@ export default function Explore() {
                 onClick={() => setCategory(cat.id)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   category === cat.id
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                    : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    ? "bg-ink-900 dark:bg-white text-white dark:text-ink-900"
+                    : "bg-white dark:bg-ink-800 border border-slate-200 dark:border-ink-700 text-slate-600 dark:text-ink-300 hover:bg-slate-50 dark:hover:bg-ink-700"
                 }`}
               >
                 <span>{cat.emoji}</span>
@@ -272,9 +272,9 @@ export default function Explore() {
               {filteredSuggestedUsers.map((user) => {
                 const isFollowing = followStatuses?.[`user:${user.username}`] || false;
                 return (
-                  <div key={user.username} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                  <div key={user.username} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700">
                     <Link to={createPageUrl("Profile") + `?username=${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-ink-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-ink-600 shrink-0">
                         <AvatarImg
                           src={user.avatar_url}
                           className="w-full h-full object-cover"
@@ -296,7 +296,7 @@ export default function Explore() {
                       disabled={followMutation.isPending}
                       className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${
                         isFollowing
-                          ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                          ? 'bg-slate-100 dark:bg-ink-700 text-slate-600 dark:text-ink-300'
                           : 'bg-orange-600 text-white hover:bg-orange-700'
                       }`}
                     >
@@ -308,9 +308,9 @@ export default function Explore() {
               {filteredSuggestedStores.map((store) => {
                 const isFollowing = followStatuses?.[`store:${store.owner_username}`] || false;
                 return (
-                  <div key={store._id} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                  <div key={store._id} className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700">
                     <Link to={storeUrl(store)} className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-ink-700 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-ink-600 shrink-0">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -332,7 +332,7 @@ export default function Explore() {
                       disabled={followMutation.isPending}
                       className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${
                         isFollowing
-                          ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                          ? 'bg-slate-100 dark:bg-ink-700 text-slate-600 dark:text-ink-300'
                           : 'bg-orange-600 text-white hover:bg-orange-700'
                       }`}
                     >
@@ -363,9 +363,9 @@ export default function Explore() {
               <Link
                 key={u.id || u.username}
                 to={createPageUrl("Profile") + `?username=${u.username}`}
-                className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[100px] hover:shadow-md transition-shadow"
+                className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 min-w-[100px] hover:shadow-md transition-shadow"
               >
-                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-slate-600">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-ink-700 flex items-center justify-center overflow-hidden border border-slate-50 dark:border-ink-600">
                   <AvatarImg
                     src={u.avatar_url}
                     className="w-full h-full object-cover"
@@ -393,7 +393,7 @@ export default function Explore() {
                 <Link
                   key={c.id || c._id}
                   to={createPageUrl("CommunityDetail") + `?id=${c.id || c._id}`}
-                  className="w-52 shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+                  className="w-52 shrink-0 bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
                 >
                   <div className={`h-24 relative ${COVER_PLACEHOLDER}`}>
                     {c.cover_image ? (
@@ -405,7 +405,7 @@ export default function Explore() {
                     )}
                   </div>
                   <div className="p-4 -mt-6 relative">
-                    <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-700 shadow-lg border-2 border-white dark:border-slate-600 flex items-center justify-center text-2xl mb-3 overflow-hidden">
+                    <div className="w-14 h-14 rounded-2xl bg-white dark:bg-ink-700 shadow-lg border-2 border-white dark:border-ink-600 flex items-center justify-center text-2xl mb-3 overflow-hidden">
                       {c.icon_url ? (
                         <img src={c.icon_url} alt={c.name} className="w-full h-full object-cover" />
                       ) : (
@@ -413,10 +413,10 @@ export default function Explore() {
                       )}
                     </div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">{c.name}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-2 min-h-[2.5rem]">
+                    <p className="text-xs text-slate-500 dark:text-ink-400 line-clamp-2 mb-2 min-h-[2.5rem]">
                       {c.description || t("explore.noDescription")}
                     </p>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-ink-500">
                       <Users className="w-3.5 h-3.5" />
                       <span>{t("explore.members", { count: c.member_count || 0 })}</span>
                     </div>

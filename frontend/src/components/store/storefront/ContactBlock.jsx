@@ -52,7 +52,7 @@ export default function ContactBlock({
         )}
 
         {show_address && (store?.phone_number || store?.address) && (
-          <div className="flex flex-col gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex flex-col gap-1.5 text-sm text-slate-600 dark:text-ink-300">
             {store.phone_number && (
               <span className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /> {store.phone_number}</span>
             )}
@@ -65,22 +65,22 @@ export default function ContactBlock({
         {show_social && (social.facebook || social.instagram || social.twitter || social.tiktok) && (
           <div className="flex items-center gap-3">
             {social.facebook && (
-              <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <a href={social.facebook} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-ink-200">
                 <Facebook className="w-5 h-5" />
               </a>
             )}
             {social.instagram && (
-              <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <a href={social.instagram} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-ink-200">
                 <Instagram className="w-5 h-5" />
               </a>
             )}
             {social.twitter && (
-              <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-ink-200">
                 <Twitter className="w-5 h-5" />
               </a>
             )}
             {social.tiktok && (
-              <a href={social.tiktok} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <a href={social.tiktok} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-ink-200">
                 TikTok
               </a>
             )}

@@ -27,7 +27,7 @@ const toastVariants = cva(
     variants: {
       variant: {
         default:
-          "border-slate-200 bg-white text-slate-900 dark:border-white/10 dark:bg-slate-900 dark:text-white shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]",
+          "border-slate-200 bg-white text-slate-900 dark:border-white/10 dark:bg-ink-900 dark:text-white shadow-[0_8px_32px_-8px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]",
         destructive:
           "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/80 dark:text-rose-200 shadow-[0_8px_32px_-8px_rgba(239,68,68,0.2)]",
         success:
@@ -41,7 +41,7 @@ const toastVariants = cva(
 );
 
 const toastIconMap = {
-  default: <Info className="h-5 w-5 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />,
+  default: <Info className="h-5 w-5 text-slate-400 dark:text-ink-500 shrink-0 mt-0.5" />,
   destructive: <AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />,
   success: <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />,
 };
@@ -78,7 +78,7 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     className={cn(
       "absolute right-2 top-2 rounded-lg p-1 opacity-60 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none",
-      "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
+      "text-slate-500 hover:text-slate-900 dark:text-ink-400 dark:hover:text-white",
       "group-[.destructive]:text-rose-400 group-[.destructive]:hover:text-rose-600",
       className
     )}

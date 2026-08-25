@@ -19,7 +19,7 @@ function PostThumb({ post }) {
   return (
     <Link
       to={createPageUrl("PostDetail") + `?id=${postId}`}
-      className="group relative block aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 border border-slate-100 dark:border-slate-700"
+      className="group relative block aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-ink-700 border border-slate-100 dark:border-ink-700"
     >
       {showImage ? (
         <img
@@ -30,7 +30,7 @@ function PostThumb({ post }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center p-2">
-          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-4 text-center">{post.content}</p>
+          <p className="text-xs text-slate-500 dark:text-ink-400 line-clamp-4 text-center">{post.content}</p>
         </div>
       )}
       {isVideo && showImage && (
@@ -62,7 +62,7 @@ export default function RelatedPosts({ productId }) {
   if (!isLoading && posts.length === 0) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
+    <div className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
         <Layers className="w-4 h-4 text-orange-500 shrink-0" />
         <h2 className="text-base font-bold text-slate-900 dark:text-white">{t("product.featuredInPosts")}</h2>

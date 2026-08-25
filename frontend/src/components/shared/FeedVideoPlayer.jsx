@@ -166,7 +166,7 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-ink-800 dark:to-ink-900">
             <div className="w-8 h-8 rounded-full border-2 border-slate-400/40 border-t-slate-500 animate-spin" />
           </div>
         )

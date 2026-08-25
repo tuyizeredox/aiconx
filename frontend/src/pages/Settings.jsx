@@ -30,18 +30,18 @@ import { useTheme } from "next-themes";
 
 function SettingSection({ icon: Icon, title, description, children, active, onClick }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden mb-4 shadow-sm">
+    <div className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 overflow-hidden mb-4 shadow-sm">
       <button 
         onClick={onClick}
-        className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+        className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-ink-800/50 transition-colors text-left"
       >
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-ink-800 flex items-center justify-center text-slate-600 dark:text-ink-400">
             <Icon className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-            <p className="text-xs text-slate-400 dark:text-slate-500">{description}</p>
+            <p className="text-xs text-slate-400 dark:text-ink-500">{description}</p>
           </div>
         </div>
         <ChevronRight className={`w-5 h-5 text-slate-300 transition-transform ${active ? "rotate-90" : ""}`} />
@@ -53,9 +53,9 @@ function SettingSection({ icon: Icon, title, description, children, active, onCl
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-slate-50 dark:border-slate-800"
+            className="overflow-hidden border-t border-slate-50 dark:border-ink-800"
           >
-            <div className="p-5 bg-slate-50/30 dark:bg-slate-800/20">
+            <div className="p-5 bg-slate-50/30 dark:bg-ink-800/20">
               {children}
             </div>
           </motion.div>
@@ -340,7 +340,7 @@ export default function Settings() {
       <BackLink to="Profile" label={t("common.backTo", { page: t("nav.profile") })} />
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">{t("settings.title")}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t("settings.appearanceDesc")}</p>
+        <p className="text-sm text-slate-500 dark:text-ink-400">{t("settings.appearanceDesc")}</p>
       </div>
 
       {/* Profile Section */}
@@ -354,7 +354,7 @@ export default function Settings() {
         <div className="space-y-6">
           <div className="flex flex-col gap-4">
             {/* Banner Upload */}
-            <div className="relative h-32 w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 group">
+            <div className="relative h-32 w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-ink-800 group">
               {profileData.banner_url ? (
                 <img src={profileData.banner_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -374,7 +374,7 @@ export default function Settings() {
             {/* Avatar Upload */}
             <div className="flex flex-col items-center -mt-12 relative z-10">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 shadow-lg">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 dark:bg-ink-800 ring-4 ring-white dark:ring-ink-900 shadow-lg">
                   <AvatarImg
                     src={profileData.avatar_url}
                     className="w-full h-full object-cover"
@@ -390,53 +390,53 @@ export default function Settings() {
                     </div>
                   )}
                 </div>
-                <label className="absolute bottom-0 right-0 w-8 h-8 bg-orange-600 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center cursor-pointer hover:bg-orange-700 transition-colors shadow-sm">
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-orange-600 rounded-full border-2 border-white dark:border-ink-900 flex items-center justify-center cursor-pointer hover:bg-orange-700 transition-colors shadow-sm">
                   <Camera className="w-4 h-4 text-white" />
                   <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'avatar')} disabled={uploading.avatar} />
                 </label>
               </div>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-2">{t("settings.avatarRecommendation")}</p>
+              <p className="text-[10px] text-slate-400 dark:text-ink-500 font-medium mt-2">{t("settings.avatarRecommendation")}</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 ml-1">{t("settings.username")}</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-ink-300 block mb-1.5 ml-1">{t("settings.username")}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">@</span>
                 <Input 
                   value={profileData.username} 
                   onChange={e => setProfileData({...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})}
                   placeholder="username"
-                  className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-orange-500 pl-8"
+                  className="rounded-xl border-slate-200 dark:border-ink-800 dark:bg-ink-900 dark:text-white focus:border-orange-500 pl-8"
                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-1 ml-1">{t("settings.usernameHint")}</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 ml-1">{t("settings.displayName")}</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-ink-300 block mb-1.5 ml-1">{t("settings.displayName")}</label>
               <Input 
                 value={profileData.display_name} 
                 onChange={e => setProfileData({...profileData, display_name: e.target.value})}
                 placeholder="Full name or nickname"
-                className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-orange-500"
+                className="rounded-xl border-slate-200 dark:border-ink-800 dark:bg-ink-900 dark:text-white focus:border-orange-500"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 ml-1">{t("settings.bio")}</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-ink-300 block mb-1.5 ml-1">{t("settings.bio")}</label>
               <textarea 
                 value={profileData.bio}
                 onChange={e => setProfileData({...profileData, bio: e.target.value})}
                 placeholder={t("settings.bioPlaceholder")}
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 focus:border-orange-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none transition-all resize-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-ink-800 focus:border-orange-500 bg-white dark:bg-ink-900 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none transition-all resize-none"
               />
-              <p className="text-right text-[10px] text-slate-400 dark:text-slate-500 mt-1">{profileData.bio.length}/500</p>
+              <p className="text-right text-[10px] text-slate-400 dark:text-ink-500 mt-1">{profileData.bio.length}/500</p>
             </div>
             <Button 
               onClick={handleProfileSave}
               disabled={updateMutation.isPending}
-              className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-11 font-semibold"
+              className="w-full bg-ink-900 dark:bg-orange-600 hover:bg-ink-800 dark:hover:bg-orange-700 text-white rounded-xl h-11 font-semibold"
             >
               {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {t("settings.saveChanges")}
@@ -454,11 +454,11 @@ export default function Settings() {
         onClick={() => setActiveSection(activeSection === "account" ? "" : "account")}
       >
         <div className="space-y-4">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+          <div className="p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.emailAddress")}</p>
-                <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-600 shrink-0">{t("settings.private")}</span>
+                <p className="text-xs font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wider">{t("settings.emailAddress")}</p>
+                <span className="text-[9px] font-black bg-slate-100 dark:bg-ink-700 text-slate-400 dark:text-ink-500 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-ink-600 shrink-0">{t("settings.private")}</span>
               </div>
               <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentUser?.email}</p>
             </div>
@@ -471,9 +471,9 @@ export default function Settings() {
               {t("settings.change")}
             </Button>
           </div>
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+          <div className="p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.phoneNumber")}</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wider">{t("settings.phoneNumber")}</p>
               <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                 {currentUser?.phone_number || t("settings.notSet")}
                 {currentUser?.is_phone_verified && (
@@ -490,9 +490,9 @@ export default function Settings() {
               {currentUser?.phone_number ? t("settings.change") : t("settings.add")}
             </Button>
           </div>
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <div className="p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t("settings.password")}</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wider">{t("settings.password")}</p>
               <p className="text-sm font-semibold text-slate-900 dark:text-white">••••••••••••</p>
             </div>
             <Button 
@@ -505,7 +505,7 @@ export default function Settings() {
             </Button>
           </div>
           <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-2xl border border-orange-100 dark:border-orange-900/30 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-sm shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-ink-800 flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-sm shrink-0">
               <Shield className="w-5 h-5" />
             </div>
             <div>
@@ -523,7 +523,7 @@ export default function Settings() {
           </div>
 
           <div className="p-4 bg-violet-50 dark:bg-violet-900/10 rounded-2xl border border-violet-100 dark:border-violet-900/30 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-violet-600 dark:text-violet-400 shadow-sm shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-ink-800 flex items-center justify-center text-violet-600 dark:text-violet-400 shadow-sm shrink-0">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
@@ -575,7 +575,7 @@ export default function Settings() {
                 onChange={e => setPassForm({...passForm, confirm: e.target.value})}
               />
               <Button 
-                className="w-full bg-slate-900 hover:bg-slate-800 rounded-xl"
+                className="w-full bg-ink-900 hover:bg-ink-800 rounded-xl"
                 disabled={!passForm.current || !passForm.new || passForm.new !== passForm.confirm || passMutation.isPending}
                 onClick={() => passMutation.mutate()}
               >
@@ -603,7 +603,7 @@ export default function Settings() {
                 onChange={e => setEmailForm({...emailForm, password: e.target.value})}
               />
               <Button 
-                className="w-full bg-slate-900 hover:bg-slate-800 rounded-xl"
+                className="w-full bg-ink-900 hover:bg-ink-800 rounded-xl"
                 disabled={!emailForm.newEmail || !emailForm.password || emailMutation.isPending}
                 onClick={() => emailMutation.mutate()}
               >
@@ -631,21 +631,21 @@ export default function Settings() {
             { id: "notif_reminders", label: t("settings.reminders"), hint: t("settings.remindersHint"), icon: ShoppingCart },
             { id: "notif_new_products", label: t("settings.newProducts"), hint: t("settings.newProductsHint"), icon: Sparkles },
           ].map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+            <div key={item.id} className="flex items-center justify-between p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-ink-900 flex items-center justify-center text-slate-400 dark:text-ink-500">
                   <item.icon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-ink-200">{item.label}</span>
                   {item.hint && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.hint}</p>
+                    <p className="text-xs text-slate-400 dark:text-ink-500 mt-0.5">{item.hint}</p>
                   )}
                 </div>
               </div>
               <div 
                 onClick={() => handleNotificationToggle(item.id)}
-                className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors shadow-inner ${notifications[item.id] ? "bg-orange-600" : "bg-slate-200 dark:bg-slate-700"}`}
+                className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors shadow-inner ${notifications[item.id] ? "bg-orange-600" : "bg-slate-200 dark:bg-ink-700"}`}
               >
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${notifications[item.id] ? "right-0.5" : "left-0.5"}`} />
               </div>
@@ -675,13 +675,13 @@ export default function Settings() {
               <Link
                 key={item.page}
                 to={createPageUrl(item.page)}
-                className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+                className="flex items-center justify-between p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-ink-900 flex items-center justify-center text-slate-400 dark:text-ink-500">
                     <item.icon className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-ink-200">{item.label}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-300" />
               </Link>
@@ -698,10 +698,10 @@ export default function Settings() {
         active={activeSection === "appearance"}
         onClick={() => setActiveSection(activeSection === "appearance" ? "" : "appearance")}
       >
-        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+        <div className="p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700">
           <div className="flex items-center gap-3 mb-3">
-            <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.theme")}</span>
+            <Moon className="w-4 h-4 text-slate-400 dark:text-ink-500" />
+            <span className="text-sm font-semibold text-slate-700 dark:text-ink-200">{t("common.theme")}</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {[
@@ -720,7 +720,7 @@ export default function Settings() {
                 className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                   theme === opt.value
                     ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
-                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                    : "bg-white dark:bg-ink-900 border-slate-100 dark:border-ink-800 text-slate-500 dark:text-ink-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
                 }`}
               >
                 {opt.label}
@@ -738,11 +738,11 @@ export default function Settings() {
         active={activeSection === "preferences"}
         onClick={() => setActiveSection(activeSection === "preferences" ? "" : "preferences")}
       >
-        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+        <div className="p-3 bg-white dark:bg-ink-800 rounded-xl border border-slate-100 dark:border-ink-700">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <Globe className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t("common.language")}</span>
+              <Globe className="w-4 h-4 text-slate-400 dark:text-ink-500" />
+              <span className="text-sm font-semibold text-slate-700 dark:text-ink-200">{t("common.language")}</span>
             </div>
             <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
               {currentLangInfo?.flag} {currentLangInfo?.label}
@@ -756,7 +756,7 @@ export default function Settings() {
                 className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                   selectedLang === l.code
                     ? "bg-orange-600 border-orange-600 text-white shadow-md shadow-orange-100"
-                    : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
+                    : "bg-white dark:bg-ink-900 border-slate-100 dark:border-ink-800 text-slate-500 dark:text-ink-400 hover:border-orange-200 dark:hover:border-orange-800 hover:text-orange-600 dark:hover:text-orange-400"
                 }`}
               >
                 {l.flag} {l.label}
@@ -766,7 +766,7 @@ export default function Settings() {
           <Button
             onClick={handleSaveLanguage}
             disabled={selectedLang === currentLang || langSaving}
-            className="w-full bg-slate-900 dark:bg-orange-600 hover:bg-slate-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
+            className="w-full bg-ink-900 dark:bg-orange-600 hover:bg-ink-800 dark:hover:bg-orange-700 text-white rounded-xl h-10 text-xs font-bold"
           >
             {langSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : `${t("common.save")} ${t("common.language")}`}
           </Button>
@@ -785,7 +785,7 @@ export default function Settings() {
       </SettingSection>
 
       {/* Logout / Dangerous Zone */}
-      <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800">
+      <div className="mt-12 pt-8 border-t border-slate-100 dark:border-ink-800">
         <Button 
           variant="outline"
           onClick={() => logout()}
@@ -793,7 +793,7 @@ export default function Settings() {
         >
           <LogOut className="w-4 h-4 mr-2" /> {t("common.logout")}
         </Button>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center mt-6">
+        <p className="text-[10px] text-slate-400 dark:text-ink-500 text-center mt-6">
           {t("settings.versionInfo")}<br/>
           {t("settings.copyright")}
         </p>
@@ -810,12 +810,12 @@ export default function Settings() {
           </DialogHeader>
           <div className="flex flex-col items-center space-y-6 py-4">
             {twoFactorData.qrCode && (
-              <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl border-4 border-slate-50 dark:border-slate-700 shadow-inner">
+              <div className="p-4 bg-white dark:bg-ink-800 rounded-2xl border-4 border-slate-50 dark:border-ink-700 shadow-inner">
                 <img src={twoFactorData.qrCode} alt="QR Code" className="w-48 h-48" />
               </div>
             )}
             <div className="space-y-2 text-center">
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{t("settings.verificationCode")}</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-ink-400 uppercase">{t("settings.verificationCode")}</p>
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otpToken} onChange={setOtpToken}>
                   <InputOTPGroup>
@@ -921,18 +921,18 @@ export default function Settings() {
           <DialogHeader><DialogTitle>{t("settings.updatePhone")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase ml-1">{t("settings.newPhoneWhatsapp")}</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-ink-400 uppercase ml-1">{t("settings.newPhoneWhatsapp")}</label>
               <Input
                 type="tel"
                 placeholder="+1234567890"
                 value={phoneForm.newPhone}
                 onChange={e => setPhoneForm({...phoneForm, newPhone: e.target.value})}
-                className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+                className="rounded-xl border-slate-200 dark:border-ink-800 dark:bg-ink-900"
               />
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">{t("settings.phoneHint")}</p>
+              <p className="text-[10px] text-slate-400 dark:text-ink-500 ml-1">{t("settings.phoneHint")}</p>
             </div>
             <Button 
-              className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-orange-600 dark:hover:bg-orange-700 rounded-xl h-11 font-bold"
+              className="w-full bg-ink-900 hover:bg-ink-800 dark:bg-orange-600 dark:hover:bg-orange-700 rounded-xl h-11 font-bold"
               disabled={!phoneForm.newPhone || phoneForm.newPhone.length < 10 || phoneMutation.isPending}
               onClick={() => phoneMutation.mutate()}
             >

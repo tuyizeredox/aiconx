@@ -134,7 +134,7 @@ export default function Cart() {
   return (
     // Renders outside the app sidebar layout (see App.jsx) — the cart owns its
     // full-width canvas and its own top chrome.
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0c] dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-ink-900 dark:text-ink-100">
       <ShopHeaderBar
         backTo={createPageUrl("Marketplace")}
         backLabel={t("common.continueShopping")}
@@ -142,18 +142,18 @@ export default function Cart() {
       />
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
-      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 mb-5 sm:mb-8 tracking-tight">
+      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-ink-100 mb-5 sm:mb-8 tracking-tight">
         {t("cart.title")} ({cartItems.length})
       </h1>
 
       {isLoading ? (
         <div className="space-y-3">
           {Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-4 animate-pulse flex gap-4 border border-slate-100 dark:border-slate-800">
-              <div className="w-20 h-20 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+            <div key={i} className="bg-white dark:bg-ink-900 rounded-xl p-4 animate-pulse flex gap-4 border border-slate-100 dark:border-ink-800">
+              <div className="w-20 h-20 bg-slate-200 dark:bg-ink-700 rounded-xl" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-3 w-1/4 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-4 w-3/4 bg-slate-200 dark:bg-ink-700 rounded" />
+                <div className="h-3 w-1/4 bg-slate-100 dark:bg-ink-800 rounded" />
               </div>
             </div>
           ))}
@@ -179,11 +179,11 @@ export default function Cart() {
                   key={item._id || item.id}
                   layout
                   exit={{ opacity: 0, x: -100 }}
-                  className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors"
+                  className="relative bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors"
                 >
                   <button
                     onClick={() => removeItemMutation.mutate(item._id || item.id)}
-                    className="absolute top-3 right-3 sm:static sm:order-3 sm:shrink-0 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 transition-colors"
+                    className="absolute top-3 right-3 sm:static sm:order-3 sm:shrink-0 text-slate-400 dark:text-ink-500 hover:text-red-500 dark:hover:text-red-400 p-1 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -191,7 +191,7 @@ export default function Cart() {
                   <div className="flex gap-3 sm:gap-4 min-w-0">
                     <Link
                       to={createPageUrl("ProductDetail") + `?id=${item.product_id}`}
-                      className="w-20 h-20 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0"
+                      className="w-20 h-20 rounded-xl bg-slate-100 dark:bg-ink-800 overflow-hidden shrink-0"
                     >
                       {item.product_image && (
                         <img src={item.product_image} alt="" className="w-full h-full object-cover" />
@@ -199,20 +199,20 @@ export default function Cart() {
                     </Link>
 
                     <div className="flex-1 min-w-0 pr-8 sm:pr-0 flex flex-col justify-center">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-ink-100 truncate">
                         {item.product_title}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{item.store_name}</p>
+                      <p className="text-xs text-slate-400 dark:text-ink-500 mb-2">{item.store_name}</p>
                       {(item.selected_color || item.selected_size || item.selected_options?.length > 0) && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 flex flex-wrap gap-x-3">
+                        <p className="text-xs text-slate-500 dark:text-ink-400 mb-2 flex flex-wrap gap-x-3">
                           {item.selected_color && (
-                            <span>{t("product.color")}: <span className="font-medium text-slate-700 dark:text-slate-300">{item.selected_color}</span></span>
+                            <span>{t("product.color")}: <span className="font-medium text-slate-700 dark:text-ink-300">{item.selected_color}</span></span>
                           )}
                           {item.selected_size && (
-                            <span>{t("product.size")}: <span className="font-medium text-slate-700 dark:text-slate-300">{item.selected_size}</span></span>
+                            <span>{t("product.size")}: <span className="font-medium text-slate-700 dark:text-ink-300">{item.selected_size}</span></span>
                           )}
                           {item.selected_options?.map((opt) => (
-                            <span key={opt.name}>{opt.name}: <span className="font-medium text-slate-700 dark:text-slate-300">{opt.value}</span></span>
+                            <span key={opt.name}>{opt.name}: <span className="font-medium text-slate-700 dark:text-ink-300">{opt.value}</span></span>
                           ))}
                         </p>
                       )}
@@ -222,19 +222,19 @@ export default function Cart() {
                     </div>
                   </div>
 
-                  <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden self-start sm:self-auto sm:shrink-0">
+                  <div className="flex items-center border border-slate-200 dark:border-ink-700 rounded-lg overflow-hidden self-start sm:self-auto sm:shrink-0">
                     <button
                       onClick={() => updateQuantityMutation.mutate({ id: item._id || item.id, quantity: (item.quantity || 1) - 1 })}
-                      className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-ink-300 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
-                    <span className="w-8 text-center text-sm font-medium text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900">
+                    <span className="w-8 text-center text-sm font-medium text-slate-900 dark:text-ink-100 bg-white dark:bg-ink-900">
                       {item.quantity || 1}
                     </span>
                     <button
                       onClick={() => updateQuantityMutation.mutate({ id: item._id || item.id, quantity: (item.quantity || 1) + 1 })}
-                      className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-ink-300 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -246,15 +246,15 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-6 lg:sticky lg:top-[4.5rem] transition-colors">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">
+            <div className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 p-4 sm:p-6 lg:sticky lg:top-[4.5rem] transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-ink-100 mb-4">
                 {t("cart.orderSummary")}
               </h3>
 
               <div className="space-y-3 mb-5">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500 dark:text-slate-400">{t("cart.subtotal")}</span>
-                  <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(subtotal)}</span>
+                  <span className="text-slate-500 dark:text-ink-400">{t("cart.subtotal")}</span>
+                  <span className="font-medium text-slate-900 dark:text-ink-100">{formatCurrency(subtotal)}</span>
                 </div>
 
                 {discount > 0 && (
@@ -267,15 +267,15 @@ export default function Cart() {
                 )}
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500 dark:text-slate-400">{t("cart.shipping")}</span>
-                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                  <span className="text-slate-500 dark:text-ink-400">{t("cart.shipping")}</span>
+                  <span className="font-medium text-slate-900 dark:text-ink-100">
                     {shipping === 0 ? t("product.freeShipping") : formatCurrency(shipping)}
                   </span>
                 </div>
 
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between text-base">
-                  <span className="font-bold text-slate-900 dark:text-slate-100">{t("common.total")}</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-100">{formatCurrency(total)}</span>
+                <div className="border-t border-slate-100 dark:border-ink-800 pt-3 flex justify-between text-base">
+                  <span className="font-bold text-slate-900 dark:text-ink-100">{t("common.total")}</span>
+                  <span className="font-bold text-slate-900 dark:text-ink-100">{formatCurrency(total)}</span>
                 </div>
               </div>
 
@@ -318,13 +318,13 @@ export default function Cart() {
                         value={couponCode}
                         onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
                         onKeyDown={e => e.key === "Enter" && applyCoupon()}
-                        className="rounded-xl font-mono text-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                        className="rounded-xl font-mono text-sm bg-white dark:bg-ink-800 border-slate-200 dark:border-ink-700 text-slate-900 dark:text-ink-100 placeholder:text-slate-400 dark:placeholder:text-ink-500"
                       />
                       <Button
                         variant="outline"
                         onClick={applyCoupon}
                         disabled={checkingCoupon || !couponCode.trim()}
-                        className="shrink-0 rounded-xl px-3 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="shrink-0 rounded-xl px-3 border-slate-200 dark:border-ink-700 text-slate-700 dark:text-ink-300 hover:bg-slate-50 dark:hover:bg-ink-800"
                       >
                         {checkingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : t("cart.applyCoupon")}
                       </Button>
@@ -350,13 +350,13 @@ export default function Cart() {
                 onClick={() => navigate(createPageUrl("Checkout"))}
                 disabled={cartItems.length === 0}
                 variant="outline"
-                className="w-full h-11 rounded-xl text-sm font-semibold border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="w-full h-11 rounded-xl text-sm font-semibold border-slate-200 dark:border-ink-700 text-slate-600 dark:text-ink-300 hover:bg-slate-50 dark:hover:bg-ink-800 transition-colors"
               >
                 <CreditCard className="w-4 h-4 mr-2" /> {t("cart.proceedToCheckout")}
               </Button>
 
               {subtotal < 50 && (
-                <p className="text-xs text-center text-slate-400 dark:text-slate-500 mt-3">
+                <p className="text-xs text-center text-slate-400 dark:text-ink-500 mt-3">
                   {t("cart.freeShippingProgress", { amount: formatCurrency(50 - subtotal) })}
                 </p>
               )}

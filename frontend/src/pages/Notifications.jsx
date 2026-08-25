@@ -97,7 +97,7 @@ export default function Notifications() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("notifications.title")}</h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t("notifications.unread", { count: unreadCount })}</p>
+            <p className="text-sm text-slate-500 dark:text-ink-400">{t("notifications.unread", { count: unreadCount })}</p>
           )}
         </div>
         {hasUnread && (
@@ -116,11 +116,11 @@ export default function Notifications() {
       {isLoading ? (
         <div className="space-y-2">
           {Array(5).fill(0).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-4 animate-pulse flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700" />
+            <div key={i} className="bg-white dark:bg-ink-800 rounded-xl p-4 animate-pulse flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-ink-700" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-2.5 w-1/2 bg-slate-100 dark:bg-slate-700 rounded" />
+                <div className="h-3 w-3/4 bg-slate-200 dark:bg-ink-700 rounded" />
+                <div className="h-2.5 w-1/2 bg-slate-100 dark:bg-ink-700 rounded" />
               </div>
             </div>
           ))}
@@ -143,7 +143,7 @@ export default function Notifications() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className={`flex items-start gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
-                  notif.is_read ? "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" : "bg-orange-50/50 dark:bg-orange-950/50 hover:bg-orange-50 dark:hover:bg-orange-950"
+                  notif.is_read ? "bg-white dark:bg-ink-800 hover:bg-slate-50 dark:hover:bg-ink-700" : "bg-orange-50/50 dark:bg-orange-950/50 hover:bg-orange-50 dark:hover:bg-orange-950"
                 }`}
                 onClick={() => handleNotificationClick(notif)}
               >
@@ -152,10 +152,10 @@ export default function Notifications() {
                     <img
                       src={notif.metadata.product_image}
                       alt=""
-                      className="w-10 h-10 rounded-xl object-cover bg-slate-100 dark:bg-slate-700"
+                      className="w-10 h-10 rounded-xl object-cover bg-slate-100 dark:bg-ink-700"
                       loading="lazy"
                     />
-                    <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-800 ${typeConfig.color}`}>
+                    <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-ink-800 ${typeConfig.color}`}>
                       <Icon className="w-3 h-3" />
                     </span>
                   </div>
@@ -166,8 +166,8 @@ export default function Notifications() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-900 dark:text-white font-medium">{notif.title}</p>
-                  {notif.body && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{notif.body}</p>}
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  {notif.body && <p className="text-xs text-slate-500 dark:text-ink-400 mt-0.5">{notif.body}</p>}
+                  <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">
                     {new Date(notif.created_at || notif.created_date).toLocaleDateString(i18n.language, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>

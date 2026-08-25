@@ -47,33 +47,33 @@ export default function CreateActionModal({ open, onClose, currentUser }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-[80] bg-ink-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
             onClick={onClose}
           >
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              className="bg-white dark:bg-slate-800 rounded-[2rem] w-full max-w-sm overflow-hidden p-6"
+              className="bg-white dark:bg-ink-800 rounded-[2rem] w-full max-w-sm overflow-hidden p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{t("create.title")}</h2>
-                <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center">
-                  <X className="w-5 h-5 text-slate-400 dark:text-slate-300" />
+                <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 dark:bg-ink-700 flex items-center justify-center">
+                  <X className="w-5 h-5 text-slate-400 dark:text-ink-300" />
                 </button>
               </div>
 
               <div className="space-y-3">
                 {actions.map((action) => {
                   const Content = (
-                    <div className="flex items-center gap-4 p-4 rounded-2xl border border-slate-50 dark:border-slate-700 hover:border-slate-100 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-left w-full group">
+                    <div className="flex items-center gap-4 p-4 rounded-2xl border border-slate-50 dark:border-ink-700 hover:border-slate-100 dark:hover:border-ink-600 hover:bg-slate-50 dark:hover:bg-ink-700 transition-all text-left w-full group">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${action.color} group-hover:scale-110 transition-transform`}>
                         <action.icon className="w-6 h-6" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">{action.label}</h3>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{action.description}</p>
+                        <p className="text-xs text-slate-400 dark:text-ink-500 truncate">{action.description}</p>
                       </div>
                     </div>
                   );

@@ -96,17 +96,17 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
       {/* Ask box — the vendor answers here rather than asks, so they get the
           list without a box they can't use. */}
       {currentUser && !isVendor && (
-        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3.5 mb-5">
-          <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">{t("product.askAboutProduct")}</p>
+        <div className="bg-slate-50 dark:bg-ink-800/50 rounded-2xl p-3.5 mb-5">
+          <p className="text-sm font-bold text-slate-800 dark:text-ink-200 mb-2">{t("product.askAboutProduct")}</p>
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t("product.questionPlaceholder")}
             maxLength={500}
-            className="min-h-[76px] text-sm rounded-xl bg-white dark:bg-slate-900"
+            className="min-h-[76px] text-sm rounded-xl bg-white dark:bg-ink-900"
           />
           <div className="flex items-center justify-between gap-3 mt-2">
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">{t("product.questionPublicNote")}</p>
+            <p className="text-[11px] text-slate-400 dark:text-ink-500">{t("product.questionPublicNote")}</p>
             <Button
               size="sm"
               onClick={() => askMutation.mutate()}
@@ -121,16 +121,16 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
       )}
 
       {!currentUser && (
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{t("product.signInToAsk")}</p>
+        <p className="text-sm text-slate-500 dark:text-ink-400 mb-5">{t("product.signInToAsk")}</p>
       )}
 
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
       ) : questions.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-          <MessageCircleQuestion className="w-9 h-9 text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("product.noQuestionsYet")}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("product.noQuestionsDesc")}</p>
+        <div className="text-center py-12 border border-dashed border-slate-200 dark:border-ink-700 rounded-2xl">
+          <MessageCircleQuestion className="w-9 h-9 text-slate-200 dark:text-ink-700 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-600 dark:text-ink-300">{t("product.noQuestionsYet")}</p>
+          <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">{t("product.noQuestionsDesc")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -140,7 +140,7 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
             return (
               <div
                 key={question.id || question._id}
-                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4"
+                className="bg-white dark:bg-ink-900 border border-slate-100 dark:border-ink-800 rounded-2xl p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -148,7 +148,7 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
                       <span className="text-orange-600 font-black mr-1.5">Q.</span>
                       {question.question}
                     </p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-[11px] text-slate-400 dark:text-ink-500 mt-1">
                       {question.asker_name || question.asker_username} · {timeAgo(question.created_at, i18n.language)}
                     </p>
                   </div>
@@ -156,7 +156,7 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
                     <button
                       onClick={() => deleteMutation.mutate(question.id || question._id)}
                       disabled={deleteMutation.isPending}
-                      className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors shrink-0"
+                      className="text-slate-300 dark:text-ink-600 hover:text-red-500 transition-colors shrink-0"
                       aria-label={t("common.delete")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -165,12 +165,12 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
                 </div>
 
                 {question.answer ? (
-                  <div className="mt-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
-                    <p className="text-sm text-slate-700 dark:text-slate-200 break-words">
+                  <div className="mt-3 bg-slate-50 dark:bg-ink-800/60 rounded-xl p-3">
+                    <p className="text-sm text-slate-700 dark:text-ink-200 break-words">
                       <span className="text-green-600 font-black mr-1.5">A.</span>
                       {question.answer}
                     </p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
+                    <p className="text-[11px] text-slate-400 dark:text-ink-500 mt-1.5 flex items-center gap-1">
                       <BadgeCheck className="w-3 h-3 text-green-600" />
                       {t("product.answeredBySeller", { store: product?.store_name || question.vendor_username })}
                       {question.answered_at ? ` · ${timeAgo(question.answered_at, i18n.language)}` : ""}
@@ -179,7 +179,7 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
                 ) : isVendor ? (
                   <AnswerForm questionId={question.id || question._id} onAnswered={refresh} />
                 ) : (
-                  <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 italic">{t("product.awaitingAnswer")}</p>
+                  <p className="mt-2 text-xs text-slate-400 dark:text-ink-500 italic">{t("product.awaitingAnswer")}</p>
                 )}
               </div>
             );

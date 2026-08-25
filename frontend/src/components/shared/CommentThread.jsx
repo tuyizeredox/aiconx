@@ -94,7 +94,7 @@ function ReplyItem({ reply, currentUser }) {
       className="flex gap-2.5 ml-10 mt-3"
     >
       <Link to={replyAuthorProfile} className="shrink-0">
-        <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-[10px] font-bold shrink-0 overflow-hidden border border-white dark:border-slate-800 shadow-sm hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
+        <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-ink-700 flex items-center justify-center text-slate-500 dark:text-ink-400 text-[10px] font-bold shrink-0 overflow-hidden border border-white dark:border-ink-800 shadow-sm hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
           <AvatarImg
             src={reply.author_avatar}
             className="w-full h-full object-cover"
@@ -103,7 +103,7 @@ function ReplyItem({ reply, currentUser }) {
         </div>
       </Link>
       <div className="flex-1">
-        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm px-3.5 py-3">
+        <div className="bg-slate-50 dark:bg-ink-800 border border-slate-100 dark:border-ink-700 rounded-2xl rounded-tl-sm px-3.5 py-3">
           <div className="flex items-center gap-1.5 mb-1">
             <Link to={replyAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
               <span className="text-xs font-bold text-slate-900 dark:text-white">{reply.author_name || "User"}</span>
@@ -114,7 +114,7 @@ function ReplyItem({ reply, currentUser }) {
               {new Date(reply.created_at || reply.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{reply.content}</p>
+          <p className="text-sm text-slate-600 dark:text-ink-300 leading-relaxed">{reply.content}</p>
         </div>
         <button
           onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(isLiked)}
@@ -233,7 +233,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
       className="flex gap-3 group"
     >
       <Link to={commentAuthorProfile} className="shrink-0">
-        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold shrink-0 border border-white dark:border-slate-800 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
+        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-ink-700 flex items-center justify-center text-slate-500 dark:text-ink-400 text-xs font-bold shrink-0 border border-white dark:border-ink-800 shadow-sm overflow-hidden hover:ring-2 hover:ring-orange-200 dark:hover:ring-orange-700 transition-all">
           <AvatarImg
             src={comment.author_avatar}
             className="w-full h-full rounded-full object-cover"
@@ -242,7 +242,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
         </div>
       </Link>
       <div className="flex-1 min-w-0">
-        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 hover:shadow-md hover:shadow-slate-100 dark:hover:shadow-slate-700/50 transition-all">
+        <div className="bg-white dark:bg-ink-800 border border-slate-100 dark:border-ink-700 rounded-2xl rounded-tl-sm p-4 hover:shadow-md hover:shadow-slate-100 dark:hover:shadow-ink-700/50 transition-all">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
               <Link to={commentAuthorProfile} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
@@ -254,7 +254,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
               {new Date(comment.created_at || comment.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">{comment.content}</p>
+          <p className="text-sm text-slate-600 dark:text-ink-300 leading-relaxed mb-3">{comment.content}</p>
 
           <div className="flex items-center gap-4">
             <button
@@ -296,7 +296,7 @@ function CommentItem({ comment, currentUser, replies, postId, onReplyPosted }) {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder={`${t("common.replyTo") || "Reply to"} @${comment.author_username || "User"}...`}
-                    className="rounded-xl border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 h-9 text-sm focus:ring-orange-100"
+                    className="rounded-xl border-slate-200 dark:border-ink-600 bg-white dark:bg-ink-700 dark:text-white dark:placeholder:text-ink-400 h-9 text-sm focus:ring-orange-100"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey && replyText.trim() && !replyMutation.isPending) {
                         e.preventDefault();
@@ -408,18 +408,18 @@ export function CommentList({ postId, currentUser, topLevelComments, repliesMap,
       {isLoading ? (
         Array(3).fill(0).map((_, i) => (
           <div key={i} className="flex gap-3 animate-pulse">
-            <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 shrink-0" />
-            <div className="flex-1 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2">
-              <div className="h-2.5 w-24 bg-slate-100 dark:bg-slate-700 rounded" />
-              <div className="h-2 w-full bg-slate-50 dark:bg-slate-700/50 rounded" />
+            <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-ink-700 shrink-0" />
+            <div className="flex-1 bg-slate-50/50 dark:bg-ink-800/50 rounded-2xl p-4 space-y-2">
+              <div className="h-2.5 w-24 bg-slate-100 dark:bg-ink-700 rounded" />
+              <div className="h-2 w-full bg-slate-50 dark:bg-ink-700/50 rounded" />
             </div>
           </div>
         ))
       ) : topLevelComments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <MessageCircle className="w-10 h-10 text-slate-200 dark:text-slate-700 mb-3" />
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{t("common.noCommentsTitle")}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t("common.noCommentsDesc")}</p>
+          <MessageCircle className="w-10 h-10 text-slate-200 dark:text-ink-700 mb-3" />
+          <p className="text-sm font-semibold text-slate-500 dark:text-ink-400">{t("common.noCommentsTitle")}</p>
+          <p className="text-xs text-slate-400 dark:text-ink-500 mt-1">{t("common.noCommentsDesc")}</p>
         </div>
       ) : (
         topLevelComments.map((comment, i) => (
@@ -470,7 +470,7 @@ export function CommentComposer({ postId, currentUser, className = "", autoFocus
       <div className={className}>
         <Link
           to="/login"
-          className="flex items-center justify-center h-11 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-semibold text-slate-600 dark:text-slate-300"
+          className="flex items-center justify-center h-11 rounded-full bg-slate-100 dark:bg-ink-800 text-sm font-semibold text-slate-600 dark:text-ink-300"
         >
           {t("common.signInToComment")}
         </Link>
@@ -493,7 +493,7 @@ export function CommentComposer({ postId, currentUser, className = "", autoFocus
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           placeholder={t("common.addComment")}
-          className="flex-1 rounded-full border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 h-11 focus-visible:ring-orange-200"
+          className="flex-1 rounded-full border-slate-200 dark:border-ink-700 bg-slate-50 dark:bg-ink-800 dark:text-white dark:placeholder:text-ink-400 h-11 focus-visible:ring-orange-200"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && commentText.trim() && !addCommentMutation.isPending) {
               e.preventDefault();

@@ -29,12 +29,12 @@ export default function ShopThisLook({ open, onOpenChange, products = [], refCod
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-h-[85vh]">
+      <DrawerContent className="border-slate-200 dark:border-ink-800 bg-white dark:bg-ink-900 max-h-[85vh]">
         <DrawerHeader className="text-left px-5 pt-2 pb-3">
           <DrawerTitle className="text-lg font-bold text-slate-900 dark:text-white">
             {t("home.shopThisLook")}
           </DrawerTitle>
-          <DrawerDescription className="text-sm text-slate-500 dark:text-slate-400">
+          <DrawerDescription className="text-sm text-slate-500 dark:text-ink-400">
             {creatorName
               ? t("home.shopThisLookByCreator", { count: products.length, name: creatorName })
               : t("home.shopThisLookCount", { count: products.length })}
@@ -53,13 +53,13 @@ export default function ShopThisLook({ open, onOpenChange, products = [], refCod
                   recordSignal("view", { id, category: p.category, price: p.price, store_id: p.store_id });
                   onOpenChange(false);
                 }}
-                className="flex items-center gap-3.5 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                className="flex items-center gap-3.5 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-ink-800/60 transition-colors"
               >
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-ink-800 shrink-0 flex items-center justify-center">
                   {p.images?.[0] ? (
                     <img src={p.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
                   ) : (
-                    <ShoppingBag className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                    <ShoppingBag className="w-5 h-5 text-slate-300 dark:text-ink-600" />
                   )}
                 </div>
 
@@ -70,13 +70,13 @@ export default function ShopThisLook({ open, onOpenChange, products = [], refCod
                   <p className="text-[15px] font-bold text-slate-900 dark:text-white mt-0.5">
                     {formatCurrency(p.price)}
                   </p>
-                  <p className={`text-[11px] mt-0.5 ${soldOut ? "text-slate-400 dark:text-slate-500" : "text-green-600 dark:text-green-500"}`}>
+                  <p className={`text-[11px] mt-0.5 ${soldOut ? "text-slate-400 dark:text-ink-500" : "text-green-600 dark:text-green-500"}`}>
                     {soldOut ? t("product.outOfStock") : t("product.inStock")}
                     {p.store_name ? " · " + p.store_name : ""}
                   </p>
                 </div>
 
-                <span className="shrink-0 h-9 px-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-bold flex items-center">
+                <span className="shrink-0 h-9 px-4 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 text-[13px] font-bold flex items-center">
                   {soldOut ? t("common.view") : t("product.buyNow")}
                 </span>
               </Link>

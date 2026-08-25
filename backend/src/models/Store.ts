@@ -61,11 +61,19 @@ export interface IStore extends Document {
   // plain lat/lng (not a GeoJSON point) because distance is computed in the
   // application layer — see routes/stores.ts's /nearby — which lets stores
   // that only filled in a city still be matched by name.
+  //
+  // `source` records how the coordinates were arrived at. 'manual' is a pin
+  // the vendor actually dropped and is exact; 'ip' is the fallback derived
+  // from the address they signed up from, is accurate to `accuracy_km` at
+  // best, and must be shown as an approximate area rather than as the shop's
+  // doorstep. A manual pin always replaces an inferred one, never the reverse.
   location?: {
     lat?: number;
     lng?: number;
     city?: string;
     country?: string;
+    source?: 'manual' | 'ip';
+    accuracy_km?: number;
   };
   website_url?: string;
   custom_domain?: string;
@@ -237,6 +245,8 @@ const StoreSchema = new Schema<IStore>({
     lng: { type: Number, min: -180, max: 180 },
     city: { type: String, trim: true },
     country: { type: String, trim: true },
+    source: { type: String, enum: ['manual', 'ip'] },
+    accuracy_km: { type: Number, min: 0 },
   },
   website_url: { type: String },
   custom_domain: { type: String, unique: true, sparse: true },

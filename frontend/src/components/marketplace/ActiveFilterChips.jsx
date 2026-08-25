@@ -73,7 +73,7 @@ export default function ActiveFilterChips({ values, onChange, onClear, nearby })
         <button
           key={key}
           onClick={onRemove}
-          className="group inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-red-200 dark:hover:border-red-900 hover:text-red-600 transition-colors max-w-[220px]"
+          className="group inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 rounded-full bg-white dark:bg-ink-800 border border-slate-200 dark:border-ink-700 text-xs font-medium text-slate-700 dark:text-ink-200 hover:border-red-200 dark:hover:border-red-900 hover:text-red-600 transition-colors max-w-[220px]"
         >
           {Icon && <Icon className="w-3 h-3 text-orange-500 group-hover:text-red-500 shrink-0" />}
           <span className="truncate">{label}</span>
@@ -83,7 +83,7 @@ export default function ActiveFilterChips({ values, onChange, onClear, nearby })
       {chips.length > 1 && (
         <button
           onClick={onClear}
-          className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-orange-600 transition-colors px-1"
+          className="text-xs font-semibold text-slate-500 dark:text-ink-400 hover:text-orange-600 transition-colors px-1"
         >
           {t("shop.clearAll")}
         </button>

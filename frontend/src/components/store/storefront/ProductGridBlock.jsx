@@ -39,7 +39,7 @@ export default function ProductGridBlock({ block, products = [], currentUser }) 
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+        <div className="text-center py-12 text-slate-400 dark:text-ink-500 border border-dashed border-slate-200 dark:border-ink-700 rounded-2xl">
           {t("storeDetail.noProductsYet")}
         </div>
       )}

@@ -412,7 +412,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-50px" }}
-        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-slate-950 transition-all duration-300"
+        className="bg-white dark:bg-ink-900 rounded-2xl border border-slate-100 dark:border-ink-800 overflow-hidden hover:shadow-lg hover:shadow-slate-100 dark:hover:shadow-ink-950 transition-all duration-300"
       >
         <ShareModal
           isOpen={isShareModalOpen}
@@ -424,7 +424,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       {isRepost && (
         <Link
           to={createPageUrl("Profile") + `?username=${post.author_username}`}
-          className="flex items-center gap-2 px-4 pt-3 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+          className="flex items-center gap-2 px-4 pt-3 text-xs font-semibold text-slate-400 dark:text-ink-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
         >
           <Repeat2 className="w-3.5 h-3.5" />
           <span>{t("common.repostedBy", { name: post.author_name || post.author_username }) || `Reposted by ${post.author_name || post.author_username}`}</span>
@@ -440,7 +440,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       {/* Header */}
       <div className="flex items-center justify-between gap-2 p-4">
         <Link to={createPageUrl("Profile") + `?username=${authorUsername}`} className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm ring-2 ring-white dark:ring-slate-900 overflow-hidden shadow-sm shrink-0">
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-ink-800 flex items-center justify-center text-slate-600 dark:text-ink-400 font-semibold text-sm ring-2 ring-white dark:ring-ink-900 overflow-hidden shadow-sm shrink-0">
             <AvatarImg
               src={displayPost.author_avatar}
               alt={displayPost.author_name}
@@ -453,11 +453,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             />
           </div>
           <div className="flex flex-col min-w-0">
-            <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors truncate">{displayPost.author_name || "User"}</p>
+            <p className="text-[13px] font-bold text-slate-900 dark:text-ink-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors truncate">{displayPost.author_name || "User"}</p>
             <div className="flex items-center gap-2 min-w-0">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">@{authorUsername}</p>
-              <span className="text-[10px] text-slate-300 dark:text-slate-600 shrink-0">•</span>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+              <p className="text-[11px] text-slate-500 dark:text-ink-400 font-medium truncate">@{authorUsername}</p>
+              <span className="text-[10px] text-slate-300 dark:text-ink-600 shrink-0">•</span>
+              <p className="text-[11px] text-slate-400 dark:text-ink-500 shrink-0">
                 {formatDistanceToNow(new Date(displayPost.created_at || displayPost.created_date), { addSuffix: true })}
               </p>
               {displayPost.is_sponsored && (
@@ -468,7 +468,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors">
+            <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-ink-800 text-slate-400 dark:text-ink-500 transition-colors">
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </DropdownMenuTrigger>
@@ -569,7 +569,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
 
       {/* Media */}
       {displayPost.media_urls?.length > 0 && (
-        <div className="mt-2 relative group select-none bg-slate-50 dark:bg-slate-950 overflow-hidden">
+        <div className="mt-2 relative group select-none bg-slate-50 dark:bg-ink-950 overflow-hidden">
           <div
             className="overflow-hidden cursor-pointer"
             ref={emblaRef}
@@ -632,7 +632,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
                     e.stopPropagation();
                     emblaApi?.scrollPrev();
                   }}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-full shadow-md z-20 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/80 dark:bg-ink-900/80 hover:bg-white dark:hover:bg-ink-900 text-slate-800 dark:text-ink-200 rounded-full shadow-md z-20 opacity-0 group-hover:opacity-100 transition-all duration-200"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -644,7 +644,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
                     e.stopPropagation();
                     emblaApi?.scrollNext();
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-full shadow-md z-20 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/80 dark:bg-ink-900/80 hover:bg-white dark:hover:bg-ink-900 text-slate-800 dark:text-ink-200 rounded-full shadow-md z-20 opacity-0 group-hover:opacity-100 transition-all duration-200"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -675,22 +675,22 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         <div className="px-4 pt-3">
           <button
             onClick={() => setIsShopSheetOpen(true)}
-            className="flex items-center gap-3 w-full h-12 pl-3 pr-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-3 w-full h-12 pl-3 pr-4 rounded-2xl bg-ink-900 dark:bg-white text-white dark:text-ink-900 hover:opacity-90 transition-opacity"
           >
             <span className="flex items-center -space-x-2 shrink-0">
               {shoppableProducts.slice(0, 3).map((p, i) => (
                 <span
                   key={p.id || p._id || i}
-                  className="w-8 h-8 rounded-lg overflow-hidden bg-slate-700 dark:bg-slate-200 ring-2 ring-slate-900 dark:ring-white flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg overflow-hidden bg-ink-700 dark:bg-ink-200 ring-2 ring-slate-900 dark:ring-white flex items-center justify-center"
                 >
                   {p.images?.[0]
                     ? <img src={p.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
-                    : <ShoppingBag className="w-3.5 h-3.5 text-white dark:text-slate-900" />}
+                    : <ShoppingBag className="w-3.5 h-3.5 text-white dark:text-ink-900" />}
                 </span>
               ))}
               {shoppableProducts.length === 0 && (
-                <span className="w-8 h-8 rounded-lg bg-slate-700 dark:bg-slate-200 flex items-center justify-center">
-                  <ShoppingBag className="w-3.5 h-3.5 text-white dark:text-slate-900" />
+                <span className="w-8 h-8 rounded-lg bg-ink-700 dark:bg-ink-200 flex items-center justify-center">
+                  <ShoppingBag className="w-3.5 h-3.5 text-white dark:text-ink-900" />
                 </span>
               )}
             </span>
@@ -703,7 +703,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 dark:border-slate-800/50">
+      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 dark:border-ink-800/50">
         <div className="flex items-center gap-5">
           <button
             onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(optimisticLiked)}
@@ -718,12 +718,12 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             >
               <Heart
                 className={`w-5 h-5 transition-colors duration-200 ${
-                  optimisticLiked ? "fill-red-500 text-red-500" : "text-slate-500 dark:text-slate-400 group-hover:text-red-400"
+                  optimisticLiked ? "fill-red-500 text-red-500" : "text-slate-500 dark:text-ink-400 group-hover:text-red-400"
                 }`}
               />
             </motion.div>
             {optimisticCount > 0 && (
-              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400">
                 {optimisticCount.toLocaleString()}
               </span>
             )}
@@ -735,9 +735,9 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             aria-label={t("common.comment")}
             className="flex items-center outline-none group"
           >
-            <MessageCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
+            <MessageCircle className="w-5 h-5 text-slate-500 dark:text-ink-400 group-hover:text-orange-500 transition-colors" />
             {displayPost.comments_count > 0 && (
-              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400">
                 {displayPost.comments_count.toLocaleString()}
               </span>
             )}
@@ -752,11 +752,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
           >
             <Repeat2
               className={`w-5 h-5 transition-colors duration-200 ${
-                optimisticReposted ? "text-green-500" : "text-slate-500 dark:text-slate-400 group-hover:text-green-500"
+                optimisticReposted ? "text-green-500" : "text-slate-500 dark:text-ink-400 group-hover:text-green-500"
               }`}
             />
             {optimisticRepostsCount > 0 && (
-              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400">
                 {optimisticRepostsCount.toLocaleString()}
               </span>
             )}
@@ -768,9 +768,9 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             aria-label={t("common.share")}
             className="flex items-center outline-none group"
           >
-            <Share2 className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors" />
+            <Share2 className="w-5 h-5 text-slate-500 dark:text-ink-400 group-hover:text-orange-500 transition-colors" />
             {displayPost.shares_count > 0 && (
-              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="ml-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400">
                 {displayPost.shares_count.toLocaleString()}
               </span>
             )}
@@ -782,7 +782,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
           className={`p-1.5 rounded-full transition-all duration-200 ${
             isBookmarked 
               ? "text-orange-600 bg-orange-50 dark:bg-orange-900/30" 
-              : "text-slate-500 dark:text-slate-400 hover:text-orange-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+              : "text-slate-500 dark:text-ink-400 hover:text-orange-500 hover:bg-slate-50 dark:hover:bg-ink-800"
           }`}
         >
           <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
@@ -795,7 +795,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
           tabIndex={0}
           onClick={openComments}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openComments(); }}
-          className="w-full text-left px-4 pb-3 -mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:underline cursor-pointer"
+          className="w-full text-left px-4 pb-3 -mt-1 text-xs font-semibold text-slate-600 dark:text-ink-300 hover:underline cursor-pointer"
         >
           {likedByNode}
         </div>

@@ -96,7 +96,7 @@ export default function CategoryProductGrid({ chip, distanceByStore }) {
         {isFetchingNextPage ? (
           <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />
         ) : !hasNextPage ? (
-          <p className="text-xs text-slate-300 dark:text-slate-600">{t("home.endOfResults")}</p>
+          <p className="text-xs text-slate-300 dark:text-ink-600">{t("home.endOfResults")}</p>
         ) : null}
       </div>
     </>

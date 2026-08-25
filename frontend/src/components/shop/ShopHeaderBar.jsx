@@ -40,16 +40,16 @@ export default function ShopHeaderBar({ backTo, backLabel, onBack, onShare, show
     ? (Array.isArray(cartResponse?.items) ? cartResponse.items.length : 0)
     : guestCartCount;
 
-  const iconButton = "w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors";
+  const iconButton = "w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-ink-400 hover:text-slate-800 dark:hover:text-ink-100 hover:bg-slate-100 dark:hover:bg-ink-800 transition-colors";
 
   return (
-    <header className="sticky top-0 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-200/70 dark:border-slate-800/70 pt-[env(safe-area-inset-top)]">
+    <header className="sticky top-0 z-40 bg-white/85 dark:bg-ink-900/85 backdrop-blur-xl border-b border-slate-200/70 dark:border-ink-800/70 pt-[env(safe-area-inset-top)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center gap-2">
         <div className="flex-1 min-w-0 flex items-center">
           <Link
             to={backTo}
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 min-w-0 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
+            className="inline-flex items-center gap-1.5 min-w-0 text-sm font-medium text-slate-500 dark:text-ink-400 hover:text-slate-800 dark:hover:text-ink-100 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline truncate">{backLabel}</span>

@@ -141,7 +141,7 @@ import React, { useState } from "react";
            placeholder={t("communities.searchCommunities")} 
            value={search} 
            onChange={(e) => setSearch(e.target.value)} 
-           className="pl-9 h-12 rounded-xl shadow-sm border-slate-200 dark:border-slate-700" 
+           className="pl-9 h-12 rounded-xl shadow-sm border-slate-200 dark:border-ink-700" 
          /> 
        </div> 
  
@@ -167,13 +167,13 @@ import React, { useState } from "react";
          {isLoading ? (
            <div className="grid sm:grid-cols-2 gap-4">
              {[1, 2, 3, 4].map(i => (
-               <div key={i} className="h-40 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
+               <div key={i} className="h-40 bg-slate-100 dark:bg-ink-800 animate-pulse rounded-2xl"></div>
              ))}
            </div>
          ) : discoverCommunities.length === 0 ? ( 
-           <div className="text-center py-16 bg-white dark:bg-slate-800/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700"> 
-             <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-             <p className="text-slate-500 dark:text-slate-400 font-medium">{t("communities.noDiscover")}</p> 
+           <div className="text-center py-16 bg-white dark:bg-ink-800/50 rounded-3xl border border-dashed border-slate-200 dark:border-ink-700"> 
+             <Users className="w-10 h-10 text-slate-300 dark:text-ink-600 mx-auto mb-3" />
+             <p className="text-slate-500 dark:text-ink-400 font-medium">{t("communities.noDiscover")}</p> 
            </div> 
          ) : ( 
            <div className="grid sm:grid-cols-2 gap-4"> 
@@ -195,7 +195,7 @@ import React, { useState } from "react";
      <Link to={`/CommunityDetail?id=${community._id}`}> 
        <motion.div 
          whileHover={{ y: -4 }} 
-         className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all h-full shadow-sm" 
+         className="bg-white dark:bg-ink-800 rounded-2xl border border-slate-100 dark:border-ink-700 overflow-hidden hover:shadow-xl transition-all h-full shadow-sm" 
        > 
          <div className={`h-28 relative ${COVER_PLACEHOLDER}`}> 
            {community.cover_image && <img src={community.cover_image} alt="" className="w-full h-full object-cover" />} 
@@ -206,12 +206,12 @@ import React, { useState } from "react";
            )} 
          </div> 
          <div className="p-5 -mt-6 relative"> 
-           <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-700 shadow-md border border-slate-100 dark:border-slate-600 flex items-center justify-center text-xl mb-3"> 
+           <div className="w-12 h-12 rounded-xl bg-white dark:bg-ink-700 shadow-md border border-slate-100 dark:border-ink-600 flex items-center justify-center text-xl mb-3"> 
              {catEmoji} 
            </div> 
            <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">{community.name}</h3> 
-           <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">{community.description}</p> 
-           <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight"> 
+           <p className="text-xs text-slate-500 dark:text-ink-400 line-clamp-2 mt-1.5 leading-relaxed">{community.description}</p> 
+           <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-50 dark:border-ink-700 text-[11px] font-bold text-slate-400 dark:text-ink-500 uppercase tracking-tight"> 
              <span className="flex items-center gap-1">
                <Users className="w-3.5 h-3.5" /> 
                {t("communities.members_other", { count: community.member_count || 0 })}

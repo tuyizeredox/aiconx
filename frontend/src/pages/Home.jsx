@@ -242,7 +242,7 @@ export default function Home() {
             description={followingOnly ? t("home.noFollowingDesc") : t("home.feedEmptyDesc")}
             action={
               <Link to={createPageUrl("Explore")}>
-                <Button className="rounded-full h-11 px-6 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900">
+                <Button className="rounded-full h-11 px-6 bg-ink-900 hover:bg-ink-800 dark:bg-white dark:text-ink-900">
                   {t("home.explore")}
                 </Button>
               </Link>
@@ -291,7 +291,7 @@ export default function Home() {
           {isFetchingNextPage ? (
             <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />
           ) : !hasNextPage ? (
-            <p className="text-xs text-slate-300 dark:text-slate-600">{t("home.endOfFeed")}</p>
+            <p className="text-xs text-slate-300 dark:text-ink-600">{t("home.endOfFeed")}</p>
           ) : null}
         </div>
       </div>
@@ -312,7 +312,7 @@ export default function Home() {
           is why the rounded bottom edge and the shadow live on this element
           and not on the header. */}
       <div
-        className={`sticky z-30 px-4 pt-0.5 pb-3 transition-[top] duration-300 ease-out ${APP_BAR_SURFACE} rounded-b-[1.375rem] shadow-[0_6px_16px_-8px_rgba(15,23,42,0.35)] dark:shadow-[0_8px_20px_-10px_rgba(0,0,0,0.9)] lg:rounded-none lg:shadow-none lg:bg-slate-50/90 dark:lg:bg-[#0a0a0c]/90 lg:border-b lg:border-slate-200/70 dark:lg:border-slate-800/70 lg:pt-2`}
+        className={`sticky z-30 px-4 pt-0.5 pb-3 transition-[top] duration-300 ease-out ${APP_BAR_SURFACE} rounded-b-[1.375rem] shadow-[0_6px_16px_-8px_rgba(15,23,42,0.35)] dark:shadow-[0_8px_20px_-10px_rgba(0,0,0,0.9)] lg:rounded-none lg:shadow-none lg:bg-slate-50/90 dark:lg:bg-ink-900/90 lg:border-b lg:border-slate-200/70 dark:lg:border-ink-800/70 lg:pt-2`}
         style={{ top: "calc(env(safe-area-inset-top) + var(--app-bar-offset, 3.5rem))" }}
       >
         <FeedSearchBar />

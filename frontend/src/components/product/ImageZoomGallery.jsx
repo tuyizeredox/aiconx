@@ -278,7 +278,7 @@ export default function ImageZoomGallery({ images, videos = [], title, badge, on
     <div>
       <div
         ref={containerRef}
-        className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3 group"
+        className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 dark:bg-ink-800 mb-3 group"
         onMouseEnter={() => supportsHover && setHovering(true)}
         onMouseLeave={() => supportsHover && setHovering(false)}
         onMouseMove={handleMouseMove}
@@ -326,17 +326,17 @@ export default function ImageZoomGallery({ images, videos = [], title, badge, on
         {!isVideo && (expandLabel ? (
           <button
             onClick={() => setLightboxOpen(true)}
-            className="absolute top-3 right-3 h-8 px-3 bg-white/95 dark:bg-slate-900/95 rounded-lg flex items-center gap-1.5 shadow-md text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors"
+            className="absolute top-3 right-3 h-8 px-3 bg-white/95 dark:bg-ink-900/95 rounded-lg flex items-center gap-1.5 shadow-md text-xs font-semibold text-slate-700 dark:text-ink-200 hover:bg-white dark:hover:bg-ink-900 transition-colors"
           >
             <Maximize2 className="w-3.5 h-3.5" /> {expandLabel}
           </button>
         ) : (
           <button
             onClick={() => setLightboxOpen(true)}
-            className="absolute bottom-3 right-3 w-9 h-9 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute bottom-3 right-3 w-9 h-9 bg-white/90 dark:bg-ink-900/90 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label={t("product.viewFullscreen")}
           >
-            <Maximize2 className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+            <Maximize2 className="w-4 h-4 text-slate-700 dark:text-ink-200" />
           </button>
         ))}
 

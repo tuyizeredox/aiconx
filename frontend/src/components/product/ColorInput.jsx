@@ -23,24 +23,24 @@ export default function ColorInput({ colors = [], onChange }) {
 
   return (
     <div>
-      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+      <label className="text-sm font-medium text-slate-700 dark:text-ink-300 mb-1.5 block">
         {t("store.productColors")}
       </label>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{t("store.productColorsHint")}</p>
+      <p className="text-xs text-slate-400 dark:text-ink-500 mb-2">{t("store.productColorsHint")}</p>
 
       {colors.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2.5">
           {colors.map((c, i) => (
             <span
               key={`${c.name}-${i}`}
-              className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200"
+              className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-slate-100 dark:bg-ink-700 text-xs font-medium text-slate-700 dark:text-ink-200"
             >
               <span className="w-3 h-3 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: c.hex }} />
               {c.name}
               <button
                 type="button"
                 onClick={() => removeColor(i)}
-                className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-ink-600 transition-colors"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -54,7 +54,7 @@ export default function ColorInput({ colors = [], onChange }) {
           type="color"
           value={hex}
           onChange={(e) => setHex(e.target.value)}
-          className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer shrink-0 bg-transparent p-0.5"
+          className="w-10 h-10 rounded-lg border border-slate-200 dark:border-ink-700 cursor-pointer shrink-0 bg-transparent p-0.5"
         />
         <Input
           placeholder={t("store.colorNamePlaceholder")}

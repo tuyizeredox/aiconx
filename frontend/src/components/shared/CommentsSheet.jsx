@@ -38,9 +38,9 @@ export default function CommentsSheet({ open, onOpenChange, post, currentUser, c
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         overlayClassName={overlayClassName}
-        className={`h-[85vh] border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none ${contentClassName}`}
+        className={`h-[85vh] border-slate-200 dark:border-ink-800 bg-white dark:bg-ink-900 focus:outline-none ${contentClassName}`}
       >
-        <div className="shrink-0 px-4 pt-1 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="shrink-0 px-4 pt-1 pb-3 border-b border-slate-100 dark:border-ink-800">
           <DrawerTitle className="text-center text-[15px] font-bold text-slate-900 dark:text-white">
             {count > 0 ? t("common.commentsCount", { count }) : t("common.comments")}
           </DrawerTitle>
@@ -62,7 +62,7 @@ export default function CommentsSheet({ open, onOpenChange, post, currentUser, c
         <CommentComposer
           postId={postId}
           currentUser={currentUser}
-          className="shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
+          className="shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 dark:border-ink-800 bg-white dark:bg-ink-900"
         />
       </DrawerContent>
     </Drawer>

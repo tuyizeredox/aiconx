@@ -1078,7 +1078,8 @@
     "chip_trending": "トレンドファッション",
     "voiceUnsupported": "このデバイスでは音声入力はサポートされていません",
     "startListening": "音声入力を開始",
-    "stopListening": "音声入力を停止"
+    "stopListening": "音声入力を停止",
+    "fabLabel": "ショッピングアシスタント"
   },
   "orderTracking": {
     "title": "注文追跡",

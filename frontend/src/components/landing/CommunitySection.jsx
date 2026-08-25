@@ -8,7 +8,7 @@ import { authLink, storePath } from "./authLink";
 
 function StoreItem({ store, t }) {
   return (
-    <div className="flex flex-col items-center text-center gap-1.5 w-[30vw] sm:w-auto shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 active:scale-[0.97] transition-transform">
+    <div className="flex flex-col items-center text-center gap-1.5 w-[30vw] sm:w-auto shrink-0 snap-start bg-white dark:bg-ink-900 border border-slate-100 dark:border-ink-800 rounded-xl p-3 active:scale-[0.97] transition-transform">
       <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900 dark:to-orange-900 flex items-center justify-center text-sm font-bold text-orange-600 dark:text-orange-300 shrink-0">
         {store.logo_url ? (
           <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
@@ -17,7 +17,7 @@ function StoreItem({ store, t }) {
         )}
       </div>
       <p className="text-xs font-bold text-slate-900 dark:text-white truncate w-full">{store.name}</p>
-      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+      <p className="text-[10px] text-slate-400 dark:text-ink-500">
         {t("landing.stores.followers", { count: store.follower_count || 0 })}
       </p>
       <Link

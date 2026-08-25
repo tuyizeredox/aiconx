@@ -48,7 +48,7 @@ export default function FeedProductTile({ product, distanceKm = null, width = "w
       })}
       className={`group block shrink-0 snap-start ${width}`}
     >
-      <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+      <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-ink-800">
         <img
           src={product.images?.[0] || "https://placehold.co/600x600/f1f5f9/94a3b8?text=+"}
           alt={product.title}
@@ -62,7 +62,7 @@ export default function FeedProductTile({ product, distanceKm = null, width = "w
           </span>
         )}
         {soldOut && (
-          <div className="absolute inset-0 bg-slate-900/45 flex items-center justify-center">
+          <div className="absolute inset-0 bg-ink-900/45 flex items-center justify-center">
             <span className="text-white text-[11px] font-bold uppercase tracking-wide">
               {t("product.outOfStock")}
             </span>
@@ -71,7 +71,7 @@ export default function FeedProductTile({ product, distanceKm = null, width = "w
       </div>
 
       <div className="pt-2.5">
-        <p className="text-[13px] font-medium text-slate-900 dark:text-slate-100 leading-snug line-clamp-1">
+        <p className="text-[13px] font-medium text-slate-900 dark:text-ink-100 leading-snug line-clamp-1">
           {product.title}
         </p>
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -81,10 +81,10 @@ export default function FeedProductTile({ product, distanceKm = null, width = "w
           <EarnBadge amount={earnings?.amount} />
         </div>
         {showShop && (
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+          <p className="text-[11px] text-slate-400 dark:text-ink-500 mt-0.5 truncate">
             {product.store_name || t("home.shopLabel")}
             {distanceKm != null && (
-              <span className="text-slate-500 dark:text-slate-400 font-medium">
+              <span className="text-slate-500 dark:text-ink-400 font-medium">
                 {" · "}
                 <MapPin className="inline w-3 h-3 -mt-0.5" /> {t("home.kmAway", { km: distanceKm })}
               </span>

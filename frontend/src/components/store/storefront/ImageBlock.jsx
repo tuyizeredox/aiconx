@@ -20,7 +20,7 @@ export default function ImageBlock({ block }) {
         img
       )}
       {caption && (
-        <figcaption className="mt-2 text-sm text-slate-500 dark:text-slate-400">{caption}</figcaption>
+        <figcaption className="mt-2 text-sm text-slate-500 dark:text-ink-400">{caption}</figcaption>
       )}
     </figure>
   );

@@ -61,10 +61,10 @@ export default function ResetPassword() {
     }
   };
 
-  const inputClass = "w-full pl-12 pr-12 py-6 sm:py-7 rounded-2xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-bold dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-slate-700 placeholder:text-slate-400 placeholder:font-medium";
+  const inputClass = "w-full pl-12 pr-12 py-6 sm:py-7 rounded-2xl dark:border-white/5 border-slate-200 dark:bg-white/[0.03] bg-slate-50 dark:text-white text-slate-900 focus:ring-4 dark:focus:ring-orange-500/10 focus:ring-orange-500/15 dark:focus:border-orange-500/40 focus:border-orange-400 dark:focus:bg-white/[0.05] focus:bg-white outline-none transition-all duration-300 font-bold dark:group-hover:border-white/10 group-hover:border-slate-300 dark:placeholder:text-ink-700 placeholder:text-slate-400 placeholder:font-medium";
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center dark:bg-[#0a0a0c] bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300">
+    <div className="min-h-screen w-full relative flex items-center justify-center dark:bg-ink-900 bg-slate-50 selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden font-sans transition-colors duration-300">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 dark:bg-[radial-gradient(circle_at_50%_50%,rgba(17,17,19,1)_0%,rgba(0,0,0,1)_100%)] bg-gradient-to-br from-orange-50/30 via-slate-50 to-slate-100" />
 
@@ -83,7 +83,7 @@ export default function ResetPassword() {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-slate-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
+          className="h-10 w-10 rounded-full dark:bg-white/5 bg-white/90 dark:hover:bg-white/10 hover:bg-white dark:text-ink-400 text-slate-600 dark:border-white/10 border-slate-200 border backdrop-blur-sm shadow-sm transition-all duration-300"
         >
           {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
@@ -104,7 +104,7 @@ export default function ResetPassword() {
 
               <form onSubmit={handleSubmit} className="space-y-5 text-left">
                 <div className="space-y-1.5">
-                  <Label htmlFor="token" className="text-[10px] font-black dark:text-slate-500 text-slate-500 uppercase tracking-[0.2em] ml-1">Reset Token</Label>
+                  <Label htmlFor="token" className="text-[10px] font-black dark:text-ink-500 text-slate-500 uppercase tracking-[0.2em] ml-1">Reset Token</Label>
                   <div className="relative group">
                     <Input
                       id="token"
@@ -114,12 +114,12 @@ export default function ResetPassword() {
                       className={inputClass}
                       required
                     />
-                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-slate-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-ink-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="newPassword" className="text-[10px] font-black dark:text-slate-500 text-slate-500 uppercase tracking-[0.2em] ml-1">{t("settings.newPassword")}</Label>
+                  <Label htmlFor="newPassword" className="text-[10px] font-black dark:text-ink-500 text-slate-500 uppercase tracking-[0.2em] ml-1">{t("settings.newPassword")}</Label>
                   <div className="relative group">
                     <Input
                       id="newPassword"
@@ -131,13 +131,13 @@ export default function ResetPassword() {
                       required
                       autoComplete="new-password"
                     />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-slate-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-ink-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 dark:text-slate-600 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-10 w-10 dark:hover:bg-white/5 hover:bg-slate-100 rounded-xl"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 dark:text-ink-600 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-10 w-10 dark:hover:bg-white/5 hover:bg-slate-100 rounded-xl"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="h-5 w-5" />}
                     </Button>
@@ -145,7 +145,7 @@ export default function ResetPassword() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword" className="text-[10px] font-black dark:text-slate-500 text-slate-500 uppercase tracking-[0.2em] ml-1">{t("settings.confirmNewPassword")}</Label>
+                  <Label htmlFor="confirmPassword" className="text-[10px] font-black dark:text-ink-500 text-slate-500 uppercase tracking-[0.2em] ml-1">{t("settings.confirmNewPassword")}</Label>
                   <div className="relative group">
                     <Input
                       id="confirmPassword"
@@ -157,13 +157,13 @@ export default function ResetPassword() {
                       required
                       autoComplete="new-password"
                     />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-slate-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 dark:text-ink-600 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-300" />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 dark:text-slate-600 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-10 w-10 dark:hover:bg-white/5 hover:bg-slate-100 rounded-xl"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 dark:text-ink-600 text-slate-400 hover:text-orange-500 transition-colors duration-300 focus:outline-none h-10 w-10 dark:hover:bg-white/5 hover:bg-slate-100 rounded-xl"
                     >
                       {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="h-5 w-5" />}
                     </Button>
@@ -185,7 +185,7 @@ export default function ResetPassword() {
                 <CheckCircle2 className="w-10 h-10 text-orange-500" />
               </div>
               <h2 className="text-3xl font-black dark:text-white text-slate-900 mb-3 tracking-tighter">Identity Secured!</h2>
-              <p className="text-sm dark:text-slate-500 text-slate-500 mb-8 leading-relaxed font-medium">
+              <p className="text-sm dark:text-ink-500 text-slate-500 mb-8 leading-relaxed font-medium">
                 Your credentials have been successfully updated. You'll be redirected to the access portal shortly.
               </p>
               <Link to={createPageUrl("login")}>
