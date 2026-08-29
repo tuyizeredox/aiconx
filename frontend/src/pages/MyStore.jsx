@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { createPageUrl, formatCurrency, storeUrl } from "@/lib/utils";
+import { createPageUrl, formatCurrency, storeUrl, isGuestBuyer } from "@/lib/utils";
 import {
   Store, Plus, Package, DollarSign, ShoppingCart, Trash2, Loader2, Eye,
   X, Upload, Camera, CheckCircle2, Play, Search, MessageCircle, Info, Truck, Navigation, Tag, Pencil, Check, Link2,
-  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle, Megaphone, LayoutTemplate, MapPin
+  ShieldAlert, ShieldCheck, Clock, Users, TrendingUp, Star, AlertTriangle, Megaphone, LayoutTemplate, MapPin, QrCode, Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import ShippingZoneManager from "@/components/mystore/ShippingZoneManager";
 import StorefrontBuilder from "@/components/mystore/StorefrontBuilder";
 import BackLink from "@/components/shared/BackLink";
 import AIProductGenerator from "@/components/mystore/AIProductGenerator";
+import ProductQRCode, { buildLabelSheet } from "@/components/mystore/ProductQRCode";
 import ColorInput from "@/components/product/ColorInput";
 import SizeInput from "@/components/product/SizeInput";
 import CustomOptionsInput from "@/components/product/CustomOptionsInput";
@@ -115,6 +116,8 @@ export default function MyStore() {
   const [uploadingAssets, setUploadingAssets] = useState({ logo: false, banner: false });
   const [editingStockId, setEditingStockId] = useState(null);
   const [stockValue, setStockValue] = useState("");
+  const [qrProduct, setQrProduct] = useState(null);
+  const [buildingSheet, setBuildingSheet] = useState(false);
   const [showVerifyStore, setShowVerifyStore] = useState(false);
   const [verificationForm, setVerificationForm] = useState({ document_type: "national_id", document_number: "", document_image_url: "" });
   const [uploadingVerificationDoc, setUploadingVerificationDoc] = useState(false);
@@ -546,6 +549,42 @@ export default function MyStore() {
       toast.error(err.message || "Failed to update order status");
     }
   });
+
+  // One printable A4 sheet holding every product's scan-to-pay label, so a
+  // vendor tagging a whole shelf prints once instead of opening each product.
+  // The codes are generated per product server-side, hence the fan-out.
+  const downloadAllLabels = async () => {
+    const printable = products.filter(p => p.status === "active");
+    if (printable.length === 0) {
+      toast.error(t("qr.noPrintableProducts"));
+      return;
+    }
+
+    setBuildingSheet(true);
+    try {
+      const labels = [];
+      const BATCH = 5;
+      for (let i = 0; i < printable.length; i += BATCH) {
+        const batch = printable.slice(i, i + BATCH);
+        const results = await Promise.all(
+          batch.map(p => productsAPI.qrCode(p.id || p._id).catch(() => null))
+        );
+        labels.push(...results.filter(Boolean));
+      }
+
+      if (labels.length === 0) {
+        toast.error(t("qr.sheetFailed"));
+        return;
+      }
+
+      buildLabelSheet(labels, `${store?.name ? store.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "store"}-qr-labels.pdf`);
+      toast.success(t("qr.sheetReady", { count: labels.length }));
+    } catch (err) {
+      toast.error(err.message || t("qr.sheetFailed"));
+    } finally {
+      setBuildingSheet(false);
+    }
+  };
 
   const activeProductsCount = products.filter(p => p.status === "active").length;
   const paidOrders = orders.filter(o => o.payment_status === "paid");
@@ -1447,6 +1486,19 @@ export default function MyStore() {
           {products.length > 0 && (
             <Button
               variant="outline"
+              onClick={downloadAllLabels}
+              disabled={buildingSheet}
+              className="rounded-xl"
+            >
+              {buildingSheet
+                ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                : <QrCode className="w-4 h-4 mr-1.5" />}
+              {t("qr.printAll")}
+            </Button>
+          )}
+          {products.length > 0 && (
+            <Button
+              variant="outline"
               onClick={() => { setDangerConfirm(""); setDangerAction("products"); }}
               className="rounded-xl border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
             >
@@ -1806,6 +1858,14 @@ export default function MyStore() {
       {/* Products Tab */}
       {activeTab === "products" && (
         <div className="space-y-2">
+          {products.length > 0 && (
+            <div className="flex items-start gap-3 rounded-xl border border-orange-100 dark:border-orange-950 bg-orange-50/60 dark:bg-orange-950/20 px-4 py-3">
+              <QrCode className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-slate-600 dark:text-ink-300 leading-relaxed">
+                {t("qr.storeHint")}
+              </p>
+            </div>
+          )}
           {products.length === 0 ? (
             <div className="text-center py-16 text-slate-400 dark:text-ink-500">{t("store.noProductsDesc")}</div>
           ) : (
@@ -1861,6 +1921,13 @@ export default function MyStore() {
                     </div>
                   </div>
                   <button
+                    onClick={() => setQrProduct(product)}
+                    title={t("qr.title")}
+                    className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors"
+                  >
+                    <QrCode className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => navigate(createPageUrl("CreatePost") + `?tag_product=${productId}`)}
                     title={t("store.postAboutThis")}
                     className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-slate-400 hover:text-orange-500 transition-colors"
@@ -1879,6 +1946,12 @@ export default function MyStore() {
           )}
         </div>
       )}
+
+      <ProductQRCode
+        product={qrProduct}
+        open={!!qrProduct}
+        onOpenChange={(open) => { if (!open) setQrProduct(null); }}
+      />
 
       {/* Edit Product Dialog */}
       <Dialog open={showEditProduct} onOpenChange={(open) => { setShowEditProduct(open); if (!open) setEditingProduct(null); }}>
@@ -2147,18 +2220,33 @@ export default function MyStore() {
                             <Info className="w-3 h-3" />
                             {t("store.details")}
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              navigate(createPageUrl("Chat") + `?to=${order.buyer_username}`);
-                            }}
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            {t("store.chat")}
-                          </Button>
+                          {/* A QR counter sale has no account behind it — the
+                              phone number the shopper paid with is the only way
+                              to reach them, so offer that instead of a chat
+                              thread that would never be read. */}
+                          {isGuestBuyer(order.buyer_username) ? (
+                            <a
+                              href={`tel:${order.buyer_phone || ""}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-8 px-3 rounded-xl text-[10px] gap-1 inline-flex items-center font-medium text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
+                            >
+                              <Smartphone className="w-3 h-3" />
+                              {order.buyer_phone || t("qr.walkInCustomer")}
+                            </a>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-8 rounded-xl text-[10px] gap-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                navigate(createPageUrl("Chat") + `?to=${order.buyer_username}`);
+                              }}
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              {t("store.chat")}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </motion.div>

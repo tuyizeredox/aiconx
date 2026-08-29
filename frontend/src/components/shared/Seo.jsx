@@ -37,8 +37,12 @@ function setCanonical(href) {
  * Sets document title, meta description, canonical URL and Open Graph/Twitter
  * tags for a public, indexable page. Restores the previous values on unmount
  * since routes share a single index.html document.
+ *
+ * `noindex` is for public pages that are not *content* — a scan-to-pay checkout,
+ * say, which would otherwise put one thin near-duplicate page per product into
+ * the index.
  */
-export default function Seo({ title, description, path = "/" }) {
+export default function Seo({ title, description, path = "/", noindex = false }) {
   useEffect(() => {
     const fullTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME;
     const canonicalUrl = `${SITE_URL}${path}`;
@@ -54,11 +58,13 @@ export default function Seo({ title, description, path = "/" }) {
     setMetaByName("twitter:title", fullTitle);
     setMetaByProperty("og:url", canonicalUrl);
     setCanonical(canonicalUrl);
+    setMetaByName("robots", noindex ? "noindex, nofollow" : "index, follow");
 
     return () => {
       document.title = prevTitle;
+      setMetaByName("robots", "index, follow");
     };
-  }, [title, description, path]);
+  }, [title, description, path, noindex]);
 
   return null;
 }

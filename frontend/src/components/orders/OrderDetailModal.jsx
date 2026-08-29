@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, isGuestBuyer } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { initializeITECPayPayment } from "@/lib/itecpay";
 import { checkoutAPI, paymentAPI } from "@/api/apiClient";
@@ -36,7 +36,8 @@ import {
   Info,
   Palette,
   Loader2,
-  ChevronLeft
+  ChevronLeft,
+  Smartphone
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -527,13 +528,26 @@ export default function OrderDetailModal({
 
           <div className="flex flex-col gap-3 pt-4">
             {isVendor ? (
-              <Button 
-                onClick={() => onContactBuyer?.(order.buyer_username)}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-orange-100"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Chat with Buyer
-              </Button>
+              // A QR counter sale has no account behind it, so there is no chat
+              // thread to open — the number the shopper paid with is the only
+              // way to reach them.
+              isGuestBuyer(order.buyer_username) ? (
+                <a
+                  href={`tel:${order.buyer_phone || ""}`}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-orange-100 inline-flex items-center justify-center text-sm"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  Call {order.buyer_phone || "buyer"}
+                </a>
+              ) : (
+                <Button 
+                  onClick={() => onContactBuyer?.(order.buyer_username)}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl gap-2 h-12 font-semibold shadow-lg shadow-orange-100"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Chat with Buyer
+                </Button>
+              )
             ) : (
               <>
                 <Button 

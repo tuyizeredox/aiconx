@@ -73,6 +73,7 @@ import StoreDetail from './pages/StoreDetail';
 import Wishlist from './pages/Wishlist';
 import VendorFinance from './pages/VendorFinance';
 import PaymentSuccess from './pages/PaymentSuccess';
+import ScanPay from './pages/ScanPay';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
@@ -110,6 +111,7 @@ export const PAGES = {
     "Wishlist": Wishlist,
     "VendorFinance": VendorFinance,
     "PaymentSuccess": PaymentSuccess,
+    "ScanPay": ScanPay,
     "Login": Login,
     "Register": Register,
     "AdminDashboard": AdminDashboard,

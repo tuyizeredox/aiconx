@@ -357,6 +357,16 @@ export const productsAPI = {
   getRelated: (id, limit = 10) => apiClient.get(`/products/related/${id}?limit=${limit}`),
   getBoughtTogether: (id, limit = 3) => apiClient.get(`/products/${id}/bought-together?limit=${limit}`),
   getRecommendations: (limit = 10) => apiClient.get(`/products/recommendations?limit=${limit}`),
+  // Printable scan-to-pay QR code for one of your own products (vendor only).
+  qrCode: (id, size = 1024) => apiClient.get(`/products/${id}/qr?size=${size}`),
+};
+
+// Public counter-sale flow behind the QR codes vendors print onto physical
+// products. No auth: a shopper scans, types their number and pays.
+export const qrPayAPI = {
+  getProduct: (productId) => apiClient.get(`/qr-pay/product/${productId}`),
+  startPayment: (data) => apiClient.post('/qr-pay/orders', data),
+  checkStatus: (orderId, reference) => apiClient.post(`/qr-pay/orders/${orderId}/status`, { reference }),
 };
 
 export const productQuestionsAPI = {

@@ -141,6 +141,12 @@ const AppRoutes = () => {
         <ErrorBoundary><Pages.StoreDetail /></ErrorBoundary>
       } />
 
+      {/* Scan-to-pay for the QR codes vendors print onto physical products.
+          Fully public and standalone by design: someone holding the item in a
+          shop scans it, types their mobile money number and pays — asking them
+          to sign in first would defeat the point. */}
+      <Route path="/pay" element={<ErrorBoundary><Pages.ScanPay /></ErrorBoundary>} />
+
       {/* Cart is publicly viewable (guest cart lives in localStorage) so a guest can add to
           cart from an affiliate link and only needs to sign in once they reach checkout */}
       <Route path="/cart" element={
@@ -178,7 +184,7 @@ const AppRoutes = () => {
         // reason product pages already are.
         const isGuestViewable = path === 'Explore';
         // Skip Login and Register as they are handled above; ProductDetail, Cart and Checkout are handled above too
-        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'Terms', 'Privacy', 'Guidelines', 'ProductDetail', 'Cart', 'Checkout', 'StoreDetail', 'Marketplace'].includes(path)) return null;
+        if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'Terms', 'Privacy', 'Guidelines', 'ProductDetail', 'Cart', 'Checkout', 'StoreDetail', 'Marketplace', 'ScanPay'].includes(path)) return null;
         
         return (
           <Route

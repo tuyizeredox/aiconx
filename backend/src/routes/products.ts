@@ -12,6 +12,7 @@ import { checkStoreVerified } from '../middleware/verification';
 import { escapeRegex } from '../utils/sanitize';
 import { deleteProductCascade } from '../services/cascadeService';
 import { notifyRestockedBookings } from '../services/bookingService';
+import { generateProductQr } from '../services/productQrService';
 
 // Translates the marketplace's query-string filters into a Mongo filter.
 // Shared by the product list and the facet counts so the two can never drift
@@ -512,6 +513,57 @@ export async function productRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ 
         error: 'Internal server error', 
         message: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      });
+    }
+  });
+
+  // Printable pay-by-scan QR code for one of the vendor's own products.
+  //
+  // The vendor downloads this, prints it, and sticks it on the physical item;
+  // a shopper scans it and pays from their phone without ever creating an
+  // account (routes/qrPay.ts serves that side). Vendor-only because the QR is a
+  // storefront asset, not public product data.
+  fastify.get('/:id/qr', {
+    preHandler: [fastify.authenticate],
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { size } = request.query as { size?: string };
+      const user = request.user as any;
+
+      if (!user?.username) {
+        return reply.code(401).send({ error: 'Unauthorized - invalid user data' });
+      }
+
+      if (!mongoose.isValidObjectId(id)) {
+        return reply.code(400).send({ error: 'Invalid product ID' });
+      }
+
+      const product = await Product.findOne({ _id: id, vendor_username: user.username })
+        .select('title price currency store_name images status')
+        .lean();
+
+      if (!product) {
+        return reply.code(404).send({ error: 'Product not found or access denied' });
+      }
+
+      const qr = await generateProductQr(id, { size: Number(size) || 1024 });
+
+      return {
+        product_id: id,
+        title: product.title,
+        price: product.price,
+        currency: product.currency || 'RWF',
+        store_name: product.store_name || '',
+        image: product.images?.[0] || '',
+        status: product.status,
+        ...qr,
+      };
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });

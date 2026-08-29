@@ -43,6 +43,7 @@ import { announcementRoutes } from './routes/announcements';
 import { reportRoutes } from './routes/reports';
 import { callRoutes } from './routes/calls';
 import { checkoutRoutes } from './routes/checkout';
+import { qrPayRoutes } from './routes/qrPay';
 import { adminRoutes } from './routes/admin';
 import { publicSettingsRoutes } from './routes/publicSettings';
 import { setupWebSocket, io } from './websocket/socket';
@@ -234,6 +235,9 @@ fastify.register(announcementRoutes, { prefix: '/api/announcements' });
 fastify.register(reportRoutes, { prefix: '/api' });
 fastify.register(callRoutes, { prefix: '/api/calls' });
 fastify.register(checkoutRoutes, { prefix: '/api/checkout' });
+// Public scan-to-pay for the QR codes vendors print onto physical products —
+// no auth by design, so a shopper can scan and pay without an account.
+fastify.register(qrPayRoutes, { prefix: '/api/qr-pay' });
 fastify.register(adminRoutes, { prefix: '/api/admin' });
 fastify.register(publicSettingsRoutes, { prefix: '/api/settings' });
 

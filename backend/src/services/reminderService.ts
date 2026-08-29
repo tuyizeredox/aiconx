@@ -30,6 +30,12 @@ import { dispatchNotifications, NotificationInput } from './notificationDispatch
  * job; jobs here only decide *what* to say and *to whom*.
  */
 
+// Counter sales paid by scanning a product's QR code belong to a guest handle
+// (routes/qrPay.ts), not to an account — there is no inbox behind
+// `guest-0788123456` and never will be, so buyer-facing nudges skip them
+// instead of piling up notifications nobody can read.
+const NOT_A_GUEST_BUYER = { $not: /^guest-/ };
+
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -326,6 +332,7 @@ async function orderConfirmationReminders(_fastify: FastifyInstance, { now }: Sw
 async function reviewReminders(_fastify: FastifyInstance, { now }: SweepContext): Promise<NotificationInput[]> {
   const orders = await Order.find({
     status: 'delivered',
+    buyer_username: NOT_A_GUEST_BUYER,
     delivered_at: {
       $lt: new Date(now.getTime() - REVIEW_MIN_AGE_MS),
       $gt: new Date(now.getTime() - REVIEW_MAX_AGE_MS),
@@ -388,6 +395,7 @@ async function reviewReminders(_fastify: FastifyInstance, { now }: SweepContext)
 async function reorderReminders(_fastify: FastifyInstance, { now }: SweepContext): Promise<NotificationInput[]> {
   const orders = await Order.find({
     status: 'delivered',
+    buyer_username: NOT_A_GUEST_BUYER,
     delivered_at: {
       $lt: new Date(now.getTime() - REORDER_MIN_AGE_MS),
       $gt: new Date(now.getTime() - REORDER_MAX_AGE_MS),
@@ -488,6 +496,7 @@ async function newArrivalRecommendations(_fastify: FastifyInstance, { now, since
   const pastOrders = await Order.find({
     created_at: { $gte: new Date(now.getTime() - TASTE_LOOKBACK_MS) },
     status: { $ne: 'cancelled' },
+    buyer_username: NOT_A_GUEST_BUYER,
   })
     .select('buyer_username store_id items.product_id')
     .sort({ created_at: -1 })

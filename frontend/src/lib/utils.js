@@ -52,6 +52,16 @@ export function formatCurrency(amount) {
   return _rwfFormatter.format(Number(amount));
 }
 
+/**
+ * A counter sale paid by scanning a product's QR code books against a guest
+ * handle (`guest-0788123456`) rather than a real account — there is nobody to
+ * message, follow or link to. Registered usernames are [a-zA-Z0-9_] only, so
+ * the hyphen makes these unambiguous.
+ */
+export function isGuestBuyer(username) {
+  return typeof username === "string" && username.startsWith("guest-");
+}
+
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".mov", ".m4v", ".avi", ".mkv", ".flv", ".wmv", ".3gp"];
 
 export function isVideoUrl(url) {
