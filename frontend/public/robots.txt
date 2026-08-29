@@ -42,4 +42,53 @@ Disallow: /admin-dashboard
 Disallow: /forgot-password
 Disallow: /reset-password
 
+# Link-preview crawlers. These are not indexers — they fetch a shared URL once
+# to build the card that appears in a chat, so the crawl-budget reasoning above
+# does not apply to them. Several of them (Twitterbot, LinkedInBot, Slackbot)
+# honour robots.txt strictly, and the Disallow list above is why a shared post
+# used to arrive as a bare link with no preview at all. A user-agent that
+# matches its own group ignores the wildcard group entirely, so these need the
+# full Allow rather than an amendment to the block above.
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+User-agent: redditbot
+Allow: /
+
+User-agent: SkypeUriPreview
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Mastodon
+Allow: /
+
 Sitemap: https://www.aiconx.net/sitemap.xml
