@@ -11,6 +11,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { postsAPI, commentsAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/AuthContext";
+import Seo from "@/components/shared/Seo";
+import { describePost, postPath } from "@/lib/previewMeta";
 import { useSocket } from "@/lib/SocketContext";
 import { toast } from "sonner";
 
@@ -446,6 +448,14 @@ export default function PostDetail() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 lg:py-6">
+      {/* A follower-only or community post is a public URL but not public
+          content, so it describes itself for anyone holding the link while
+          staying out of the index. */}
+      <Seo
+        meta={describePost(post, { url: postPath(postId) })}
+        path={postPath(postId)}
+        noindex={post.visibility && post.visibility !== "public"}
+      />
       <Link to={createPageUrl("Home")} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
         <ArrowLeft className="w-4 h-4" /> Back
       </Link>

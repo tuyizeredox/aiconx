@@ -26,6 +26,8 @@ import { useAffiliateLink } from "@/hooks/useAffiliateLink";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI, storesAPI, productQuestionsAPI, productBookingsAPI } from "@/api/apiClient";
 import { addToGuestCart, getGuestCart } from "@/lib/guestCart";
 import { useAuth } from "@/lib/AuthContext";
+import Seo from "@/components/shared/Seo";
+import { describeProduct, productPath } from "@/lib/previewMeta";
 import { useTranslation } from "react-i18next";
 import {
   Star, Heart, ShoppingCart, Share2, Minus, Plus, Check, PenLine, Images, Zap,
@@ -513,6 +515,13 @@ export default function ProductDetail() {
 
   return (
     <ProductPageShell backTo={backTo} backLabel={backLabel} onShare={() => nativeShare()}>
+      {/* Product/Offer structured data — the price, currency and stock state a
+          search engine needs to render the result as a shopping card rather
+          than a plain blue link. `store` supplies the seller/brand name. */}
+      <Seo
+        meta={describeProduct(product, { url: productPath(productId), store })}
+        path={productPath(productId)}
+      />
       <ShareModal
         isOpen={isShareModalOpen}
         onOpenChange={setIsShareModalOpen}

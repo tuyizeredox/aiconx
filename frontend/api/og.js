@@ -12,15 +12,25 @@
  * so nothing in the app's runtime path changes. This function looks the item up
  * in the API and returns a small document whose <head> describes that one item.
  *
- * Search engines are deliberately NOT routed here. They render JavaScript, and
- * serving them a different document than humans get is the shape of thing
- * search engines penalise.
+ * Search engines are deliberately NOT routed here. They render JavaScript, so
+ * they get the SPA and read the tags Seo.jsx sets from the same descriptions
+ * (src/lib/previewMeta.js) -- and serving a search engine a different document
+ * than humans get is the shape of thing search engines penalise.
  */
 
+import {
+  SITE_NAME,
+  SITE_URL,
+  FALLBACK,
+  describePost,
+  describeProduct,
+  describeStore,
+  postPath,
+  productPath,
+  pruneJsonLd,
+} from '../src/lib/previewMeta.js';
+
 const API_BASE = (process.env.OG_API_BASE || 'https://aiconxbackend.onrender.com/api').replace(/\/+$/, '');
-const SITE_URL = (process.env.OG_SITE_URL || 'https://www.aiconx.net').replace(/\/+$/, '');
-const SITE_NAME = 'Aicon X';
-const FALLBACK_IMAGE = `${SITE_URL}/og-image.png`;
 
 // The backend sleeps on idle and a cold start can run past a crawler's own
 // patience. Losing the race is survivable -- we fall back to the generic Aicon X
@@ -42,57 +52,6 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** Post bodies carry newlines and emoji; meta content is a single line. */
-function clean(value) {
-  if (typeof value !== 'string') return '';
-  return value.replace(/\s+/g, ' ').trim();
-}
-
-function truncate(value, max) {
-  const text = clean(value);
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max);
-  const lastSpace = cut.lastIndexOf(' ');
-  const kept = lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut;
-  return `${kept.replace(/[\s,.;:!?-]+$/, '')}…`;
-}
-
-function isHttpUrl(value) {
-  return typeof value === 'string' && /^https?:\/\//i.test(value);
-}
-
-/**
- * Normalises a media URL into something a preview crawler will actually accept.
- *
- * WhatsApp in particular drops images over roughly 600KB and ignores ones it
- * considers too small, so an untouched 4MB portrait upload previews as no image
- * at all. Cloudinary can hand back a correctly sized JPEG from the same asset,
- * which is the difference between a card with a picture and a card without one.
- * Anything not on Cloudinary (S3 originals) is passed through as-is.
- *
- * Returns the dimensions only when we dictated them. A crawler that is told a
- * size lays the card out before the image has downloaded, so a declared size
- * that turns out to be wrong is worse than declaring none at all.
- */
-function previewImage(url) {
-  if (!isHttpUrl(url)) return null;
-  if (!url.includes('res.cloudinary.com')) return { url, width: null, height: null };
-
-  // A Cloudinary video delivers its poster frame by asking for a still format.
-  const isVideo = url.includes('/video/upload/');
-  const source = isVideo ? url.replace(/\.(mp4|mov|webm|m3u8)(\?.*)?$/i, '.jpg') : url;
-
-  return {
-    url: source.replace('/upload/', '/upload/c_fill,g_auto,w_1200,h_630,f_jpg,q_auto:good/'),
-    width: 1200,
-    height: 630,
-  };
-}
-
-// The house image is square, so it gets the small card. Claiming the wide
-// format for it is how a fallback ends up letterboxed or centre-cropped.
-const FALLBACK = { url: FALLBACK_IMAGE, width: 1024, height: 1024, square: true };
-
 async function fetchJson(path) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -112,94 +71,6 @@ async function fetchJson(path) {
   }
 }
 
-function authorLabel(post) {
-  return clean(post.author_name) || (post.author_username ? `@${post.author_username}` : SITE_NAME);
-}
-
-function describePost(post) {
-  const author = authorLabel(post);
-  const body = clean(post.content);
-  const media = Array.isArray(post.media_urls) ? post.media_urls.filter(isHttpUrl) : [];
-  const thumbs = Array.isArray(post.thumbnail_urls) ? post.thumbnail_urls.filter(isHttpUrl) : [];
-
-  let title;
-  if (body) {
-    title = truncate(body, 90);
-  } else if (post.media_type === 'video') {
-    title = `${author} shared a video`;
-  } else if (media.length) {
-    title = `${author} shared ${media.length > 1 ? `${media.length} photos` : 'a photo'}`;
-  } else {
-    title = `${author} on ${SITE_NAME}`;
-  }
-
-  // A long body is worth continuing into the description; a short one has
-  // already been said in full by the title, so the byline is the useful line.
-  const description = body.length > 90
-    ? truncate(body, 200)
-    : `Post by ${author} on ${SITE_NAME}`;
-
-  // For a video the poster frame is the thumbnail, never the .mp4 itself -- a
-  // crawler handed a video URL as og:image renders a blank card.
-  const image = post.media_type === 'video'
-    ? previewImage(thumbs[0] || media[0])
-    : previewImage(media[0] || thumbs[0]);
-
-  return {
-    title,
-    description,
-    // Falling back to the author's avatar keeps a text-only post recognisably
-    // *someone's* post rather than an anonymous house card.
-    image: image || previewImage(post.author_avatar) || FALLBACK,
-    type: 'article',
-    extra: [
-      ['article:author', author],
-      ['article:published_time', post.created_at ? new Date(post.created_at).toISOString() : null],
-    ],
-  };
-}
-
-function describeProduct(product) {
-  const images = Array.isArray(product.images) ? product.images.filter(isHttpUrl) : [];
-  const image = previewImage(images[0]);
-  const price = Number(product.price);
-  const currency = clean(product.currency) || 'RWF';
-  const priceLabel = Number.isFinite(price) ? `${currency} ${price.toLocaleString('en-US')}` : null;
-
-  const summary = clean(product.description);
-  const description =
-    [priceLabel, summary ? truncate(summary, 160) : null].filter(Boolean).join(' · ') ||
-    `Available now on ${SITE_NAME}`;
-
-  return {
-    title: clean(product.title) || 'Product',
-    description,
-    image: image || FALLBACK,
-    type: 'product',
-    extra: Number.isFinite(price)
-      ? [
-          ['product:price:amount', String(price)],
-          ['product:price:currency', currency],
-          ['og:availability', product.status === 'active' ? 'in stock' : 'out of stock'],
-        ]
-      : [],
-  };
-}
-
-function describeStore(store) {
-  const image = previewImage(store.banner_url) || previewImage(store.logo_url);
-  const summary = clean(store.description);
-  const name = clean(store.name);
-
-  return {
-    title: name || 'Store',
-    description: summary ? truncate(summary, 200) : `Shop ${name || 'this store'} on ${SITE_NAME}`,
-    image: image || FALLBACK,
-    type: 'website',
-    extra: [],
-  };
-}
-
 /**
  * Keyed by the `page` the rewrite matched, so a route and its preview stay
  * described in one place. `key` names the query parameter the identifier
@@ -210,13 +81,13 @@ const SOURCES = {
   postdetail: {
     key: 'id',
     path: (id) => `/posts/${encodeURIComponent(id)}`,
-    canonical: (id) => `/postdetail?id=${encodeURIComponent(id)}`,
+    canonical: postPath,
     describe: describePost,
   },
   productdetail: {
     key: 'id',
     path: (id) => `/products/${encodeURIComponent(id)}`,
-    canonical: (id) => `/productdetail?id=${encodeURIComponent(id)}`,
+    canonical: productPath,
     describe: describeProduct,
   },
   storedetail: {
@@ -242,6 +113,7 @@ const GENERIC = {
   image: FALLBACK,
   type: 'website',
   extra: [],
+  jsonLd: null,
 };
 
 function renderHtml(meta, { shareUrl, canonicalUrl }) {
@@ -275,6 +147,13 @@ function renderHtml(meta, { shareUrl, canonicalUrl }) {
     .map(([attr, key, content]) => `    <meta ${attr}="${escapeHtml(key)}" content="${escapeHtml(content)}" />`)
     .join('\n');
 
+  const jsonLd = pruneJsonLd(meta.jsonLd);
+  // </script> inside a JSON string would close this block early; escaping the
+  // slash keeps the JSON valid and the document intact.
+  const structuredData = jsonLd
+    ? `\n    <script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>`
+    : '';
+
   // The body exists for the rare human who arrives with a crawler-shaped user
   // agent. It links onward rather than redirecting: a redirect back to the same
   // URL would be matched by the same rule and loop.
@@ -285,7 +164,7 @@ function renderHtml(meta, { shareUrl, canonicalUrl }) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(meta.title)} — ${SITE_NAME}</title>
     <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
-${tags}
+${tags}${structuredData}
   </head>
   <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#f8fafc;font:16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif">
     <main style="max-width:34rem;padding:2rem;text-align:center">
@@ -318,7 +197,7 @@ export default async function handler(req, res) {
     const item = await fetchJson(source.path(key));
     if (item && !item.error) {
       try {
-        meta = source.describe(item);
+        meta = source.describe(item, { url: canonicalPath });
       } catch {
         // A malformed record is not worth failing the preview over.
         meta = GENERIC;

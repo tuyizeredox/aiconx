@@ -182,7 +182,14 @@ const AppRoutes = () => {
         // Discover is the other half of the shoppable feed — the search bar on
         // the home screen lands here — so it stays open to guests for the same
         // reason product pages already are.
-        const isGuestViewable = path === 'Explore';
+        //
+        // PostDetail joins it because a post is the thing people share: a link
+        // pasted into WhatsApp that opens a sign-in wall wastes the share, and
+        // a search engine crawling logged-out would index the login page rather
+        // than the post. Acting on a post (liking, commenting, following) still
+        // asks for an account — PostCard already gates every one of those on
+        // `currentUser` — so only reading is opened up.
+        const isGuestViewable = path === 'Explore' || path === 'PostDetail';
         // Skip Login and Register as they are handled above; ProductDetail, Cart and Checkout are handled above too
         if (['Login', 'Register', 'ForgotPassword', 'ResetPassword', 'AdminDashboard', 'Terms', 'Privacy', 'Guidelines', 'ProductDetail', 'Cart', 'Checkout', 'StoreDetail', 'Marketplace', 'ScanPay'].includes(path)) return null;
         

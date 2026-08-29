@@ -20,6 +20,8 @@ import StorefrontRenderer from "@/components/store/storefront/StorefrontRenderer
 import StarRating from "@/components/reviews/StarRating";
 import { storesAPI, productsAPI, reviewsAPI, followsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
+import Seo from "@/components/shared/Seo";
+import { describeStore, storePath } from "@/lib/previewMeta";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 
@@ -242,6 +244,10 @@ export default function StoreDetail() {
 
   return (
     <div>
+      {/* Canonicalised on the slug form so /storedetail?id= links already out
+          in the wild consolidate onto one indexed URL instead of competing
+          with it as a duplicate. */}
+      <Seo meta={describeStore(store, { url: storePath(store) })} path={storePath(store)} />
       <StoreHeaderBar
         store={store}
         onShare={handleShare}

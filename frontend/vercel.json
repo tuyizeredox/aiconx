@@ -34,6 +34,10 @@
       "destination": "/api/og?page=productdetail&id=:id"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://iqon.onrender.com/api/:path*"
     },

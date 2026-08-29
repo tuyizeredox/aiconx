@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { Post, IPost } from '../models/Post';
 import { User } from '../models/User';
 import { Follow } from '../models/Follow';
+import { CommunityMember } from '../models/CommunityMember';
 import { Notification } from '../models/Notification';
 import { NotificationService } from '../services/notificationService';
 import { z } from 'zod';
@@ -218,6 +219,11 @@ export async function postRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      // Shared links and crawlers put arbitrary strings on this route; an id
+      // that is not an ObjectId is a miss, not a server error.
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
       const post = await Post.findById(id).lean({ virtuals: true }) as any;
 
       if (!post) {
@@ -225,9 +231,44 @@ export async function postRoutes(fastify: FastifyInstance) {
       }
 
       const user = request.user as any;
+      const isAuthor = !!user?.username && user.username === post.author_username;
+      const isAdmin = user?.role === 'super_admin';
 
-      if (post.is_active === false && user?.username !== post.author_username && user?.role !== 'super_admin') {
+      if (post.is_active === false && !isAuthor && !isAdmin) {
         return reply.code(404).send({ error: 'Post not found' });
+      }
+
+      // A restricted post is reachable by id even though the feed never lists
+      // it, so the audience is enforced here too. This is checked against the
+      // *authenticated* identity only: `user_username` below is a caller-
+      // supplied hint for personalising like/repost flags, and trusting it
+      // here would let anyone read a follower-only post by naming one of the
+      // author's followers. Link previews (api/og.js) fetch anonymously, which
+      // is what keeps a private post out of a WhatsApp card.
+      if (!isAuthor && !isAdmin && post.visibility && post.visibility !== 'public') {
+        const viewer = user?.username;
+        let permitted = false;
+
+        if (viewer) {
+          if (post.visibility === 'followers') {
+            permitted = !!(await Follow.exists({
+              follower_username: viewer,
+              following_username: post.author_username,
+              follow_type: 'user',
+            }));
+          } else if (post.visibility === 'community') {
+            permitted = !!post.community_id && !!(await CommunityMember.exists({
+              community_id: String(post.community_id),
+              member_username: viewer,
+            }));
+          }
+        }
+
+        // 404 rather than 403: whether a restricted post exists at all is
+        // itself something only its audience should be able to learn.
+        if (!permitted) {
+          return reply.code(404).send({ error: 'Post not found' });
+        }
       }
 
       const query = request.query as any;

@@ -46,6 +46,7 @@ import { checkoutRoutes } from './routes/checkout';
 import { qrPayRoutes } from './routes/qrPay';
 import { adminRoutes } from './routes/admin';
 import { publicSettingsRoutes } from './routes/publicSettings';
+import { sitemapRoutes } from './routes/sitemap';
 import { setupWebSocket, io } from './websocket/socket';
 import './services/orderCleanupService';
 import './services/backupService';
@@ -240,6 +241,7 @@ fastify.register(checkoutRoutes, { prefix: '/api/checkout' });
 fastify.register(qrPayRoutes, { prefix: '/api/qr-pay' });
 fastify.register(adminRoutes, { prefix: '/api/admin' });
 fastify.register(publicSettingsRoutes, { prefix: '/api/settings' });
+fastify.register(sitemapRoutes, { prefix: '/api/sitemap' });
 
 // Error handling for uncaught exceptions — always exit; let process manager restart
 process.on('uncaughtException', (error) => {

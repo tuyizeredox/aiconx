@@ -1,6 +1,7 @@
 # Aicon X (aiconx.net) — robots.txt
-# This is primarily a logged-in social-commerce app; only the public
-# marketing/legal pages are meant to be indexed.
+# A logged-in app wrapped around public content: the posts, products and store
+# pages anyone can read without an account are the part worth indexing, and
+# they are listed in the sitemap below. Everything behind a sign-in is not.
 
 User-agent: *
 Allow: /$
@@ -12,6 +13,8 @@ Allow: /privacy
 Allow: /community-guidelines
 Allow: /productdetail
 Allow: /storedetail
+Allow: /store/
+Allow: /postdetail
 
 # Authenticated app areas — no SEO value, and crawling them just wastes
 # crawl budget since anonymous requests get redirected to /welcome anyway.
@@ -20,7 +23,6 @@ Disallow: /explore
 Disallow: /marketplace
 Disallow: /communities
 Disallow: /communitydetail
-Disallow: /postdetail
 Disallow: /createpost
 Disallow: /chat
 Disallow: /notifications
