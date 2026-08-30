@@ -1,43 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/:page(postdetail|productdetail|storedetail)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|whatsapp|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|TelegramBot|Discordbot|Pinterest|redditbot|SkypeUriPreview|MicrosoftPreview|vkShare|Viber|Snapchat|Mastodon|Bluesky|bskylink|Applebot|Iframely|embedly|Quora Link Preview|XING-contenttabreceiver|Nuzzel|Flipboard|W3C_Validator).*"
-        }
-      ],
-      "destination": "/api/og?page=:page"
-    },
-    {
-      "source": "/store/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|whatsapp|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|TelegramBot|Discordbot|Pinterest|redditbot|SkypeUriPreview|MicrosoftPreview|vkShare|Viber|Snapchat|Mastodon|Bluesky|bskylink|Applebot|Iframely|embedly|Quora Link Preview|XING-contenttabreceiver|Nuzzel|Flipboard|W3C_Validator).*"
-        }
-      ],
-      "destination": "/api/og?page=store&slug=:slug"
-    },
-    {
-      "source": "/product/:id",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|whatsapp|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|TelegramBot|Discordbot|Pinterest|redditbot|SkypeUriPreview|MicrosoftPreview|vkShare|Viber|Snapchat|Mastodon|Bluesky|bskylink|Applebot|Iframely|embedly|Quora Link Preview|XING-contenttabreceiver|Nuzzel|Flipboard|W3C_Validator).*"
-        }
-      ],
-      "destination": "/api/og?page=productdetail&id=:id"
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
-    },
-    {
       "source": "/api/:path*",
       "destination": "https://iqon.onrender.com/api/:path*"
     },

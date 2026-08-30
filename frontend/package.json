@@ -10,7 +10,9 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "sync": "npx cap sync"
+    "sync": "npx cap sync",
+    "postbuild": "node scripts/generate-sitemap.mjs",
+    "deploy:worker": "wrangler deploy --config worker/wrangler.toml"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "^7.0.1",

@@ -1,0 +1,17 @@
+name = "aiconx-link-previews"
+main = "index.js"
+compatibility_date = "2026-08-30"
+
+# Both hostnames, so a link shared without the www still previews. The Worker
+# passes everything that is not a preview crawler straight to the origin, so
+# running on the whole path space costs nothing.
+routes = [
+  { pattern = "www.aiconx.net/*", zone_name = "aiconx.net" },
+  { pattern = "aiconx.net/*", zone_name = "aiconx.net" },
+]
+
+[vars]
+OG_API_BASE = "https://aiconxbackend.onrender.com/api"
+
+[observability]
+enabled = true
