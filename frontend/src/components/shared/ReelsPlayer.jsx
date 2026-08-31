@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useImperativeHandle } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Play, ShoppingBag, Link2 } from "lucide-react";
@@ -13,6 +13,7 @@ import ShareModal from "./ShareModal";
 import PostDetailModal from "./PostDetailModal";
 import CommentsSheet from "./CommentsSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import useAuthGate from "@/hooks/useAuthGate";
 import AvatarImg from "./AvatarImg";
 
 function postKey(post) {
@@ -208,19 +209,17 @@ const ReelSlide = React.forwardRef(function ReelSlide(
   );
 });
 
-const slideVariants = {
-  enter: (dir) => ({ y: dir > 0 ? "100%" : "-100%", opacity: 0 }),
-  center: { y: 0, opacity: 1 },
-  exit: (dir) => ({ y: dir > 0 ? "-100%" : "100%", opacity: 0 }),
-};
-
 // Fullscreen, swipeable reels-style player. Swipe up/down (or drag) moves
 // between the videos in `queue`, mirroring Instagram/TikTok Reels.
 export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaIndex, currentUser, onClose }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // Liking, saving, commenting and sharing a reel all need an account.
+  // Navigating to sign-in unmounts this portal, so the viewer lands on the
+  // form and comes back to the post they were watching.
+  const { requireAuth } = useAuthGate();
   const clampedStart = Math.min(Math.max(startIndex, 0), Math.max(queue.length - 1, 0));
-  const [[activeIndex, direction], setActiveState] = useState([clampedStart, 0]);
+  const [activeIndex, setActiveIndex] = useState(clampedStart);
   const [interactions, setInteractions] = useState({});
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -232,6 +231,7 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
   // entire reason the sheet exists.
   const isMobile = useIsMobile();
   const openComments = () => {
+    if (!requireAuth("comment")) return;
     if (isMobile) setIsCommentsOpen(true);
     else setIsDetailModalOpen(true);
   };
@@ -249,17 +249,33 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
   const [isScrubbing, setIsScrubbing] = useState(false);
 
   const activePost = queue[activeIndex];
-  const activeMediaIndex = activeIndex === clampedStart && startMediaIndex != null
-    ? startMediaIndex
-    : getPostVideoIndex(activePost);
+  // Which item of a multi-media post is the video. The reel the viewer opened
+  // from the feed keeps the exact one they tapped; everything else resolves to
+  // its first video.
+  const mediaIndexFor = useCallback((i) => (
+    i === clampedStart && startMediaIndex != null ? startMediaIndex : getPostVideoIndex(queue[i])
+  ), [clampedStart, startMediaIndex, queue]);
   const activeId = postKey(activePost);
+
+  // The reels that stay mounted: the one being watched and its immediate
+  // neighbours. See the render for why this matters.
+  const visibleSlides = useMemo(() => (
+    [activeIndex - 1, activeIndex, activeIndex + 1].filter((i) => i >= 0 && i < queue.length)
+  ), [activeIndex, queue.length]);
 
   // Tagged products link straight to the product page — no credit to anyone.
   // An affiliate link is different: it must carry the affiliate's ref_code
   // through to ProductDetail so the click (and any resulting sale) is
   // attributed to whoever shared it, same as the feed card's "Buy Now".
+  // Reels are opened from a feed whose posts already carry their products,
+  // resolved in bulk by the server (see enrichPostsForViewer). Reaching for
+  // them again here would put three requests between a tap and the video.
+  // The queries stay as a fallback for a queue that arrived without them.
+  const servedTagged = Array.isArray(activePost?.tagged_products_data);
+  const servedAffiliate = activePost?.affiliate_link_data !== undefined;
+
   const taggedProductIds = activePost?.tagged_products;
-  const { data: taggedProducts } = useQuery({
+  const { data: fetchedTaggedProducts } = useQuery({
     queryKey: ["postTaggedProducts", taggedProductIds],
     queryFn: async () => {
       const results = await Promise.all((taggedProductIds || []).map(async (id) => {
@@ -272,27 +288,35 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
       }));
       return results.filter(Boolean);
     },
-    enabled: !!taggedProductIds?.length,
+    enabled: !servedTagged && !!taggedProductIds?.length,
     staleTime: 5 * 60 * 1000,
   });
+
+  const taggedProducts = servedTagged ? activePost.tagged_products_data : fetchedTaggedProducts;
 
   const firstAffiliateLinkId = activePost?.affiliate_links?.[0];
-  const { data: postAffiliateLink } = useQuery({
+  const { data: fetchedAffiliateLink } = useQuery({
     queryKey: ["postAffiliateLink", firstAffiliateLinkId],
     queryFn: () => affiliateLinksAPI.get(firstAffiliateLinkId),
-    enabled: !!firstAffiliateLinkId,
+    enabled: !servedAffiliate && !!firstAffiliateLinkId,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: affiliateProduct } = useQuery({
+  const postAffiliateLink = servedAffiliate ? activePost.affiliate_link_data : fetchedAffiliateLink;
+
+  const { data: fetchedAffiliateProduct } = useQuery({
     queryKey: ["postAffiliateProduct", postAffiliateLink?.product_id],
     queryFn: async () => {
       const res = await productsAPI.get(postAffiliateLink.product_id);
       return res?.data || res;
     },
-    enabled: !!postAffiliateLink?.product_id,
+    enabled: !servedAffiliate && !!postAffiliateLink?.product_id,
     staleTime: 5 * 60 * 1000,
   });
+
+  const affiliateProduct = servedAffiliate
+    ? activePost.affiliate_product_data
+    : fetchedAffiliateProduct;
 
   // Reset the bar and caption whenever the active reel changes — durations
   // and an expanded caption don't carry over between videos.
@@ -364,10 +388,9 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
   }, [onClose, activeIndex]);
 
   const paginate = useCallback((dir) => {
-    setActiveState(([idx]) => {
+    setActiveIndex((idx) => {
       const next = idx + dir;
-      if (next < 0 || next >= queue.length) return [idx, 0];
-      return [next, dir];
+      return next < 0 || next >= queue.length ? idx : next;
     });
   }, [queue.length]);
 
@@ -416,7 +439,8 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
   });
 
   const toggleLike = useCallback((post) => {
-    if (!currentUser || likeMutation.isPending) return;
+    if (!requireAuth("like")) return;
+    if (likeMutation.isPending) return;
     const id = postKey(post);
     const current = getInteraction(post);
     setInteractions((prev) => ({
@@ -428,16 +452,16 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
       },
     }));
     likeMutation.mutate({ postId: id, wasLiked: current.liked });
-  }, [currentUser, getInteraction, likeMutation]);
+  }, [requireAuth, getInteraction, likeMutation]);
 
   const toggleBookmark = useCallback((post) => {
-    if (!currentUser) return;
+    if (!requireAuth("save")) return;
     const id = postKey(post);
     const current = getInteraction(post);
     setInteractions((prev) => ({ ...prev, [id]: { ...current, isBookmarked: !current.isBookmarked } }));
     bookmarkMutation.mutate({ postId: id, wasBookmarked: current.isBookmarked });
     toast.success(current.isBookmarked ? "Removed from saved" : "Post saved!");
-  }, [currentUser, getInteraction, bookmarkMutation]);
+  }, [requireAuth, getInteraction, bookmarkMutation]);
 
   if (!activePost) return null;
 
@@ -458,71 +482,75 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
       style={{ overscrollBehavior: "none", WebkitTapHighlightColor: "transparent" }}
     >
       <div className="relative w-full h-full max-w-md mx-auto overflow-hidden bg-black">
-        <AnimatePresence initial={false} custom={direction}>
-          <motion.div
-            key={activeId || activeIndex}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.28, ease: "easeOut" }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.5}
-            onDragEnd={(e, info) => {
-              if (info.offset.y < -70) paginate(1);
-              else if (info.offset.y > 70) paginate(-1);
-            }}
-            className="absolute inset-0"
-          >
-            <ReelSlide
-              ref={activeVideoRef}
-              post={activePost}
-              mediaIndex={activeMediaIndex}
-              isActive={!isDetailModalOpen && !isShareModalOpen}
-              onDoubleTapLike={() => !activeInteraction.liked && toggleLike(activePost)}
-              onDurationChange={setDuration}
-              onTimeUpdate={(t) => { if (!scrubbingRef.current) setCurrentTime(t); }}
-            />
-          </motion.div>
-        </AnimatePresence>
+        {/* A three-reel window, mounted and kept alive as the viewer swipes.
+            The neighbouring <video> elements are the very same objects that
+            become active on the next swipe, so the reel swiped to is already
+            buffered and its first frame already decoded.
 
-        {/* Hidden preloaders for the neighboring reels so swiping feels instant.
-            The very next/prev reel is warmed fully (auto); one further out only
-            fetches metadata + a small head start, so a fast swipe still has a
-            connection primed without spending bandwidth on reels not yet close. */}
-        {queue[activeIndex + 1] && (
-          <video
-            key={`preload-next-${postKey(queue[activeIndex + 1])}`}
-            src={queue[activeIndex + 1].media_urls?.[getPostVideoIndex(queue[activeIndex + 1])]}
-            preload="auto"
-            fetchPriority="high"
-            muted
-            playsInline
-            className="hidden"
-          />
-        )}
+            This used to be an AnimatePresence keyed on the active reel, which
+            unmounted and rebuilt the <video> on every swipe — throwing away
+            all of that work and showing a black frame while the replacement
+            re-fetched, however warm the browser cache was.
+
+            Drag lives on the window rather than on a slide so the whole stack
+            follows the finger and the next reel is visibly coming in during
+            the gesture. dragElastic is small so the snap back to origin is
+            imperceptible against the slides' own travel. */}
+        <motion.div
+          className="absolute inset-0"
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={0.18}
+          dragMomentum={false}
+          onDragEnd={(e, info) => {
+            if (info.offset.y < -70) paginate(1);
+            else if (info.offset.y > 70) paginate(-1);
+          }}
+        >
+          {visibleSlides.map((i) => {
+            const post = queue[i];
+            const isActiveSlide = i === activeIndex;
+            return (
+              <motion.div
+                key={postKey(post) || i}
+                className="absolute inset-0"
+                initial={false}
+                animate={{ y: `${(i - activeIndex) * 100}%` }}
+                transition={{ duration: 0.28, ease: "easeOut" }}
+              >
+                <ReelSlide
+                  ref={isActiveSlide ? activeVideoRef : undefined}
+                  post={post}
+                  mediaIndex={mediaIndexFor(i)}
+                  isActive={isActiveSlide && !isDetailModalOpen && !isShareModalOpen}
+                  preload
+                  onDoubleTapLike={() => {
+                    const interaction = getInteraction(post);
+                    if (!interaction.liked) toggleLike(post);
+                  }}
+                  onDurationChange={isActiveSlide ? setDuration : undefined}
+                  onTimeUpdate={isActiveSlide ? (t) => { if (!scrubbingRef.current) setCurrentTime(t); } : undefined}
+                />
+              </motion.div>
+            );
+          })}
+        </motion.div>
+
+        {/* One reel further out is warmed too, so a run of fast swipes stays
+            ahead of the viewer. Positioned off-screen rather than `hidden`:
+            a display:none video is outside the render tree and browsers are
+            free to skip preloading it entirely. */}
         {queue[activeIndex + 2] && (
           <video
             key={`preload-next2-${postKey(queue[activeIndex + 2])}`}
             src={queue[activeIndex + 2].media_urls?.[getPostVideoIndex(queue[activeIndex + 2])]}
-            preload="metadata"
-            fetchPriority="low"
-            muted
-            playsInline
-            className="hidden"
-          />
-        )}
-        {queue[activeIndex - 1] && (
-          <video
-            key={`preload-prev-${postKey(queue[activeIndex - 1])}`}
-            src={queue[activeIndex - 1].media_urls?.[getPostVideoIndex(queue[activeIndex - 1])]}
             preload="auto"
             fetchPriority="low"
             muted
             playsInline
-            className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
+            className="absolute w-px h-px opacity-0 pointer-events-none -left-px top-0"
           />
         )}
 
@@ -699,7 +727,11 @@ export default function ReelsPlayer({ queue = [], startIndex = 0, startMediaInde
           </button>
 
           <button
-            onClick={(e) => { e.stopPropagation(); currentUser && nativeShare(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!requireAuth("share")) return;
+              nativeShare();
+            }}
             className="flex flex-col items-center gap-1"
           >
             <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">

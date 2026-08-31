@@ -11,6 +11,7 @@ import { commentsAPI } from "@/api/apiClient";
 import { useTranslation } from "react-i18next";
 import { useSocket } from "@/lib/SocketContext";
 import { toast } from "sonner";
+import useAuthGate from "@/hooks/useAuthGate";
 
 /**
  * A post's comment thread, independent of whatever is wrapping it.
@@ -445,6 +446,7 @@ export function CommentList({ postId, currentUser, topLevelComments, repliesMap,
 export function CommentComposer({ postId, currentUser, className = "", autoFocus = false }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { gateState } = useAuthGate();
   const [commentText, setCommentText] = useState("");
   const inputRef = useRef(null);
 
@@ -465,11 +467,14 @@ export function CommentComposer({ postId, currentUser, className = "", autoFocus
     onError: () => toast.error(t("common.commentFailed")),
   });
 
+  // Carries where the reader was and what they were about to do, so the
+  // sign-in screen can say so and send them back here afterwards.
   if (!currentUser) {
     return (
       <div className={className}>
         <Link
           to="/login"
+          state={gateState("comment")}
           className="flex items-center justify-center h-11 rounded-full bg-slate-100 dark:bg-ink-800 text-sm font-semibold text-slate-600 dark:text-ink-300"
         >
           {t("common.signInToComment")}

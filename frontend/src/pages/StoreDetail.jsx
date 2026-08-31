@@ -20,6 +20,7 @@ import StorefrontRenderer from "@/components/store/storefront/StorefrontRenderer
 import StarRating from "@/components/reviews/StarRating";
 import { storesAPI, productsAPI, reviewsAPI, followsAPI } from "@/api/apiClient";
 import { useAuth } from "@/lib/AuthContext";
+import useAuthGate from "@/hooks/useAuthGate";
 import Seo from "@/components/shared/Seo";
 import { describeStore, storePath } from "@/lib/previewMeta";
 import { useTranslation } from "react-i18next";
@@ -38,6 +39,7 @@ export default function StoreDetail() {
   const identifier = slug || idParam;
   const view = params.get("view");
   const { user: currentUser } = useAuth();
+  const { requireAuth } = useAuthGate();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = React.useState("");
@@ -94,6 +96,8 @@ export default function StoreDetail() {
 
   const followMutation = useMutation({
     mutationFn: async () => {
+      // Guests are sent to sign in before the mutation is ever started, so
+      // this is only a backstop.
       if (!currentUser) throw new Error("Please login to follow");
       const followingUsername = store.owner_username || store.name?.toLowerCase().replace(/\s+/g, '_');
       if (isFollowing) {
@@ -233,7 +237,7 @@ export default function StoreDetail() {
         currentUser={currentUser}
         isFollowing={isFollowing}
         isFollowedBy={isFollowedBy}
-        onFollowToggle={() => followMutation.mutate()}
+        onFollowToggle={() => { if (requireAuth("follow")) followMutation.mutate(); }}
         followPending={followMutation.isPending}
         onShare={handleShare}
       />
@@ -310,7 +314,7 @@ export default function StoreDetail() {
             {currentUser && currentUser.username !== store.owner_username && (
               <div className="mt-5 flex flex-wrap gap-2">
                 <Button
-                  onClick={() => followMutation.mutate()}
+                  onClick={() => { if (requireAuth("follow")) followMutation.mutate(); }}
                   disabled={followMutation.isPending}
                   className={`rounded-xl gap-2 font-semibold transition-all ${
                     isFollowing

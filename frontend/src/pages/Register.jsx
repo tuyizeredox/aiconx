@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/layout/Logo";
+import AuthGateNotice from "@/components/shared/AuthGateNotice";
 import LanguagePicker from "@/components/layout/LanguagePicker";
 import { useTheme } from 'next-themes';
 import { toast } from '@/components/ui/use-toast';
@@ -259,6 +260,8 @@ const Register = () => {
                 <h2 className="text-2xl sm:text-3xl font-black dark:text-white text-slate-900 tracking-tight">{t("auth.registerTitle")}</h2>
                 <p className="dark:text-ink-500 text-slate-500 text-sm">{t("auth.registerSubtitle")}</p>
               </div>
+
+              <AuthGateNotice variant="register" />
 
               <AnimatePresence>
                 {error && (

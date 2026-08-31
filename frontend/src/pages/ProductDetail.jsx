@@ -26,6 +26,7 @@ import { useAffiliateLink } from "@/hooks/useAffiliateLink";
 import { productsAPI, reviewsAPI, cartAPI, wishlistAPI, storesAPI, productQuestionsAPI, productBookingsAPI } from "@/api/apiClient";
 import { addToGuestCart, getGuestCart } from "@/lib/guestCart";
 import { useAuth } from "@/lib/AuthContext";
+import useAuthGate from "@/hooks/useAuthGate";
 import Seo from "@/components/shared/Seo";
 import { describeProduct, productPath } from "@/lib/previewMeta";
 import { useTranslation } from "react-i18next";
@@ -103,6 +104,7 @@ export default function ProductDetail() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { requireAuth } = useAuthGate();
 
   const { data: productResponse, isLoading, error: productError } = useQuery({
     queryKey: ["product", productId],
@@ -345,10 +347,9 @@ export default function ProductDetail() {
   });
 
   const handleBook = () => {
-    if (!currentUser) {
-      toast.error(t("product.signInToBook"));
-      return;
-    }
+    // A toast that says "sign in" but leaves the shopper on the page is a
+    // dead end. Take them to the form instead, and bring them back.
+    if (!requireAuth("book")) return;
     // Variants still have to be chosen: the booking records which one the
     // shopper wants so the vendor knows what to restock.
     const missing = missingSelection();
@@ -397,10 +398,7 @@ export default function ProductDetail() {
 
   const wishlistMutation = useMutation({
     mutationFn: async () => {
-      if (!currentUser) {
-        toast.error(t("product.signInToSave"));
-        return;
-      }
+      if (!requireAuth("wishlist")) return;
 
       // Double check state to avoid race conditions
       if (isWishlisted) {

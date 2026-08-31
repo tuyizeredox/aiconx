@@ -346,17 +346,17 @@ export default function ImageZoomGallery({ images, videos = [], title, badge, on
               onClick={() => setSelected((i) => Math.max(0, i - 1))}
               disabled={selected === 0}
               aria-label={t("common.previous")}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 transition-opacity"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/95 hover:bg-white text-slate-900 ring-1 ring-black/10 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 transition-all"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 text-slate-900" strokeWidth={2.5} />
             </button>
             <button
               onClick={() => setSelected((i) => Math.min(media.length - 1, i + 1))}
               disabled={selected === media.length - 1}
               aria-label={t("common.next")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 transition-opacity"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/95 hover:bg-white text-slate-900 ring-1 ring-black/10 rounded-full flex items-center justify-center shadow-lg disabled:opacity-40 transition-all"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 text-slate-900" strokeWidth={2.5} />
             </button>
           </>
         )}

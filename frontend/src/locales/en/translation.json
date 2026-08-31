@@ -247,7 +247,29 @@
     "welcomeAboardTitle": "Welcome aboard!",
     "accountCreatedDesc": "Your account has been created successfully.",
     "createAccountFailedGeneric": "Failed to create account. Please try again.",
-    "registrationFailedTitle": "Registration failed"
+    "registrationFailedTitle": "Registration failed",
+    "gateTitle": "Sign in to continue",
+    "gateNoAccount": "No account yet?",
+    "gateCreateAccount": "Create one in a minute",
+    "gateBackTo": "You'll come straight back here afterwards.",
+    "intents": {
+      "like": "like this post",
+      "comment": "join the conversation",
+      "repost": "repost this",
+      "share": "share this post",
+      "save": "save this post",
+      "follow": "follow",
+      "wishlist": "save this to your wishlist",
+      "book": "book this item",
+      "ask": "ask the seller a question",
+      "review": "leave a review",
+      "message": "send a message",
+      "checkout": "complete your order",
+      "report": "report this"
+    },
+    "gateSignInTo": "Sign in to {{action}}",
+    "gateCreateTo": "Create an account to {{action}}",
+    "gateCreateTitle": "Create an account to continue"
   },
   "home": {
     "feed": "Feed",

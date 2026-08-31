@@ -19,6 +19,7 @@ import AvatarImg from "./AvatarImg";
 import ShopThisLook from "@/components/home/ShopThisLook";
 import { useNativeShare } from "@/hooks/useNativeShare";
 import { useIsMobile } from "@/hooks/use-mobile";
+import useAuthGate from "@/hooks/useAuthGate";
 import { formatDistanceToNow } from "date-fns";
 import useEmblaCarousel from 'embla-carousel-react';
 import {
@@ -31,6 +32,10 @@ import {
 const PostCard = memo(function PostCard({ post, currentUser, fullView = false, feedPosts }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // Every action below is closed to guests. Rather than doing nothing when
+  // one is tapped, send them to sign-in with what they were trying to do —
+  // see useAuthGate.
+  const { requireAuth } = useAuthGate();
 
   // A repost wraps another post: interactions (like/comment/share/bookmark)
   // and the header/media/tags shown all act on the original content, with a
@@ -53,6 +58,7 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
   // `fullView` (the post's own page) already shows the thread inline.
   const isMobile = useIsMobile();
   const openComments = () => {
+    if (!requireAuth("comment")) return;
     if (isMobile) setIsCommentsOpen(true);
     else setIsDetailModalOpen(true);
   };
@@ -73,49 +79,82 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
   const [optimisticRepostsCount, setOptimisticRepostsCount] = useState(displayPost?.reposts_count || 0);
   const isRepostOwner = isRepost && currentUser?.username === post?.author_username;
 
-  // Follow status check
+  // The feed response already carries everything below it - follow state,
+  // known likers, tagged products, the affiliate link and its product - all
+  // resolved in bulk for the whole page (see enrichPostsForViewer on the
+  // server). Each of these used to be its own request per card, so a page of
+  // ten posts opened dozens of them and starved its own images and video of
+  // connections.
+  //
+  // The queries are kept as a fallback, disabled whenever the server answered:
+  // a post reached through an endpoint that doesn't enrich (or a cached
+  // payload from before it did) still resolves its own data.
+  // Toggling follow can no longer be answered by invalidating a query that
+  // is switched off, so the button tracks its own state once tapped.
+  const [followOverride, setFollowOverride] = useState(null);
+
+  const servedFollow = displayPost?.is_following_author !== undefined;
+  const servedLikers = Array.isArray(displayPost?.known_likers);
+  const servedTagged = Array.isArray(displayPost?.tagged_products_data);
+  const servedAffiliate = displayPost?.affiliate_link_data !== undefined;
+
   const { data: followStatus } = useQuery({
     queryKey: ["followStatus", currentUser?.username, authorUsername],
     queryFn: () => followsAPI.check({
       follower_username: currentUser?.username,
       following_username: authorUsername
     }),
-    enabled: !!currentUser?.username && !!authorUsername && !isOwner,
+    enabled: !servedFollow && !!currentUser?.username && !!authorUsername && !isOwner,
   });
 
-  const isFollowing = followStatus?.is_following || false;
+  const isFollowing = followOverride ?? (servedFollow
+    ? !!displayPost.is_following_author
+    : (followStatus?.is_following || false));
 
   // Who among the people I follow also liked this post
-  const { data: knownLikers } = useQuery({
+  const { data: knownLikersRes } = useQuery({
     queryKey: ["knownLikers", "post", postId, currentUser?.username],
     queryFn: () => likesAPI.getKnownLikers("post", postId, 3),
-    enabled: !!currentUser?.username && !!postId && (displayPost?.likes_count || 0) > 0,
+    enabled: !servedLikers && !!currentUser?.username && !!postId && (displayPost?.likes_count || 0) > 0,
     staleTime: 60000,
   });
 
+  const knownLikers = useMemo(
+    () => (servedLikers
+      ? { users: displayPost.known_likers, total: displayPost.known_likers.length }
+      : knownLikersRes),
+    [servedLikers, displayPost?.known_likers, knownLikersRes]
+  );
+
   const firstAffiliateLinkId = displayPost?.affiliate_links?.[0];
-  const { data: postAffiliateLink } = useQuery({
+  const { data: fetchedAffiliateLink } = useQuery({
     queryKey: ["postAffiliateLink", firstAffiliateLinkId],
     queryFn: () => affiliateLinksAPI.get(firstAffiliateLinkId),
-    enabled: !!firstAffiliateLinkId,
+    enabled: !servedAffiliate && !!firstAffiliateLinkId,
     staleTime: 5 * 60 * 1000,
   });
 
+  const postAffiliateLink = servedAffiliate ? displayPost.affiliate_link_data : fetchedAffiliateLink;
+
   // The affiliate link only caches a title/price snapshot from when it was
-  // created — pull the live product so the embed can show a real image and
+  // created - pull the live product so the embed can show a real image and
   // current price instead of a bare text link.
-  const { data: affiliateProduct } = useQuery({
+  const { data: fetchedAffiliateProduct } = useQuery({
     queryKey: ["postAffiliateProduct", postAffiliateLink?.product_id],
     queryFn: async () => {
       const res = await productsAPI.get(postAffiliateLink.product_id);
       return res?.data || res;
     },
-    enabled: !!postAffiliateLink?.product_id,
+    enabled: !servedAffiliate && !!postAffiliateLink?.product_id,
     staleTime: 5 * 60 * 1000,
   });
 
+  const affiliateProduct = servedAffiliate
+    ? displayPost.affiliate_product_data
+    : fetchedAffiliateProduct;
+
   const taggedProductIds = displayPost?.tagged_products;
-  const { data: taggedProducts } = useQuery({
+  const { data: fetchedTaggedProducts } = useQuery({
     queryKey: ["postTaggedProducts", taggedProductIds],
     queryFn: async () => {
       const results = await Promise.all((taggedProductIds || []).map(async (id) => {
@@ -128,9 +167,11 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       }));
       return results.filter(Boolean);
     },
-    enabled: !!taggedProductIds?.length,
+    enabled: !servedTagged && !!taggedProductIds?.length,
     staleTime: 5 * 60 * 1000,
   });
+
+  const taggedProducts = servedTagged ? displayPost.tagged_products_data : fetchedTaggedProducts;
 
   // Everything shoppable in this post, as one list. Tagged products and an
   // affiliate product are the same thing to a shopper — something worn in the
@@ -328,8 +369,8 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
   });
 
   const followMutation = useMutation({
-    mutationFn: async () => {
-      if (isFollowing) {
+    mutationFn: async (wasFollowing = isFollowing) => {
+      if (wasFollowing) {
         await followsAPI.unfollow({
           follower_username: currentUser.username,
           following_username: authorUsername
@@ -338,30 +379,45 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         await followsAPI.follow(authorUsername, 'user');
       }
     },
-    onSuccess: () => {
+    onMutate: () => {
+      const wasFollowing = isFollowing;
+      setFollowOverride(!wasFollowing);
+      return { wasFollowing };
+    },
+    onSuccess: (_data, _vars, context) => {
       queryClient.invalidateQueries({ queryKey: ["followStatus", currentUser?.username, authorUsername] });
       queryClient.invalidateQueries({ queryKey: ["followCounts"] });
-      toast.success(isFollowing ? "Unfollowed" : "Following");
+      toast.success(context?.wasFollowing ? "Unfollowed" : "Following");
     },
-    onError: () => {
+    onError: (_error, _vars, context) => {
+      setFollowOverride(context?.wasFollowing ?? null);
       toast.error("Failed to update follow status");
     },
   });
-
-  if (!post) return null;
 
   // Posts with a video, in feed order, so the fullscreen player can swipe
   // between them the way Reels/TikTok do. Falls back to just this post when
   // the caller didn't supply the surrounding feed (e.g. a single-post page).
   // Reposts are resolved to the original post they wrap, matching what's
   // actually rendered (and playable) in each card.
-  const resolveDisplayPost = (p) => (p?.repost_of && p?.original_post) ? p.original_post : p;
-  const feedDisplayPosts = (Array.isArray(feedPosts) && feedPosts.length > 0 ? feedPosts : [post]).map(resolveDisplayPost);
-  const videoQueue = feedDisplayPosts.filter(isVideoPost);
-  if (videoQueue.length === 0 && isVideoPost(displayPost)) videoQueue.push(displayPost);
+  //
+  // Memoised because it walks the entire loaded feed: computing it inline made
+  // every card re-scan every post on every render, so one appended page turned
+  // into thousands of wasted passes right as the reader was mid-scroll.
+  const videoQueue = useMemo(() => {
+    if (!post) return [];
+    const resolveDisplayPost = (p) => (p?.repost_of && p?.original_post) ? p.original_post : p;
+    const source = Array.isArray(feedPosts) && feedPosts.length > 0 ? feedPosts : [post];
+    const queue = source.map(resolveDisplayPost).filter(isVideoPost);
+    if (queue.length === 0 && isVideoPost(displayPost)) queue.push(displayPost);
+    return queue;
+  }, [feedPosts, post, displayPost]);
+
+  if (!post) return null;
 
   const triggerLike = () => {
-    if (currentUser && !optimisticLiked && !likeMutation.isPending) {
+    if (!requireAuth("like")) return;
+    if (!optimisticLiked && !likeMutation.isPending) {
       likeMutation.mutate(optimisticLiked);
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 1000);
@@ -473,9 +529,12 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {!isOwner && currentUser && (
+            {!isOwner && (
               <DropdownMenuItem
-                onClick={() => followMutation.mutate()}
+                onClick={() => {
+                  if (!requireAuth("follow")) return;
+                  followMutation.mutate(isFollowing);
+                }}
                 className="flex items-center gap-2 cursor-pointer"
               >
                 {isFollowing ? (
@@ -540,9 +599,12 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
               <Copy className="w-4 h-4" />
               <span>Copy link</span>
             </DropdownMenuItem>
-            {!isOwner && currentUser && (
+            {!isOwner && (
               <DropdownMenuItem
-                onClick={() => setIsReportModalOpen(true)}
+                onClick={() => {
+                  if (!requireAuth("report")) return;
+                  setIsReportModalOpen(true);
+                }}
                 className="flex items-center gap-2 cursor-pointer text-red-600"
               >
                 <Flag className="w-4 h-4" />
@@ -706,7 +768,10 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-50 dark:border-ink-800/50">
         <div className="flex items-center gap-5">
           <button
-            onClick={() => currentUser && !likeMutation.isPending && likeMutation.mutate(optimisticLiked)}
+            onClick={() => {
+              if (!requireAuth("like")) return;
+              if (!likeMutation.isPending) likeMutation.mutate(optimisticLiked);
+            }}
             disabled={likeMutation.isPending}
             title={optimisticCount > 0 ? `${optimisticCount.toLocaleString()} ${t("common.like")}` : t("common.like")}
             aria-label={t("common.like")}
@@ -744,7 +809,10 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
           </button>
 
           <button
-            onClick={() => currentUser && !isOwner && !repostMutation.isPending && repostMutation.mutate(optimisticReposted)}
+            onClick={() => {
+              if (!requireAuth("repost")) return;
+              if (!isOwner && !repostMutation.isPending) repostMutation.mutate(optimisticReposted);
+            }}
             disabled={repostMutation.isPending || isOwner}
             title={isOwner ? (t("common.cannotRepostOwn") || "You can't repost your own post") : (optimisticRepostsCount > 0 ? `${optimisticRepostsCount.toLocaleString()} ${t("common.repost") || "Repost"}` : (t("common.repost") || "Repost"))}
             aria-label={t("common.repost") || "Repost"}
@@ -763,7 +831,10 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
           </button>
 
           <button
-            onClick={() => currentUser && nativeShare()}
+            onClick={() => {
+              if (!requireAuth("share")) return;
+              nativeShare();
+            }}
             title={displayPost.shares_count > 0 ? `${displayPost.shares_count.toLocaleString()} ${t("common.share")}` : t("common.share")}
             aria-label={t("common.share")}
             className="flex items-center outline-none group"
@@ -778,7 +849,10 @@ const PostCard = memo(function PostCard({ post, currentUser, fullView = false, f
         </div>
 
         <button 
-          onClick={() => currentUser && saveMutation.mutate()}
+          onClick={() => {
+            if (!requireAuth("save")) return;
+            saveMutation.mutate();
+          }}
           className={`p-1.5 rounded-full transition-all duration-200 ${
             isBookmarked 
               ? "text-orange-600 bg-orange-50 dark:bg-orange-900/30" 

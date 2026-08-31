@@ -238,7 +238,29 @@
     "welcomeAboardTitle": "Murakaza neza mu muryango!",
     "accountCreatedDesc": "Konti yawe yaremwe neza.",
     "createAccountFailedGeneric": "Gufungura konti byanze. Nyamuneka ongera ugerageze.",
-    "registrationFailedTitle": "Kwiyandikisha byanze"
+    "registrationFailedTitle": "Kwiyandikisha byanze",
+    "gateTitle": "Injira kugira ngo ukomeze",
+    "gateNoAccount": "Nta konti ufite?",
+    "gateCreateAccount": "Iyifungure mu munota",
+    "gateBackTo": "Uzahita ugarurwa aho wari uri.",
+    "intents": {
+      "like": "ukunde iyi nyandiko",
+      "comment": "utange igitekerezo",
+      "repost": "wongere usangize iyi nyandiko",
+      "share": "usangize iyi nyandiko",
+      "save": "ubike iyi nyandiko",
+      "follow": "ukurikire",
+      "wishlist": "ubike iki mu byo wifuza",
+      "book": "ufate iki kintu",
+      "ask": "ubaze umucuruzi ikibazo",
+      "review": "utange isuzuma",
+      "message": "wohereze ubutumwa",
+      "checkout": "urangize itegeko ryawe",
+      "report": "utange ikirego"
+    },
+    "gateSignInTo": "Injira kugira ngo {{action}}",
+    "gateCreateTo": "Iyandikishe kugira ngo {{action}}",
+    "gateCreateTitle": "Iyandikishe kugira ngo ukomeze"
   },
   "home": {
     "feed": "Amakuru",

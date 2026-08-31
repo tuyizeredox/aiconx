@@ -8,6 +8,9 @@ import { Notification } from '../models/Notification';
 import { NotificationService } from '../services/notificationService';
 import { z } from 'zod';
 import { likeTarget, unlikeTarget, getLikesForTargets } from '../services/likeService';
+import { Like } from '../models/Like';
+import { Product } from '../models/Product';
+import { AffiliateLink } from '../models/AffiliateLink';
 import { escapeRegex } from '../utils/sanitize';
 
 const createPostSchema = z.object({
@@ -79,38 +82,184 @@ async function resolveAndNotifyMentions(
   return taggedUsernames;
 }
 
-// Attaches is_liked / is_reposted flags and, for reposts, the original post
-// they wrap, so the frontend can render "Reposted by X" without extra calls.
-async function enrichPostsForViewer(posts: any[], effectiveUsername?: string | null) {
-  const postIds = posts.map((p: any) => p._id.toString());
+// How many "liked by" faces a card shows. Mirrors the default on
+// GET /likes/known-likers, which this replaces for the feed.
+const KNOWN_LIKERS_LIMIT = 3;
 
-  const repostOfIds = [...new Set(posts.map((p: any) => p.repost_of).filter(Boolean))];
+function toObjectIds(ids: string[]) {
+  return ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+}
+
+/**
+ * Resolves everything a feed card renders, for a whole page of posts, in a
+ * fixed number of queries.
+ *
+ * Each card used to fetch its own follow state, known likers, tagged products
+ * and affiliate link. A ten-post page therefore opened forty to seventy round
+ * trips, all of them competing with that same feed's images and video for the
+ * browser's handful of connections - the posts appeared slowly and the video
+ * in them started later still. None of that work is per-post in nature, so it
+ * is batched here instead: the client renders a page from this one response.
+ *
+ * The added fields are additive. A client that predates them still works, and
+ * still falls back to its own per-card requests (see PostCard).
+ */
+async function enrichPostsForViewer(posts: any[], effectiveUsername?: string | null) {
+  const viewer = effectiveUsername ? String(effectiveUsername).toLowerCase() : null;
+
+  const repostOfIds = [...new Set(posts.map((p: any) => p.repost_of).filter(Boolean))] as string[];
   const originalsMap = new Map<string, any>();
   if (repostOfIds.length > 0) {
-    const originals = await Post.find({ _id: { $in: repostOfIds } }).lean({ virtuals: true });
+    const originals = await Post.find({ _id: { $in: toObjectIds(repostOfIds) } }).lean({ virtuals: true });
     for (const original of originals as any[]) {
-      originalsMap.set(original._id.toString(), { ...original, id: original._id.toString() });
+      originalsMap.set(original._id.toString(), original);
     }
   }
 
+  // A repost renders its original's media, tags and counts, so the original is
+  // the thing that has to be enriched. Both are collected and treated as one
+  // set, then the resolved data is attached to whichever object the client
+  // will actually read it off.
+  const subjects: any[] = [...posts, ...originalsMap.values()];
+  const subjectIds = [...new Set(subjects.map((p) => p._id.toString()))];
+
+  /* ------------------------------------------------ viewer-relative state */
+
   let userLikesSet = new Set<string>();
   let userRepostsSet = new Set<string>();
-  if (effectiveUsername) {
-    userLikesSet = await getLikesForTargets(effectiveUsername, 'post', postIds);
-    const myReposts = await Post.find({ author_username: effectiveUsername.toLowerCase(), repost_of: { $in: postIds } })
-      .select('repost_of')
-      .lean();
-    userRepostsSet = new Set(myReposts.map((r: any) => r.repost_of));
+  let followingSet = new Set<string>();
+
+  if (viewer) {
+    const [likes, myReposts, follows] = await Promise.all([
+      getLikesForTargets(viewer, 'post', subjectIds),
+      Post.find({ author_username: viewer, repost_of: { $in: subjectIds } }).select('repost_of').lean(),
+      Follow.find({ follower_username: viewer, follow_type: 'user' }).select('following_username').lean(),
+    ]);
+    userLikesSet = likes;
+    userRepostsSet = new Set((myReposts as any[]).map((r) => r.repost_of));
+    followingSet = new Set((follows as any[]).map((f) => f.following_username).filter(Boolean));
   }
 
-  return posts.map((post: any) => {
-    const id = post._id.toString();
+  /* ------------------------------------------------------------- products */
+
+  // Only the first affiliate link is ever rendered on a card, so only the
+  // first is resolved.
+  const linkIds = [...new Set(subjects.map((p) => p.affiliate_links?.[0]).filter(Boolean))] as string[];
+  const linksById = new Map<string, any>();
+  if (linkIds.length > 0) {
+    const links = await AffiliateLink.find({ _id: { $in: toObjectIds(linkIds) } }).lean();
+    for (const link of links as any[]) {
+      linksById.set(link._id.toString(), { ...link, id: link._id.toString() });
+    }
+  }
+
+  const taggedIds = subjects.flatMap((p) => (p.tagged_products || []).filter(Boolean)) as string[];
+  const affiliateProductIds = [...linksById.values()].map((l) => String(l.product_id)).filter(Boolean);
+  const productIds = [...new Set([...taggedIds, ...affiliateProductIds])];
+
+  const productsById = new Map<string, any>();
+  if (productIds.length > 0) {
+    const products = await Product.find({ _id: { $in: toObjectIds(productIds) } }).lean({ virtuals: true });
+    for (const product of products as any[]) {
+      productsById.set(product._id.toString(), { ...product, id: product._id.toString() });
+    }
+  }
+
+  /* --------------------------------------------------------- known likers */
+
+  // "Liked by @a, @b and 12 others". People the viewer follows come first; any
+  // remaining slots are filled with the most-followed other likers, so a post
+  // with no likes from the viewer's network still shows recognisable names.
+  // Three queries for the whole page, rather than three per post.
+  const knownLikersByPost = new Map<string, any[]>();
+  if (viewer) {
+    const likedIds = subjects.filter((p) => (p.likes_count || 0) > 0).map((p) => p._id.toString());
+
+    if (likedIds.length > 0) {
+      const likes = await Like.find({ target_type: 'post', target_id: { $in: likedIds } })
+        .select('target_id user_username created_at')
+        .sort({ created_at: -1 })
+        .lean();
+
+      const followed = new Map<string, string[]>();
+      const strangersByPost = new Map<string, string[]>();
+      for (const like of likes as any[]) {
+        const username = like.user_username;
+        if (!username || username === viewer) continue;
+        const bucket = followingSet.has(username) ? followed : strangersByPost;
+        const forPost = bucket.get(like.target_id) || [];
+        if (forPost.length < 200 && !forPost.includes(username)) {
+          forPost.push(username);
+          bucket.set(like.target_id, forPost);
+        }
+      }
+
+      // Rank the page's non-followed likers once, together, by follower count.
+      const strangers = [...new Set([...strangersByPost.values()].flat())];
+      const popularity = new Map<string, number>();
+      if (strangers.length > 0) {
+        const ranked = await Follow.aggregate([
+          { $match: { following_username: { $in: strangers }, follow_type: 'user' } },
+          { $group: { _id: '$following_username', follower_count: { $sum: 1 } } },
+        ]);
+        for (const row of ranked as any[]) popularity.set(row._id, row.follower_count);
+      }
+
+      const picked = new Map<string, string[]>();
+      const allPicked = new Set<string>();
+      for (const postId of likedIds) {
+        const mine = (followed.get(postId) || []).slice(0, KNOWN_LIKERS_LIMIT);
+        const remaining = KNOWN_LIKERS_LIMIT - mine.length;
+        const fill = remaining > 0
+          ? (strangersByPost.get(postId) || [])
+              .slice()
+              .sort((a, b) => (popularity.get(b) || 0) - (popularity.get(a) || 0))
+              .slice(0, remaining)
+          : [];
+        const usernames = [...mine, ...fill];
+        if (usernames.length === 0) continue;
+        picked.set(postId, usernames);
+        usernames.forEach((u) => allPicked.add(u));
+      }
+
+      if (allPicked.size > 0) {
+        const users = await User.find({ username: { $in: [...allPicked] } })
+          .select('username display_name avatar_url')
+          .lean();
+        const byUsername = new Map((users as any[]).map((u) => [u.username, u]));
+        for (const [postId, usernames] of picked) {
+          knownLikersByPost.set(postId, usernames.map((u) => byUsername.get(u)).filter(Boolean));
+        }
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------- attach */
+
+  const decorate = (subject: any) => {
+    const id = subject._id.toString();
+    const link = linksById.get(subject.affiliate_links?.[0]) || null;
+    const affiliateProduct = link?.product_id ? productsById.get(String(link.product_id)) || null : null;
     return {
-      ...post,
+      ...subject,
       id,
       is_liked: userLikesSet.has(id),
       is_reposted: userRepostsSet.has(id),
-      original_post: post.repost_of ? originalsMap.get(post.repost_of) || null : undefined,
+      is_following_author: viewer ? followingSet.has(subject.author_username) : false,
+      tagged_products_data: (subject.tagged_products || [])
+        .map((pid: string) => productsById.get(String(pid)))
+        .filter(Boolean),
+      affiliate_link_data: link,
+      affiliate_product_data: affiliateProduct,
+      known_likers: knownLikersByPost.get(id) || [],
+    };
+  };
+
+  return posts.map((post: any) => {
+    const original = post.repost_of ? originalsMap.get(post.repost_of) : null;
+    return {
+      ...decorate(post),
+      original_post: post.repost_of ? (original ? decorate(original) : null) : undefined,
     };
   });
 }

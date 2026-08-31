@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/layout/Logo";
+import AuthGateNotice from "@/components/shared/AuthGateNotice";
 import LanguagePicker from "@/components/layout/LanguagePicker";
 import {
   InputOTP,
@@ -280,6 +281,8 @@ const Login = () => {
                     <h2 className="text-2xl sm:text-3xl font-black dark:text-white text-slate-900 tracking-tight">{t("auth.signIn")}</h2>
                     <p className="dark:text-ink-500 text-slate-500 text-sm">{t("auth.loginSubtitle")}</p>
                   </div>
+
+                  <AuthGateNotice />
 
                   <AnimatePresence>
                     {error && (

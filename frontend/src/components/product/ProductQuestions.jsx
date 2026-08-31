@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageCircleQuestion, Loader2, Trash2, BadgeCheck, Send } from "lucide-react";
+import { MessageCircleQuestion, Loader2, Trash2, BadgeCheck, Send, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { productQuestionsAPI } from "@/api/apiClient";
 import { timeAgo } from "@/lib/timeAgo";
+import useAuthGate from "@/hooks/useAuthGate";
 
 const MIN_QUESTION_LENGTH = 5;
 
@@ -53,6 +55,7 @@ function AnswerForm({ questionId, onAnswered }) {
  */
 export default function ProductQuestions({ productId, product, currentUser, onCountChange }) {
   const { t, i18n } = useTranslation();
+  const { gateState } = useAuthGate();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
 
@@ -120,8 +123,17 @@ export default function ProductQuestions({ productId, product, currentUser, onCo
         </div>
       )}
 
+      {/* A link, not a statement: telling a visitor to sign in without
+          giving them the way there is the same dead end as a silent button. */}
       {!currentUser && (
-        <p className="text-sm text-slate-500 dark:text-ink-400 mb-5">{t("product.signInToAsk")}</p>
+        <Link
+          to="/login"
+          state={gateState("ask")}
+          className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-orange-600 hover:text-orange-500 dark:text-orange-400"
+        >
+          {t("product.signInToAsk")}
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       )}
 
       {isLoading ? (

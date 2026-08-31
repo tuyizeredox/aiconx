@@ -6,6 +6,37 @@ import { motion, AnimatePresence } from "framer-motion";
 // container isn't 0-height (and doesn't collapse the poster) in the meantime.
 const DEFAULT_RATIO = 4 / 5;
 
+// How far ahead of the viewport a player does each thing. Mounting the
+// <video> only costs a metadata request, so it happens early; pulling actual
+// media bytes is expensive, so it waits until the post is nearly on screen —
+// but still far enough out that the first frame is decoded and ready before
+// the scroll reaches it, which is what makes a feed feel instant.
+const MOUNT_MARGIN = "1600px 0px";
+const WARM_MARGIN = "700px 0px";
+
+// Playback hysteresis: start once a third of the post is showing, stop only
+// once it has mostly left. A single threshold makes videos flicker on and off
+// around the boundary while scrolling, which is both ugly and expensive.
+const PLAY_AT = 0.35;
+const PAUSE_BELOW = 0.2;
+
+// Only one feed video ever plays at a time. Several <video> elements decoding
+// at once is the single biggest cause of scroll jank on mid-range Android —
+// and two soundtracks at once is wrong anyway. Whoever starts playing evicts
+// the previous one; a module-level ref is enough since there is one feed.
+let activePlayer = null;
+
+function claimPlayback(video) {
+  if (activePlayer && activePlayer !== video) {
+    activePlayer.pause();
+  }
+  activePlayer = video;
+}
+
+function releasePlayback(video) {
+  if (activePlayer === video) activePlayer = null;
+}
+
 // Instagram-feed-style video player: autoplays muted while in view, loops,
 // single tap toggles sound, double tap likes (delegated to the caller).
 const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
@@ -21,10 +52,13 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
   const [showMuteHint, setShowMuteHint] = useState(false);
   const [ratio, setRatio] = useState(DEFAULT_RATIO);
   // Lazy-load gate: the <video> gets no src (and issues no network request)
-  // until its container is about to scroll into view, so a feed with many
-  // video posts doesn't fire off a metadata request for every one of them
-  // the moment the page mounts.
+  // until its container is within MOUNT_MARGIN of the viewport, so a feed with
+  // many video posts doesn't fire off a request for every one of them the
+  // moment the page mounts.
   const [shouldLoad, setShouldLoad] = useState(false);
+  // Second gate: buffer the media itself once the post is close enough that
+  // the reader is likely to reach it.
+  const [shouldWarm, setShouldWarm] = useState(false);
   const lastTapRef = useRef(0);
   const tapTimerRef = useRef(null);
   const muteHintTimerRef = useRef(null);
@@ -36,24 +70,39 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
     }
   }, [videoRef]);
 
-  // Start loading once the player is within ~1 screen of the viewport
+  // Mount and warm gates. Both watch the container, at different distances.
   useEffect(() => {
-    if (shouldLoad) return;
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || shouldWarm) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShouldLoad(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "800px 0px", threshold: 0 }
-    );
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [shouldLoad]);
+    const observers = [];
+    const watch = (rootMargin, apply) => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            apply();
+            observer.disconnect();
+          }
+        },
+        { rootMargin, threshold: 0 }
+      );
+      observer.observe(container);
+      observers.push(observer);
+    };
+
+    if (!shouldLoad) watch(MOUNT_MARGIN, () => setShouldLoad(true));
+    watch(WARM_MARGIN, () => { setShouldLoad(true); setShouldWarm(true); });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, [shouldLoad, shouldWarm]);
+
+  // Chromium keeps buffering when `preload` is raised on a live element, so
+  // the warm gate can upgrade a player that already fetched its metadata
+  // without calling load() and throwing that buffer away.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && shouldWarm) video.preload = "auto";
+  }, [videoRef, shouldWarm, src]);
 
   // Autoplay while sufficiently in view, pause otherwise
   useEffect(() => {
@@ -63,18 +112,22 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
 
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !suspended) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
+        const visible = entries[entries.length - 1].intersectionRatio;
+        if (visible >= PLAY_AT && !suspended) {
+          claimPlayback(video);
+          video.play().catch(() => {});
+        } else if (visible < PAUSE_BELOW) {
+          video.pause();
+          releasePlayback(video);
+        }
       },
-      { threshold: 0.6 }
+      { threshold: [0, PAUSE_BELOW, PLAY_AT, 0.6, 0.9] }
     );
     observer.observe(container);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      releasePlayback(video);
+    };
   }, [videoRef, src, shouldLoad, suspended]);
 
   // The fullscreen reel viewer plays its own (unmuted) copy of a video on top
@@ -84,16 +137,19 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
     const video = videoRef.current;
     if (!video || !suspended) return;
     video.pause();
+    releasePlayback(video);
     video.muted = true;
     setIsMuted(true);
   }, [suspended, videoRef]);
 
   useEffect(() => {
+    const video = videoRef.current;
     return () => {
       clearTimeout(tapTimerRef.current);
       clearTimeout(muteHintTimerRef.current);
+      if (video) releasePlayback(video);
     };
-  }, []);
+  }, [videoRef]);
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
@@ -149,20 +205,24 @@ const FeedVideoPlayer = React.forwardRef(function FeedVideoPlayer(
           playsInline
           muted
           loop
-          preload="metadata"
+          preload={shouldWarm ? "auto" : "metadata"}
+          disableRemotePlayback
           onLoadedMetadata={handleLoadedMetadata}
           onLoadedData={() => setIsLoaded(true)}
+          onCanPlay={() => setIsLoaded(true)}
         />
       )}
 
-      {/* Poster / loading placeholder shown until the first frame is ready */}
+      {/* Poster / loading placeholder shown until the first frame is ready.
+          Eager, not lazy: this is the thing the reader actually looks at while
+          the video buffers, so deferring it defeats its whole purpose. */}
       {!isLoaded && (
         poster ? (
           <img
             src={poster}
             alt=""
-            loading="lazy"
             decoding="async"
+            fetchPriority={shouldWarm ? "high" : "auto"}
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
           />
         ) : (

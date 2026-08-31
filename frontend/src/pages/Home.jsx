@@ -87,7 +87,10 @@ export default function Home() {
       (entries) => {
         if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
       },
-      { rootMargin: "800px" }
+      // A page ahead of the scroll: the next posts (and the first frames of
+      // their videos) are already in place by the time the reader reaches
+      // them, instead of the feed stalling on a spinner at the bottom.
+      { rootMargin: "1500px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
